@@ -12,6 +12,20 @@ public class Engine
         Raylib.SetTargetFPS(60);
         Raylib.SetExitKey(KeyboardKey.Q);
         
+        var groundTexture = Raylib.LoadTexture("Assets/Textures/grass.jpg");
+        
+        var groundMaterial = Raylib.LoadMaterialDefault();
+        Raylib.SetMaterialTexture(ref groundMaterial, MaterialMapIndex.Albedo, groundTexture);
+        
+        // Create plane mesh
+        var planeMesh = Raylib.GenMeshPlane(50.0f, 50.0f, 1, 1); // 50x50 plane, 1x1 subdivisions
+        var planeModel = Raylib.LoadModelFromMesh(planeMesh);
+
+        unsafe
+        {
+            planeModel.Materials[0] = groundMaterial; // Assign material to model
+        }
+        
         // Start
         var player = new Player();
         player.Start();
@@ -27,8 +41,8 @@ public class Engine
         
             Raylib.BeginMode3D(player.Camera);
         
-            // Draw simple ground plane
-            Raylib.DrawPlane(new Vector3(0.0f, 0.0f, 0.0f), new Vector2(50.0f, 50.0f), Color.Green);
+            // Draw ground plane
+            Raylib.DrawModel(planeModel, new Vector3(0.0f, 0.0f, 0.0f), 1.0f, Color.White);
         
             // Draw player representation (simple cube)
             //Raylib.DrawCube(playerPosition, 0.5f, 1.8f, 0.5f, Color.Red);
@@ -40,6 +54,10 @@ public class Engine
         
             Raylib.EndDrawing();
         }
+        
+        // Unload resources
+        Raylib.UnloadTexture(groundTexture);
+        Raylib.UnloadModel(planeModel); // Also unloads the material
         
         Raylib.CloseWindow();
     }

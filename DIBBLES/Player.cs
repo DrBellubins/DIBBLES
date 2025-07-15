@@ -9,7 +9,7 @@ public class Player
     
     public Vector3 Position { get; set; } = new Vector3(0.0f, 0.0f, 0.0f);
     public Camera3D Camera;
-
+    
     private float mouseSensitivity = 0.1f;
     private float cameraYaw = 0f;   // Horizontal rotation
     private float cameraPitch = 0f; // Vertical rotation
@@ -18,8 +18,8 @@ public class Player
     {
         // Set up camera
         Camera = new Camera3D();
-        Camera.Position = new Vector3(0.0f, 1.8f, 0.0f); // Camera slightly above ground
-        Camera.Target = new Vector3(0.0f, 1.8f, 1.0f);  // Looking forward
+        Camera.Position = new Vector3(0.0f, 2.0f, 0.0f); // Camera slightly above ground
+        Camera.Target = new Vector3(0.0f, 2.0f, 1.0f);  // Looking forward
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);      // Up vector
         Camera.FovY = 90.0f;                            // Field of view
         Camera.Projection = CameraProjection.Perspective;
@@ -57,7 +57,7 @@ public class Player
         // Transform input direction to camera's coordinate system
         Vector3 worldMoveDirection = (cameraForward * moveDirection.Z) + (cameraRight * moveDirection.X);
         
-        // Normalize movement direction and apply speed
+        // Normalize a movement direction and apply speed
         if (worldMoveDirection.Length() > 0)
         {
             worldMoveDirection = Vector3.Normalize(worldMoveDirection);
@@ -75,7 +75,7 @@ public class Player
         cameraPitch -= mouseDeltaY;
         cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f); // Limit vertical look
         
-        // Calculate camera direction for looking
+        // Calculate a camera direction for looking
         Vector3 cameraDirection = new Vector3(
             MathF.Cos(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch)),
             MathF.Sin(MathHelper.ToRadians(cameraPitch)),
