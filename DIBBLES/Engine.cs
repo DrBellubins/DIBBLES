@@ -5,12 +5,25 @@ namespace DIBBLES;
 
 public class Engine
 {
+    public const int FPS = 60;
+    public const float FrameTimestep = 1.0f / (float)FPS;
+    
+    public static bool IsRunning;
+    
     public static void Initialize()
     {
         // Initialize window
         Raylib.InitWindow(1600, 900, "DIBBLES");
-        Raylib.SetTargetFPS(60);
+        Raylib.SetTargetFPS(0);
         Raylib.SetExitKey(KeyboardKey.Q);
+        
+        var previousTimer = DateTime.Now;
+        var currentTimer = DateTime.Now;
+
+        var time = 0.0f;
+        var deltaTime = 0.0f;
+
+        IsRunning = true;
         
         var groundTexture = Raylib.LoadTexture("Assets/Textures/grass.jpg");
         
@@ -27,13 +40,25 @@ public class Engine
         }
         
         // Start
+        var groundBox = new BoundingBox(
+            new Vector3(-25.0f, 0f, -25.0f), // Slightly below y=0 for tolerance
+            new Vector3(25.0f, 0.1f, 25.0f)
+        );
+        
         var player = new Player();
         player.Start();
         
-        while (!Raylib.WindowShouldClose())
+        while (IsRunning)
         {
+            if (Raylib.WindowShouldClose())
+                Close();
+            
+            currentTimer = DateTime.Now;
+            deltaTime = (currentTimer.Ticks - previousTimer.Ticks) / 10000000f;
+            time += deltaTime;
+            
             // --- Update ---
-            player.Update(0f);
+            player.Update(groundBox, deltaTime);
         
             // --- Draw ---
             Raylib.BeginDrawing();
@@ -53,6 +78,10 @@ public class Engine
             Raylib.DrawRectangle(Raylib.GetScreenWidth() / 2 - 2, Raylib.GetScreenHeight() / 2 - 2, 4, 4, Color.White);
         
             Raylib.EndDrawing();
+            
+            previousTimer = currentTimer;
+            
+            Thread.Sleep((int)(FrameTimestep * 1000.0f));
         }
         
         // Unload resources
@@ -60,5 +89,10 @@ public class Engine
         Raylib.UnloadModel(planeModel); // Also unloads the material
         
         Raylib.CloseWindow();
+    }
+    
+    public static void Close()
+    {
+        IsRunning = false;
     }
 }
