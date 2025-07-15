@@ -28,10 +28,11 @@ public class Engine
         var groundTexture = Raylib.LoadTexture("Assets/Textures/grass.jpg");
         
         var groundMaterial = Raylib.LoadMaterialDefault();
+        
         Raylib.SetMaterialTexture(ref groundMaterial, MaterialMapIndex.Albedo, groundTexture);
         
         // Create plane mesh
-        var planeMesh = Raylib.GenMeshPlane(50.0f, 50.0f, 1, 1); // 50x50 plane, 1x1 subdivisions
+        var planeMesh = MeshUtils.GenMeshPlaneTiled(50.0f, 50.0f, 1, 1, 10.0f, 10.0f); // 50x50 plane, 1x1 subdivisions
         var planeModel = Raylib.LoadModelFromMesh(planeMesh);
 
         unsafe

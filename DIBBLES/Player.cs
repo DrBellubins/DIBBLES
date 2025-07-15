@@ -5,17 +5,18 @@ namespace DIBBLES;
 
 public class Player
 {
-    public const float WalkSpeed = 5.0f;
-    public const float RunSpeed = 8.0f;
-    public const float AirAcceleration = 6.0f;     // HL2 style air accel
-    public const float GroundAcceleration = 30.0f; // HL2 style ground accel
-    public const float GroundFriction = 20.0f;     // HL2 style ground friction
-    public const float AirFriction = 2.0f;         // Less friction in air
-    public const float Gravity = 15.0f;
-    public const float JumpImpulse = 7.5f;
-    public const float PlayerHeight = 2.0f;
-    public const float CrouchHeight = 1.0f;
-    public const float CrouchSpeed = 2.0f;
+    // HL2 movement values, converted to meters and m/s.
+    public const float WalkSpeed = 3.81f;        // ~150 Source units/s
+    public const float RunSpeed = 4.83f;         // ~190 Source units/s
+    public const float AirAcceleration = 10.0f;  // HL2 style air accel
+    public const float GroundAcceleration = 5.0f;// HL2 style ground accel
+    public const float GroundFriction = 4.0f;    // HL2 style ground friction
+    public const float AirFriction = 0.5f;       // Less friction in air
+    public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
+    public const float JumpImpulse = 5.0f;       // HL2 jump velocity ≈ 5 m/s
+    public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
+    public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
+    public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
 
     public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
     public Camera3D Camera;
@@ -44,21 +45,17 @@ public class Player
     public void Update(BoundingBox groundBox, float deltaTime)
     {
         // --- Handle Crouch ---
-        bool crouchKey = Raylib.IsKeyDown(KeyboardKey.LeftControl);
-        if (crouchKey && !isCrouching)
-        {
-            isCrouching = true;
-        }
-        else if (!crouchKey && isCrouching)
-        {
-            isCrouching = false;
-        }
+        var crouchKey = Raylib.IsKeyDown(KeyboardKey.C);
 
-        float targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
+        isCrouching = crouchKey;
+
+        var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
+        
         // Smooth crouch transition (optional)
-        float camHeight = Camera.Position.Y - Position.Y;
-        float desiredCamHeight = targetHeight * 0.5f;
-        float heightLerpSpeed = 12f;
+        var camHeight = Camera.Position.Y - Position.Y;
+        var desiredCamHeight = targetHeight * 0.5f;
+        var heightLerpSpeed = 12f;
+        
         Camera.Position.Y = Position.Y + MathHelper.Lerp(camHeight, desiredCamHeight, heightLerpSpeed * deltaTime);
 
         // --- Gravity & Vertical Movement ---
@@ -78,8 +75,9 @@ public class Player
             isGrounded = false;
 
         // --- Mouse input for camera rotation ---
-        float mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
-        float mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
+        var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
+        var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
+        
         cameraYaw += mouseDeltaX;
         cameraPitch -= mouseDeltaY;
         cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
@@ -97,6 +95,7 @@ public class Player
 
         // --- Movement Input ---
         Vector3 inputDir = Vector3.Zero;
+        
         if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
         if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
         if (Raylib.IsKeyDown(KeyboardKey.A)) inputDir.X -= 1.0f;
@@ -113,6 +112,7 @@ public class Player
             0.0f,
             MathF.Sin(MathHelper.ToRadians(cameraYaw))
         );
+        
         cameraForward = Vector3.Normalize(cameraForward);
 
         Vector3 cameraRight = new Vector3(
@@ -120,10 +120,11 @@ public class Player
             0.0f,
             MathF.Sin(MathHelper.ToRadians(cameraYaw + 90.0f))
         );
+        
         cameraRight = Vector3.Normalize(cameraRight);
 
         Vector3 wishDir = (cameraForward * inputDir.Z) + (cameraRight * inputDir.X);
-        
+
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
 
@@ -132,26 +133,13 @@ public class Player
         float friction = isGrounded ? GroundFriction : AirFriction;
 
         Vector3 wishVel = wishDir * currentSpeed;
-
-        // Accelerate towards wishVel (HL2 style)
         Vector3 velXZ = new Vector3(velocity.X, 0f, velocity.Z);
+        
         float wishSpeed = wishVel.Length();
 
-        if (wishSpeed > 0)
+        // HL2-style friction: Only apply friction when no input and grounded
+        if (wishSpeed == 0 && isGrounded)
         {
-            float currentSpeed = Vector3.Dot(velXZ, wishDir);
-            float addSpeed = wishSpeed - currentSpeed;
-            
-            if (addSpeed > 0)
-            {
-                float accelSpeed = accel * deltaTime * wishSpeed;
-                if (accelSpeed > addSpeed) accelSpeed = addSpeed;
-                velXZ += wishDir * accelSpeed;
-            }
-        }
-        else if (isGrounded)
-        {
-            // Apply friction
             float speed = velXZ.Length();
             
             if (speed != 0)
@@ -159,6 +147,20 @@ public class Player
                 float drop = speed * friction * deltaTime;
                 float newSpeed = Math.Max(speed - drop, 0);
                 velXZ *= (newSpeed / speed);
+            }
+        }
+
+        // HL2-style acceleration: Only accelerate toward wishDir when input is present
+        if (wishSpeed > 0)
+        {
+            float currentSpeedInDir = Vector3.Dot(velXZ, wishDir);
+            float addSpeed = wishSpeed - currentSpeedInDir;
+            
+            if (addSpeed > 0)
+            {
+                float accelSpeed = accel * deltaTime * wishSpeed;
+                if (accelSpeed > addSpeed) accelSpeed = addSpeed;
+                velXZ += wishDir * accelSpeed;
             }
         }
 
@@ -180,6 +182,7 @@ public class Player
         }
     }
 
+    // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
     private BoundingBox GetPlayerBox(Vector3 position, float height)
     {
         Vector3 min = new Vector3(
