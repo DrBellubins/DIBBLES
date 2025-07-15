@@ -8,6 +8,9 @@ public class Player
     public const float WalkSpeed = 5.0f;
     public const float RunSpeed = 8.0f;
     public const float Gravity = 15.0f;
+    public const float Acceleration = 30.0f;
+    public const float Friction = 20.0f;
+    public const float JumpImpulse = 7.5f;
     public const float PlayerHeight = 2.0f;
 
     public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
@@ -18,7 +21,7 @@ public class Player
     private float cameraYaw = 0f;   // Horizontal rotation
     private float cameraPitch = 0f; // Vertical rotation
 
-    private float verticalVelocity = 0.0f;
+    private Vector3 velocity = Vector3.Zero; 
     private bool isGrounded = false;
 
     public void Start()
@@ -38,8 +41,8 @@ public class Player
     public void Update(BoundingBox groundBox, float deltaTime)
     {
         // --- Gravity & Vertical Movement ---
-        verticalVelocity -= Gravity * deltaTime;
-        Position.Y += verticalVelocity * deltaTime;
+        velocity.Y -= Gravity * deltaTime;
+        Position.Y += velocity.Y * deltaTime;
 
         // --- Ground Collision using Raylib's CheckCollisionBoxes ---
         var playerBox = GetPlayerBox(Position);
@@ -49,7 +52,7 @@ public class Player
             // Collided with ground
             // Snap player to top of ground
             Position.Y = groundBox.Max.Y + PlayerHeight * 0.5f;
-            verticalVelocity = 0.0f;
+            velocity.Y = 0.0f;
             isGrounded = true;
         }
         else
@@ -106,17 +109,30 @@ public class Player
         cameraRight = Vector3.Normalize(cameraRight);
 
         // Transform input direction to camera's coordinate system
-        Vector3 worldMoveDirection = (cameraForward * moveDirection.Z) + (cameraRight * moveDirection.X);
+        var worldMoveDirection = (cameraForward * moveDirection.Z) + (cameraRight * moveDirection.X);
         
-        // Normalize a movement direction and apply speed
+        // --- Acceleration & Friction ---
+        var targetVelocity = Vector3.Zero;
+        
         if (worldMoveDirection.Length() > 0)
         {
-            worldMoveDirection = Vector3.Normalize(worldMoveDirection);
-            worldMoveDirection *= currentSpeed * deltaTime;
-
-            // Move only on XZ plane
-            Position.X += worldMoveDirection.X;
-            Position.Z += worldMoveDirection.Z;
+            targetVelocity = Vector3.Normalize(worldMoveDirection) * currentSpeed;
+            velocity = Vector3.Lerp(velocity, targetVelocity, Acceleration * deltaTime / Math.Max(targetVelocity.Length(), 1f)); // Accelerate towards target
+        }
+        else if (isGrounded)
+        {
+            // Apply friction to slow down when no input
+            velocity = Vector3.Lerp(velocity, Vector3.Zero, Friction * deltaTime);
+        }
+        
+        Position.X += velocity.X * deltaTime;
+        Position.Z += velocity.Z * deltaTime;
+        
+        // --- Jumping ---
+        if (isGrounded && Raylib.IsKeyPressed(KeyboardKey.Space))
+        {
+            velocity.Y = JumpImpulse;
+            isGrounded = false;
         }
     }
     
