@@ -87,6 +87,7 @@ public class Engine
         
             // --- Draw ---
             Raylib.BeginDrawing();
+            Raylib.ClearBackground(Color.Black);
         
             Raylib.BeginTextureMode(target);
             Raylib.ClearBackground(Color.SkyBlue);
@@ -107,6 +108,8 @@ public class Engine
             // Draw simple crosshair
             Raylib.DrawRectangle(Raylib.GetScreenWidth() / 2 - 2, Raylib.GetScreenHeight() / 2 - 2, 4, 4, Color.White);
         
+            Raylib.DrawFPS(10, 10);
+            
             Raylib.EndDrawing();
             
             previousTimer = currentTimer;
