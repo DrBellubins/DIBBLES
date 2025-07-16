@@ -32,10 +32,22 @@ public class Engine
         
         // Setup low-res effect
         var target = Raylib.LoadRenderTexture(VirtualScreenWidth, VirtualScreenHeight);
-        var virtualRatio = (float)ScreenWidth / (float)VirtualScreenWidth;
+        
+        // Calculate the scale to fit while preserving aspect ratio
+        float scaleX = (float)ScreenWidth / (float)VirtualScreenWidth;
+        float scaleY = (float)ScreenHeight / (float)VirtualScreenHeight;
+        float scale = MathF.Min(scaleX, scaleY);
+
+        // Calculate destination size
+        float destWidth = VirtualScreenWidth * scale;
+        float destHeight = VirtualScreenHeight * scale;
+
+        // Center the rectangle
+        float destX = (ScreenWidth - destWidth) * 0.5f;
+        float destY = (ScreenHeight - destHeight) * 0.5f;
         
         var sourceRec = new Rectangle(0.0f, 0.0f, (float)target.Texture.Width, -(float)target.Texture.Height);
-        var destRec = new Rectangle(0f, 0f, VirtualScreenWidth * virtualRatio, VirtualScreenHeight * virtualRatio);
+        var destRec = new Rectangle(destX, destY, destWidth, destHeight);
         
         // Setup ground material (temporary)
         var groundTexture = Raylib.LoadTexture("Assets/Textures/grass_dark.png");
