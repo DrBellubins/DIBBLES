@@ -3,18 +3,15 @@
 
 // Raylib provides:
 uniform sampler2D texture0;      // The source texture
-uniform vec2 resolution;         // Output resolution
+uniform vec2 emuRes;             // Emulated resolution
 varying vec2 fragTexCoord;       // Texcoord for current pixel
 
 // ---------- Parameters ----------
 const float hardScan  = -8.0;   // Scanline hardness
-const float hardPix   = -3.0;   // Pixel hardness
-const vec2  warp      = vec2(1.0/32.0, 1.0/24.0); // Display warp
+const float hardPix   = -12.0;   // Pixel hardness
+const vec2  warp      = vec2(1.0 / 32.0, 1.0 / 24.0); // Display warp
 const float maskDark  = 0.5;    // Mask minimum
 const float maskLight = 1.5;    // Mask maximum
-
-// Emulated input resolution (change to match your virtual screen)
-const vec2 emuRes = vec2(320.0, 240.0);
 
 // ---------- Color Space Helpers ----------
 // (For sRGB textures, these can be omitted in Raylib)
