@@ -1,5 +1,6 @@
 using Raylib_cs;
 using System.Numerics;
+using DIBBLES.Utils;
 
 namespace DIBBLES;
 
@@ -22,6 +23,7 @@ public class Player
     public Camera3D Camera;
 
     private float currentSpeed = WalkSpeed;
+    private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
     private float cameraYaw = 0f;
     private float cameraPitch = 0f;
@@ -42,32 +44,28 @@ public class Player
         Raylib.DisableCursor();
     }
 
-    public void Update(BoundingBox groundBox, float deltaTime)
+    public void Update(BoundingBox groundBox)
     {
         // --- Handle Crouch ---
         var crouchKey = Raylib.IsKeyDown(KeyboardKey.C);
-
         isCrouching = crouchKey;
-
+        
         var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
-        
-        // Smooth crouch transition (optional)
-        var camHeight = Camera.Position.Y - Position.Y;
-        var desiredCamHeight = targetHeight * 0.5f;
-        var heightLerpSpeed = 12f;
-        
-        Camera.Position.Y = Position.Y + MathHelper.Lerp(camHeight, desiredCamHeight, heightLerpSpeed * deltaTime);
+        var heightLerpSpeed = 20f;
+
+        // Smoothly interpolate currentHeight
+        currentHeight = MathHelper.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
 
         // --- Gravity & Vertical Movement ---
-        velocity.Y -= Gravity * deltaTime;
-        Position.Y += velocity.Y * deltaTime;
+        velocity.Y -= Gravity * Time.DeltaTime;
+        Position.Y += velocity.Y * Time.DeltaTime;
 
         // --- Ground Collision ---
-        var playerBox = GetPlayerBox(Position, targetHeight);
+        var playerBox = GetPlayerBox(Position, currentHeight);
 
         if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
-            Position.Y = groundBox.Max.Y + targetHeight * 0.5f;
+            Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
             velocity.Y = 0.0f;
             isGrounded = true;
         }
@@ -90,7 +88,7 @@ public class Player
         );
 
         // Camera position
-        Camera.Position = Position + new Vector3(0.0f, desiredCamHeight, 0.0f);
+        Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = Camera.Position + cameraDirection;
 
         // --- Movement Input ---
@@ -144,7 +142,7 @@ public class Player
             
             if (speed != 0)
             {
-                float drop = speed * friction * deltaTime;
+                float drop = speed * friction * Time.DeltaTime;
                 float newSpeed = Math.Max(speed - drop, 0);
                 velXZ *= (newSpeed / speed);
             }
@@ -158,7 +156,7 @@ public class Player
             
             if (addSpeed > 0)
             {
-                float accelSpeed = accel * deltaTime * wishSpeed;
+                float accelSpeed = accel * Time.DeltaTime * wishSpeed;
                 if (accelSpeed > addSpeed) accelSpeed = addSpeed;
                 velXZ += wishDir * accelSpeed;
             }
@@ -171,8 +169,8 @@ public class Player
         velocity.X = velXZ.X;
         velocity.Z = velXZ.Z;
 
-        Position.X += velocity.X * deltaTime;
-        Position.Z += velocity.Z * deltaTime;
+        Position.X += velocity.X * Time.DeltaTime;
+        Position.Z += velocity.Z * Time.DeltaTime;
 
         // --- Jumping ---
         if (isGrounded && Raylib.IsKeyPressed(KeyboardKey.Space))

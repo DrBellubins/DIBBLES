@@ -1,4 +1,4 @@
-namespace DIBBLES;
+namespace DIBBLES.Utils;
 
 // Helper class for math functions
 public static class MathHelper

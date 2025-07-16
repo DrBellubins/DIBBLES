@@ -2,7 +2,7 @@ using Raylib_cs;
 using System;
 using System.Runtime.InteropServices;
 
-namespace DIBBLES;
+namespace DIBBLES.Utils;
 
 public static class MeshUtils
 {

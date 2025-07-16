@@ -1,84 +1,82 @@
-/*namespace DIBBLES.Scenes;
-
-using System;
+using System.Numerics;
+using DIBBLES.Effects;
+using DIBBLES.Utils;
 using Raylib_cs;
-using static Raylib_cs.Raylib;
 
-public class TestScene
+namespace DIBBLES.Scenes;
+
+public class TestScene : Scene
 {
-    private Shader skyboxShader;
-    private Model skybox;
+    private Player player = new Player();
+    private CRTEffect crtEffect = new CRTEffect();
     
-    public void Initialize()
+    private Texture2D groundTexture;
+    private Material groundMaterial;
+    private Model planeModel;
+    private BoundingBox groundBox;
+    
+    public override void Start()
     {
-        // NOTE: Adjust shader locations as needed; check your Raylib-CS/shader setup!
-        skyboxShader = LoadShader(
-            "resources/shaders/glsl330/skybox.vs",
-            "resources/shaders/glsl330/skybox.fs"
+        // Setup ground material (temporary)
+        groundTexture = Resource.Load<Texture2D>("grass_dark.png");
+        groundMaterial = Raylib.LoadMaterialDefault();
+        
+        Raylib.SetMaterialTexture(ref groundMaterial, MaterialMapIndex.Albedo, groundTexture);
+        
+        // Create plane mesh
+        var planeMesh = MeshUtils.GenMeshPlaneTiled(50.0f, 50.0f, 1, 1, 10.0f, 10.0f); // 50x50 plane, 1x1 subdivisions
+        planeModel = Raylib.LoadModelFromMesh(planeMesh);
+
+        unsafe
+        {
+            planeModel.Materials[0] = groundMaterial; // Assign material to model
+        }
+        
+        groundBox = new BoundingBox(
+            new Vector3(-25.0f, 0f, -25.0f), // Slightly below y=0 for tolerance
+            new Vector3(25.0f, 0.1f, 25.0f)
         );
         
-        Mesh cube = GenMeshCube(1.0f, 1.0f, 1.0f);
-        skybox = LoadModelFromMesh(cube);
+        player.Start();
+        crtEffect.Start();
+    }
+
+    public override void Update()
+    {
+        player.Update(groundBox);
+    }
+
+    public override void Draw()
+    {
+        Raylib.BeginDrawing();
+        Raylib.ClearBackground(Color.Black);
         
-        skybox.Materials[0].Shader = skyboxShader;
-
-        // Set the shader values
-        int envMapLoc = GetShaderLocation(skyboxShader, "environmentMap");
-        SetShaderValue(skyboxShader, envMapLoc, new int[] { (int)MaterialMapIndex.Cubemap }, ShaderUniformDataType.Int);
-
-        int doGammaLoc = GetShaderLocation(skyboxShader, "doGamma");
-        SetShaderValue(skyboxShader, doGammaLoc, new int[] { 0 }, ShaderUniformDataType.Int);
-
-        int vflippedLoc = GetShaderLocation(skyboxShader, "vflipped");
-        SetShaderValue(skyboxShader, vflippedLoc, new int[] { 0 }, ShaderUniformDataType.Int);
-
-        Image img = LoadImage("resources/skybox.png");
-        TextureCubemap cubemap = LoadTextureCubemap(img, CubemapLayout.AutoDetect);
-        UnloadImage(img);
-
-        skybox.Materials[0].Maps[(int)MaterialMapIndex.Cubemap].Texture = cubemap;
-
-        while (!WindowShouldClose())
-        {
+        crtEffect.DrawStart(Time.time);
             
-        }
-    }
-
-    public void Update(float deltaTime)
-    {
+        Raylib.ClearBackground(Color.SkyBlue);
+        Raylib.BeginMode3D(player.Camera);
         
-    }
-
-    public void Render(float deltaTime)
-    {
-        UpdateCamera(ref camera, CameraMode.CAMERA_FIRST_PERSON);
-
-        BeginDrawing();
-        ClearBackground(Raylib_cs.Color.RAYWHITE);
-
-        BeginMode3D(camera);
-
-        Raylib_cs.Rlgl.rlDisableBackfaceCulling();
-        Raylib_cs.Rlgl.rlDisableDepthMask();
-
-        DrawModel(skybox, new System.Numerics.Vector3(0, 0, 0), 1.0f, Raylib_cs.Color.WHITE);
-
-        Raylib_cs.Rlgl.rlEnableBackfaceCulling();
-        Raylib_cs.Rlgl.rlEnableDepthMask();
-
-        DrawGrid(10, 1.0f);
-
-        EndMode3D();
-
-        DrawFPS(10, 10);
-
-        EndDrawing();
+        // Draw ground plane
+        Raylib.DrawModel(planeModel, new Vector3(0.0f, 0.0f, 0.0f), 1.0f, Color.White);
+        
+        Raylib.EndMode3D();
+            
+        // Draw simple crosshair
+        Raylib.DrawRectangle(Engine.VirtualScreenWidth / 2 - 1, Engine.VirtualScreenHeight / 2 - 1, 2, 2, Color.White);
+            
+        // Test text
+        Raylib.DrawTextEx(Engine.MainFont, "Hello World! This is a test", Vector2.Zero, 18f, 2f,Color.White);
+            
+        crtEffect.DrawEnd();
+        
+        Raylib.DrawFPS(10, 10);
+            
+        Raylib.EndDrawing();
     }
 
     public void Unload()
     {
-        UnloadShader(skyboxShader);
-        UnloadTexture(cubemap);
-        UnloadModel(skybox);
+        Raylib.UnloadTexture(groundTexture);
+        Raylib.UnloadModel(planeModel); // Also unloads the material
     }
-}*/
+}

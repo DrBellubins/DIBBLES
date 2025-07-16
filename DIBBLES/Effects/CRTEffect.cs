@@ -7,6 +7,7 @@ public class CRTEffect
 {
     private Shader crtShader;
     private RenderTexture2D target;
+    private RenderTexture2D filmGrainOutput;
     private RenderTexture2D crtOutput;
 
     private Rectangle sourceRec;
@@ -17,10 +18,13 @@ public class CRTEffect
         target = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
         Raylib.SetTextureFilter(target.Texture, TextureFilter.Point);
         
+        filmGrainOutput = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
+        Raylib.SetTextureFilter(filmGrainOutput.Texture, TextureFilter.Point);
+        
         crtOutput = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
         Raylib.SetTextureFilter(crtOutput.Texture, TextureFilter.Bilinear);
         
-        crtShader = Raylib.LoadShader(null, "Assets/Shaders/CRT.glsl");
+        crtShader = Resource.LoadShader(null, "Assets/Shaders/CRT.glsl");
         
         Raylib.SetShaderValue(crtShader, Raylib.GetShaderLocation(crtShader, "emuRes"),
             new Vector2(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight), ShaderUniformDataType.Vec2);
@@ -42,8 +46,10 @@ public class CRTEffect
         destRec = new Rectangle(destX, destY, destWidth, destHeight);
     }
 
-    public void DrawStart()
+    public void DrawStart(float time)
     {
+        //Raylib.SetShaderValue(crtShader, Raylib.GetShaderLocation(crtShader, "time"), time, ShaderUniformDataType.Float);
+        
         Raylib.BeginTextureMode(target);
     }
 
@@ -51,7 +57,9 @@ public class CRTEffect
     {
         Raylib.EndTextureMode();
         
-        Raylib.BeginTextureMode(crtOutput);
+        // FilmGrain pass
+        /*Raylib.BeginTextureMode(filmGrainOutput);
+        Raylib.SetShaderValue(crtShader, Raylib.GetShaderLocation(crtShader, "pass"), 0, ShaderUniformDataType.Int);
         
         Raylib.BeginShaderMode(crtShader);
         Raylib.DrawTextureRec(target.Texture, sourceRec, Vector2.Zero, Color.White);
@@ -59,6 +67,17 @@ public class CRTEffect
         
         Raylib.EndTextureMode();
         
-        Raylib.DrawTexturePro(crtOutput.Texture, sourceRec, destRec, Vector2.Zero, 0.0f, Color.White);
+        // CRT pass
+        Raylib.BeginTextureMode(crtOutput);
+        
+        Raylib.SetShaderValue(crtShader, Raylib.GetShaderLocation(crtShader, "pass"), 1, ShaderUniformDataType.Int);
+        
+        Raylib.BeginShaderMode(crtShader);
+        Raylib.DrawTextureRec(filmGrainOutput.Texture, sourceRec, Vector2.Zero, Color.White);
+        Raylib.EndShaderMode();
+        
+        Raylib.EndTextureMode();*/
+        
+        Raylib.DrawTexturePro(target.Texture, sourceRec, destRec, Vector2.Zero, 0.0f, Color.White);
     }
 }
