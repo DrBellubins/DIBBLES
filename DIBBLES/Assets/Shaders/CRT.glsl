@@ -1,162 +1,164 @@
-//
-// PUBLIC DOMAIN CRT STYLED SCAN-LINE SHADER
-//
-//   by Timothy Lottes
-//
-// This is more along the style of a really good CGA arcade monitor.
-// With RGB inputs instead of NTSC.
-// The shadow mask example has the mask rotated 90 degrees for less chromatic aberration.
-//
-// Left it unoptimized to show the theory behind the algorithm.
-//
-// It is an example what I personally would want as a display option for pixel art games.
-// Please take and use, change, or whatever.
-//
+// CRT Scanline Shader (Raylib version, cleaned up)
+// Adapted from ShaderToy by Timothy Lottes, public domain
 
-// Emulated input resolution.
-#if 0
-// Fix resolution to set amount.
-#define res (vec2(320.0/1.0,160.0/1.0))
-#else
-// Optimize for resize.
-#define res (iResolution.xy/6.0)
-#endif
+// Raylib provides:
+uniform sampler2D texture0;      // The source texture
+uniform vec2 resolution;         // Output resolution
+varying vec2 fragTexCoord;       // Texcoord for current pixel
 
-// Hardness of scanline.
-//  -8.0 = soft
-// -16.0 = medium
-float hardScan=-8.0;
+// ---------- Parameters ----------
+const float hardScan  = -8.0;   // Scanline hardness
+const float hardPix   = -3.0;   // Pixel hardness
+const vec2  warp      = vec2(1.0/32.0, 1.0/24.0); // Display warp
+const float maskDark  = 0.5;    // Mask minimum
+const float maskLight = 1.5;    // Mask maximum
 
-// Hardness of pixels in scanline.
-// -2.0 = soft
-// -4.0 = hard
-float hardPix=-3.0;
+// Emulated input resolution (change to match your virtual screen)
+const vec2 emuRes = vec2(320.0, 240.0);
 
-// Display warp.
-// 0.0 = none
-// 1.0/8.0 = extreme
-vec2 warp=vec2(1.0/32.0,1.0/24.0);
+// ---------- Color Space Helpers ----------
+// (For sRGB textures, these can be omitted in Raylib)
+float toLinear1(float c)
+{
+    return (c <= 0.04045) ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4);
+}
 
-// Amount of shadow mask.
-float maskDark=0.5;
-float maskLight=1.5;
+vec3 toLinear(vec3 c)
+{
+    return vec3(toLinear1(c.r), toLinear1(c.g), toLinear1(c.b));
+}
 
-//------------------------------------------------------------------------
+float toSrgb1(float c)
+{
+    return (c < 0.0031308) ? c * 12.92 : 1.055*pow(c,0.41666) - 0.055;
+}
 
-// sRGB to Linear.
-// Assuing using sRGB typed textures this should not be needed.
-float ToLinear1(float c){return(c<=0.04045)?c/12.92:pow((c+0.055)/1.055,2.4);}
-vec3 ToLinear(vec3 c){return vec3(ToLinear1(c.r),ToLinear1(c.g),ToLinear1(c.b));}
+vec3 toSrgb(vec3 c)
+{
+    return vec3(toSrgb1(c.r), toSrgb1(c.g), toSrgb1(c.b));
+}
 
-// Linear to sRGB.
-// Assuing using sRGB typed textures this should not be needed.
-float ToSrgb1(float c){return(c<0.0031308?c*12.92:1.055*pow(c,0.41666)-0.055);}
-vec3 ToSrgb(vec3 c){return vec3(ToSrgb1(c.r),ToSrgb1(c.g),ToSrgb1(c.b));}
+// ---------- CRT Effect Core ----------
 
-// Nearest emulated sample given floating point position and texel offset.
-// Also zero's off screen.
-vec3 Fetch(vec2 pos,vec2 off){
-    pos=floor(pos*res+off)/res;
-    if(max(abs(pos.x-0.5),abs(pos.y-0.5))>0.5)return vec3(0.0,0.0,0.0);
-    return ToLinear(texture(iChannel0,pos.xy,-16.0).rgb);}
+// Fetch texel in emulated input space, with offset
+vec3 fetch(vec2 pos, vec2 offset)
+{
+    pos = floor(pos * emuRes + offset) / emuRes;
 
-    // Distance in emulated pixels to nearest texel.
-    vec2 Dist(vec2 pos){pos=pos*res;return -((pos-floor(pos))-vec2(0.5));}
+    // Clamp to texture edge
+    if (any(lessThan(pos, vec2(0.0))) || any(greaterThan(pos, vec2(1.0))))
+        return vec3(0.0);
 
-    // 1D Gaussian.
-    float Gaus(float pos,float scale){return exp2(scale*pos*pos);}
+    return texture2D(texture0, pos).rgb;
+}
 
-    // 3-tap Gaussian filter along horz line.
-    vec3 Horz3(vec2 pos,float off){
-        vec3 b=Fetch(pos,vec2(-1.0,off));
-        vec3 c=Fetch(pos,vec2( 0.0,off));
-        vec3 d=Fetch(pos,vec2( 1.0,off));
-        float dst=Dist(pos).x;
-        // Convert distance to weight.
-        float scale=hardPix;
-        float wb=Gaus(dst-1.0,scale);
-        float wc=Gaus(dst+0.0,scale);
-        float wd=Gaus(dst+1.0,scale);
-        // Return filtered sample.
-        return (b*wb+c*wc+d*wd)/(wb+wc+wd);}
+// Distance in emulated pixels to nearest texel
+vec2 dist(vec2 pos)
+{
+    pos = pos * emuRes;
+    return -((pos - floor(pos)) - vec2(0.5));
+}
 
-        // 5-tap Gaussian filter along horz line.
-        vec3 Horz5(vec2 pos,float off){
-            vec3 a=Fetch(pos,vec2(-2.0,off));
-            vec3 b=Fetch(pos,vec2(-1.0,off));
-            vec3 c=Fetch(pos,vec2( 0.0,off));
-            vec3 d=Fetch(pos,vec2( 1.0,off));
-            vec3 e=Fetch(pos,vec2( 2.0,off));
-            float dst=Dist(pos).x;
-            // Convert distance to weight.
-            float scale=hardPix;
-            float wa=Gaus(dst-2.0,scale);
-            float wb=Gaus(dst-1.0,scale);
-            float wc=Gaus(dst+0.0,scale);
-            float wd=Gaus(dst+1.0,scale);
-            float we=Gaus(dst+2.0,scale);
-            // Return filtered sample.
-            return (a*wa+b*wb+c*wc+d*wd+e*we)/(wa+wb+wc+wd+we);}
+// Gaussian kernel
+float gauss(float pos, float scale)
+{
+    return exp2(scale * pos * pos);
+}
 
-            // Return scanline weight.
-            float Scan(vec2 pos,float off){
-                float dst=Dist(pos).y;
-                return Gaus(dst+off,hardScan);}
+// 3-tap horizontal filter
+vec3 horz3(vec2 pos, float offset)
+{
+    vec3 b = fetch(pos, vec2(-1.0, offset));
+    vec3 c = fetch(pos, vec2( 0.0, offset));
+    vec3 d = fetch(pos, vec2( 1.0, offset));
 
-                // Allow nearest three lines to effect pixel.
-                vec3 Tri(vec2 pos){
-                    vec3 a=Horz3(pos,-1.0);
-                    vec3 b=Horz5(pos, 0.0);
-                    vec3 c=Horz3(pos, 1.0);
-                    float wa=Scan(pos,-1.0);
-                    float wb=Scan(pos, 0.0);
-                    float wc=Scan(pos, 1.0);
-                    return a*wa+b*wb+c*wc;}
+    float dst = dist(pos).x;
+    float scale = hardPix;
+    float wb = gauss(dst - 1.0, scale);
+    float wc = gauss(dst,       scale);
+    float wd = gauss(dst + 1.0, scale);
 
-                    // Distortion of scanlines, and end of screen alpha.
-                    vec2 Warp(vec2 pos){
-                        pos=pos*2.0-1.0;
-                        pos*=vec2(1.0+(pos.y*pos.y)*warp.x,1.0+(pos.x*pos.x)*warp.y);
-                        return pos*0.5+0.5;}
+    return (b * wb + c * wc + d * wd) / (wb + wc + wd);
+}
 
-                        // Shadow mask.
-                        vec3 Mask(vec2 pos){
-                            pos.x+=pos.y*3.0;
-                            vec3 mask=vec3(maskDark,maskDark,maskDark);
-                            pos.x=fract(pos.x/6.0);
-                            if(pos.x<0.333)mask.r=maskLight;
-                            else if(pos.x<0.666)mask.g=maskLight;
-                            else mask.b=maskLight;
-                            return mask;}
+// 5-tap horizontal filter
+vec3 horz5(vec2 pos, float offset)
+{
+    vec3 a = fetch(pos, vec2(-2.0, offset));
+    vec3 b = fetch(pos, vec2(-1.0, offset));
+    vec3 c = fetch(pos, vec2( 0.0, offset));
+    vec3 d = fetch(pos, vec2( 1.0, offset));
+    vec3 e = fetch(pos, vec2( 2.0, offset));
 
-                            // Draw dividing bars.
-                            float Bar(float pos,float bar){pos-=bar;return pos*pos<4.0?0.0:1.0;}
+    float dst = dist(pos).x;
+    float scale = hardPix;
+    float wa = gauss(dst - 2.0, scale);
+    float wb = gauss(dst - 1.0, scale);
+    float wc = gauss(dst,       scale);
+    float wd = gauss(dst + 1.0, scale);
+    float we = gauss(dst + 2.0, scale);
 
-                            // Entry.
-                            void mainImage( out vec4 fragColor, in vec2 fragCoord )
-                            {
-                                // Unmodified.
-                                if (fragCoord.x<iResolution.x*0.333)
-                                {
-                                    fragColor.rgb=Fetch(fragCoord.xy/iResolution.xy+vec2(0.333,0.0),vec2(0.0,0.0));
+    return (a*wa + b*wb + c*wc + d*wd + e*we) / (wa + wb + wc + wd + we);
+}
 
-                                }
-                                else
-                                {
-                                    vec2 pos=Warp(fragCoord.xy/iResolution.xy+vec2(-0.333,0.0));
+// Scanline weight
+float scan(vec2 pos, float offset)
+{
+    float dst = dist(pos).y;
+    return gauss(dst + offset, hardScan);
+}
 
-                                    if (fragCoord.x<iResolution.x * 0.666)
-                                    {
-                                        hardScan=-12.0;
-                                        maskDark=maskLight=1.0;
-                                        pos=Warp(fragCoord.xy/iResolution.xy);
+// Allow nearest three scanlines to affect pixel
+vec3 tri(vec2 pos)
+{
+    vec3 a = horz3(pos, -1.0);
+    vec3 b = horz5(pos,  0.0);
+    vec3 c = horz3(pos,  1.0);
+    float wa = scan(pos, -1.0);
+    float wb = scan(pos,  0.0);
+    float wc = scan(pos,  1.0);
+    return a * wa + b * wb + c * wc;
+}
 
-                                    }
+// Distortion of scanlines, and end of screen alpha
+vec2 warpCoord(vec2 pos)
+{
+    pos = pos * 2.0 - 1.0;
+    pos *= vec2(1.0 + (pos.y * pos.y) * warp.x,
+                1.0 + (pos.x * pos.x) * warp.y);
 
-                                    fragColor.rgb=Tri(pos)*Mask(fragCoord.xy);
-                                }
+    return pos * 0.5 + 0.5;
+}
 
-                                fragColor.a = 1.0;
-                                fragColor.rgb *= Bar(fragCoord.x,iResolution.x*0.333) * Bar(fragCoord.x,iResolution.x*0.666);
-                                fragColor.rgb=ToSrgb(fragColor.rgb);
-                            }
+// Shadow mask
+vec3 mask(vec2 pos)
+{
+    pos.x += pos.y * 3.0;
+    vec3 m = vec3(maskDark);
+    float px = fract(pos.x / 6.0);
+
+    if (px < 0.333)      m.r = maskLight;
+    else if (px < 0.666) m.g = maskLight;
+    else                 m.b = maskLight;
+
+    return m;
+}
+
+// ---------- Main Fragment Shader ----------
+void main()
+{
+    // Convert output pixel to normalized position
+    vec2 uv = fragTexCoord;
+
+    // Apply barrel distortion warp
+    vec2 crtUV = warpCoord(uv);
+
+    // Get CRT color
+    vec3 color = tri(crtUV);
+
+    // Apply shadow mask
+    color *= mask(gl_FragCoord.xy);
+
+    // Output color (no need to convert to sRGB, Raylib expects linear RGB)
+    gl_FragColor = vec4(color, 1.0);
+}

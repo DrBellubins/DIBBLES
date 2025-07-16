@@ -1,5 +1,6 @@
 using Raylib_cs;
 using System.Numerics;
+using DIBBLES.Effects;
 
 namespace DIBBLES;
 
@@ -30,25 +31,6 @@ public class Engine
 
         IsRunning = true;
         
-        // Setup low-res effect
-        var target = Raylib.LoadRenderTexture(VirtualScreenWidth, VirtualScreenHeight);
-        
-        // Calculate the scale to fit while preserving aspect ratio
-        float scaleX = (float)ScreenWidth / (float)VirtualScreenWidth;
-        float scaleY = (float)ScreenHeight / (float)VirtualScreenHeight;
-        float scale = MathF.Min(scaleX, scaleY);
-
-        // Calculate destination size
-        float destWidth = VirtualScreenWidth * scale;
-        float destHeight = VirtualScreenHeight * scale;
-
-        // Center the rectangle
-        float destX = (ScreenWidth - destWidth) * 0.5f;
-        float destY = (ScreenHeight - destHeight) * 0.5f;
-        
-        var sourceRec = new Rectangle(0.0f, 0.0f, (float)target.Texture.Width, -(float)target.Texture.Height);
-        var destRec = new Rectangle(destX, destY, destWidth, destHeight);
-        
         // Setup ground material (temporary)
         var groundTexture = Raylib.LoadTexture("Assets/Textures/grass_dark.png");
         var groundMaterial = Raylib.LoadMaterialDefault();
@@ -72,6 +54,9 @@ public class Engine
         
         var player = new Player();
         player.Start();
+
+        var crtEffect = new CRTEffect();
+        crtEffect.Start();
         
         while (IsRunning)
         {
@@ -89,9 +74,9 @@ public class Engine
             Raylib.BeginDrawing();
             Raylib.ClearBackground(Color.Black);
         
-            Raylib.BeginTextureMode(target);
-            Raylib.ClearBackground(Color.SkyBlue);
+            crtEffect.DrawStart();
             
+            Raylib.ClearBackground(Color.SkyBlue);
             Raylib.BeginMode3D(player.Camera);
         
             // Draw ground plane
@@ -101,9 +86,8 @@ public class Engine
             //Raylib.DrawCube(playerPosition, 0.5f, 1.8f, 0.5f, Color.Red);
         
             Raylib.EndMode3D();
-            Raylib.EndTextureMode();
-        
-            Raylib.DrawTexturePro(target.Texture, sourceRec, destRec, Vector2.Zero, 0.0f, Color.White);
+            
+            crtEffect.DrawEnd();
             
             // Draw simple crosshair
             Raylib.DrawRectangle(Raylib.GetScreenWidth() / 2 - 2, Raylib.GetScreenHeight() / 2 - 2, 4, 4, Color.White);
