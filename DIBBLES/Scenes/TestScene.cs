@@ -7,8 +7,8 @@ namespace DIBBLES.Scenes;
 
 public class TestScene : Scene
 {
-    private SrcPlayer player = new SrcPlayer();
-    //private Player player = new Player();
+    private Player player = new Player();
+    //private SrcPlayer player =  new SrcPlayer();
     private CRTEffect crtEffect = new CRTEffect();
     
     private Texture2D groundTexture;
@@ -34,8 +34,8 @@ public class TestScene : Scene
         }
         
         groundBox = new BoundingBox(
-            new Vector3(-25.0f, 0f, -25.0f), // Slightly below y=0 for tolerance
-            new Vector3(25.0f, 0.1f, 25.0f)
+            new Vector3(-25.0f, -0.1f, -25.0f), // Slightly below y=0 for tolerance
+            new Vector3(25.0f, 0.0f, 25.0f)
         );
         
         player.Start();

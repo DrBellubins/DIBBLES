@@ -76,12 +76,12 @@ public class SrcPlayer
         // --- Handle Crouch ---
         var crouchKey = Raylib.IsKeyDown(KeyboardKey.C);
         bool wantsToCrouch = crouchKey;
-
+        
         if (wantsToCrouch && !isInCrouchTransition)
         {
             Crouch();
         }
-        else if (!wantsToCrouch && isInCrouchTransition && isCrouching)
+        else if (!wantsToCrouch && isCrouching)
         {
             UnCrouch(groundBox);
         }
@@ -89,6 +89,8 @@ public class SrcPlayer
         // Update crouch transition
         UpdateCrouching(Time.DeltaTime);
 
+        Console.WriteLine(isCrouching);
+        
         // --- Gravity & Vertical Movement ---
         velocity.Y -= Gravity * Time.DeltaTime;
         Position.Y += velocity.Y * Time.DeltaTime;
@@ -106,11 +108,11 @@ public class SrcPlayer
                 hasEverLanded = true;
                 PlayJumpSound(false); // Play landing sound
                 
-                if (deferCrouchSlideToLand)
+                /*if (deferCrouchSlideToLand)
                 {
                     deferCrouchSlideToLand = false;
                     StartCrouchSlide(groundBox);
-                }
+                }*/
             }
             
             isGrounded = true;
@@ -208,21 +210,23 @@ public class SrcPlayer
         }
 
         // Apply crouch slide
-        if (isCrouchSliding && isGrounded)
+        /*if (isCrouchSliding && isGrounded)
         {
             float timeDifference = Time.time - crouchSlideStartTime;
             Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground for simplicity
-            float slope = Vector3.Dot(wishDir, floorNormal);
-            float newSpeed = Math.Max(MinCrouchSlideBoost, velXZ.Length() * CrouchSlideBoostMultiplier);
+            float slope = Vector3.Dot(GetForwardVector(), floorNormal);
+            float newSpeed = Math.Max(MinCrouchSlideBoost, velocity.Length() * CrouchSlideBoostMultiplier);
             
+            newSpeed = Math.Min(newSpeed, MaxCrouchSlideVelocityBoost);
+    
             if (newSpeed > MinCrouchSlideBoost && slope < 0.0f)
             {
                 newSpeed = Math.Clamp(newSpeed + CrouchSlideBoostSlopeFactor * (newSpeed - MinCrouchSlideBoost) * slope, MinCrouchSlideBoost, newSpeed);
             }
-            
+    
             float decay = MathHelper.Lerp(MaxCrouchSlideVelocityBoost, MinCrouchSlideVelocityBoost, Math.Clamp(timeDifference / CrouchSlideBoostTime, 0.0f, 1.0f));
-            velXZ = Vector3.Normalize(velXZ) * newSpeed * (1.0f + slope) * decay;
-            
+            velXZ = GetForwardVector() * newSpeed * (1.0f + slope) * decay;
+    
             if (velXZ.Length() < 0.1f)
             {
                 StopCrouchSliding();
@@ -231,7 +235,7 @@ public class SrcPlayer
         else if (isGrounded)
         {
             StopCrouchSliding();
-        }
+        }*/
 
         // Apply acceleration
         if (wishSpeed > 0)
@@ -274,11 +278,17 @@ public class SrcPlayer
         if (!isInCrouchTransition && CanCrouch())
         {
             isInCrouchTransition = true;
+            isCrouching = true; // Set immediately when crouch starts
             float forwardSpeed = Vector3.Dot(velocity, GetForwardVector());
-            
-            if (forwardSpeed >= SprintSpeed * CrouchSlideSpeedRequirementMultiplier && isGrounded)
+            Vector3 normalizedVelocity = velocity.Length() > 0 ? Vector3.Normalize(velocity) : Vector3.Zero;
+            float forwardAlignment = Vector3.Dot(normalizedVelocity, GetForwardVector());
+
+            // Only trigger slide if moving mostly forward (within ~30 degrees) and speed is sufficient
+            if (forwardSpeed >= SprintSpeed * CrouchSlideSpeedRequirementMultiplier && 
+                forwardAlignment > 0.866f && // cos(30°) ≈ 0.866
+                isGrounded)
             {
-                StartCrouchSlide(null);
+                //StartCrouchSlide(null);
             }
             else if (!isGrounded && velocity.Y < 0.0f)
             {
@@ -292,7 +302,8 @@ public class SrcPlayer
         if (CanUnCrouch(groundBox))
         {
             isInCrouchTransition = true;
-            StopCrouchSliding();
+            isCrouching = false; // Set immediately when uncrouch starts
+            //StopCrouchSliding();
         }
     }
 
@@ -303,27 +314,42 @@ public class SrcPlayer
 
         float targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
         float targetTime = isCrouching ? (isGrounded ? CrouchTime : CrouchJumpTime) : (isGrounded ? UncrouchTime : UncrouchJumpTime);
-        
+    
         float fullCrouchDiff = PlayerHeight - CrouchHeight;
         float currentUnscaledHeight = currentHeight;
         float currentAlpha = 1.0f - (currentUnscaledHeight - CrouchHeight) / fullCrouchDiff;
-        
+    
         if (MathF.Abs(targetTime) < float.Epsilon)
         {
             currentHeight = targetHeight;
-            isCrouching = targetHeight == CrouchHeight;
+            // Adjust Position.Y to keep the player's feet on the ground
+            if (!isCrouching) // Uncrouching
+            {
+                float heightDifference = PlayerHeight - currentUnscaledHeight;
+                Position.Y += heightDifference * 0.5f;
+            }
             isInCrouchTransition = false;
             return;
         }
 
         float targetAlphaDiff = deltaTime / targetTime;
-        float targetAlpha = currentAlpha + targetAlphaDiff;
+        float targetAlpha = currentAlpha + (isCrouching ? targetAlphaDiff : -targetAlphaDiff); // Reverse direction for uncrouching
 
         if (targetAlpha >= 1.0f || Math.Abs(targetAlpha - 1.0f) < 0.0001f)
         {
             targetAlpha = 1.0f;
-            targetAlphaDiff = targetAlpha - currentAlpha;
-            isCrouching = targetHeight == CrouchHeight;
+            isInCrouchTransition = false;
+            
+            // Adjust Position.Y to keep the player's feet on the ground
+            if (!isCrouching) // Uncrouching
+            {
+                float heightDifference = PlayerHeight - currentUnscaledHeight;
+                Position.Y += heightDifference * 0.5f;
+            }
+        }
+        else if (targetAlpha <= 0.0f || Math.Abs(targetAlpha) < 0.0001f)
+        {
+            targetAlpha = 0.0f;
             isInCrouchTransition = false;
         }
 
@@ -341,33 +367,39 @@ public class SrcPlayer
         if (!isCrouching)
             return false;
 
-        // Check if there's enough space to uncrouch
-        var standingBox = GetPlayerBox(Position, PlayerHeight);
+        // Calculate the adjusted position for standing height
+        float heightDifference = PlayerHeight - currentHeight;
+        Vector3 standingPosition = Position + new Vector3(0.0f, heightDifference * 0.5f, 0.0f);
+
+        // Check collision with the standing bounding box at the adjusted position
+        var standingBox = GetPlayerBox(standingPosition, PlayerHeight);
         return !Raylib.CheckCollisionBoxes(standingBox, groundBox);
     }
 
-    private void StartCrouchSlide(BoundingBox? groundBox)
+    /*private void StartCrouchSlide(BoundingBox? groundBox)
     {
         if (crouchSlideStartTime + CrouchSlideCooldown > Time.time)
         {
             if (velocity.Length() >= MinCrouchSlideBoost)
                 isCrouchSliding = true;
-            
             return;
         }
 
         if (groundBox.HasValue)
         {
             float newSpeed = Math.Max(MinCrouchSlideBoost, velocity.Length() * CrouchSlideBoostMultiplier);
+            newSpeed = Math.Min(newSpeed, MaxCrouchSlideVelocityBoost);
+            
             Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground
             float slope = Vector3.Dot(GetForwardVector(), floorNormal);
-            
+        
             if (newSpeed > MinCrouchSlideBoost && slope < 0.0f)
             {
                 newSpeed = Math.Clamp(newSpeed + CrouchSlideBoostSlopeFactor * (newSpeed - MinCrouchSlideBoost) * slope, MinCrouchSlideBoost, newSpeed);
             }
-            
-            velocity = Vector3.Normalize(velocity) * newSpeed;
+        
+            // Use forward vector for slide direction
+            velocity = GetForwardVector() * newSpeed;
             crouchSlideStartTime = Time.time;
             isCrouchSliding = true;
         }
@@ -377,7 +409,7 @@ public class SrcPlayer
     {
         isCrouchSliding = false;
         deferCrouchSlideToLand = false;
-    }
+    }*/
 
     private bool CanAttemptJump(BoundingBox groundBox)
     {
@@ -408,6 +440,7 @@ public class SrcPlayer
         {
             speedMultiplier = Math.Max((1.0f - surfaceFriction) * speedMultiplier, 0.0f);
         }
+        
         currentStepHeight = MathHelper.Lerp(MaxStepHeight, MinStepHeight, speedMultiplier);
     }
 
@@ -415,6 +448,7 @@ public class SrcPlayer
     {
         // Simplified edge detection: check if player is near an edge by tracing downward
         Vector3 traceStart = Position;
+        
         if (velocity.Length() > 0)
             traceStart += Vector3.Normalize(velocity) * EdgeFrictionDist;
         else
@@ -439,6 +473,7 @@ public class SrcPlayer
         float sprintSpeedThreshold = isCrouching ? CrouchSpeed * 1.7f : SprintSpeed;
 
         bool playSound = (isGrounded || isCrouching) && speed >= walkSpeedThreshold && !isCrouchSliding;
+        
         if (!playSound)
             return;
 
@@ -462,6 +497,7 @@ public class SrcPlayer
             return;
 
         float moveSoundVolume = isJump ? (Raylib.IsKeyDown(KeyboardKey.LeftShift) ? 1.0f : 0.5f) : 0.5f;
+        
         if (!isJump)
         {
             float fallSpeed = -velocity.Y;
@@ -473,6 +509,7 @@ public class SrcPlayer
             else
                 moveSoundVolume = 0.5f;
         }
+        
         if (isCrouching)
             moveSoundVolume *= 0.65f;
 
@@ -499,11 +536,13 @@ public class SrcPlayer
             position.Y - height * 0.5f,
             position.Z - 0.25f
         );
+        
         Vector3 max = new Vector3(
             position.X + 0.25f,
             position.Y + height * 0.5f,
             position.Z + 0.25f
         );
+        
         return new BoundingBox(min, max);
     }
 }

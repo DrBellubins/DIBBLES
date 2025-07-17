@@ -10,11 +10,11 @@ public class Player
     public const float WalkSpeed = 3.81f;        // ~150 Source units/s
     public const float RunSpeed = 4.83f;         // ~190 Source units/s
     public const float AirAcceleration = 10.0f;  // HL2 style air accel
-    public const float GroundAcceleration = 5.0f;// HL2 style ground accel
+    public const float GroundAcceleration = 10.0f; // HL2 style ground accel
     public const float GroundFriction = 8.0f;    // HL2 style ground friction
     public const float AirFriction = 0.5f;       // Less friction in air
     public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
-    public const float JumpImpulse = 5.0f;       // HL2 jump velocity ≈ 5 m/s
+    public const float JumpImpulse = 3.048f * 2f;       // HL2 jump velocity ≈ 5 m/s
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
