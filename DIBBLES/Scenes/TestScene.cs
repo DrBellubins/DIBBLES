@@ -8,7 +8,6 @@ namespace DIBBLES.Scenes;
 public class TestScene : Scene
 {
     private Player player = new Player();
-    //private SrcPlayer player =  new SrcPlayer();
     private CRTEffect crtEffect = new CRTEffect();
     
     private Texture2D groundTexture;

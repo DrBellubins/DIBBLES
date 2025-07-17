@@ -7,12 +7,12 @@ namespace DIBBLES;
 public class Player
 {
     // HL2 movement values, converted to meters and m/s.
-    public const float WalkSpeed = 3.81f;        // ~150 Source units/s
-    public const float RunSpeed = 4.83f;         // ~190 Source units/s
+    public const float WalkSpeed = 3.619f;        // 361.9 Hu
+    public const float RunSpeed = 6.096f;         // 609.6 Hu
     public const float AirAcceleration = 10.0f;  // HL2 style air accel
     public const float GroundAcceleration = 10.0f; // HL2 style ground accel
     public const float GroundFriction = 8.0f;    // HL2 style ground friction
-    public const float AirFriction = 0.5f;       // Less friction in air
+    public const float AirFriction = 0.0f;       // Less friction in air
     public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
     public const float JumpImpulse = 3.048f * 2f;       // HL2 jump velocity ≈ 5 m/s
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
