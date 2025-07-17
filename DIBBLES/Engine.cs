@@ -59,7 +59,7 @@ public class Engine
             Time.DeltaTime = (currentTicks - previousTicks) / (float)Stopwatch.Frequency;
             Time.time += Time.DeltaTime;
             
-            Console.WriteLine($"DeltaTime: {Time.DeltaTime:F6} s, FPS: {1.0f / Time.DeltaTime:F2}");
+            //Console.WriteLine($"DeltaTime: {Time.DeltaTime:F6} s, FPS: {1.0f / Time.DeltaTime:F2}");
 
             // Cap frame rate
             //long targetTicks = (long)(FrameTimestep * Stopwatch.Frequency);
