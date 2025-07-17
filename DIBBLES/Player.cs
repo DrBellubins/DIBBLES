@@ -11,7 +11,7 @@ public class Player
     public const float RunSpeed = 4.83f;         // ~190 Source units/s
     public const float AirAcceleration = 10.0f;  // HL2 style air accel
     public const float GroundAcceleration = 5.0f;// HL2 style ground accel
-    public const float GroundFriction = 4.0f;    // HL2 style ground friction
+    public const float GroundFriction = 8.0f;    // HL2 style ground friction
     public const float AirFriction = 0.5f;       // Less friction in air
     public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
     public const float JumpImpulse = 5.0f;       // HL2 jump velocity ≈ 5 m/s

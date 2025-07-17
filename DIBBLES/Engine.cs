@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Raylib_cs;
 using System.Numerics;
 using DIBBLES.Effects;
@@ -26,18 +27,17 @@ public class Engine
         Raylib.InitWindow(ScreenWidth, ScreenHeight, "DIBBLES");
         Raylib.SetTargetFPS(0);
         Raylib.SetExitKey(KeyboardKey.Q);
+
+        var timer = new Stopwatch();
+        timer.Start();
         
-        var previousTimer = DateTime.Now;
-        var currentTimer = DateTime.Now;
+        long previousTicks = timer.ElapsedTicks;
 
         IsRunning = true;
-        
         MainFont = Raylib.LoadFont("Assets/Textures/romulus.png");
         
-        // Scenes
         var testScene = new TestScene();
         
-        // Start
         foreach (var scene in Scenes)
             scene.Start();
         
@@ -46,25 +46,27 @@ public class Engine
             if (Raylib.WindowShouldClose())
                 Close();
             
-            currentTimer = DateTime.Now;
-            Time.DeltaTime = (currentTimer.Ticks - previousTimer.Ticks) / 10000000f;
-            Time.time += Time.DeltaTime;
-            
-            // --- Update ---
+            // Update and draw
             foreach (var scene in Scenes)
                 scene.Update();
         
-            // --- Draw ---
             foreach (var scene in Scenes)
                 scene.Draw();
             
-            previousTimer = currentTimer;
+            // Calculate delta time after rendering
+            long currentTicks = timer.ElapsedTicks;
             
-            Thread.Sleep((int)(FrameTimestep * 1000.0f));
+            Time.DeltaTime = (currentTicks - previousTicks) / (float)Stopwatch.Frequency;
+            Time.time += Time.DeltaTime;
+            
+            Console.WriteLine($"DeltaTime: {Time.DeltaTime:F6} s, FPS: {1.0f / Time.DeltaTime:F2}");
+
+            // Cap frame rate
+            //long targetTicks = (long)(FrameTimestep * Stopwatch.Frequency);
+            //while (timer.ElapsedTicks - previousTicks < targetTicks) {} // Spin-wait only
+
+            previousTicks = timer.ElapsedTicks;
         }
-        
-        // Unload resources
-        
         
         Raylib.CloseWindow();
     }
