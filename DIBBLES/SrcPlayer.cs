@@ -37,6 +37,14 @@ public class SrcPlayer
     public const float MinCrouchSlideVelocityBoost = 2.7f;
     public const float CrouchSlideBoostSlopeFactor = 2.7f;
     public const float CrouchSlideCooldown = 1.0f;
+    public const float MaxJumpHoldTime = 0.0f;   // No variable jump height
+    public const int MaxJumpCount = 1;           // Single jump by default
+    public const float MaxJumpTime = 0.6096f;    // Time to apex (derived from JumpZVelocity and Gravity)
+
+    // Bunny hopping settings (emulating Unreal's console variables)
+    public bool AutoBunnyHop = false;             // Emulates CVarAutoBHop
+    public int JumpBoostMode = 2;                // Emulates CVarJumpBoost (1 = always boost, 2 = boost when aligned)
+    public bool BunnyHoppingEnabled = true;      // Emulates CVarBunnyhop
 
     public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
     public Camera3D Camera;
@@ -58,6 +66,12 @@ public class SrcPlayer
     private float currentStepHeight = MaxStepHeight;
     private float surfaceFriction = 1.0f;
     private bool hasEverLanded = false;
+    private bool isJumpPressed = false;
+    private bool deferJumpStop = false;
+    private bool isSprinting = false;
+    private int jumpCurrentCount = 0;
+    private float jumpKeyHoldTime = 0.0f;
+    private float lastJumpBoostTime = 0.0f;
 
     public void Start()
     {
@@ -95,12 +109,10 @@ public class SrcPlayer
 
         // --- Ground Collision ---
         var playerBox = GetPlayerBox(Position, currentHeight);
-        
         if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
             Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
             velocity.Y = 0.0f;
-            
             if (!isGrounded)
             {
                 hasEverLanded = true;
@@ -109,6 +121,11 @@ public class SrcPlayer
                 {
                     deferCrouchSlideToLand = false;
                     StartCrouchSlide(groundBox);
+                }
+                // Reset jump state on landing
+                if (!isJumpPressed)
+                {
+                    ResetJumpState();
                 }
             }
             isGrounded = true;
@@ -146,7 +163,7 @@ public class SrcPlayer
         if (Raylib.IsKeyDown(KeyboardKey.D)) inputDir.X += 1.0f;
 
         // Determine speed based on state
-        bool isSprinting = Raylib.IsKeyDown(KeyboardKey.LeftShift) && !isCrouching;
+        isSprinting = Raylib.IsKeyDown(KeyboardKey.LeftShift) && !isCrouching;
         currentSpeed = isCrouching ? CrouchSpeed : (isSprinting ? SprintSpeed : RunSpeed);
 
         // Camera-relative movement
@@ -212,12 +229,10 @@ public class SrcPlayer
             Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground for simplicity
             float slope = Vector3.Dot(wishDir, floorNormal);
             float newSpeed = Math.Max(MinCrouchSlideBoost, velXZ.Length() * CrouchSlideBoostMultiplier);
-            
             if (newSpeed > MinCrouchSlideBoost && slope < 0.0f)
             {
                 newSpeed = Math.Clamp(newSpeed + CrouchSlideBoostSlopeFactor * (newSpeed - MinCrouchSlideBoost) * slope, MinCrouchSlideBoost, newSpeed);
             }
-            
             float decay = MathHelper.Lerp(MaxCrouchSlideVelocityBoost, MinCrouchSlideVelocityBoost, Math.Clamp(timeDifference / CrouchSlideBoostTime, 0.0f, 1.0f));
             velXZ = Vector3.Normalize(velXZ) * newSpeed * (1.0f + slope) * decay;
             
@@ -245,9 +260,12 @@ public class SrcPlayer
             }
         }
 
-        // Clamp horizontal speed
-        if (velXZ.Length() > currentSpeed)
-            velXZ = Vector3.Normalize(velXZ) * currentSpeed;
+        // Clamp horizontal speed (unless bunny hopping is enabled)
+        if (!BunnyHoppingEnabled || isCrouchSliding)
+        {
+            if (velXZ.Length() > currentSpeed)
+                velXZ = Vector3.Normalize(velXZ) * currentSpeed;
+        }
 
         velocity.X = velXZ.X;
         velocity.Z = velXZ.Z;
@@ -255,12 +273,40 @@ public class SrcPlayer
         Position.X += velocity.X * Time.DeltaTime;
         Position.Z += velocity.Z * Time.DeltaTime;
 
-        // --- Jumping ---
-        if (isGrounded && Raylib.IsKeyPressed(KeyboardKey.Space) && CanAttemptJump(groundBox))
+        // --- Jump Input Handling ---
+        bool wasJumpPressed = isJumpPressed;
+        isJumpPressed = Raylib.IsKeyDown(KeyboardKey.Space);
+
+        if (isJumpPressed && !wasJumpPressed)
         {
-            velocity.Y = JumpImpulse;
-            isGrounded = false;
-            PlayJumpSound(true);
+            // Jump key pressed
+            if (CanJump())
+            {
+                PerformJump(groundBox, wishDir);
+            }
+        }
+        else if (!isJumpPressed && wasJumpPressed && !AutoBunnyHop && !deferJumpStop)
+        {
+            // Jump key released
+            ResetJumpState();
+        }
+
+        // Clear deferJumpStop after processing
+        if (deferJumpStop)
+        {
+            deferJumpStop = false;
+        }
+
+        // Auto bunny hop: attempt jump on landing if space is held
+        if (AutoBunnyHop && isJumpPressed && isGrounded && CanJump())
+        {
+            PerformJump(groundBox, wishDir);
+        }
+
+        // Update jump hold time
+        if (isJumpPressed && jumpCurrentCount > 0)
+        {
+            jumpKeyHoldTime += Time.DeltaTime;
         }
 
         // Play movement sounds
@@ -273,7 +319,6 @@ public class SrcPlayer
         {
             isInCrouchTransition = true;
             float forwardSpeed = Vector3.Dot(velocity, GetForwardVector());
-            
             if (forwardSpeed >= SprintSpeed * CrouchSlideSpeedRequirementMultiplier && isGrounded)
             {
                 StartCrouchSlide(null);
@@ -350,7 +395,6 @@ public class SrcPlayer
         {
             if (velocity.Length() >= MinCrouchSlideBoost)
                 isCrouchSliding = true;
-            
             return;
         }
 
@@ -359,12 +403,10 @@ public class SrcPlayer
             float newSpeed = Math.Max(MinCrouchSlideBoost, velocity.Length() * CrouchSlideBoostMultiplier);
             Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground
             float slope = Vector3.Dot(GetForwardVector(), floorNormal);
-            
             if (newSpeed > MinCrouchSlideBoost && slope < 0.0f)
             {
                 newSpeed = Math.Clamp(newSpeed + CrouchSlideBoostSlopeFactor * (newSpeed - MinCrouchSlideBoost) * slope, MinCrouchSlideBoost, newSpeed);
             }
-            
             velocity = Vector3.Normalize(velocity) * newSpeed;
             crouchSlideStartTime = Time.time;
             isCrouchSliding = true;
@@ -377,6 +419,113 @@ public class SrcPlayer
         deferCrouchSlideToLand = false;
     }
 
+    private bool CanJump()
+    {
+        bool canJump = true;
+
+        if (jumpCurrentCount >= MaxJumpCount)
+        {
+            if (MaxJumpHoldTime <= 0.0f || jumpKeyHoldTime >= MaxJumpHoldTime)
+            {
+                canJump = false;
+            }
+            else
+            {
+                canJump = isJumpPressed && (isGrounded || jumpCurrentCount < MaxJumpCount);
+            }
+        }
+
+        if (canJump && isGrounded)
+        {
+            Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground
+            float floorZ = Vector3.Dot(floorNormal, Vector3.UnitY);
+            float walkableFloorZ = 0.7f; // From Unreal's SetWalkableFloorZ
+            canJump = floorZ >= walkableFloorZ || Math.Abs(floorZ - walkableFloorZ) < 0.0001f;
+        }
+
+        return canJump;
+    }
+
+    private void PerformJump(BoundingBox groundBox, Vector3 inputDir)
+    {
+        if (!isGrounded || !CanAttemptJump(groundBox))
+            return;
+
+        velocity.Y = JumpImpulse;
+        isGrounded = false;
+        jumpCurrentCount++;
+        if (isJumpPressed)
+        {
+            deferJumpStop = true;
+        }
+        PlayJumpSound(true);
+
+        // Apply jump boost
+        if (JumpBoostMode > 0 && Time.time >= lastJumpBoostTime + MaxJumpTime)
+        {
+            lastJumpBoostTime = Time.time;
+            Vector3 facing = GetForwardVector();
+            Vector3 currentVelXZ = new Vector3(velocity.X, 0, velocity.Z);
+            Vector3 inputVel = inputDir * currentSpeed;
+
+            float forwardSpeed = Vector3.Dot(inputVel, facing);
+            float speedBoostPerc = isCrouching ? 0.1f : (isSprinting ? 0.1f : 0.5f);
+            float speedAddition = Math.Abs(forwardSpeed * speedBoostPerc);
+            float maxBoostedSpeed = currentSpeed * (1.0f + speedBoostPerc);
+            float speedAdditionNoClamp = speedAddition;
+
+            if (JumpBoostMode == 2)
+            {
+                // Only boost if input aligns with current movement
+                float velDotInput = Vector3.Dot(Vector3.Normalize(currentVelXZ), inputDir);
+                if (Math.Abs(velDotInput) < 0.01f)
+                {
+                    speedAddition = 0.0f;
+                    speedAdditionNoClamp = 0.0f;
+                }
+            }
+
+            float newSpeed = speedAddition + currentVelXZ.Length();
+            if (newSpeed > maxBoostedSpeed)
+            {
+                speedAddition -= newSpeed - maxBoostedSpeed;
+            }
+
+            if (forwardSpeed < -currentSpeed * MathF.Sin(0.6981f))
+            {
+                speedAddition *= -1.0f;
+                speedAdditionNoClamp *= -1.0f;
+            }
+
+            Vector3 jumpBoostedVel = currentVelXZ + facing * speedAddition;
+            float jumpBoostedSizeSq = jumpBoostedVel.LengthSquared();
+
+            if (BunnyHoppingEnabled)
+            {
+                Vector3 jumpBoostedUnclampVel = currentVelXZ + facing * speedAdditionNoClamp;
+                float jumpBoostedUnclampSizeSq = jumpBoostedUnclampVel.LengthSquared();
+                if (jumpBoostedUnclampSizeSq > jumpBoostedSizeSq)
+                {
+                    jumpBoostedVel = jumpBoostedUnclampVel;
+                    jumpBoostedSizeSq = jumpBoostedUnclampSizeSq;
+                }
+            }
+
+            if (currentVelXZ.LengthSquared() < jumpBoostedSizeSq)
+            {
+                velocity.X = jumpBoostedVel.X;
+                velocity.Z = jumpBoostedVel.Z;
+            }
+        }
+    }
+
+    private void ResetJumpState()
+    {
+        jumpCurrentCount = 0;
+        jumpKeyHoldTime = 0.0f;
+        deferJumpStop = false;
+    }
+
     private bool CanAttemptJump(BoundingBox groundBox)
     {
         if (!isGrounded)
@@ -385,7 +534,6 @@ public class SrcPlayer
         Vector3 floorNormal = new Vector3(0, 1, 0); // Assuming flat ground
         float floorZ = Vector3.Dot(floorNormal, Vector3.UnitY);
         float walkableFloorZ = 0.7f; // From Unreal's SetWalkableFloorZ
-        
         return floorZ >= walkableFloorZ || Math.Abs(floorZ - walkableFloorZ) < 0.0001f;
     }
 
@@ -399,9 +547,7 @@ public class SrcPlayer
 
         float speedScale = (speed - SprintSpeed * 1.7f) / (SprintSpeed * 2.5f - SprintSpeed * 1.7f);
         float speedMultiplier = Math.Clamp(speedScale, 0.0f, 1.0f);
-        
         speedMultiplier *= speedMultiplier;
-        
         if (isGrounded)
         {
             speedMultiplier = Math.Max((1.0f - surfaceFriction) * speedMultiplier, 0.0f);
@@ -411,7 +557,6 @@ public class SrcPlayer
 
     private bool TraceEdge(BoundingBox groundBox)
     {
-        // Simplified edge detection: check if player is near an edge by tracing downward
         Vector3 traceStart = Position;
         if (velocity.Length() > 0)
             traceStart += Vector3.Normalize(velocity) * EdgeFrictionDist;
@@ -420,7 +565,6 @@ public class SrcPlayer
 
         traceStart.Y += currentHeight * 0.5f;
         Vector3 traceEnd = traceStart - new Vector3(0, EdgeFrictionHeight + currentHeight, 0);
-        
         return !Raylib.GetRayCollisionBox(new Ray(traceStart, traceEnd - traceStart), groundBox).Hit;
     }
 
@@ -443,13 +587,10 @@ public class SrcPlayer
         bool isSprinting = speed >= sprintSpeedThreshold;
         moveSoundTime = isSprinting ? 300.0f : (isCrouching ? 500.0f : 400.0f);
         float moveSoundVolume = isSprinting ? 1.0f : 0.5f;
-        
         if (isCrouching)
             moveSoundVolume *= 0.65f;
 
-        // Placeholder for sound playback (Raylib sound loading would be needed)
         string soundFile = isSprinting ? "sprint_step.wav" : "walk_step.wav";
-        // Note: Actual sound playback requires Resource.Load<Sound> and Raylib.PlaySound
         // Console.WriteLine($"Playing {soundFile} with volume {moveSoundVolume}");
         stepSide = !stepSide;
     }
@@ -475,7 +616,6 @@ public class SrcPlayer
             moveSoundVolume *= 0.65f;
 
         string soundFile = isJump ? "jump.wav" : "land.wav";
-        // Note: Actual sound playback requires Resource.Load<Sound> and Raylib.PlaySound
         // Console.WriteLine($"Playing {soundFile} with volume {moveSoundVolume}");
     }
 
