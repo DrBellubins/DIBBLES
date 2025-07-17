@@ -4,6 +4,7 @@ using System.Numerics;
 using DIBBLES.Effects;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
+using System.Threading;
 
 namespace DIBBLES;
 
@@ -25,7 +26,7 @@ public class Engine
     {
         // Initialize window
         Raylib.InitWindow(ScreenWidth, ScreenHeight, "DIBBLES");
-        Raylib.SetTargetFPS(0);
+        Raylib.SetTargetFPS(0); // Disable Raylib's FPS cap
         Raylib.SetExitKey(KeyboardKey.Q);
 
         var timer = new Stopwatch();
@@ -40,7 +41,7 @@ public class Engine
         
         foreach (var scene in Scenes)
             scene.Start();
-        
+
         while (IsRunning)
         {
             if (Raylib.WindowShouldClose())
@@ -53,19 +54,26 @@ public class Engine
             foreach (var scene in Scenes)
                 scene.Draw();
             
-            // Calculate delta time after rendering
-            long currentTicks = timer.ElapsedTicks;
+            // Cap frame rate with optimized spin-wait
+            long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
+            long beforeWait = timer.ElapsedTicks;
+            long elapsedTicks = beforeWait - previousTicks;
+            int spinCount = 0;
             
-            Time.DeltaTime = (currentTicks - previousTicks) / (float)Stopwatch.Frequency;
+            while (elapsedTicks < targetTicks)
+            {
+                Thread.SpinWait(100); // Brief spin-wait to reduce CPU usage
+                elapsedTicks = timer.ElapsedTicks - previousTicks;
+                spinCount++;
+            }
+            
+            long afterWait = timer.ElapsedTicks;
+            
+            // Calculate DeltaTime after spin-wait to include wait time
+            Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
             Time.time += Time.DeltaTime;
-            
-            //Console.WriteLine($"DeltaTime: {Time.DeltaTime:F6} s, FPS: {1.0f / Time.DeltaTime:F2}");
 
-            // Cap frame rate
-            //long targetTicks = (long)(FrameTimestep * Stopwatch.Frequency);
-            //while (timer.ElapsedTicks - previousTicks < targetTicks) {} // Spin-wait only
-
-            previousTicks = timer.ElapsedTicks;
+            previousTicks = afterWait; // Update to the end of the frame
         }
         
         Raylib.CloseWindow();

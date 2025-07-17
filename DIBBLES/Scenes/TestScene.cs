@@ -65,11 +65,9 @@ public class TestScene : Scene
         Raylib.DrawRectangle(Engine.VirtualScreenWidth / 2 - 1, Engine.VirtualScreenHeight / 2 - 1, 2, 2, Color.White);
             
         // Test text
-        Raylib.DrawTextEx(Engine.MainFont, "Hello World! This is a test", Vector2.Zero, 18f, 2f,Color.White);
+        Raylib.DrawTextEx(Engine.MainFont, $"FPS: {1f / Time.DeltaTime}", Vector2.Zero, 18f, 2f,Color.White);
             
         crtEffect.DrawEnd();
-        
-        Raylib.DrawFPS(10, 10);
             
         Raylib.EndDrawing();
     }
