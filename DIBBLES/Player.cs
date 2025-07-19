@@ -29,6 +29,8 @@ public class Player
     private float cameraPitch = 0f;
 
     private Vector3 velocity = Vector3.Zero;
+    
+    private bool isJumping = false;
     private bool isGrounded = false;
     private bool isCrouching = false;
 
@@ -46,15 +48,23 @@ public class Player
 
     public void Update(BoundingBox groundBox)
     {
-        // --- Handle Crouch ---
+        // --- Input ---
+        Vector3 inputDir = Vector3.Zero;
+        
+        if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
+        if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
+        if (Raylib.IsKeyDown(KeyboardKey.A)) inputDir.X -= 1.0f;
+        if (Raylib.IsKeyDown(KeyboardKey.D)) inputDir.X += 1.0f;
+
+        if (Raylib.IsKeyDown(KeyboardKey.LeftShift) && !isCrouching)
+            currentSpeed = RunSpeed;
+        else
+            currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
+        
         var crouchKey = Raylib.IsKeyDown(KeyboardKey.C);
         isCrouching = crouchKey;
         
-        var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
-        var heightLerpSpeed = 20f;
-
-        // Smoothly interpolate currentHeight
-        currentHeight = MathHelper.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
+        isJumping = isCrouching ? Raylib.IsKeyPressed(KeyboardKey.Space) : Raylib.IsKeyDown(KeyboardKey.Space);
 
         // --- Gravity & Vertical Movement ---
         velocity.Y -= Gravity * Time.DeltaTime;
@@ -62,6 +72,7 @@ public class Player
 
         // --- Ground Collision ---
         var playerBox = GetPlayerBox(Position, currentHeight);
+        var wasGrounded = isGrounded; // Track previous grounded state for jump timing
 
         if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
@@ -90,20 +101,7 @@ public class Player
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = Camera.Position + cameraDirection;
-
-        // --- Movement Input ---
-        Vector3 inputDir = Vector3.Zero;
         
-        if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.A)) inputDir.X -= 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.D)) inputDir.X += 1.0f;
-
-        if (Raylib.IsKeyDown(KeyboardKey.LeftShift) && !isCrouching)
-            currentSpeed = RunSpeed;
-        else
-            currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
-
         // Camera-relative movement
         Vector3 cameraForward = new Vector3(
             MathF.Cos(MathHelper.ToRadians(cameraYaw)),
@@ -157,14 +155,19 @@ public class Player
             if (addSpeed > 0)
             {
                 float accelSpeed = accel * Time.DeltaTime * wishSpeed;
+                
                 if (accelSpeed > addSpeed) accelSpeed = addSpeed;
-                velXZ += wishDir * accelSpeed;
+                    velXZ += wishDir * accelSpeed;
             }
         }
 
-        // Clamp horizontal speed
-        if (velXZ.Length() > currentSpeed)
-            velXZ = Vector3.Normalize(velXZ) * currentSpeed;
+        // Relax speed cap for bunnyhopping
+        if (isGrounded && wasGrounded)
+        {
+            // Apply speed cap only when grounded for multiple frames (not a bunnyhop)
+            if (velXZ.Length() > currentSpeed)
+                velXZ = Vector3.Normalize(velXZ) * currentSpeed;
+        }
 
         velocity.X = velXZ.X;
         velocity.Z = velXZ.Z;
@@ -172,8 +175,14 @@ public class Player
         Position.X += velocity.X * Time.DeltaTime;
         Position.Z += velocity.Z * Time.DeltaTime;
 
+        // --- Crouching ---
+        var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
+        var heightLerpSpeed = 20f;
+        
+        currentHeight = MathHelper.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
+        
         // --- Jumping ---
-        if (isGrounded && Raylib.IsKeyPressed(KeyboardKey.Space))
+        if (isGrounded && isJumping)
         {
             velocity.Y = JumpImpulse;
             isGrounded = false;

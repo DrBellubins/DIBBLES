@@ -15,7 +15,7 @@ public class Engine
     public const int VirtualScreenWidth = 640;
     public const int VirtualScreenHeight = 480;
     
-    public const int FPS = 60;
+    public const int FPS = 165;
     public const float FrameTimestep = 1.0f / (float)FPS;
     
     public static bool IsRunning;
