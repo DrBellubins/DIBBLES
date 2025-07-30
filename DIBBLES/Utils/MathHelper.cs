@@ -7,6 +7,11 @@ public static class MathHelper
     {
         return degrees * (MathF.PI / 180.0f);
     }
+    
+    public static double ToRadians(double degrees)
+    {
+        return degrees * (MathF.PI / 180.0d);
+    }
 
     public static float Lerp(float a, float b, float t)
     {

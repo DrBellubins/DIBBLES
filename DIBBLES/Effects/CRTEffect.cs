@@ -24,7 +24,7 @@ public class CRTEffect
         crtOutput = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
         Raylib.SetTextureFilter(crtOutput.Texture, TextureFilter.Bilinear);
         
-        crtShader = Resource.LoadShader(null, "Assets/Shaders/CRT.glsl");
+        //crtShader = Resource.LoadShader(null, "Assets/Shaders/CRT.fs");
         
         Raylib.SetShaderValue(crtShader, Raylib.GetShaderLocation(crtShader, "emuRes"),
             new Vector2(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight), ShaderUniformDataType.Vec2);

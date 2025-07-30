@@ -38,6 +38,7 @@ public class Engine
         MainFont = Raylib.LoadFont("Assets/Textures/romulus.png");
         
         var testScene = new TestScene();
+        //var bezierScene = new BezierMeshScene();
         
         foreach (var scene in Scenes)
             scene.Start();

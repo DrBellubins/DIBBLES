@@ -58,7 +58,7 @@ public static class Resource
 
     public static Shader LoadShader(string vsName, string fsName)
     {
-        var shader = Raylib.LoadShader(vsName, fsName);
+        var shader = Raylib.LoadShader($"Assets/Shaders/{vsName}", $"Assets/Shaders/{fsName}");
         shaders.Add(shader);
         
         return shader;
