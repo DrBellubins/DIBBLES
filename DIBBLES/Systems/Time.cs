@@ -1,4 +1,4 @@
-namespace DIBBLES;
+namespace DIBBLES.Systems;
 
 public class Time
 {

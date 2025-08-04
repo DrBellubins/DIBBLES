@@ -108,7 +108,7 @@ public class CRTEffect
         Raylib.EndShaderMode();
     
         Raylib.EndTextureMode();*/
-    
+        
         Raylib.DrawTexturePro(ditherRT.Texture, sourceRec, destRec, Vector2.Zero, 0.0f, Color.White);
         //Raylib.DrawTexturePro(target.Texture, sourceRec, destRec, Vector2.Zero, 0.0f, Color.White);
     }

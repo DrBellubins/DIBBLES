@@ -1,6 +1,6 @@
+using DIBBLES;
 
-
-namespace DIBBLES;
+namespace DIBBLES.Systems;
 
 public abstract class Scene
 {

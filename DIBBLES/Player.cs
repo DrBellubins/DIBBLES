@@ -1,5 +1,6 @@
 using Raylib_cs;
 using System.Numerics;
+using DIBBLES.Systems;
 using DIBBLES.Utils;
 
 namespace DIBBLES;
@@ -20,6 +21,9 @@ public class Player
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
 
     public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
+    public Vector3 Velocity = Vector3.Zero;
+    public Vector3 CameraDirection = Vector3.Zero;
+    
     public Camera3D Camera;
 
     private float currentSpeed = WalkSpeed;
@@ -27,8 +31,6 @@ public class Player
     private float mouseSensitivity = 0.1f;
     private float cameraYaw = 0f;
     private float cameraPitch = 0f;
-
-    private Vector3 velocity = Vector3.Zero;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -67,8 +69,8 @@ public class Player
         isJumping = isCrouching ? Raylib.IsKeyPressed(KeyboardKey.Space) : Raylib.IsKeyDown(KeyboardKey.Space);
 
         // --- Gravity & Vertical Movement ---
-        velocity.Y -= Gravity * Time.DeltaTime;
-        Position.Y += velocity.Y * Time.DeltaTime;
+        Velocity.Y -= Gravity * Time.DeltaTime;
+        Position.Y += Velocity.Y * Time.DeltaTime;
 
         // --- Ground Collision ---
         var playerBox = GetPlayerBox(Position, currentHeight);
@@ -77,7 +79,7 @@ public class Player
         if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
             Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
-            velocity.Y = 0.0f;
+            Velocity.Y = 0.0f;
             isGrounded = true;
         }
         else
@@ -92,7 +94,7 @@ public class Player
         cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
 
         // Calculate camera direction
-        Vector3 cameraDirection = new Vector3(
+        CameraDirection = new Vector3(
             MathF.Cos(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch)),
             MathF.Sin(MathHelper.ToRadians(cameraPitch)),
             MathF.Sin(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch))
@@ -100,7 +102,7 @@ public class Player
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
-        Camera.Target = Camera.Position + cameraDirection;
+        Camera.Target = Camera.Position + CameraDirection;
         
         // Camera-relative movement
         Vector3 cameraForward = new Vector3(
@@ -129,7 +131,7 @@ public class Player
         float friction = isGrounded ? GroundFriction : AirFriction;
 
         Vector3 wishVel = wishDir * currentSpeed;
-        Vector3 velXZ = new Vector3(velocity.X, 0f, velocity.Z);
+        Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
         
         float wishSpeed = wishVel.Length();
 
@@ -169,11 +171,11 @@ public class Player
                 velXZ = Vector3.Normalize(velXZ) * currentSpeed;
         }
 
-        velocity.X = velXZ.X;
-        velocity.Z = velXZ.Z;
+        Velocity.X = velXZ.X;
+        Velocity.Z = velXZ.Z;
 
-        Position.X += velocity.X * Time.DeltaTime;
-        Position.Z += velocity.Z * Time.DeltaTime;
+        Position.X += Velocity.X * Time.DeltaTime;
+        Position.Z += Velocity.Z * Time.DeltaTime;
 
         // --- Crouching ---
         var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
@@ -184,7 +186,7 @@ public class Player
         // --- Jumping ---
         if (isGrounded && isJumping)
         {
-            velocity.Y = JumpImpulse;
+            Velocity.Y = JumpImpulse;
             isGrounded = false;
         }
     }
