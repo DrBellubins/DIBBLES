@@ -123,6 +123,7 @@ public class Skybox
         ));
         
         Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "Time"), Time.time, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "cameraPosition"), player.Camera.Position, ShaderUniformDataType.Vec3);
         
         // Bind cubemap texture explicitly before drawing
         Rlgl.ActiveTextureSlot(2);

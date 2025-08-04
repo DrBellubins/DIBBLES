@@ -25,7 +25,6 @@ public class VoxelPathTracer
         InitializeVoxels();
 
         // Load compute shader
-        //computeShader = Resource.LoadShader(null, "path_tracer.comp");
         computeShader = Resource.LoadComputeShader("path_tracer.comp");
         outputTexture = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
 

@@ -1,14 +1,42 @@
 #version 330
 
+#define WIND vec2(0.4, -0.8)
+#define MIN_HEIGHT 2.0
+#define MAX_HEIGHT 8.0
+
 in vec3 fragPosition;
 uniform sampler2D environmentMap;
 uniform float Time; // Time uniform for animation
+uniform vec3 cameraPosition;
 out vec4 finalColor;
 
-#define MIN_HEIGHT 2.0
-#define MAX_HEIGHT 8.0
-#define WIND vec2(0.8, 1.4)
 vec3 sundir = normalize(vec3(1.0, 0.75, 1.0));
+
+// Bayer dither matrix (4x4) for dither effect
+const float bayer4x4[16] = float[16](
+    0.0/16.0,  8.0/16.0,  2.0/16.0, 10.0/16.0,
+    12.0/16.0,  4.0/16.0, 14.0/16.0,  6.0/16.0,
+    3.0/16.0, 11.0/16.0,  1.0/16.0,  9.0/16.0,
+    15.0/16.0,  7.0/16.0, 13.0/16.0,  5.0/16.0
+);
+
+// Bayer dither matrix (2x2) for dither effect
+const float bayer2x2[4] = float[4](
+    0.0/4.0, 2.0/4.0,
+    3.0/4.0, 1.0/4.0
+);
+
+
+float getDither(vec3 pos, float density)
+{
+    // Use 3D position for dithering
+    int x = int(mod(pos.x * 32.0, 4.0));
+    int y = int(mod(pos.y * 32.0, 4.0));
+    int z = int(mod(pos.z * 32.0, 4.0));
+    int index = (x + y * 4 + z) % 16; // Combine 3D coordinates into index
+    float ditherValue = bayer4x4[index];
+    return density > ditherValue ? density : 0.0;
+}
 
 float noise(in vec3 x)
 {
@@ -74,8 +102,8 @@ vec3 raymarching(vec3 ro, vec3 rd, float t, vec3 backCol)
     vec4 sum = vec4(0.0);
     vec3 pos = ro + rd * t;
 
-    int maxSteps = 32; // Increased from 10 to 24 for better sampling
-    float baseStep = 0.05; // Smaller base step size
+    int maxSteps = 24; // Increased from 10 to 24 for better sampling
+    float baseStep = 0.07; // Smaller base step size
 
     for (int i = 0; i < maxSteps; i++)
     {
@@ -87,6 +115,10 @@ vec3 raymarching(vec3 ro, vec3 rd, float t, vec3 backCol)
 
         if (den > 0.01)
         {
+            // Apply dither effect to density
+            //den = getDither(pos, den);
+            //den = mix(den, getDither(pos, den), 0.8);
+
             float light = compute_light(pos, sundir);
             vec3 lin = vec3(0.65, 0.7, 0.75) * 1.5 + vec3(1.0, 0.6, 0.3) * light;
             vec4 col = vec4(mix(vec3(1.0, 0.95, 0.8) * 1.1, vec3(0.35, 0.4, 0.45), den), den);
@@ -95,17 +127,6 @@ vec3 raymarching(vec3 ro, vec3 rd, float t, vec3 backCol)
             col.rgb *= col.a;
             sum = sum + col * (1.0 - sum.a);
         }
-
-        /*if (den > 0.01)
-        {
-            float dif = clamp((den - density(pos + 0.3 * sundir)) / 0.6, 0.0, 1.0);
-            vec3 lin = vec3(0.65, 0.7, 0.75) * 1.5 + vec3(1.0, 0.6, 0.3) * dif;
-            vec4 col = vec4(mix(vec3(1.0, 0.95, 0.8) * 1.1, vec3(0.35, 0.4, 0.45), den), den);
-            col.rgb *= lin;
-            col.a *= 0.75;
-            col.rgb *= col.a;
-            sum = sum + col * (1.0 - sum.a);
-        }*/
 
         // Adjust step size based on vertical component to reduce artifacts
         float stepSize = baseStep / max(0.1, abs(rd.y)); // Smaller steps for vertical rays
@@ -142,13 +163,13 @@ void main()
     uv = fract(uv);
 
     // Compute ray origin and direction
-    vec3 ro = vec3(0.0, 0.0, 0.0); // Camera at origin, slightly offset
+    vec3 ro = vec3(cameraPosition.x * 0.1, cameraPosition.y * 0.1, cameraPosition.z * 0.1);
     vec3 rd = dir; // Ray direction from normalized fragment position
 
     // Background color (sky gradient)
     float sun = clamp(dot(sundir, rd), 0.0, 1.0);
     vec3 col = mix(vec3(0.78, 0.78, 0.7), vec3(0.3, 0.4, 0.5), uv.y * 0.5 + 0.5);
-    col += 0.5 * vec3(1.0, 0.5, 0.1) * pow(sun, 8.0);
+    col += 0.5 * vec3(1.0, 0.5, 0.1) * pow(sun, 4.0);
 
     // Raymarch clouds if ray intersects the cloud plane
     float dist = planeIntersect(ro, rd, MIN_HEIGHT);

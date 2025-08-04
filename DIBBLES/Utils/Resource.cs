@@ -35,7 +35,7 @@ public static class Resource
             {
                 var texture = Raylib.LoadTexture(file);
                 Raylib.GenTextureMipmaps(ref texture);
-                Raylib.SetTextureFilter(texture, TextureFilter.Point);
+                Raylib.SetTextureFilter(texture, TextureFilter.Bilinear);
                 
                 textures.Add(texture);
                 
@@ -57,9 +57,10 @@ public static class Resource
         }
     }
 
-    public static Shader LoadShader(string vsName, string fsName)
+    public static Shader LoadShader(string? vsName, string fsName)
     {
-        var shader = Raylib.LoadShader($"Assets/Shaders/{vsName}", $"Assets/Shaders/{fsName}");
+        var vsFilename = vsName != null ? $"Assets/Shaders/{vsName}" : null;
+        var shader = Raylib.LoadShader(vsFilename, $"Assets/Shaders/{fsName}");
         shaders.Add(shader);
         
         return shader;
