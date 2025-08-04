@@ -133,9 +133,9 @@ public class SrcPlayer
 
         // Calculate camera direction
         Vector3 cameraDirection = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch)),
-            MathF.Sin(MathHelper.ToRadians(cameraPitch)),
-            MathF.Sin(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch))
+            MathF.Cos(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch)),
+            MathF.Sin(GMath.ToRadians(cameraPitch)),
+            MathF.Sin(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch))
         );
 
         // Camera position
@@ -156,17 +156,17 @@ public class SrcPlayer
 
         // Camera-relative movement
         Vector3 cameraForward = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw)),
+            MathF.Cos(GMath.ToRadians(cameraYaw)),
             0.0f,
-            MathF.Sin(MathHelper.ToRadians(cameraYaw))
+            MathF.Sin(GMath.ToRadians(cameraYaw))
         );
         
         cameraForward = Vector3.Normalize(cameraForward);
 
         Vector3 cameraRight = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw + 90.0f)),
+            MathF.Cos(GMath.ToRadians(cameraYaw + 90.0f)),
             0.0f,
-            MathF.Sin(MathHelper.ToRadians(cameraYaw + 90.0f))
+            MathF.Sin(GMath.ToRadians(cameraYaw + 90.0f))
         );
         
         cameraRight = Vector3.Normalize(cameraRight);
@@ -442,7 +442,7 @@ public class SrcPlayer
             speedMultiplier = Math.Max((1.0f - surfaceFriction) * speedMultiplier, 0.0f);
         }
         
-        currentStepHeight = MathHelper.Lerp(MaxStepHeight, MinStepHeight, speedMultiplier);
+        currentStepHeight = GMath.Lerp(MaxStepHeight, MinStepHeight, speedMultiplier);
     }
 
     private bool TraceEdge(BoundingBox groundBox)
@@ -522,9 +522,9 @@ public class SrcPlayer
     private Vector3 GetForwardVector()
     {
         var vec = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw)),
+            MathF.Cos(GMath.ToRadians(cameraYaw)),
             0.0f,
-            MathF.Sin(MathHelper.ToRadians(cameraYaw))
+            MathF.Sin(GMath.ToRadians(cameraYaw))
         );
 
         return Vector3.Normalize(vec);

@@ -118,7 +118,7 @@ public class Skybox
     
         Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matView"), rotView);
         Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matProjection"), Matrix4x4.CreatePerspectiveFieldOfView(
-            MathHelper.ToRadians(player.Camera.FovY),
+            GMath.ToRadians(player.Camera.FovY),
             (float)Engine.VirtualScreenWidth / Engine.VirtualScreenHeight,
             0.1f, 1000.0f
         ));

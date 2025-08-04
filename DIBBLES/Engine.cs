@@ -30,6 +30,10 @@ public class Engine
         Raylib.SetTargetFPS(0); // Disable Raylib's FPS cap
         Raylib.SetExitKey(KeyboardKey.Q);
 
+        Raylib.InitAudioDevice();
+        
+        GMath.Init();
+        
         var timer = new Stopwatch();
         timer.Start();
         

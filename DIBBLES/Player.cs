@@ -36,8 +36,18 @@ public class Player
     private bool isGrounded = false;
     private bool isCrouching = false;
 
+    private bool justJumped = false;
+    private bool justLanded = false;
+    
+    private AudioPlayer jumpLandPlayer = new AudioPlayer();
+    private Sound jumpSound;
+    private Sound landSound;
+    
     public void Start()
     {
+        jumpSound = Resource.Load<Sound>("grass_jump.ogg");
+        landSound = Resource.Load<Sound>("grass_land.ogg");
+        
         Camera = new Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
@@ -68,6 +78,22 @@ public class Player
         
         isJumping = isCrouching ? Raylib.IsKeyPressed(KeyboardKey.Space) : Raylib.IsKeyDown(KeyboardKey.Space);
 
+        // TODO: Add justJumped and justLanded
+        
+        // Player audio
+        //var magnitude = MathF.Abs(Velocity.Length());
+        
+        if (justJumped)
+        {
+            jumpLandPlayer.Sound = jumpSound;
+            jumpLandPlayer.Play2D();
+        }
+        else if (justLanded)
+        {
+            jumpLandPlayer.Sound = landSound;
+            jumpLandPlayer.Play2D();
+        }
+        
         // --- Gravity & Vertical Movement ---
         Velocity.Y -= Gravity * Time.DeltaTime;
         Position.Y += Velocity.Y * Time.DeltaTime;
@@ -76,11 +102,19 @@ public class Player
         var playerBox = GetPlayerBox(Position, currentHeight);
         var wasGrounded = isGrounded; // Track previous grounded state for jump timing
 
+        // Reset one-frame flags at the start of each frame
+        justJumped = false;
+        justLanded = false;
+        
         if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
             Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
             Velocity.Y = 0.0f;
             isGrounded = true;
+            
+            // Detect landing (transition from not grounded to grounded)
+            if (!wasGrounded)
+                justLanded = true;
         }
         else
             isGrounded = false;
@@ -95,9 +129,9 @@ public class Player
 
         // Calculate camera direction
         CameraDirection = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch)),
-            MathF.Sin(MathHelper.ToRadians(cameraPitch)),
-            MathF.Sin(MathHelper.ToRadians(cameraYaw)) * MathF.Cos(MathHelper.ToRadians(cameraPitch))
+            MathF.Cos(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch)),
+            MathF.Sin(GMath.ToRadians(cameraPitch)),
+            MathF.Sin(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch))
         );
 
         // Camera position
@@ -106,17 +140,17 @@ public class Player
         
         // Camera-relative movement
         Vector3 cameraForward = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw)),
+            MathF.Cos(GMath.ToRadians(cameraYaw)),
             0.0f,
-            MathF.Sin(MathHelper.ToRadians(cameraYaw))
+            MathF.Sin(GMath.ToRadians(cameraYaw))
         );
         
         cameraForward = Vector3.Normalize(cameraForward);
 
         Vector3 cameraRight = new Vector3(
-            MathF.Cos(MathHelper.ToRadians(cameraYaw + 90.0f)),
+            MathF.Cos(GMath.ToRadians(cameraYaw + 90.0f)),
             0.0f,
-            MathF.Sin(MathHelper.ToRadians(cameraYaw + 90.0f))
+            MathF.Sin(GMath.ToRadians(cameraYaw + 90.0f))
         );
         
         cameraRight = Vector3.Normalize(cameraRight);
@@ -181,14 +215,17 @@ public class Player
         var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
         var heightLerpSpeed = 20f;
         
-        currentHeight = MathHelper.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
+        currentHeight = GMath.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
         
         // --- Jumping ---
         if (isGrounded && isJumping)
         {
             Velocity.Y = JumpImpulse;
             isGrounded = false;
+            justJumped = true;
         }
+        
+        jumpLandPlayer.Update();
     }
 
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)

@@ -17,16 +17,9 @@ public class TestScene : Scene
     private Material groundMaterial;
     private Model planeModel;
     private BoundingBox groundBox;
-
-    private AudioPlayer audioPlayer = new AudioPlayer();
     
     public override void Start()
     {
-        Raylib.InitAudioDevice();
-        
-        var testsound = Resource.Load<Sound>("footstep.ogg");
-        audioPlayer.Sound = testsound;
-        
         // Setup ground material
         groundTexture = Resource.Load<Texture2D>("grass_dark.png");
         groundMaterial = Raylib.LoadMaterialDefault();
@@ -54,11 +47,6 @@ public class TestScene : Scene
     public override void Update()
     {
         player.Update(groundBox);
-        
-        audioPlayer.Update();
-        
-        if (Raylib.IsKeyPressed(KeyboardKey.F))
-            audioPlayer.Play(player.Position, player.CameraDirection, player.Velocity);
     }
 
     public override void Draw()

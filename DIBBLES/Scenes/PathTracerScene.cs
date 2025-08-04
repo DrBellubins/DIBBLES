@@ -21,9 +21,9 @@ public class PathTracerScene : Scene
     {
         cameraAngle += Time.DeltaTime * 30f;
         cameraPos = new Vector3(
-            (float)Math.Cos(MathHelper.ToRadians(cameraAngle)) * 20,
+            (float)Math.Cos(GMath.ToRadians(cameraAngle)) * 20,
             5,
-            (float)Math.Sin(MathHelper.ToRadians(cameraAngle)) * 20
+            (float)Math.Sin(GMath.ToRadians(cameraAngle)) * 20
         );
     }
 

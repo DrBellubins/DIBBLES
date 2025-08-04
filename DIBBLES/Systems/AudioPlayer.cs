@@ -19,6 +19,7 @@ public class AudioPlayer
     public float DopplerFactor = 0.0f; // Strength of Doppler effect
     public float MinPitch = 0.5f;     // Minimum pitch for Doppler
     public float MaxPitch = 2.0f;     // Maximum pitch for Doppler
+    public float RandomPitchRange = 0.2f; // How much the pitch changes either up or down
 
     // Play the sound with 3D audio effects relative to listener position and orientation
     public void Play(Vector3 listenerPosition, Vector3 listenerDirection, Vector3 listenerVelocity = default)
@@ -56,12 +57,35 @@ public class AudioPlayer
         
             Raylib.SetSoundPitch(Sound, pitch);
         }
+        
+        // Set random pitch before playing
+        if (RandomPitchRange > 0.0f)
+        {
+            var rndPitch = Pitch + GMath.NextFloat(-RandomPitchRange, RandomPitchRange);
+            Raylib.SetSoundPitch(Sound, rndPitch);
+        }
 
         // Play the sound
         Raylib.PlaySound(Sound);
         IsPlaying = true;
     }
 
+    public void Play2D()
+    {
+        if (Sound.FrameCount == 0) return; // No sound assigned
+
+        // Set random pitch before playing
+        if (RandomPitchRange > 0.0f)
+        {
+            var rndPitch = Pitch + GMath.NextFloat(-RandomPitchRange, RandomPitchRange);
+            Raylib.SetSoundPitch(Sound, rndPitch);
+        }
+        
+        // Play the sound
+        Raylib.PlaySound(Sound);
+        IsPlaying = true;
+    }
+    
     // Stop the sound
     public void Stop()
     {
