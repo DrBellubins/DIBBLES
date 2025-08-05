@@ -13,7 +13,8 @@ public class Engine
 {
     public const int ScreenWidth = 1600;
     public const int ScreenHeight = 900;
-    public const int VirtualScreenWidth = 640;
+    public static readonly int VirtualScreenWidth = (int)((float)ScreenWidth / ScreenHeight * VirtualScreenHeight);
+    //public const int VirtualScreenWidth = 640;
     public const int VirtualScreenHeight = 480;
     
     public const int FPS = 165;

@@ -33,7 +33,7 @@ void main()
     if (pass == 0)
     {
         // Film grain pass
-        float grain = random(uv * time) * 0.5;
+        float grain = random(uv * time) * 0.0;
         finalColor = vec4(color.rgb + grain, color.a);
     }
     else if (pass == 1)

@@ -16,10 +16,10 @@ public class FilmicEffect
     private float saturation = -0.15f;
     private float redCurve = 1.0f;
     private float greenCurve = 1.0f;
-    private float blueCurve = 8.0f;
+    private float blueCurve = 1.0f;
     private float baseCurve = 1.5f;
     private float baseGamma = 1.0f;
-    private float effectGamma = 0.65f;
+    private float effectGamma = 1.0f;
     private float effectGammaR = 1.0f;
     private float effectGammaG = 1.0f;
     private float effectGammaB = 1.0f;

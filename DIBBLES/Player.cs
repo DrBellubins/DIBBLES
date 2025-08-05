@@ -62,6 +62,17 @@ public class Player
     {
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
+
+        // Allow tabbing out and back into game
+        if (Raylib.IsKeyPressed(KeyboardKey.Escape)) Raylib.EnableCursor();
+        
+        var mousePosition = Raylib.GetMousePosition();
+        
+        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
+                                mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
+        
+        if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left))
+            Raylib.DisableCursor();
         
         if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
         if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
@@ -86,12 +97,12 @@ public class Player
         if (justJumped)
         {
             jumpLandPlayer.Sound = jumpSound;
-            jumpLandPlayer.Play2D();
+            //jumpLandPlayer.Play2D();
         }
         else if (justLanded)
         {
             jumpLandPlayer.Sound = landSound;
-            jumpLandPlayer.Play2D();
+            //jumpLandPlayer.Play2D();
         }
         
         // --- Gravity & Vertical Movement ---
