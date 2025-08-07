@@ -21,19 +21,19 @@ public class CRTEffect
     public void Start()
     {
         target = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
-        Raylib.SetTextureFilter(target.Texture, TextureFilter.Bilinear);
+        Raylib.SetTextureFilter(target.Texture, TextureFilter.Point);
         
-        filmicEffectRT = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
-        Raylib.SetTextureFilter(filmicEffectRT.Texture, TextureFilter.Bilinear);
-        
-        filmGrainRT = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
-        Raylib.SetTextureFilter(filmGrainRT.Texture, TextureFilter.Bilinear);
+        //filmGrainRT = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
+        //Raylib.SetTextureFilter(filmGrainRT.Texture, TextureFilter.Point);
         
         ditherRT = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
-        Raylib.SetTextureFilter(ditherRT.Texture, TextureFilter.Bilinear);
+        Raylib.SetTextureFilter(ditherRT.Texture, TextureFilter.Point);
         
         //crtOutput = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
         //Raylib.SetTextureFilter(crtOutput.Texture, TextureFilter.Bilinear);
+        
+        filmicEffectRT = Raylib.LoadRenderTexture(Engine.VirtualScreenWidth, Engine.VirtualScreenHeight);
+        Raylib.SetTextureFilter(filmicEffectRT.Texture, TextureFilter.Bilinear);
         
         crtShader = Resource.LoadShader(null, "CRT2.fs");
         
