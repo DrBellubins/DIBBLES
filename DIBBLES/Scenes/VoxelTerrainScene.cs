@@ -81,6 +81,16 @@ public class VoxelTerrainScene : Scene
         terrainGen.Draw();
 
         Raylib.EndMode3D();
+        
+        // Draw chunk coordinates in 2D after 3D rendering
+        foreach (var chunk in terrainGen.GetChunks().Values)
+        {
+            Vector3 chunkCenter = chunk.Position + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+            Vector2 screenPos = Raylib.GetWorldToScreen(chunkCenter, _camera);
+            
+            Raylib.DrawText($"Chunk ({chunk.Coords.X}, {chunk.Coords.Y})", (int)screenPos.X, (int)screenPos.Y, 10, Color.Black);
+        }
+        
         Raylib.DrawFPS(10, 10);
         Raylib.EndDrawing();
     }
