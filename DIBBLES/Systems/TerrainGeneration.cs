@@ -25,7 +25,7 @@ public class Chunk
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 8;
+    public const int RenderDistance = 16;
     public const int ChunkSize = 16;
     public const int ChunkHeight = 32;
     
@@ -74,11 +74,6 @@ public class TerrainGeneration
                 if (!chunks.ContainsKey(chunkCoord))
                 {
                     chunksToGenerate.Add(chunkCoord);
-                    Console.WriteLine($"[GenerateTerrain] Queuing chunk for generation: {chunkCoord}");
-                }
-                else
-                {
-                    Console.WriteLine($"[GenerateTerrain] Chunk {chunkCoord} already exists, skipping");
                 }
             }
         }
@@ -88,26 +83,9 @@ public class TerrainGeneration
             var chunk = new Chunk(coord);
             GenerateChunkData(chunk);
             
-            if (chunks.ContainsKey(coord))
-            {
-                Console.WriteLine($"[GenerateTerrain] Warning: Overwriting existing chunk at {coord}");
-            }
-            
             chunks[coord] = chunk;
         
             chunk.Model = generateChunkMesh(chunk);
-
-            unsafe
-            {
-                if (chunk.Model.MeshCount == 0)
-                {
-                    Console.WriteLine($"[GenerateTerrain] Warning: Chunk {coord} has an empty mesh!");
-                }
-                else
-                {
-                    Console.WriteLine($"[GenerateTerrain] Chunk {coord} mesh generated with {chunk.Model.Meshes->VertexCount} vertices");
-                }
-            }
         }
     }
     
@@ -118,6 +96,7 @@ public class TerrainGeneration
             for (int z = 0; z < ChunkSize; z++)
             {
                 float height = noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * 0.5f + 0.5f;
+                
                 int terrainHeight = (int)(height * (ChunkHeight - 10)) + 10;
 
                 for (int y = 0; y < ChunkHeight; y++)
@@ -165,7 +144,8 @@ public class TerrainGeneration
                 {
                     if (chunk.VoxelData[x, y, z] == 0) continue;
 
-                    var pos = new Vector3(chunk.Position.X + x, chunk.Position.Y + y, chunk.Position.Z + z);
+                    var pos = new Vector3(x, y, z);
+                    //var pos = new Vector3(chunk.Position.X + x, chunk.Position.Y + y, chunk.Position.Z + z);
                     var color = Raylib.ColorLerp(Color.Green, Color.Brown, (float)y / ChunkHeight);
                     
                     int vertexOffset = vertices.Count;
@@ -249,48 +229,45 @@ public class TerrainGeneration
             TriangleCount = indices.Count / 3
         };
 
-        // Only upload data if the mesh is non-empty
-        if (vertices.Count > 0)
+        // Upload mesh data
+        unsafe
         {
-            unsafe
+            mesh.Vertices = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
+                
+            for (int i = 0; i < vertices.Count; i++)
             {
-                mesh.Vertices = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
-                for (int i = 0; i < vertices.Count; i++)
-                {
-                    mesh.Vertices[i * 3] = vertices[i].X;
-                    mesh.Vertices[i * 3 + 1] = vertices[i].Y;
-                    mesh.Vertices[i * 3 + 2] = vertices[i].Z;
-                }
-
-                mesh.Normals = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
-                for (int i = 0; i < normals.Count; i++)
-                {
-                    mesh.Normals[i * 3] = normals[i].X;
-                    mesh.Normals[i * 3 + 1] = normals[i].Y;
-                    mesh.Normals[i * 3 + 2] = normals[i].Z;
-                }
-
-                mesh.Colors = (byte*)Raylib.MemAlloc((uint)mesh.VertexCount * 4 * sizeof(byte));
-                for (int i = 0; i < colors.Count; i++)
-                {
-                    mesh.Colors[i * 4] = colors[i].R;
-                    mesh.Colors[i * 4 + 1] = colors[i].G;
-                    mesh.Colors[i * 4 + 2] = colors[i].B;
-                    mesh.Colors[i * 4 + 3] = colors[i].A;
-                }
-
-                mesh.Indices = (ushort*)Raylib.MemAlloc((uint)indices.Count * sizeof(ushort));
-                for (int i = 0; i < indices.Count; i++)
-                {
-                    mesh.Indices[i] = (ushort)indices[i];
-                }
-            
-                Raylib.UploadMesh(&mesh, false);
+                mesh.Vertices[i * 3] = vertices[i].X;
+                mesh.Vertices[i * 3 + 1] = vertices[i].Y;
+                mesh.Vertices[i * 3 + 2] = vertices[i].Z;
             }
-        }
-        else
-        {
-            Console.WriteLine($"[generateChunkMesh] Warning: Chunk {chunk.Coords} has no vertices, creating empty mesh");
+
+            mesh.Normals = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
+                
+            for (int i = 0; i < normals.Count; i++)
+            {
+                mesh.Normals[i * 3] = normals[i].X;
+                mesh.Normals[i * 3 + 1] = normals[i].Y;
+                mesh.Normals[i * 3 + 2] = normals[i].Z;
+            }
+
+            mesh.Colors = (byte*)Raylib.MemAlloc((uint)mesh.VertexCount * 4 * sizeof(byte));
+                
+            for (int i = 0; i < colors.Count; i++)
+            {
+                mesh.Colors[i * 4] = colors[i].R;
+                mesh.Colors[i * 4 + 1] = colors[i].G;
+                mesh.Colors[i * 4 + 2] = colors[i].B;
+                mesh.Colors[i * 4 + 3] = colors[i].A;
+            }
+
+            mesh.Indices = (ushort*)Raylib.MemAlloc((uint)indices.Count * sizeof(ushort));
+                
+            for (int i = 0; i < indices.Count; i++)
+            {
+                mesh.Indices[i] = (ushort)indices[i];
+            }
+            
+            Raylib.UploadMesh(&mesh, false);
         }
         
         Model model = Raylib.LoadModelFromMesh(mesh);
@@ -303,17 +280,6 @@ public class TerrainGeneration
     }
     
     private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
-    {
-        // If outside chunk bounds, treat as air (non-solid)
-        if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkSize)
-        {
-            return false;
-        }
-    
-        return chunk.VoxelData[x, y, z] == 1;
-    }
-    
-    /*private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
     {
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkSize)
         {
@@ -328,21 +294,16 @@ public class TerrainGeneration
             
             if (y < 0 || y >= ChunkHeight) return false;
             
-            //Console.WriteLine($"[Chunk {chunk.Coords}] Checking neighbor at {neighborCoord} for local ({x}, {y}, {z}) mapped to ({nx}, {y}, {nz})");
-            
             if (chunks.TryGetValue(neighborCoord, out var neighborChunk))
             {
-                //Console.WriteLine($"[Chunk {chunk.Coords}] Neighbor found at {neighborCoord}");
                 return neighborChunk.VoxelData[nx, y, nz] == 1;
             }
-            
-            //Console.WriteLine($"[Chunk {chunk.Coords}] Neighbor not found at {neighborCoord}");
             
             return false;
         }
         
         return chunk.VoxelData[x, y, z] == 1;
-    }*/
+    }
     
     public void Draw()
     {
@@ -358,11 +319,8 @@ public class TerrainGeneration
                 (byte)255
             );
             
-            Raylib.DrawCubeWires(
-                chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-                ChunkSize, ChunkHeight, ChunkSize, 
-                debugColor
-            );
+            //Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
+            //    ChunkSize, ChunkHeight, ChunkSize, debugColor);
         }
     }
 }
