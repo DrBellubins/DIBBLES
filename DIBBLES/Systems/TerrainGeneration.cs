@@ -6,32 +6,16 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Systems;
 
-public class Chunk
-{
-    public int ID;
-    public Vector2Int Coords;
-    public Vector3 Position;
-    public byte[,,] VoxelData;
-    public Model Model;
-
-    public Chunk(Vector2Int coords)
-    {
-        ID = GMath.NextInt(-int.MaxValue, int.MaxValue);
-        Coords = coords;
-        Position = new Vector3(coords.X * TerrainGeneration.ChunkSize, 0, coords.Y * TerrainGeneration.ChunkSize);
-        VoxelData = new byte[TerrainGeneration.ChunkSize, TerrainGeneration.ChunkHeight, TerrainGeneration.ChunkSize];
-    }
-}
-
 public class TerrainGeneration
 {
     public const int RenderDistance = 16;
     public const int ChunkSize = 16;
     public const int ChunkHeight = 32;
     
-    private Dictionary<Vector2Int, Chunk> chunks = new Dictionary<Vector2Int, Chunk>();
+    private Dictionary<Vector3, Chunk> chunks = new Dictionary<Vector3, Chunk>();
+    
     private FastNoiseLite noise = new FastNoiseLite();
-    private Vector2Int lastCameraChunk = new Vector2Int(int.MaxValue, int.MaxValue);
+    private Vector3 lastCameraChunk = Vector3.Zero;
 
     public void Start()
     {
@@ -46,8 +30,9 @@ public class TerrainGeneration
     public void UpdateTerrain(Vector3 cameraPosition)
     {
         // Calculate current chunk coordinates based on camera position
-        Vector2Int currentChunk = new Vector2Int(
+        var currentChunk = new Vector3(
             (int)Math.Floor(cameraPosition.X / ChunkSize),
+            0f,
             (int)Math.Floor(cameraPosition.Z / ChunkSize)
         );
         
@@ -60,30 +45,30 @@ public class TerrainGeneration
         }
     }
     
-    private void GenerateTerrain(Vector2Int centerChunk)
+    private void GenerateTerrain(Vector3 centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
-        List<Vector2Int> chunksToGenerate = new List<Vector2Int>();
-
-        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        List<Vector3> chunksToGenerate = new List<Vector3>();
+        
+        for (int cx = (int)centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
         {
-            for (int cz = centerChunk.Y - halfRenderDistance; cz <= centerChunk.Y + halfRenderDistance; cz++)
+            for (int cz = (int)centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
             {
-                Vector2Int chunkCoord = new Vector2Int(cx, cz);
+                Vector3 chunkPos = new Vector3(cx * ChunkSize, 0f, cz * ChunkSize);
                 
-                if (!chunks.ContainsKey(chunkCoord))
+                if (!chunks.ContainsKey(chunkPos))
                 {
-                    chunksToGenerate.Add(chunkCoord);
+                    chunksToGenerate.Add(chunkPos);
                 }
             }
         }
     
-        foreach (var coord in chunksToGenerate)
+        foreach (var pos in chunksToGenerate)
         {
-            var chunk = new Chunk(coord);
+            var chunk = new Chunk(pos);
             GenerateChunkData(chunk);
             
-            chunks[coord] = chunk;
+            chunks[pos] = chunk;
         
             chunk.Model = generateChunkMesh(chunk);
         }
@@ -96,26 +81,35 @@ public class TerrainGeneration
             for (int z = 0; z < ChunkSize; z++)
             {
                 float height = noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * 0.5f + 0.5f;
-                
                 int terrainHeight = (int)(height * (ChunkHeight - 10)) + 10;
 
                 for (int y = 0; y < ChunkHeight; y++)
                 {
+                    var block = new Block();
+                    block.Type = BlockType.Dirt;
+                    block.Position = new Vector3(x, y, z);
+                    
                     chunk.VoxelData[x, y, z] = (byte)(y < terrainHeight ? 1 : 0);
                 }
             }
         }
     }
     
-    private void UnloadDistantChunks(Vector2Int centerChunk)
+    private void UnloadDistantChunks(Vector3 centerChunk)
     {
-        List<Vector2Int> chunksToRemove = new List<Vector2Int>();
+        List<Vector3> chunksToRemove = new List<Vector3>();
 
         foreach (var chunk in chunks)
         {
-            int dx = Math.Abs(chunk.Key.X - centerChunk.X);
-            int dz = Math.Abs(chunk.Key.Y - centerChunk.Y);
-            
+            // Convert world-space key to chunk coordinates
+            int chunkX = (int)Math.Floor(chunk.Key.X / ChunkSize);
+            int chunkZ = (int)Math.Floor(chunk.Key.Z / ChunkSize);
+            int centerX = (int)centerChunk.X;
+            int centerZ = (int)centerChunk.Z;
+
+            int dx = Math.Abs(chunkX - centerX);
+            int dz = Math.Abs(chunkZ - centerZ);
+        
             if (dx > RenderDistance / 2 || dz > RenderDistance / 2)
             {
                 chunksToRemove.Add(chunk.Key);
@@ -145,7 +139,6 @@ public class TerrainGeneration
                     if (chunk.VoxelData[x, y, z] == 0) continue;
 
                     var pos = new Vector3(x, y, z);
-                    //var pos = new Vector3(chunk.Position.X + x, chunk.Position.Y + y, chunk.Position.Z + z);
                     var color = Raylib.ColorLerp(Color.Green, Color.Brown, (float)y / ChunkHeight);
                     
                     int vertexOffset = vertices.Count;
@@ -274,7 +267,7 @@ public class TerrainGeneration
         return model;
     }
     
-    public Dictionary<Vector2Int, Chunk> GetChunks()
+    public Dictionary<Vector3, Chunk> GetChunks()
     {
         return chunks;
     }
@@ -283,26 +276,68 @@ public class TerrainGeneration
     {
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkSize)
         {
-            Vector2Int neighborCoord = chunk.Coords;
+            // Calculate the current chunk's coordinates from its Position
+            Vector3 chunkCoord = new Vector3(
+                (int)(chunk.Position.X / ChunkSize),
+                0f,
+                (int)(chunk.Position.Z / ChunkSize)
+            );
+
+            // Adjust chunk coordinates based on out-of-bounds voxel
+            Vector3 neighborCoord = chunkCoord;
             int nx = x, nz = z;
-            
+
             if (x < 0) { nx = ChunkSize - 1; neighborCoord.X -= 1; }
             else if (x >= ChunkSize) { nx = 0; neighborCoord.X += 1; }
-            
-            if (z < 0) { nz = ChunkSize - 1; neighborCoord.Y -= 1; }
-            else if (z >= ChunkSize) { nz = 0; neighborCoord.Y += 1; }
-            
+
+            if (z < 0) { nz = ChunkSize - 1; neighborCoord.Z -= 1; }
+            else if (z >= ChunkSize) { nz = 0; neighborCoord.Z += 1; }
+
             if (y < 0 || y >= ChunkHeight) return false;
-            
+
+            // Look up the neighboring chunk
             if (chunks.TryGetValue(neighborCoord, out var neighborChunk))
             {
                 return neighborChunk.VoxelData[nx, y, nz] == 1;
             }
-            
+
             return false;
         }
-        
+
         return chunk.VoxelData[x, y, z] == 1;
+    }
+    
+    public Block? GetBlockAt(Vector3 worldPos)
+    {
+        // Calculate chunk coordinates
+        Vector3 chunkCoord = new Vector3(
+            (int)Math.Floor(worldPos.X / ChunkSize),
+            0f,
+            (int)Math.Floor(worldPos.Z / ChunkSize)
+        );
+
+        // Calculate local block coordinates
+        int localX = (int)(worldPos.X - (chunkCoord.X * ChunkSize));
+        int localY = (int)worldPos.Y;
+        int localZ = (int)(worldPos.Z - (chunkCoord.Z * ChunkSize));
+
+        // Check if chunk exists and coordinates are valid
+        if (chunks.TryGetValue(chunkCoord, out var chunk) &&
+            localX >= 0 && localX < ChunkSize &&
+            localY >= 0 && localY < ChunkHeight &&
+            localZ >= 0 && localZ < ChunkSize)
+        {
+            if (chunk.VoxelData[localX, localY, localZ] == 1)
+            {
+                return new Block
+                {
+                    Type = BlockType.Dirt,
+                    Position = new Vector3(localX, localY, localZ)
+                };
+            }
+        }
+    
+        return null;
     }
     
     public void Draw()
@@ -311,16 +346,8 @@ public class TerrainGeneration
         {
             Raylib.DrawModel(chunk.Model, chunk.Position, 1.0f, Color.White);
             
-            // Draw chunk boundaries with unique colors based on coordinates
-            Color debugColor = new Color(
-                (byte)(Math.Abs(chunk.Coords.X % 255)),
-                (byte)(Math.Abs(chunk.Coords.Y % 255)),
-                (byte)255,
-                (byte)255
-            );
-            
             //Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-            //    ChunkSize, ChunkHeight, ChunkSize, debugColor);
+            //    ChunkSize, ChunkHeight, ChunkSize, Color.Red);
         }
     }
 }

@@ -91,6 +91,8 @@ public class VoxelTerrainScene : Scene
             Raylib.DrawText($"Chunk ({chunk.Position.X}, {chunk.Position.Z})", (int)screenPos.X, (int)screenPos.Y, 10, Color.Black);
         }*/
         
+        //Raylib.DrawGrid(100, 16);
+        
         Raylib.DrawFPS(10, 10);
         Raylib.EndDrawing();
     }
