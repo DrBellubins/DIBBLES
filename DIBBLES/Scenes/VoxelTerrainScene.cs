@@ -17,8 +17,6 @@ public class VoxelTerrainScene : Scene
 
     public override void Start()
     {
-        terrainGen.Start();
-        
         _camera = new Camera3D
         {
             Position = new Vector3(0f, TerrainGeneration.ChunkHeight, 0f),
@@ -31,12 +29,20 @@ public class VoxelTerrainScene : Scene
         Raylib.DisableCursor();
         
         // Initial terrain generation
+        terrainGen.Start(_camera);
         terrainGen.UpdateTerrain(_camera.Position);
     }
 
     public override void Update()
     {
-        float moveSpeed = 20.0f * Time.DeltaTime;
+        float currentMovespeed;
+
+        if (Raylib.IsKeyDown(KeyboardKey.LeftShift))
+            currentMovespeed = 60f;
+        else
+            currentMovespeed = 20f;
+        
+        float moveSpeed = currentMovespeed * Time.DeltaTime;
 
         var direction = new Vector3();
 
@@ -69,7 +75,14 @@ public class VoxelTerrainScene : Scene
         
         _camera.Target = _camera.Position + CameraDirection;
         
-        terrainGen.UpdateTerrain(_camera.Position);
+        // --- Block breaking and placing ---
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            terrainGen.BreakBlock(_camera);
+        
+        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
+            terrainGen.PlaceBlock(BlockType.Dirt, _camera); // Default to placing dirt blocks
+        
+        //terrainGen.UpdateTerrain(_camera.Position);
     }
 
     public override void Draw()
@@ -83,15 +96,15 @@ public class VoxelTerrainScene : Scene
         Raylib.EndMode3D();
         
         // Draw chunk coordinates in 2D after 3D rendering
-        /*foreach (var chunk in terrainGen.GetChunks().Values)
-        {
-            Vector3 chunkCenter = chunk.Position + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
-            Vector2 screenPos = Raylib.GetWorldToScreen(chunkCenter, _camera);
-            
-            Raylib.DrawText($"Chunk ({chunk.Position.X}, {chunk.Position.Z})", (int)screenPos.X, (int)screenPos.Y, 10, Color.Black);
-        }*/
+        //foreach (var pos in terrainGen.chunks.Keys)
+        //{
+        //    Vector3 chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+        //    Vector2 screenPos = Raylib.GetWorldToScreen(chunkCenter, _camera);
+        //    
+        //    Raylib.DrawText($"Chunk ({pos.X}, {pos.Z})", (int)screenPos.X, (int)screenPos.Y, 24, Color.Blue);
+        //}
         
-        //Raylib.DrawGrid(100, 16);
+        Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
         
         Raylib.DrawFPS(10, 10);
         Raylib.EndDrawing();

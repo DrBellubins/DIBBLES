@@ -50,7 +50,7 @@ public class Engine
         
         foreach (var scene in Scenes)
             scene.Start();
-
+        
         while (IsRunning)
         {
             if (Raylib.WindowShouldClose())
