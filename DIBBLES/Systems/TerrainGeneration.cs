@@ -20,6 +20,7 @@ public class TerrainGeneration
     private Vector3 lastCameraChunk = Vector3.One; // Needs to != zero for first gen
 
     public int Seed;
+    private Block? selectedBlock;
     
     public void Start(Camera3D _camera)
     {
@@ -39,13 +40,13 @@ public class TerrainGeneration
         noise.SetFractalGain(0.5f);
     }
     
-    public void UpdateTerrain(Vector3 cameraPosition)
+    public void UpdateTerrain(Camera3D camera)
     {
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3(
-            (int)Math.Floor(cameraPosition.X / ChunkSize),
+            (int)Math.Floor(camera.Position.X / ChunkSize),
             0f,
-            (int)Math.Floor(cameraPosition.Z / ChunkSize)
+            (int)Math.Floor(camera.Position.Z / ChunkSize)
         );
         
         // Only update if the camera has moved to a new chunk
@@ -55,6 +56,12 @@ public class TerrainGeneration
             GenerateTerrain(currentChunk);
             UnloadDistantChunks(currentChunk);
         }
+    }
+
+    // TEMPORARY
+    public void UpdateTest(Camera3D camera)
+    {
+        selectedBlock = selectBlock(camera);
     }
     
     private void GenerateTerrain(Vector3 centerChunk)
@@ -394,17 +401,15 @@ public class TerrainGeneration
         return chunk.Blocks[x, y, z]?.Info.Type != BlockType.Air;
     }
 
-    public void BreakBlock(Camera3D camera)
+    private Block? selectBlock(Camera3D camera)
     {
         Ray ray = Raylib.GetScreenToWorldRay(new Vector2(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f), camera);
         
         Block? hitBlock = null;
-        Vector3? hitPosition = null;
         float closestDistance = float.MaxValue;
 
         foreach (var chunk in chunks.Values)
         {
-            // Create a bounding box for the chunk
             BoundingBox chunkBox = new BoundingBox(
                 chunk.Position,
                 chunk.Position + new Vector3(ChunkSize, ChunkHeight, ChunkSize)
@@ -419,6 +424,7 @@ public class TerrainGeneration
                         for (int z = 0; z < ChunkSize; z++)
                         {
                             var block = chunk.Blocks[x, y, z];
+                            
                             if (block?.Info.Type == BlockType.Air) continue;
 
                             Vector3 blockPos = chunk.Position + new Vector3(x, y, z);
@@ -429,11 +435,11 @@ public class TerrainGeneration
                             );
 
                             var collision = Raylib.GetRayCollisionBox(ray, blockBox);
+                            
                             if (collision.Hit && collision.Distance < closestDistance && collision.Distance <= ReachDistance)
                             {
                                 closestDistance = collision.Distance;
                                 hitBlock = block;
-                                hitPosition = blockPos;
                             }
                         }
                     }
@@ -441,29 +447,88 @@ public class TerrainGeneration
             }
         }
 
-        if (hitBlock != null && hitPosition.HasValue)
+        return hitBlock;
+    }
+    
+    public void BreakBlock()
+    {
+        if (selectedBlock == null) return;
+
+        // Calculate chunk coordinates
+        Vector3 chunkCoord = new Vector3(
+            (int)Math.Floor(selectedBlock.Position.X / ChunkSize) * ChunkSize,
+            0f,
+            (int)Math.Floor(selectedBlock.Position.Z / ChunkSize) * ChunkSize
+        );
+
+        if (chunks.TryGetValue(chunkCoord, out var chunk))
         {
-            // Calculate chunk coordinates in world space
-            Vector3 chunkCoord = new Vector3(
-                (int)Math.Floor(hitPosition.Value.X / ChunkSize) * ChunkSize,
-                0f,
-                (int)Math.Floor(hitPosition.Value.Z / ChunkSize) * ChunkSize
-            );
+            // Calculate local block coordinates
+            int localX = (int)(selectedBlock.Position.X - chunkCoord.X);
+            int localY = (int)selectedBlock.Position.Y;
+            int localZ = (int)(selectedBlock.Position.Z - chunkCoord.Z);
 
-            if (chunks.TryGetValue(chunkCoord, out var chunk))
+            if (localX >= 0 && localX < ChunkSize &&
+                localY >= 0 && localY < ChunkHeight &&
+                localZ >= 0 && localZ < ChunkSize)
             {
-                // Calculate local block coordinates
-                int localX = (int)(hitPosition.Value.X - chunkCoord.X);
-                int localY = (int)hitPosition.Value.Y;
-                int localZ = (int)(hitPosition.Value.Z - chunkCoord.Z);
-
-                if (localX >= 0 && localX < ChunkSize &&
-                    localY >= 0 && localY < ChunkHeight &&
-                    localZ >= 0 && localZ < ChunkSize)
+                // Replace block with air
+                chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[BlockType.Air]);
+            
+                // Avoid adding same chunk twice
+                if (!chunk.Info.Modified)
                 {
-                    // Replace block with air
-                    chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[BlockType.Air]);
-                    
+                    chunk.Info.Modified = true;
+                    WorldSave.Data.ModifiedChunks.Add(chunk);
+                }
+
+                // Update chunk lighting and mesh
+                generateLighting(chunk);
+                Raylib.UnloadModel(chunk.Model);
+                chunk.Model = generateChunkMesh(chunk);
+            }
+        }
+    }
+    
+    public void PlaceBlock(BlockType blockType, Camera3D camera)
+    {
+        if (selectedBlock == null) return;
+
+        // Get ray to calculate hit normal
+        Ray ray = Raylib.GetScreenToWorldRay(new Vector2(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f), camera);
+        Vector3 blockPos = selectedBlock.Position;
+        BoundingBox blockBox = new BoundingBox(blockPos, blockPos + Vector3.One);
+        var collision = Raylib.GetRayCollisionBox(ray, blockBox);
+    
+        if (!collision.Hit) return;
+
+        // Calculate the position to place the new block
+        Vector3 placePos = blockPos + collision.Normal;
+
+        // Calculate chunk coordinates in world space
+        Vector3 chunkCoord = new Vector3(
+            (int)Math.Floor(blockPos.X / ChunkSize) * ChunkSize,
+            0f,
+            (int)Math.Floor(blockPos.Z / ChunkSize) * ChunkSize
+        );
+
+        if (chunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            // Calculate local block coordinates
+            int localX = (int)(placePos.X - chunkCoord.X);
+            int localY = (int)placePos.Y;
+            int localZ = (int)(placePos.Z - chunkCoord.Z);
+
+            if (localX >= 0 && localX < ChunkSize &&
+                localY >= 0 && localY < ChunkHeight &&
+                localZ >= 0 && localZ < ChunkSize)
+            {
+                // Only place if the target position is air
+                if (chunk.Blocks[localX, localY, localZ]?.Info.Type == BlockType.Air)
+                {
+                    // Place the new block
+                    chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[blockType]);
+                
                     // Avoid adding same chunk twice
                     if (!chunk.Info.Modified)
                     {
@@ -478,130 +543,6 @@ public class TerrainGeneration
                 }
             }
         }
-    }
-    
-    public void PlaceBlock(BlockType blockType, Camera3D camera)
-    {
-        Ray ray = Raylib.GetScreenToWorldRay(new Vector2(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f), camera);
-        
-        Block? hitBlock = null;
-        Vector3? hitPosition = null;
-        Vector3? hitNormal = null;
-        float closestDistance = float.MaxValue;
-
-        foreach (var chunk in chunks.Values)
-        {
-            BoundingBox chunkBox = new BoundingBox(
-                chunk.Position,
-                chunk.Position + new Vector3(ChunkSize, ChunkHeight, ChunkSize)
-            );
-
-            if (Raylib.GetRayCollisionBox(ray, chunkBox).Hit)
-            {
-                for (int x = 0; x < ChunkSize; x++)
-                {
-                    for (int y = 0; y < ChunkHeight; y++)
-                    {
-                        for (int z = 0; z < ChunkSize; z++)
-                        {
-                            var block = chunk.Blocks[x, y, z];
-                            if (block?.Info.Type == BlockType.Air) continue;
-
-                            Vector3 blockPos = chunk.Position + new Vector3(x, y, z);
-                            BoundingBox blockBox = new BoundingBox(
-                                blockPos,
-                                blockPos + Vector3.One
-                            );
-
-                            var collision = Raylib.GetRayCollisionBox(ray, blockBox);
-                            if (collision.Hit && collision.Distance < closestDistance && collision.Distance <= ReachDistance)
-                            {
-                                closestDistance = collision.Distance;
-                                hitBlock = block;
-                                hitPosition = blockPos;
-                                hitNormal = collision.Normal;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (hitBlock != null && hitPosition.HasValue && hitNormal.HasValue)
-        {
-            // Calculate the position to place the new block
-            Vector3 placePos = hitPosition.Value + hitNormal.Value;
-
-            // Calculate chunk coordinates in world space
-            Vector3 chunkCoord = new Vector3(
-                (int)Math.Floor(hitPosition.Value.X / ChunkSize) * ChunkSize,
-                0f,
-                (int)Math.Floor(hitPosition.Value.Z / ChunkSize) * ChunkSize
-            );
-
-            if (chunks.TryGetValue(chunkCoord, out var chunk))
-            {
-                // Calculate local block coordinates
-                int localX = (int)(placePos.X - chunkCoord.X);
-                int localY = (int)placePos.Y;
-                int localZ = (int)(placePos.Z - chunkCoord.Z);
-
-                if (localX >= 0 && localX < ChunkSize &&
-                    localY >= 0 && localY < ChunkHeight &&
-                    localZ >= 0 && localZ < ChunkSize)
-                {
-                    // Only place if the target position is air
-                    if (chunk.Blocks[localX, localY, localZ]?.Info.Type == BlockType.Air)
-                    {
-                        // Place the new block
-                        chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[blockType]);
-                        
-                        // Avoid adding same chunk twice
-                        if (!chunk.Info.Modified)
-                        {
-                            chunk.Info.Modified = true;
-                            WorldSave.Data.ModifiedChunks.Add(chunk);
-                        }
-
-                        // Update chunk lighting and mesh
-                        generateLighting(chunk);
-                        Raylib.UnloadModel(chunk.Model);
-                        chunk.Model = generateChunkMesh(chunk);
-                    }
-                }
-            }
-        }
-    }
-
-    public Block? GetBlockAt(Vector3 worldPos)
-    {
-        // Calculate chunk coordinates
-        Vector3 chunkCoord = new Vector3(
-            (int)Math.Floor(worldPos.X / ChunkSize),
-            0f,
-            (int)Math.Floor(worldPos.Z / ChunkSize)
-        );
-
-        // Calculate local block coordinates
-        int localX = (int)(worldPos.X - (chunkCoord.X * ChunkSize));
-        int localY = (int)worldPos.Y;
-        int localZ = (int)(worldPos.Z - (chunkCoord.Z * ChunkSize));
-
-        // Check if chunk exists and coordinates are valid
-        if (chunks.TryGetValue(chunkCoord, out var chunk) &&
-            localX >= 0 && localX < ChunkSize &&
-            localY >= 0 && localY < ChunkHeight &&
-            localZ >= 0 && localZ < ChunkSize)
-        {
-            var block = chunk.Blocks[localX, localY, localZ];
-            
-            if (block?.Info.Type != BlockType.Air)
-            {
-                return block;
-            }
-        }
-    
-        return null;
     }
     
     private void UnloadDistantChunks(Vector3 centerChunk)
@@ -644,6 +585,9 @@ public class TerrainGeneration
                 debugColor = Color.Red;
             else
                 debugColor = Color.Blue;
+            
+            if (selectedBlock != null)
+                Raylib.DrawCubeWires(selectedBlock.Position + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
             
             Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
                 ChunkSize, ChunkHeight, ChunkSize, debugColor);
