@@ -19,11 +19,19 @@ public class TerrainGeneration
     private readonly FastNoiseLite noise = new FastNoiseLite();
     private Vector3 lastCameraChunk = Vector3.One; // Needs to != zero for first gen
 
+    public int Seed;
+    
     public void Start(Camera3D _camera)
     {
         Block.InitializeBlockPrefabs();
         
+        if (WorldSave.Data.Seed != 0)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(int.MaxValue);
+        
         noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        noise.SetSeed(1337);
         noise.SetFrequency(0.02f);
         noise.SetFractalType(FastNoiseLite.FractalType.FBm);
         noise.SetFractalOctaves(4);
@@ -111,6 +119,8 @@ public class TerrainGeneration
         }
     }
 
+    // TODO: Blocks immediately turn to black after a certain distance
+    // TODO: Entire blocks are shaded when just one face should be
     private void generateLighting(Chunk chunk)
     {
         for (int x = 0; x < ChunkSize; x++)
@@ -453,7 +463,13 @@ public class TerrainGeneration
                 {
                     // Replace block with air
                     chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[BlockType.Air]);
-                    chunk.Info.Modified = true;
+                    
+                    // Avoid adding same chunk twice
+                    if (!chunk.Info.Modified)
+                    {
+                        chunk.Info.Modified = true;
+                        WorldSave.Data.ModifiedChunks.Add(chunk);
+                    }
 
                     // Update chunk lighting and mesh
                     generateLighting(chunk);
@@ -539,7 +555,13 @@ public class TerrainGeneration
                     {
                         // Place the new block
                         chunk.Blocks[localX, localY, localZ] = new Block(new Vector3(localX, localY, localZ), Block.Prefabs[blockType]);
-                        chunk.Info.Modified = true;
+                        
+                        // Avoid adding same chunk twice
+                        if (!chunk.Info.Modified)
+                        {
+                            chunk.Info.Modified = true;
+                            WorldSave.Data.ModifiedChunks.Add(chunk);
+                        }
 
                         // Update chunk lighting and mesh
                         generateLighting(chunk);
@@ -616,8 +638,15 @@ public class TerrainGeneration
         {
             Raylib.DrawModel(chunk.Model, chunk.Position, 1.0f, Color.White);
             
+            Color debugColor = Color.Black;
+            
+            if (chunk.Info.Modified)
+                debugColor = Color.Red;
+            else
+                debugColor = Color.Blue;
+            
             Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-                ChunkSize, ChunkHeight, ChunkSize, Color.Blue);
+                ChunkSize, ChunkHeight, ChunkSize, debugColor);
         }
     }
 }

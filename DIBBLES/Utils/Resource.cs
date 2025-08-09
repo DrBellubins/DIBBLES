@@ -6,7 +6,7 @@ namespace DIBBLES;
 public static class Resource
 {
     private static string execDirectory = AppContext.BaseDirectory;
-    private static string assetsPath = $"{execDirectory}/Assets";
+    private static string assetsPath = Path.Combine(execDirectory, "assets");
 
     private static List<Texture2D> textures = new List<Texture2D>();
     private static List<Shader> shaders = new List<Shader>();

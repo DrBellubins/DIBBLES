@@ -72,7 +72,6 @@ public class Block
 {
     public Vector3 Position;
     public BlockInfo Info;
-    public ChunkInfo ChunkInfo;
     public float LightLevel; // 0 to 1
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
@@ -86,7 +85,6 @@ public class Block
     {
         Position = Vector3.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        ChunkInfo = new ChunkInfo();
         LightLevel = 1.0f;
     }
 
@@ -94,7 +92,6 @@ public class Block
     {
         Position = position;
         Info = info;
-        ChunkInfo = new ChunkInfo();
         LightLevel = 1.0f;
     }
     

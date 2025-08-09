@@ -31,6 +31,8 @@ public class VoxelTerrainScene : Scene
         // Initial terrain generation
         terrainGen.Start(_camera);
         terrainGen.UpdateTerrain(_camera.Position);
+        
+        WorldSave.Initialize();
     }
 
     public override void Update()
@@ -58,6 +60,13 @@ public class VoxelTerrainScene : Scene
         if (Raylib.IsKeyDown(KeyboardKey.D))
             _camera.Position -= Vector3.Normalize(Vector3.Cross(_camera.Up, _camera.Target - _camera.Position)) * moveSpeed;
 
+        // Temporary world saving/loading
+        if (Raylib.IsKeyDown(KeyboardKey.O))
+            WorldSave.LoadWorldData("test");
+
+        if (Raylib.IsKeyDown(KeyboardKey.L))
+            WorldSave.SaveWorldData("test");
+        
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * 0.1f;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * 0.1f;
