@@ -29,7 +29,7 @@ public class VoxelTerrainScene : Scene
         Raylib.DisableCursor();
         
         // Initial terrain generation
-        terrainGen.Start(_camera);
+        terrainGen.Start();
         terrainGen.UpdateTerrain(_camera);
         
         WorldSave.Initialize();
@@ -37,7 +37,10 @@ public class VoxelTerrainScene : Scene
 
     public override void Update()
     {
-        terrainGen.UpdateTest(_camera);
+        Debug.Update(_camera);
+        
+        //terrainGen.UpdateTerrain(_camera);
+        terrainGen.UpdateMovement(_camera);
         
         // Temporary world saving/loading
         if (Raylib.IsKeyDown(KeyboardKey.O))
@@ -91,7 +94,7 @@ public class VoxelTerrainScene : Scene
             terrainGen.BreakBlock();
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            terrainGen.PlaceBlock(BlockType.Dirt, _camera); // Default to placing dirt blocks
+            terrainGen.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
         
         //terrainGen.UpdateTerrain(_camera.Position);
     }
@@ -103,17 +106,18 @@ public class VoxelTerrainScene : Scene
         Raylib.BeginMode3D(_camera);
 
         terrainGen.Draw();
+        
+        // Draw chunk coordinates in 2D after 3D rendering
+        foreach (var pos in terrainGen.chunks.Keys)
+        {
+            var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+
+            Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter, Color.White);
+        }
 
         Raylib.EndMode3D();
         
-        // Draw chunk coordinates in 2D after 3D rendering
-        //foreach (var pos in terrainGen.chunks.Keys)
-        //{
-        //    Vector3 chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
-        //    Vector2 screenPos = Raylib.GetWorldToScreen(chunkCenter, _camera);
-        //    
-        //    Raylib.DrawText($"Chunk ({pos.X}, {pos.Z})", (int)screenPos.X, (int)screenPos.Y, 24, Color.Blue);
-        //}
+        
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
         
