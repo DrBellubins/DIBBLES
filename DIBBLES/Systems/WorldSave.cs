@@ -74,6 +74,10 @@ public class WorldSave
                                 writer.Write(currentBlock.Position.X);
                                 writer.Write(currentBlock.Position.Y);
                                 writer.Write(currentBlock.Position.Z);
+                                
+                                // Save lighting data
+                                writer.Write(currentBlock.SkyLight);
+                                writer.Write(currentBlock.BlockLight);
                             }
                         }
                     }
@@ -129,6 +133,10 @@ public class WorldSave
                                         currentBlock.Position = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 
                                         currentBlock.Info = info;
+                                        
+                                        // Load lighting data
+                                        currentBlock.SkyLight = reader.ReadInt32();
+                                        currentBlock.BlockLight = reader.ReadInt32();
 
                                         currentChunk.Blocks[x, y, z] = currentBlock;
                                     }

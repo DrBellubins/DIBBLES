@@ -131,6 +131,22 @@ public class TerrainGeneration
         }
     }
 
+    /// <summary>
+    /// Generates lighting for a chunk using Minecraft-style lighting system.
+    /// Implements both skylight (sunlight) and blocklight (torches, glowstone) with BFS propagation.
+    /// 
+    /// Skylight:
+    /// - Starts at level 15 at the top of the world
+    /// - Propagates down through transparent blocks without decreasing
+    /// - Decreases by 1 when passing through opaque blocks
+    /// - Spreads horizontally with distance-based attenuation
+    /// 
+    /// Blocklight:
+    /// - Emitted by light sources (torches=14, glowstone=15)
+    /// - Propagates in all directions through transparent blocks
+    /// - Decreases by 1 per block distance
+    /// - Uses BFS flood fill for optimal performance
+    /// </summary>
     private void generateLighting(Chunk chunk)
     {
         // Initialize all blocks in the chunk with no light
@@ -233,7 +249,7 @@ public class TerrainGeneration
     }
     
     /// <summary>
-    /// Propagates light using BFS flood fill algorithm
+    /// Propagates light using BFS flood fill algorithm with cross-chunk support
     /// </summary>
     private void propagateLight(Chunk chunk, Queue<(int x, int y, int z)> lightQueue, bool isSkyLight)
     {
@@ -250,7 +266,7 @@ public class TerrainGeneration
         while (lightQueue.Count > 0)
         {
             var (x, y, z) = lightQueue.Dequeue();
-            var currentBlock = chunk.Blocks[x, y, z];
+            var currentBlock = getBlockAt(chunk, x, y, z);
             if (currentBlock == null) continue;
             
             int currentLight = isSkyLight ? currentBlock.SkyLight : currentBlock.BlockLight;
@@ -262,42 +278,81 @@ public class TerrainGeneration
                 int ny = y + (int)dir.Y;
                 int nz = z + (int)dir.Z;
                 
-                // Check if neighbor is within current chunk bounds
-                if (nx >= 0 && nx < ChunkSize && ny >= 0 && ny < ChunkHeight && nz >= 0 && nz < ChunkSize)
+                var neighborBlock = getBlockAt(chunk, nx, ny, nz);
+                if (neighborBlock == null) continue;
+                
+                // Calculate new light level (decrease by 1 for distance)
+                int newLightLevel = currentLight - 1;
+                
+                // Special case for skylight: don't decrease when going down through transparent blocks
+                if (isSkyLight && dir.Y == -1 && neighborBlock.Info.IsTransparent)
                 {
-                    var neighborBlock = chunk.Blocks[nx, ny, nz];
-                    if (neighborBlock == null) continue;
-                    
-                    // Calculate new light level (decrease by 1 for distance)
-                    int newLightLevel = currentLight - 1;
-                    
-                    // Special case for skylight: don't decrease when going down through transparent blocks
-                    if (isSkyLight && dir.Y == -1 && neighborBlock.Info.IsTransparent)
+                    newLightLevel = currentLight; // Don't decrease skylight going down through transparent blocks
+                }
+                
+                if (newLightLevel <= 0) continue;
+                
+                // Only propagate through transparent blocks (air, water, etc.)
+                if (!neighborBlock.Info.IsTransparent && neighborBlock.Info.Type != BlockType.Air) continue;
+                
+                int neighborCurrentLight = isSkyLight ? neighborBlock.SkyLight : neighborBlock.BlockLight;
+                
+                // Update light if the new level is higher
+                if (newLightLevel > neighborCurrentLight)
+                {
+                    if (isSkyLight)
+                        neighborBlock.SkyLight = newLightLevel;
+                    else
+                        neighborBlock.BlockLight = newLightLevel;
+                        
+                    // Add to queue with chunk-relative coordinates
+                    if (nx >= 0 && nx < ChunkSize && ny >= 0 && ny < ChunkHeight && nz >= 0 && nz < ChunkSize)
                     {
-                        newLightLevel = currentLight; // Don't decrease skylight going down through transparent blocks
-                    }
-                    
-                    if (newLightLevel <= 0) continue;
-                    
-                    // Only propagate through transparent blocks (air, water, etc.)
-                    if (!neighborBlock.Info.IsTransparent && neighborBlock.Info.Type != BlockType.Air) continue;
-                    
-                    int neighborCurrentLight = isSkyLight ? neighborBlock.SkyLight : neighborBlock.BlockLight;
-                    
-                    // Update light if the new level is higher
-                    if (newLightLevel > neighborCurrentLight)
-                    {
-                        if (isSkyLight)
-                            neighborBlock.SkyLight = newLightLevel;
-                        else
-                            neighborBlock.BlockLight = newLightLevel;
-                            
                         lightQueue.Enqueue((nx, ny, nz));
                     }
                 }
-                // TODO: Handle cross-chunk light propagation for neighbor chunks
             }
         }
+    }
+    
+    /// <summary>
+    /// Gets a block at the given coordinates, handling cross-chunk lookups
+    /// </summary>
+    private Block? getBlockAt(Chunk baseChunk, int x, int y, int z)
+    {
+        // Check if coordinates are within base chunk bounds
+        if (x >= 0 && x < ChunkSize && y >= 0 && y < ChunkHeight && z >= 0 && z < ChunkSize)
+        {
+            return baseChunk.Blocks[x, y, z];
+        }
+        
+        // Handle cross-chunk lookup
+        Vector3 chunkCoord = new Vector3(
+            (int)(baseChunk.Position.X / ChunkSize),
+            0f,
+            (int)(baseChunk.Position.Z / ChunkSize)
+        );
+        
+        // Calculate which chunk the coordinates belong to
+        Vector3 targetChunkCoord = chunkCoord;
+        int localX = x, localZ = z;
+        
+        if (x < 0) { localX = ChunkSize + x; targetChunkCoord.X -= 1; }
+        else if (x >= ChunkSize) { localX = x - ChunkSize; targetChunkCoord.X += 1; }
+        
+        if (z < 0) { localZ = ChunkSize + z; targetChunkCoord.Z -= 1; }
+        else if (z >= ChunkSize) { localZ = z - ChunkSize; targetChunkCoord.Z += 1; }
+        
+        if (y < 0 || y >= ChunkHeight) return null;
+        
+        // Look up the target chunk
+        Vector3 targetChunkPos = new Vector3(targetChunkCoord.X * ChunkSize, 0f, targetChunkCoord.Z * ChunkSize);
+        if (chunks.TryGetValue(targetChunkPos, out var targetChunk))
+        {
+            return targetChunk.Blocks[localX, y, localZ];
+        }
+        
+        return null;
     }
     
     /// <summary>
@@ -370,13 +425,17 @@ public class TerrainGeneration
                     var pos = new Vector3(x, y, z);
                     var blockType = chunk.Blocks[x, y, z].Info.Type;
                     
+                    // Calculate lighting for this block using Minecraft-style lighting
+                    // Uses the maximum of skylight and blocklight for effective illumination
                     var lightLevel = chunk.Blocks[x, y, z].NormalizedLightLevel;
                     
                     // Apply gamma correction for more realistic lighting (similar to Minecraft)
+                    // This makes the transition between light and dark more visually appealing
                     var gamma = 1.4f;
                     lightLevel = MathF.Pow(lightLevel, 1.0f / gamma);
                     
                     // Ensure minimum visibility even in complete darkness
+                    // This prevents areas from being completely black
                     lightLevel = Math.Max(lightLevel, 0.05f);
                     
                     var color = new Color(
