@@ -161,7 +161,6 @@ public class TerrainGeneration
                     if (!skyBlocked && chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
                     {
                         chunk.Blocks[x, y, z].LightLevel = 1.0f;
-                        queue.Enqueue((chunk, x, y, z, 1.0f));
                     }
                     else
                     {
