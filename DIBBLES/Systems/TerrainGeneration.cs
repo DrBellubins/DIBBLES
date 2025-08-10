@@ -150,14 +150,13 @@ public class TerrainGeneration
         HashSet<Chunk> affectedChunks = new();
         affectedChunks.Add(chunk);
 
-        // Enqueue all boundary air blocks as light sources
+        // Enqueue all air blocks at the top of the chunk as sky light sources
         for (int x = 0; x < ChunkSize; x++)
-        for (int y = 0; y < ChunkHeight; y++)
-        for (int z = 0; z < ChunkSize; z++)
         {
-            if (chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
+            for (int z = 0; z < ChunkSize; z++)
             {
-                if (x == 0 || x == ChunkSize-1 || y == ChunkHeight-1 || z == 0 || z == ChunkSize-1 || y == 0)
+                int y = ChunkHeight - 1;
+                if (chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
                 {
                     chunk.Blocks[x, y, z].LightLevel = 1.0f;
                     queue.Enqueue((chunk, x, y, z, 1.0f));
@@ -174,6 +173,7 @@ public class TerrainGeneration
         while (queue.Count > 0)
         {
             var (curChunk, x, y, z, light) = queue.Dequeue();
+            
             for (int d = 0; d < 6; d++)
             {
                 int nx = x + dx[d];
@@ -181,6 +181,7 @@ public class TerrainGeneration
                 int nz = z + dz[d];
                 Chunk targetChunk = curChunk;
                 int tx = nx, ty = ny, tz = nz;
+                
                 // Handle cross-chunk propagation
                 if (nx < 0 || nx >= ChunkSize || nz < 0 || nz >= ChunkSize)
                 {
@@ -190,23 +191,31 @@ public class TerrainGeneration
                         0f,
                         (int)(curChunk.Position.Z / ChunkSize)
                     );
+                    
                     var neighborCoord = chunkCoord;
                     if (nx < 0) { tx = ChunkSize - 1; neighborCoord.X -= 1; }
                     else if (nx >= ChunkSize) { tx = 0; neighborCoord.X += 1; }
                     if (nz < 0) { tz = ChunkSize - 1; neighborCoord.Z -= 1; }
                     else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
+                    
                     if (!chunks.TryGetValue(neighborCoord * ChunkSize, out targetChunk))
                         continue;
+                    
                     affectedChunks.Add(targetChunk);
                 }
+                
                 if (ty < 0 || ty >= ChunkHeight)
                     continue;
+                
                 var neighbor = targetChunk.Blocks[tx, ty, tz];
                 float newLight = light - falloff;
+                
                 if (newLight <= 0f) continue;
+                
                 if (neighbor.LightLevel < newLight)
                 {
                     neighbor.LightLevel = newLight;
+                    
                     if (neighbor.Info.Type == BlockType.Air)
                     {
                         queue.Enqueue((targetChunk, tx, ty, tz, newLight));
