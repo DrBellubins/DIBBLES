@@ -133,7 +133,141 @@ public class TerrainGeneration
 
     private void generateLighting(Chunk chunk)
     {
+        // Initialize sky lighting - propagate from top down
+        initializeSkyLighting(chunk);
         
+        // Initialize block lighting from emissive blocks
+        initializeBlockLighting(chunk);
+        
+        // Propagate lighting using BFS
+        propagateLighting(chunk);
+    }
+    
+    private void initializeSkyLighting(Chunk chunk)
+    {
+        // Initialize sky light from the top of the world down
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                byte skyLight = 15; // Maximum sky light at the top
+                
+                for (int y = ChunkHeight - 1; y >= 0; y--)
+                {
+                    var block = chunk.Blocks[x, y, z];
+                    
+                    if (block.Info.Type == BlockType.Air || block.Info.IsTransparent)
+                    {
+                        block.SkyLight = skyLight;
+                    }
+                    else
+                    {
+                        block.SkyLight = 0;
+                        skyLight = 0; // Block the light from going further down
+                    }
+                }
+            }
+        }
+    }
+    
+    private void initializeBlockLighting(Chunk chunk)
+    {
+        // Initialize block light from emissive blocks
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkHeight; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    var block = chunk.Blocks[x, y, z];
+                    block.BlockLight = block.Info.LightEmission;
+                }
+            }
+        }
+    }
+    
+    private void propagateLighting(Chunk chunk)
+    {
+        // Use BFS to propagate both sky and block light
+        Queue<Vector3Int> lightQueue = new Queue<Vector3Int>();
+        
+        // Add all blocks with light to the queue for propagation
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkHeight; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    var block = chunk.Blocks[x, y, z];
+                    if (block.SkyLight > 0 || block.BlockLight > 0)
+                    {
+                        lightQueue.Enqueue(new Vector3Int(x, y, z));
+                    }
+                }
+            }
+        }
+        
+        // Process light propagation
+        while (lightQueue.Count > 0)
+        {
+            var pos = lightQueue.Dequeue();
+            var block = chunk.Blocks[pos.X, pos.Y, pos.Z];
+            
+            // Check all 6 neighboring positions
+            Vector3Int[] neighbors = {
+                new Vector3Int(pos.X - 1, pos.Y, pos.Z),
+                new Vector3Int(pos.X + 1, pos.Y, pos.Z),
+                new Vector3Int(pos.X, pos.Y - 1, pos.Z),
+                new Vector3Int(pos.X, pos.Y + 1, pos.Z),
+                new Vector3Int(pos.X, pos.Y, pos.Z - 1),
+                new Vector3Int(pos.X, pos.Y, pos.Z + 1)
+            };
+            
+            foreach (var neighborPos in neighbors)
+            {
+                // Skip if outside chunk bounds (we'll handle cross-chunk later)
+                if (neighborPos.X < 0 || neighborPos.X >= ChunkSize ||
+                    neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight ||
+                    neighborPos.Z < 0 || neighborPos.Z >= ChunkSize)
+                    continue;
+                
+                var neighbor = chunk.Blocks[neighborPos.X, neighborPos.Y, neighborPos.Z];
+                
+                // Skip if neighbor is opaque
+                if (!neighbor.Info.IsTransparent && neighbor.Info.Type != BlockType.Air)
+                    continue;
+                
+                bool updated = false;
+                
+                // Propagate sky light
+                if (block.SkyLight > 1)
+                {
+                    byte newSkyLight = (byte)(block.SkyLight - 1);
+                    if (newSkyLight > neighbor.SkyLight)
+                    {
+                        neighbor.SkyLight = newSkyLight;
+                        updated = true;
+                    }
+                }
+                
+                // Propagate block light
+                if (block.BlockLight > 1)
+                {
+                    byte newBlockLight = (byte)(block.BlockLight - 1);
+                    if (newBlockLight > neighbor.BlockLight)
+                    {
+                        neighbor.BlockLight = newBlockLight;
+                        updated = true;
+                    }
+                }
+                
+                // Add to queue if lighting was updated
+                if (updated)
+                {
+                    lightQueue.Enqueue(neighborPos);
+                }
+            }
+        }
     }
     
     private Model generateChunkMesh(Chunk chunk)
@@ -157,11 +291,14 @@ public class TerrainGeneration
                     
                     var lightLevel = chunk.Blocks[x, y, z].LightLevel;
                     
+                    // Normalize light level from 0-15 to 0-1, ensuring minimum visibility
+                    float lightValue = Math.Max(0.1f, lightLevel / 15.0f);
+                    
                     var color = new Color(
-                        (byte)(255f * lightLevel),
-                        (byte)(255f * lightLevel),
-                        (byte)(255f * lightLevel),
-                        (byte)255
+                        (int)(255 * lightValue),
+                        (int)(255 * lightValue),
+                        (int)(255 * lightValue),
+                        255
                     );
                     
                     int vertexOffset = vertices.Count;
@@ -536,11 +673,14 @@ public class TerrainGeneration
             return;
 
         // Set block to Air
+        var oldBlock = chunk.Blocks[localX, localY, localZ];
         chunk.Blocks[localX, localY, localZ] = new Block(blockPos, Block.Prefabs[BlockType.Air]);
         chunk.Info.Modified = true;
 
-        // Regenerate lighting and mesh
-        generateLighting(chunk);
+        // Update lighting if the broken block was opaque or emissive
+        updateLightingForBlockChange(chunk, localX, localY, localZ, oldBlock, chunk.Blocks[localX, localY, localZ]);
+        
+        // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
         chunk.Model = generateChunkMesh(chunk);
 
@@ -602,11 +742,14 @@ public class TerrainGeneration
             return;
         
         // Place the new block
+        var oldBlock = chunk.Blocks[localX, localY, localZ];
         chunk.Blocks[localX, localY, localZ] = new Block(newBlockPos, Block.Prefabs[blockType]);
         chunk.Info.Modified = true;
         
-        // Regenerate lighting and mesh
-        generateLighting(chunk);
+        // Update lighting for the placed block
+        updateLightingForBlockChange(chunk, localX, localY, localZ, oldBlock, chunk.Blocks[localX, localY, localZ]);
+        
+        // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
         chunk.Model = generateChunkMesh(chunk);
         
@@ -619,6 +762,19 @@ public class TerrainGeneration
         
         if (sound.FrameCount != 0)
             Raylib.PlaySound(sound);
+    }
+    
+    private void updateLightingForBlockChange(Chunk chunk, int x, int y, int z, Block oldBlock, Block newBlock)
+    {
+        // For now, do full relighting of the chunk when blocks change
+        // This is simpler but less efficient than proper local relighting
+        generateLighting(chunk);
+        
+        // TODO: Implement proper local relighting for better performance
+        // This would involve:
+        // 1. Light removal BFS from the changed block
+        // 2. Light addition BFS from neighboring blocks
+        // 3. Handling cross-chunk light propagation
     }
     
     private void UnloadDistantChunks(Vector3 centerChunk)

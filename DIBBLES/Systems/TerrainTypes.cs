@@ -56,15 +56,19 @@ public class BlockInfo
     public int Hardness; // 0 to 10 (10 being unbreakable)
     public float Thickness; // 0 to 1 (Used for slowling player down)
     public int MaxStack;
+    public bool IsTransparent; // True if light can pass through
+    public byte LightEmission; // Light level emitted by this block (0-15)
 
     public BlockInfo() {}
 
-    public BlockInfo(BlockType type, int hardness, float thickness, int maxStack)
+    public BlockInfo(BlockType type, int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
         Type = type;
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
+        IsTransparent = isTransparent;
+        LightEmission = lightEmission;
     }
 }
 
@@ -72,7 +76,8 @@ public class Block
 {
     public Vector3 Position;
     public BlockInfo Info;
-    public int LightLevel;
+    public byte SkyLight;   // Sky light level (0-15)
+    public byte BlockLight; // Block light level (0-15)
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();
@@ -81,30 +86,35 @@ public class Block
     public static Texture2D TextureAtlas; // Store the atlas
     public static Dictionary<BlockType, Rectangle> AtlasUVs = new Dictionary<BlockType, Rectangle>(); // Store UV mappings
     
+    // Helper property to get the effective light level (max of sky and block light)
+    public byte LightLevel => Math.Max(SkyLight, BlockLight);
+    
     public Block()
     {
         Position = Vector3.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        LightLevel = 1;
+        SkyLight = 0;
+        BlockLight = 0;
     }
 
     public Block(Vector3 position, BlockInfo info)
     {
         Position = position;
         Info = info;
-        LightLevel = 1;
+        SkyLight = 0;
+        BlockLight = info.LightEmission; // Set initial block light from emission
     }
     
     public static void InitializeBlockPrefabs()
     {
-        // Initialize block prefabs
-        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0));
-        Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64));
-        Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64));
-        Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64));
-        Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64));
-        Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64));
+        // Initialize block prefabs with transparency and light emission
+        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0));
+        Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
 
         // Define block types in the exact order for the atlas
         BlockType[] atlasBlockTypes = { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Sand, BlockType.Snow };
