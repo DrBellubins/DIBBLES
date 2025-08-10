@@ -24,11 +24,30 @@ public class TerrainGeneration
     private Vector3 selectedNormal;
     private Block? selectedBlock;
     
+    private Shader terrainShader;
+    
     private static readonly Vector3[] Directions = 
     {
         new (1, 0, 0), new (-1, 0, 0),
         new (0, 1, 0), new (0, -1, 0),
         new (0, 0, 1), new (0, 0, -1)
+    };
+    
+    private static readonly int[,] FaceVertexOffsets = new int[6, 12]
+    {
+        // Each row: 4 vertices, each with (x, y, z) offsets
+        // Front (-Z)
+        { 0,0,0, 0,1,0, 1,1,0, 1,0,0 },
+        // Back (+Z)
+        { 1,0,1, 1,1,1, 0,1,1, 0,0,1 },
+        // Left (-X)
+        { 0,0,1, 0,1,1, 0,1,0, 0,0,0 },
+        // Right (+X)
+        { 1,0,0, 1,1,0, 1,1,1, 1,0,1 },
+        // Bottom (-Y)
+        { 0,0,1, 1,0,1, 1,0,0, 0,0,0 },
+        // Top (+Y)
+        { 0,1,0, 1,1,0, 1,1,1, 0,1,1 }
     };
     
     public void Start()
@@ -47,6 +66,8 @@ public class TerrainGeneration
         noise.SetFractalOctaves(4);
         noise.SetFractalLacunarity(2.0f);
         noise.SetFractalGain(0.5f);
+        
+        terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
 
     public void UpdateTerrain(Camera3D camera)
@@ -104,7 +125,7 @@ public class TerrainGeneration
         foreach (var pos in chunksToGenerate)
         {
             var chunk = chunks[pos];
-            generateLighting(chunk);
+            //generateLighting(chunk);
             chunk.Model = generateChunkMesh(chunk);
         }
     }
@@ -145,105 +166,58 @@ public class TerrainGeneration
     
     private void generateLighting(Chunk chunk)
     {
-        // Initialize all blocks with zero light level
+        // 1. Reset all light levels
         for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int y = 0; y < ChunkHeight; y++)
-            {
-                for (int z = 0; z < ChunkSize; z++)
-                {
-                    chunk.Blocks[x, y, z].LightLevel = 0.0f;
-                }
-            }
-        }
+        for (int y = 0; y < ChunkHeight; y++)
+        for (int z = 0; z < ChunkSize; z++)
+            chunk.Blocks[x, y, z].LightLevel = 0f;
+    
+        // 2. Sky-exposed air blocks get full light, enqueue for flood fill
+        Queue<(Vector3 worldPos, float level)> queue = new();
         
-        Queue<(Vector3 worldPos, float level)> queue = new Queue<(Vector3, float)>();
-
-        // Enqueue sky-exposed air blocks for this chunk
         for (int x = 0; x < ChunkSize; x++)
+        for (int z = 0; z < ChunkSize; z++)
         {
-            for (int z = 0; z < ChunkSize; z++)
+            bool foundSolid = false;
+            
+            for (int y = ChunkHeight - 1; y >= 0; y--)
             {
-                bool foundSolid = false;
+                var block = chunk.Blocks[x, y, z];
                 
-                for (int y = ChunkHeight - 1; y >= 0; y--)
+                if (!foundSolid && block.Info.Type == BlockType.Air)
                 {
-                    Block block = chunk.Blocks[x, y, z];
-                    
-                    if (!foundSolid && block.Info.Type == BlockType.Air)
-                    {
-                        block.LightLevel = 1.0f;
-                        Vector3 worldPos = chunk.Position + new Vector3(x, y, z);
-                        queue.Enqueue((worldPos, 1.0f));
-                    }
-                    else if (block.Info.Type != BlockType.Air)
-                    {
-                        foundSolid = true;
-                    }
+                    block.LightLevel = 1f;
+                    queue.Enqueue((chunk.Position + new Vector3(x, y, z), 1f));
                 }
+                else if (block.Info.Type != BlockType.Air)
+                    foundSolid = true;
             }
         }
-
-        // Enqueue any light-emitting blocks in this chunk (for future support, e.g., torches)
-        // Example: 
-        // for (int x = 0; x < ChunkSize; x++)
-        // for (int y = 0; y < ChunkHeight; y++)
-        // for (int z = 0; z < ChunkSize; z++)
-        // {
-        //     Block block = chunk.Blocks[x, y, z];
-        //     float emission = GetEmissionLevel(block.Info.Type); // Define a method to return emission, e.g., 0.9f for torch, 0f otherwise
-        //     if (emission > 0f)
-        //     {
-        //         if (emission > block.LightLevel)
-        //         {
-        //             block.LightLevel = emission;
-        //             Vector3 worldPos = chunk.Position + new Vector3(x, y, z);
-        //             queue.Enqueue((worldPos, emission));
-        //         }
-        //     }
-        // }
-
-        // Propagate light (omnidirectional flood-fill)
+    
+        // 3. Flood fill light through air blocks (across chunks)
         while (queue.Count > 0)
         {
             var (worldPos, level) = queue.Dequeue();
-            float proposedLevel = level - LightDecay;
-            if (proposedLevel <= 0f) continue;
-
+            float nextLevel = level - LightDecay;
+            
+            if (nextLevel <= 0f) continue;
+    
             foreach (var dir in Directions)
             {
-                Vector3 neighborWorldPos = worldPos + dir;
-
-                // Special handling for out-of-world bounds
-                if (neighborWorldPos.Y >= ChunkHeight) continue; // Assume full light above, but no propagation upward beyond chunk
-                if (neighborWorldPos.Y < 0) continue;
-
-                // Get neighbor chunk and block
-                var neighborChunkCoord = new Vector3(
-                    (int)Math.Floor(neighborWorldPos.X / ChunkSize) * ChunkSize,
-                    0f,
-                    (int)Math.Floor(neighborWorldPos.Z / ChunkSize) * ChunkSize
-                );
-
-                if (!chunks.TryGetValue(neighborChunkCoord, out var neighborChunk)) continue;
-
-                var local = neighborWorldPos - neighborChunkCoord;
-                int lx = (int)local.X;
-                int ly = (int)local.Y;
-                int lz = (int)local.Z;
-
-                if (lx < 0 || lx >= ChunkSize || ly < 0 || ly >= ChunkHeight || lz < 0 || lz >= ChunkSize) continue;
-
-                Block neighborBlock = neighborChunk.Blocks[lx, ly, lz];
+                var neighborPos = worldPos + dir;
                 
-                if (neighborBlock.Info.Type == BlockType.Air && proposedLevel > neighborBlock.LightLevel)
+                if (neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight) continue;
+                if (!TryGetBlock(neighborPos, out var neighborBlock)) continue;
+                
+                if (neighborBlock.Info.Type == BlockType.Air && nextLevel > neighborBlock.LightLevel)
                 {
-                    neighborBlock.LightLevel = proposedLevel;
-                    queue.Enqueue((neighborWorldPos, proposedLevel));
+                    neighborBlock.LightLevel = nextLevel;
+                    queue.Enqueue((neighborPos, nextLevel));
                 }
             }
         }
-        
+    
+        // 4. Propagate light into solid blocks (multiple passes for falloff)
         for (int pass = 0; pass < 8; pass++)
         {
             for (int x = 0; x < ChunkSize; x++)
@@ -253,212 +227,213 @@ public class TerrainGeneration
                 var block = chunk.Blocks[x, y, z];
                 
                 if (block.Info.Type == BlockType.Air) continue;
-
-                float maxNeighborLight = 0f;
+    
+                float maxLight = 0f;
                 
                 foreach (var dir in Directions)
                 {
-                    int nx = x + (int)dir.X;
-                    int ny = y + (int)dir.Y;
-                    int nz = z + (int)dir.Z;
-                    
+                    int nx = x + (int)dir.X, ny = y + (int)dir.Y, nz = z + (int)dir.Z;
                     if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkHeight || nz < 0 || nz >= ChunkSize) continue;
-                    
                     var neighbor = chunk.Blocks[nx, ny, nz];
-                    
-                    maxNeighborLight = Math.Max(maxNeighborLight, neighbor.LightLevel - LightDecay);
+                    maxLight = Math.Max(maxLight, neighbor.LightLevel - LightDecay);
                 }
                 
-                block.LightLevel = Math.Max(block.LightLevel, maxNeighborLight);
-            }
-        }
-        
-        for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int y = 0; y < ChunkHeight; y++)
-            {
-                for (int z = 0; z < ChunkSize; z++)
-                {
-                    if (chunk.Blocks[x, y, z].Info.Type != BlockType.Air && chunk.Blocks[x, y, z].LightLevel > 0)
-                    {
-                        Console.WriteLine($"Solid block at ({x},{y},{z}) has light level {chunk.Blocks[x, y, z].LightLevel}");
-                    }
-                }
+                block.LightLevel = Math.Max(block.LightLevel, maxLight);
             }
         }
     }
     
+    private float getLight(Chunk chunk, int x, int y, int z)
+    {
+        if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkSize)
+        {
+            // Try to sample from neighbor chunk, or return 1.0f if above the chunk (sky)
+            if (y >= ChunkHeight) return 1.0f;
+            
+            return 0f;
+        }
+        
+        return chunk.Blocks[x, y, z].LightLevel;
+    }
+
+    // Helper to get a block at world position (across chunks)
+    private bool TryGetBlock(Vector3 worldPos, out Block block)
+    {
+        var chunkCoord = new Vector3(
+            (int)Math.Floor(worldPos.X / ChunkSize) * ChunkSize,
+            0f,
+            (int)Math.Floor(worldPos.Z / ChunkSize) * ChunkSize
+        );
+        
+        if (chunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            var local = worldPos - chunkCoord;
+            int lx = (int)local.X, ly = (int)local.Y, lz = (int)local.Z;
+            
+            if (lx >= 0 && lx < ChunkSize && ly >= 0 && ly < ChunkHeight && lz >= 0 && lz < ChunkSize)
+            {
+                block = chunk.Blocks[lx, ly, lz];
+                return true;
+            }
+        }
+
+        block = null!;
+        return false;
+    }
+
+    private List<Color> GetSmoothFaceVertexColors(Chunk chunk, int x, int y, int z, int face)
+    {
+        var colors = new List<Color>(4);
+    
+        for (int v = 0; v < 4; v++)
+        {
+            int vx = x + FaceVertexOffsets[face, v * 3 + 0];
+            int vy = y + FaceVertexOffsets[face, v * 3 + 1];
+            int vz = z + FaceVertexOffsets[face, v * 3 + 2];
+    
+            // Average light from 8 surrounding voxels
+            float light =
+                (getLight(chunk, vx,     vy,     vz) +
+                 getLight(chunk, vx - 1, vy,     vz) +
+                 getLight(chunk, vx,     vy - 1, vz) +
+                 getLight(chunk, vx,     vy,     vz - 1) +
+                 getLight(chunk, vx - 1, vy - 1, vz) +
+                 getLight(chunk, vx - 1, vy,     vz - 1) +
+                 getLight(chunk, vx,     vy - 1, vz - 1) +
+                 getLight(chunk, vx - 1, vy - 1, vz - 1)
+                ) / 8f;
+    
+            //Console.WriteLine($"Light: {light} at ({vx}, {vy}, {vz})");
+            
+            byte lightByte = (byte)Math.Clamp(light * 255f, 0, 255);
+            colors.Add(new Color(lightByte, lightByte, lightByte, (byte)255));
+            //colors.Add(Color.White);
+        }
+    
+        return colors;
+    }
+    
     private Model generateChunkMesh(Chunk chunk)
     {
-        List<Vector3> vertices = [];
-        List<int> indices = [];
-        List<Vector3> normals = [];
-        List<Vector2> texcoords = [];
-        List<Color> colors = [];
-        
+        List<Vector3> vertices = new();
+        List<int> indices = new();
+        List<Vector3> normals = new();
+        List<Vector2> texcoords = new();
+        List<Color> colors = new();
+    
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int y = 0; y < ChunkHeight; y++)
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
-                    if (chunk.Blocks[x, y, z]?.Info.Type == BlockType.Air) continue; // Skip air blocks
-                    
+                    if (chunk.Blocks[x, y, z]?.Info.Type == BlockType.Air) continue;
+    
                     var pos = new Vector3(x, y, z);
                     var blockType = chunk.Blocks[x, y, z].Info.Type;
-                    
-                    var lightLevel = chunk.Blocks[x, y, z].LightLevel;
-                    
-                    var lightByte = (byte)Math.Clamp(lightLevel * 255f, 0, 255);
-                    var color = new Color(lightByte, lightByte, lightByte, (byte)255);
-                    
-                    int vertexOffset = vertices.Count;
-
+    
                     // Define cube vertices (8 corners)
                     Vector3[] cubeVertices =
-                    [
+                    {
                         pos + new Vector3(0, 0, 0), pos + new Vector3(1, 0, 0),
                         pos + new Vector3(1, 1, 0), pos + new Vector3(0, 1, 0),
                         pos + new Vector3(0, 0, 1), pos + new Vector3(1, 0, 1),
                         pos + new Vector3(1, 1, 1), pos + new Vector3(0, 1, 1)
-                    ];
-                    
+                    };
+    
                     // Get UV coordinates from atlas
                     Vector2[] uvCoords;
-                    
+    
                     if (Block.AtlasUVs.TryGetValue(blockType, out var uvRect))
                     {
                         uvCoords = new Vector2[]
                         {
-                            new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
-                            new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height), // Top-right
-                            new Vector2(uvRect.X + uvRect.Width, uvRect.Y), // Bottom-right
-                            new Vector2(uvRect.X, uvRect.Y) // Bottom-left
+                            new Vector2(uvRect.X, uvRect.Y + uvRect.Height),
+                            new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height),
+                            new Vector2(uvRect.X + uvRect.Width, uvRect.Y),
+                            new Vector2(uvRect.X, uvRect.Y)
                         };
                     }
                     else
                     {
-                        // Fallback UVs (e.g., for Air or missing textures)
                         uvCoords = new Vector2[]
                         {
                             new Vector2(0, 1), new Vector2(1, 1),
                             new Vector2(1, 0), new Vector2(0, 0)
                         };
                     }
-                    
-                    // UVs need to be rotated for some reason
-                    Vector2[] rotatedUvCoords = new Vector2[]
-                    {
-                        uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0] // Rotate 90 degrees CW
-                    };
-                    
+    
                     // Check each face and add only if not occluded
-                    // Front face (-Z)
-                    if (!isVoxelSolid(chunk, x, y, z - 1))
+                    for (int face = 0; face < 6; face++)
                     {
-                        vertices.AddRange([cubeVertices[0], cubeVertices[3], cubeVertices[2], cubeVertices[1]]);
-                        normals.AddRange([new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 2, vertexOffset + 3, vertexOffset, vertexOffset + 1, vertexOffset + 2]);
-                        vertexOffset += 4;
-                    }
-
-                    // Back face (+Z)
-                    if (!isVoxelSolid(chunk, x, y, z + 1))
-                    {
-                        vertices.AddRange([cubeVertices[5], cubeVertices[6], cubeVertices[7], cubeVertices[4]]);
-                        normals.AddRange([new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                        vertexOffset += 4;
-                    }
-
-                    // Left face (-X)
-                    if (!isVoxelSolid(chunk, x - 1, y, z))
-                    {
-                        vertices.AddRange([cubeVertices[4], cubeVertices[7], cubeVertices[3], cubeVertices[0]]);
-                        normals.AddRange([new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                        vertexOffset += 4;
-                    }
-
-                    // Right face (+X)
-                    if (!isVoxelSolid(chunk, x + 1, y, z))
-                    {
-                        vertices.AddRange([cubeVertices[1], cubeVertices[2], cubeVertices[6], cubeVertices[5]]);
-                        normals.AddRange([new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                        vertexOffset += 4;
-                    }
-
-                    // Bottom face (-Y)
-                    if (!isVoxelSolid(chunk, x, y - 1, z))
-                    {
-                        vertices.AddRange([cubeVertices[4], cubeVertices[0], cubeVertices[1], cubeVertices[5]]);
-                        normals.AddRange([new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                        vertexOffset += 4;
-                    }
-
-                    // Top face (+Y)
-                    if (!isVoxelSolid(chunk, x, y + 1, z))
-                    {
-                        vertices.AddRange([cubeVertices[3], cubeVertices[7], cubeVertices[6], cubeVertices[2]]);
-                        normals.AddRange([new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0)]);
-                        texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
-                        indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                        if (!isVoxelSolid(chunk, x + (int)Directions[face].X, y + (int)Directions[face].Y, z + (int)Directions[face].Z))
+                        {
+                            int vertexOffset = vertices.Count;
+                            
+                            vertices.AddRange(new[]
+                            {
+                                cubeVertices[FaceVertexOffsets[face, 0]],
+                                cubeVertices[FaceVertexOffsets[face, 1]],
+                                cubeVertices[FaceVertexOffsets[face, 2]],
+                                cubeVertices[FaceVertexOffsets[face, 3]]
+                            });
+    
+                            normals.AddRange(new[]
+                            {
+                                Directions[face], Directions[face],
+                                Directions[face], Directions[face]
+                            });
+    
+                            texcoords.AddRange(uvCoords);
+    
+                            // Use smooth lighting for vertex colors
+                            var faceColors = GetSmoothFaceVertexColors(chunk, x, y, z, face);
+                            colors.AddRange(faceColors);
+    
+                            indices.AddRange(new[]
+                            {
+                                vertexOffset, vertexOffset + 2, vertexOffset + 1,
+                                vertexOffset, vertexOffset + 3, vertexOffset + 2
+                            });
+                        }
                     }
                 }
             }
         }
-
-        // Create mesh
+    
+        // Create and upload the mesh (same as your existing code)
         Mesh mesh = new Mesh
         {
             VertexCount = vertices.Count,
             TriangleCount = indices.Count / 3
         };
-
-        // Upload mesh data
+    
         unsafe
         {
             mesh.Vertices = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
-                
             for (int i = 0; i < vertices.Count; i++)
             {
                 mesh.Vertices[i * 3] = vertices[i].X;
                 mesh.Vertices[i * 3 + 1] = vertices[i].Y;
                 mesh.Vertices[i * 3 + 2] = vertices[i].Z;
             }
-
+    
             mesh.Normals = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
-                
             for (int i = 0; i < normals.Count; i++)
             {
                 mesh.Normals[i * 3] = normals[i].X;
                 mesh.Normals[i * 3 + 1] = normals[i].Y;
                 mesh.Normals[i * 3 + 2] = normals[i].Z;
             }
-            
+    
             mesh.TexCoords = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 2 * sizeof(float));
-            
             for (int i = 0; i < texcoords.Count; i++)
             {
                 mesh.TexCoords[i * 2] = texcoords[i].X;
                 mesh.TexCoords[i * 2 + 1] = texcoords[i].Y;
             }
-
+    
             mesh.Colors = (byte*)Raylib.MemAlloc((uint)mesh.VertexCount * 4 * sizeof(byte));
-                
             for (int i = 0; i < colors.Count; i++)
             {
                 mesh.Colors[i * 4] = colors[i].R;
@@ -466,25 +441,24 @@ public class TerrainGeneration
                 mesh.Colors[i * 4 + 2] = colors[i].B;
                 mesh.Colors[i * 4 + 3] = colors[i].A;
             }
-
+    
             mesh.Indices = (ushort*)Raylib.MemAlloc((uint)indices.Count * sizeof(ushort));
-                
             for (int i = 0; i < indices.Count; i++)
             {
                 mesh.Indices[i] = (ushort)indices[i];
             }
-            
+    
             Raylib.UploadMesh(&mesh, false);
         }
         
         Model model = Raylib.LoadModelFromMesh(mesh);
-        
-        // Assign texture atlas
+    
         if (Block.TextureAtlas.Id != 0)
         {
             unsafe
             {
                 model.Materials[0].Shader = Raylib.LoadMaterialDefault().Shader;
+                //model.Materials[0].Shader = terrainShader;
                 model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = Block.TextureAtlas;
             }
         }
