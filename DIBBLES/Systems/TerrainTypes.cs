@@ -72,7 +72,7 @@ public class Block
 {
     public Vector3 Position;
     public BlockInfo Info;
-    public float LightLevel; // 0 to 1
+    public int LightLevel;
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();
@@ -85,14 +85,14 @@ public class Block
     {
         Position = Vector3.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        LightLevel = 1.0f;
+        LightLevel = 1;
     }
 
     public Block(Vector3 position, BlockInfo info)
     {
         Position = position;
         Info = info;
-        LightLevel = 1.0f;
+        LightLevel = 1;
     }
     
     public static void InitializeBlockPrefabs()
