@@ -40,7 +40,7 @@ public class VoxelTerrainScene : Scene
         Debug.Update(_camera);
         
         //terrainGen.UpdateTerrain(_camera);
-        terrainGen.UpdateMovement(_camera);
+        TerrainGeneration.Gameplay.Update(_camera);
         
         // Temporary world saving/loading
         if (Raylib.IsKeyDown(KeyboardKey.O))
@@ -91,10 +91,10 @@ public class VoxelTerrainScene : Scene
         
         // --- Block breaking and placing ---
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-            terrainGen.BreakBlock();
+            TerrainGeneration.Gameplay.BreakBlock();
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            terrainGen.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
+            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
         
         //terrainGen.UpdateTerrain(_camera.Position);
     }

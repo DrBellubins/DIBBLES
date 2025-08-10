@@ -31,12 +31,14 @@ public class TerrainMesh
                     // Normalize light level from 0-15 to 0-1, ensuring minimum visibility
                     float lightValue = Math.Max(0.1f, lightLevel / 15.0f);
                     
-                    var color = new Color(
-                        (byte)(255 * lightValue),
-                        (byte)(255 * lightValue),
-                        (byte)(255 * lightValue),
-                        (byte)255
-                    );
+                    //var color = new Color(
+                    //    (byte)(255 * lightValue),
+                    //    (byte)(255 * lightValue),
+                    //    (byte)(255 * lightValue),
+                    //    (byte)255
+                    //);
+                    
+                    var color = Color.White;
                     
                     int vertexOffset = vertices.Count;
 
