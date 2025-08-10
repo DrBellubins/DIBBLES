@@ -12,6 +12,7 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const int ChunkHeight = 32;
     public const float ReachDistance = 100f; // Has to be finite!
+    public const float LightDecay = 1f / 16f;
     
     public readonly Dictionary<Vector3, Chunk> chunks = new Dictionary<Vector3, Chunk>();
     
@@ -22,6 +23,13 @@ public class TerrainGeneration
     
     private Vector3 selectedNormal;
     private Block? selectedBlock;
+    
+    private static readonly Vector3[] Directions = 
+    {
+        new (1, 0, 0), new (-1, 0, 0),
+        new (0, 1, 0), new (0, -1, 0),
+        new (0, 0, 1), new (0, 0, -1)
+    };
     
     public void Start()
     {
@@ -57,7 +65,6 @@ public class TerrainGeneration
             GenerateTerrain(currentChunk);
             UnloadDistantChunks(currentChunk);
         }
-
     }
     
     public void UpdateMovement(Camera3D camera)
@@ -85,14 +92,19 @@ public class TerrainGeneration
             }
         }
     
+        // Generate chunk data
         foreach (var pos in chunksToGenerate)
         {
             var chunk = new Chunk(pos);
             generateChunkData(chunk);
-            generateLighting(chunk);
-            
             chunks[pos] = chunk;
-        
+        }
+
+        // Generate lighting for all chunks
+        foreach (var pos in chunksToGenerate)
+        {
+            var chunk = chunks[pos];
+            generateLighting(chunk);
             chunk.Model = generateChunkMesh(chunk);
         }
     }
@@ -130,34 +142,146 @@ public class TerrainGeneration
             }
         }
     }
-
-    // TODO: Blocks immediately turn to black after a certain distance
-    // TODO: Entire blocks are shaded when just one face should be
+    
     private void generateLighting(Chunk chunk)
     {
+        // Initialize all blocks with zero light level
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkHeight; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    chunk.Blocks[x, y, z].LightLevel = 0.0f;
+                }
+            }
+        }
+        
+        Queue<(Vector3 worldPos, float level)> queue = new Queue<(Vector3, float)>();
+
+        // Enqueue sky-exposed air blocks for this chunk
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                // Start at the top of the chunk
-                bool isSkyExposed = true; // Assume the top is exposed to sky
-                float currentLightLevel = 1.0f; // Maximum light level (full sunlight)
-
+                bool foundSolid = false;
+                
                 for (int y = ChunkHeight - 1; y >= 0; y--)
                 {
-                    var block = chunk.Blocks[x, y, z];
+                    Block block = chunk.Blocks[x, y, z];
                     
-                    if (block.Info.Type == BlockType.Air)
+                    if (!foundSolid && block.Info.Type == BlockType.Air)
                     {
-                        // Air blocks get full light if exposed to sky
-                        block.LightLevel = isSkyExposed ? 1.0f : 0.0f;
+                        block.LightLevel = 1.0f;
+                        Vector3 worldPos = chunk.Position + new Vector3(x, y, z);
+                        queue.Enqueue((worldPos, 1.0f));
                     }
-                    else
+                    else if (block.Info.Type != BlockType.Air)
                     {
-                        // Solid block: assign light level and reduce for blocks below
-                        block.LightLevel = currentLightLevel;
-                        isSkyExposed = false; // Block occludes sunlight
-                        currentLightLevel = Math.Max(0.0f, currentLightLevel - 0.2f); // Decrease light level (adjust 0.2f as needed)
+                        foundSolid = true;
+                    }
+                }
+            }
+        }
+
+        // Enqueue any light-emitting blocks in this chunk (for future support, e.g., torches)
+        // Example: 
+        // for (int x = 0; x < ChunkSize; x++)
+        // for (int y = 0; y < ChunkHeight; y++)
+        // for (int z = 0; z < ChunkSize; z++)
+        // {
+        //     Block block = chunk.Blocks[x, y, z];
+        //     float emission = GetEmissionLevel(block.Info.Type); // Define a method to return emission, e.g., 0.9f for torch, 0f otherwise
+        //     if (emission > 0f)
+        //     {
+        //         if (emission > block.LightLevel)
+        //         {
+        //             block.LightLevel = emission;
+        //             Vector3 worldPos = chunk.Position + new Vector3(x, y, z);
+        //             queue.Enqueue((worldPos, emission));
+        //         }
+        //     }
+        // }
+
+        // Propagate light (omnidirectional flood-fill)
+        while (queue.Count > 0)
+        {
+            var (worldPos, level) = queue.Dequeue();
+            float proposedLevel = level - LightDecay;
+            if (proposedLevel <= 0f) continue;
+
+            foreach (var dir in Directions)
+            {
+                Vector3 neighborWorldPos = worldPos + dir;
+
+                // Special handling for out-of-world bounds
+                if (neighborWorldPos.Y >= ChunkHeight) continue; // Assume full light above, but no propagation upward beyond chunk
+                if (neighborWorldPos.Y < 0) continue;
+
+                // Get neighbor chunk and block
+                var neighborChunkCoord = new Vector3(
+                    (int)Math.Floor(neighborWorldPos.X / ChunkSize) * ChunkSize,
+                    0f,
+                    (int)Math.Floor(neighborWorldPos.Z / ChunkSize) * ChunkSize
+                );
+
+                if (!chunks.TryGetValue(neighborChunkCoord, out var neighborChunk)) continue;
+
+                var local = neighborWorldPos - neighborChunkCoord;
+                int lx = (int)local.X;
+                int ly = (int)local.Y;
+                int lz = (int)local.Z;
+
+                if (lx < 0 || lx >= ChunkSize || ly < 0 || ly >= ChunkHeight || lz < 0 || lz >= ChunkSize) continue;
+
+                Block neighborBlock = neighborChunk.Blocks[lx, ly, lz];
+                
+                if (neighborBlock.Info.Type == BlockType.Air && proposedLevel > neighborBlock.LightLevel)
+                {
+                    neighborBlock.LightLevel = proposedLevel;
+                    queue.Enqueue((neighborWorldPos, proposedLevel));
+                }
+            }
+        }
+        
+        for (int pass = 0; pass < 8; pass++)
+        {
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkHeight; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var block = chunk.Blocks[x, y, z];
+                
+                if (block.Info.Type == BlockType.Air) continue;
+
+                float maxNeighborLight = 0f;
+                
+                foreach (var dir in Directions)
+                {
+                    int nx = x + (int)dir.X;
+                    int ny = y + (int)dir.Y;
+                    int nz = z + (int)dir.Z;
+                    
+                    if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkHeight || nz < 0 || nz >= ChunkSize) continue;
+                    
+                    var neighbor = chunk.Blocks[nx, ny, nz];
+                    
+                    maxNeighborLight = Math.Max(maxNeighborLight, neighbor.LightLevel - LightDecay);
+                }
+                
+                block.LightLevel = Math.Max(block.LightLevel, maxNeighborLight);
+            }
+        }
+        
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkHeight; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    if (chunk.Blocks[x, y, z].Info.Type != BlockType.Air && chunk.Blocks[x, y, z].LightLevel > 0)
+                    {
+                        Console.WriteLine($"Solid block at ({x},{y},{z}) has light level {chunk.Blocks[x, y, z].LightLevel}");
                     }
                 }
             }
@@ -185,12 +309,8 @@ public class TerrainGeneration
                     
                     var lightLevel = chunk.Blocks[x, y, z].LightLevel;
                     
-                    var color = new Color(
-                        255f * lightLevel,
-                        255f * lightLevel,
-                        255f * lightLevel,
-                        255f
-                    );
+                    var lightByte = (byte)Math.Clamp(lightLevel * 255f, 0, 255);
+                    var color = new Color(lightByte, lightByte, lightByte, (byte)255);
                     
                     int vertexOffset = vertices.Count;
 
@@ -406,9 +526,7 @@ public class TerrainGeneration
 
         return chunk.Blocks[x, y, z]?.Info.Type != BlockType.Air;
     }
-
-    // TODO: Block isn't selected at certain angles.
-    // Sometimes blocks can be broken through other blocks.
+    
     private (Block?, Vector3) selectBlock(Camera3D camera)
     {
         var rayPosition = camera.Position;

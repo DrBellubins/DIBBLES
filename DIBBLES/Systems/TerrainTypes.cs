@@ -85,14 +85,14 @@ public class Block
     {
         Position = Vector3.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        LightLevel = 1.0f;
+        LightLevel = 0f;
     }
 
     public Block(Vector3 position, BlockInfo info)
     {
         Position = position;
         Info = info;
-        LightLevel = 1.0f;
+        LightLevel = 0f;
     }
     
     public static void InitializeBlockPrefabs()
@@ -183,9 +183,9 @@ public class Block
             Raylib.EndTextureMode();
             
             // Export atlas for debugging
-            Image atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
+            /*Image atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
             Raylib.ExportImage(atlasImage, "atlas_debug.png");
-            Raylib.UnloadImage(atlasImage);
+            Raylib.UnloadImage(atlasImage);*/
 
             TextureAtlas = atlasRenderTexture.Texture;
 
