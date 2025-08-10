@@ -14,7 +14,8 @@ public enum BlockType
     Stone,
     Sand,
     Snow,
-    Water
+    Water,
+    Torch
 }
 
 public enum TerrainBiome
@@ -115,6 +116,7 @@ public class Block
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
+        Prefabs.Add(BlockType.Torch, new BlockInfo(BlockType.Torch, 1, 0.0f, 16, true, 14)); // Torches emit light level 14
 
         // Define block types in the exact order for the atlas
         BlockType[] atlasBlockTypes = { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Sand, BlockType.Snow };
@@ -226,6 +228,8 @@ public class Block
                 return Raylib.LoadTexture("Assets/Textures/Blocks/snow.png");
             case BlockType.Water:
                 return Raylib.LoadTexture("Assets/Textures/Blocks/water.png");
+            case BlockType.Torch:
+                return Raylib.LoadTexture("Assets/Textures/Blocks/torch.png"); // Will fallback to error.png if doesn't exist
             default:
                 return Raylib.LoadTexture("Assets/Textures/Blocks/error.png");
         }
@@ -249,6 +253,8 @@ public class Block
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Sand/sand{i}.ogg");
             case BlockType.Snow:
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Snow/snow{i}.ogg");
+            case BlockType.Torch:
+                return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg"); // Use stone sounds for now
             default:
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg");
         }
