@@ -108,12 +108,12 @@ public class VoxelTerrainScene : Scene
         terrainGen.Draw();
         
         // Draw chunk coordinates in 2D after 3D rendering
-        foreach (var pos in terrainGen.chunks.Keys)
-        {
-            var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
-
-            Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter, Color.White);
-        }
+        //foreach (var pos in terrainGen.chunks.Keys)
+        //{
+        //    var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+        //
+        //    Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter, Color.White);
+        //}
 
         Raylib.EndMode3D();
         

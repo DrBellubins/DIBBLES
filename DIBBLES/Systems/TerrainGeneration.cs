@@ -150,20 +150,27 @@ public class TerrainGeneration
         HashSet<Chunk> affectedChunks = new();
         affectedChunks.Add(chunk);
 
-        // Enqueue all air blocks at the top of the chunk as sky light sources
+        // Top-down sky light column propagation
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                int y = ChunkHeight - 1;
-                if (chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
+                bool skyBlocked = false;
+                for (int y = ChunkHeight - 1; y >= 0; y--)
                 {
-                    chunk.Blocks[x, y, z].LightLevel = 1.0f;
-                    queue.Enqueue((chunk, x, y, z, 1.0f));
+                    if (!skyBlocked && chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
+                    {
+                        chunk.Blocks[x, y, z].LightLevel = 1.0f;
+                        queue.Enqueue((chunk, x, y, z, 1.0f));
+                    }
+                    else
+                    {
+                        skyBlocked = true; // Once we hit a non-air block, no sky light below
+                    }
                 }
             }
         }
-
+        
         // 6 directions
         int[] dx = { 1, -1, 0, 0, 0, 0 };
         int[] dy = { 0, 0, 1, -1, 0, 0 };
@@ -208,18 +215,17 @@ public class TerrainGeneration
                     continue;
                 
                 var neighbor = targetChunk.Blocks[tx, ty, tz];
-                float newLight = light - falloff;
+                float newLight = light;
                 
+                if (neighbor.Info.Type != BlockType.Air)
+                    newLight -= falloff;
+
                 if (newLight <= 0f) continue;
                 
                 if (neighbor.LightLevel < newLight)
                 {
                     neighbor.LightLevel = newLight;
-                    
-                    if (neighbor.Info.Type == BlockType.Air)
-                    {
-                        queue.Enqueue((targetChunk, tx, ty, tz, newLight));
-                    }
+                    queue.Enqueue((targetChunk, tx, ty, tz, newLight));
                 }
             }
         }
@@ -754,8 +760,8 @@ public class TerrainGeneration
             if (selectedBlock != null)
                 Raylib.DrawCubeWires(selectedBlock.Position + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
             
-            Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-                ChunkSize, ChunkHeight, ChunkSize, debugColor);
+            //Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
+            //    ChunkSize, ChunkHeight, ChunkSize, debugColor);
         }
     }
 }
