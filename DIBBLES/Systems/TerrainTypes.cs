@@ -14,7 +14,9 @@ public enum BlockType
     Stone,
     Sand,
     Snow,
-    Water
+    Water,
+    Torch,
+    Glowstone
 }
 
 public enum TerrainBiome
@@ -56,15 +58,19 @@ public class BlockInfo
     public int Hardness; // 0 to 10 (10 being unbreakable)
     public float Thickness; // 0 to 1 (Used for slowling player down)
     public int MaxStack;
+    public bool IsTransparent; // Allows light to pass through
+    public int EmittedLight; // Light level emitted by this block (0-15)
 
     public BlockInfo() {}
 
-    public BlockInfo(BlockType type, int hardness, float thickness, int maxStack)
+    public BlockInfo(BlockType type, int hardness, float thickness, int maxStack, bool isTransparent = false, int emittedLight = 0)
     {
         Type = type;
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
+        IsTransparent = isTransparent;
+        EmittedLight = emittedLight;
     }
 }
 
@@ -72,7 +78,8 @@ public class Block
 {
     public Vector3 Position;
     public BlockInfo Info;
-    public int LightLevel;
+    public int SkyLight; // Skylight level (0-15)
+    public int BlockLight; // Blocklight level (0-15)
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();
@@ -81,33 +88,47 @@ public class Block
     public static Texture2D TextureAtlas; // Store the atlas
     public static Dictionary<BlockType, Rectangle> AtlasUVs = new Dictionary<BlockType, Rectangle>(); // Store UV mappings
     
+    /// <summary>
+    /// Gets the effective light level for rendering (max of skylight and blocklight)
+    /// </summary>
+    public int EffectiveLightLevel => Math.Max(SkyLight, BlockLight);
+    
+    /// <summary>
+    /// Gets the light level as a normalized float (0.0 to 1.0)
+    /// </summary>
+    public float NormalizedLightLevel => EffectiveLightLevel / 15.0f;
+    
     public Block()
     {
         Position = Vector3.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        LightLevel = 1;
+        SkyLight = 0;
+        BlockLight = 0;
     }
 
     public Block(Vector3 position, BlockInfo info)
     {
         Position = position;
         Info = info;
-        LightLevel = 1;
+        SkyLight = 0;
+        BlockLight = 0;
     }
     
     public static void InitializeBlockPrefabs()
     {
-        // Initialize block prefabs
-        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0));
-        Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64));
-        Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64));
-        Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64));
-        Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64));
-        Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64));
+        // Initialize block prefabs with transparency and light emission properties
+        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0)); // Air is transparent
+        Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0)); // Water is transparent
+        Prefabs.Add(BlockType.Torch, new BlockInfo(BlockType.Torch, 1, 0.0f, 64, true, 14)); // Torch emits light level 14
+        Prefabs.Add(BlockType.Glowstone, new BlockInfo(BlockType.Glowstone, 3, 0.0f, 64, false, 15)); // Glowstone emits max light
 
-        // Define block types in the exact order for the atlas
-        BlockType[] atlasBlockTypes = { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Sand, BlockType.Snow };
+        // Define block types in the exact order for the atlas (add new light-emitting blocks)
+        BlockType[] atlasBlockTypes = { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Sand, BlockType.Snow, BlockType.Torch, BlockType.Glowstone };
         List<Texture2D> tempTextures = new List<Texture2D>();
         
         int maxWidth = 0;
@@ -145,11 +166,11 @@ public class Block
             Sounds.Add(blockType, blockSounds);
         }
 
-        // Create texture atlas in a 5x1 layout
+        // Create texture atlas in a 7x1 layout
         if (tempTextures.Count > 0)
         {
-            int textureCount = tempTextures.Count; // Should be 5 (Dirt, Grass, Stone, Sand, Snow)
-            int atlasWidth = maxWidth * textureCount; // 5 textures in a single row
+            int textureCount = tempTextures.Count; // Should be 7 (Dirt, Grass, Stone, Sand, Snow, Torch, Glowstone)
+            int atlasWidth = maxWidth * textureCount; // 7 textures in a single row
             int atlasHeight = maxHeight;
 
             RenderTexture2D atlasRenderTexture = Raylib.LoadRenderTexture(atlasWidth, atlasHeight);
@@ -170,7 +191,7 @@ public class Block
                 // Draw texture at the correct position
                 Raylib.DrawTexturePro(tempTextures[index], sourceRect, destRect, new Vector2(0, 0), 0.0f, Color.White);
 
-                // Calculate UV coordinates for a 5x1 atlas
+                // Calculate UV coordinates for a 7x1 atlas
                 float uMin = (float)(index * maxWidth) / atlasWidth;
                 float uMax = (float)((index + 1) * maxWidth) / atlasWidth;
                 float vMin = 0.0f;
@@ -216,6 +237,10 @@ public class Block
                 return Raylib.LoadTexture("Assets/Textures/Blocks/snow.png");
             case BlockType.Water:
                 return Raylib.LoadTexture("Assets/Textures/Blocks/water.png");
+            case BlockType.Torch:
+                return Raylib.LoadTexture("Assets/Textures/Blocks/torch.png");
+            case BlockType.Glowstone:
+                return Raylib.LoadTexture("Assets/Textures/Blocks/glowstone.png");
             default:
                 return Raylib.LoadTexture("Assets/Textures/Blocks/error.png");
         }
@@ -239,6 +264,10 @@ public class Block
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Sand/sand{i}.ogg");
             case BlockType.Snow:
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Snow/snow{i}.ogg");
+            case BlockType.Torch:
+                return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg"); // Use stone sounds for torch
+            case BlockType.Glowstone:
+                return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg"); // Use stone sounds for glowstone
             default:
                 return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg");
         }

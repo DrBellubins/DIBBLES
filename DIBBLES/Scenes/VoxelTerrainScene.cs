@@ -93,8 +93,20 @@ public class VoxelTerrainScene : Scene
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             terrainGen.BreakBlock();
         
+        // Block placement with different types
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            terrainGen.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
+        {
+            if (Raylib.IsKeyDown(KeyboardKey.One))
+                terrainGen.PlaceBlock(BlockType.Dirt);
+            else if (Raylib.IsKeyDown(KeyboardKey.Two))
+                terrainGen.PlaceBlock(BlockType.Stone);
+            else if (Raylib.IsKeyDown(KeyboardKey.Three))
+                terrainGen.PlaceBlock(BlockType.Torch);
+            else if (Raylib.IsKeyDown(KeyboardKey.Four))
+                terrainGen.PlaceBlock(BlockType.Glowstone);
+            else
+                terrainGen.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
+        }
         
         //terrainGen.UpdateTerrain(_camera.Position);
     }
@@ -120,6 +132,10 @@ public class VoxelTerrainScene : Scene
         
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
+        
+        // Draw UI instructions
+        Raylib.DrawText("Block types: 1-Dirt, 2-Stone, 3-Torch, 4-Glowstone", 10, 40, 20, Color.White);
+        Raylib.DrawText("Right-click to place, Left-click to break", 10, 65, 20, Color.White);
         
         Raylib.DrawFPS(10, 10);
         Raylib.EndDrawing();
