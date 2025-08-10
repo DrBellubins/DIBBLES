@@ -133,7 +133,87 @@ public class TerrainGeneration
 
     private void generateLighting(Chunk chunk)
     {
-        // TODO: Implement a more sophisticated lighting algorithm
+        // Reset all light levels to 0
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int y = 0; y < ChunkHeight; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    chunk.Blocks[x, y, z].LightLevel = 0f;
+                }
+            }
+        }
+
+        float falloff = 0.08f; // Small additive falloff for smooth decay
+        Queue<(Chunk chunk, int x, int y, int z, float light)> queue = new();
+        HashSet<Chunk> affectedChunks = new();
+        affectedChunks.Add(chunk);
+
+        // Enqueue all boundary air blocks as light sources
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkHeight; y++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            if (chunk.Blocks[x, y, z].Info.Type == BlockType.Air)
+            {
+                if (x == 0 || x == ChunkSize-1 || y == ChunkHeight-1 || z == 0 || z == ChunkSize-1 || y == 0)
+                {
+                    chunk.Blocks[x, y, z].LightLevel = 1.0f;
+                    queue.Enqueue((chunk, x, y, z, 1.0f));
+                }
+            }
+        }
+
+        // 6 directions
+        int[] dx = { 1, -1, 0, 0, 0, 0 };
+        int[] dy = { 0, 0, 1, -1, 0, 0 };
+        int[] dz = { 0, 0, 0, 0, 1, -1 };
+
+        // BFS flood fill with cross-chunk propagation
+        while (queue.Count > 0)
+        {
+            var (curChunk, x, y, z, light) = queue.Dequeue();
+            for (int d = 0; d < 6; d++)
+            {
+                int nx = x + dx[d];
+                int ny = y + dy[d];
+                int nz = z + dz[d];
+                Chunk targetChunk = curChunk;
+                int tx = nx, ty = ny, tz = nz;
+                // Handle cross-chunk propagation
+                if (nx < 0 || nx >= ChunkSize || nz < 0 || nz >= ChunkSize)
+                {
+                    // Calculate neighbor chunk position
+                    var chunkCoord = new Vector3(
+                        (int)(curChunk.Position.X / ChunkSize),
+                        0f,
+                        (int)(curChunk.Position.Z / ChunkSize)
+                    );
+                    var neighborCoord = chunkCoord;
+                    if (nx < 0) { tx = ChunkSize - 1; neighborCoord.X -= 1; }
+                    else if (nx >= ChunkSize) { tx = 0; neighborCoord.X += 1; }
+                    if (nz < 0) { tz = ChunkSize - 1; neighborCoord.Z -= 1; }
+                    else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
+                    if (!chunks.TryGetValue(neighborCoord * ChunkSize, out targetChunk))
+                        continue;
+                    affectedChunks.Add(targetChunk);
+                }
+                if (ty < 0 || ty >= ChunkHeight)
+                    continue;
+                var neighbor = targetChunk.Blocks[tx, ty, tz];
+                float newLight = light - falloff;
+                if (newLight <= 0f) continue;
+                if (neighbor.LightLevel < newLight)
+                {
+                    neighbor.LightLevel = newLight;
+                    if (neighbor.Info.Type == BlockType.Air)
+                    {
+                        queue.Enqueue((targetChunk, tx, ty, tz, newLight));
+                    }
+                }
+            }
+        }
     }
     
     private Model generateChunkMesh(Chunk chunk)
@@ -158,10 +238,10 @@ public class TerrainGeneration
                     var lightLevel = chunk.Blocks[x, y, z].LightLevel;
                     
                     var color = new Color(
-                        255f * lightLevel,
-                        255f * lightLevel,
-                        255f * lightLevel,
-                        255f
+                        (byte)(255f * lightLevel),
+                        (byte)(255f * lightLevel),
+                        (byte)(255f * lightLevel),
+                        (byte)255
                     );
                     
                     int vertexOffset = vertices.Count;
