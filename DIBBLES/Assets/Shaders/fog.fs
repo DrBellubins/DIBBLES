@@ -22,6 +22,6 @@ void main()
 
     vec4 scene = texture(sceneTex, fragTexCoord);
 
-    finalColor = vec4(depth, depth, depth, 1.0);
-    //finalColor = mix(scene, fogColor, fogFactor);
+    //finalColor = vec4(linearDepth, linearDepth, linearDepth, 1.0);
+    finalColor = mix(scene, fogColor, fogFactor);
 }

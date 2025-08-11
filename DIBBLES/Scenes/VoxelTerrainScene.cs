@@ -29,6 +29,9 @@ public class VoxelTerrainScene : Scene
             Projection = CameraProjection.Perspective
         };
         
+        // Must be set for proper depth buffers
+        Rlgl.SetClipPlanes(0.01f, 1000f);
+        
         Raylib.DisableCursor();
         
         // Initial terrain generation

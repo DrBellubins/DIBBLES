@@ -11,21 +11,19 @@ public class FogEffect
     private int depthTexLoc;
     private int fogNearLoc, fogFarLoc, fogColorLoc;
     
-    private uint depthTexId;
-    
     private float fogNear = 5.0f;
     private float fogFar = 40.0f;
     private Vector4 fogColor = new Vector4(0.5f, 0.6f, 0.7f, 1.0f);
 
     public void Start()
     {
-        depthTexId = Rlgl.LoadTextureDepth(Engine.ScreenWidth, Engine.ScreenHeight, true);
-        
         fogShader = Resource.LoadShader(null, "fog.fs");
-        target = Raylib.LoadRenderTexture(Engine.ScreenWidth, Engine.ScreenHeight);
+        
+        target = loadRenderTextureWithDepth(Engine.ScreenWidth, Engine.ScreenHeight);
 
         sceneTexLoc = Raylib.GetShaderLocation(fogShader, "sceneTex");
         depthTexLoc = Raylib.GetShaderLocation(fogShader, "depthTex");
+        
         fogNearLoc = Raylib.GetShaderLocation(fogShader, "fogNear");
         fogFarLoc = Raylib.GetShaderLocation(fogShader, "fogFar");
         fogColorLoc = Raylib.GetShaderLocation(fogShader, "fogColor");
@@ -37,22 +35,22 @@ public class FogEffect
 
     public void DrawStart()
     {
+        Rlgl.EnableDepthMask();
         Raylib.BeginTextureMode(target);
     }
 
     public void DrawEnd()
     {
         Raylib.EndTextureMode();
+        Rlgl.DisableDepthMask();
 
         Raylib.BeginShaderMode(fogShader);
 
         // Set scene color tex (color buffer)
         Raylib.SetShaderValueTexture(fogShader, sceneTexLoc, target.Texture);
 
-        // Attach the depth texture (as a raw OpenGL texture id)
-        Rlgl.ActiveTextureSlot(1);
-        Rlgl.EnableTexture(depthTexId);
-        Raylib.SetShaderValueTexture(fogShader, depthTexLoc, new Texture2D { Id = depthTexId, Width = Engine.ScreenWidth, Height = Engine.ScreenHeight, Mipmaps = 1, Format = PixelFormat.UncompressedR8G8B8A8 });
+        // Attach the depth texture
+        Raylib.SetShaderValueTexture(fogShader, depthTexLoc, target.Depth);
 
         // Draw fullscreen quad with shader
         Raylib.DrawTextureRec(target.Texture, new Rectangle(0, 0, Engine.ScreenWidth, -Engine.ScreenHeight), Vector2.Zero, Color.White);
@@ -61,6 +59,57 @@ public class FogEffect
         Raylib.EndShaderMode();
     }
 
+    private RenderTexture2D loadRenderTextureWithDepth(int width, int height)
+    {
+        RenderTexture2D target = new RenderTexture2D();
+
+        target.Id = Rlgl.LoadFramebuffer(); // Load an empty framebuffer
+
+        if (target.Id > 0)
+        {
+            Rlgl.EnableFramebuffer(target.Id);
+
+            // Create color texture (default to RGBA)
+            unsafe
+            {
+                target.Texture.Id = Rlgl.LoadTexture((void*)0, width, height, PixelFormat.UncompressedR8G8B8A8, 1);
+            }
+            
+            target.Texture.Width = width;
+            target.Texture.Height = height;
+            target.Texture.Format = PixelFormat.UncompressedR8G8B8A8;
+            target.Texture.Mipmaps = 1;
+
+            // Create depth texture
+            target.Depth.Id = Rlgl.LoadTextureDepth(width, height, false);
+            target.Depth.Width = width;
+            target.Depth.Height = height;
+            target.Depth.Format = PixelFormat.UncompressedR32; // Closest available in raylib-cs
+            target.Depth.Mipmaps = 1;
+
+            // Attach color texture and depth texture to FBO
+            Rlgl.FramebufferAttach(target.Id, target.Texture.Id,
+                FramebufferAttachType.ColorChannel0,
+                FramebufferAttachTextureType.Texture2D, 0);
+
+            Rlgl.FramebufferAttach(target.Id, target.Depth.Id,
+                FramebufferAttachType.Depth,
+                FramebufferAttachTextureType.Texture2D, 0);
+
+            // Check if fbo is complete with attachments (valid)
+            if (Rlgl.FramebufferComplete(target.Id))
+                Raylib.TraceLog(TraceLogLevel.Info, $"FBO: [ID {target.Id}] Framebuffer object created successfully");
+
+            Rlgl.DisableFramebuffer();
+        }
+        else
+        {
+            Raylib.TraceLog(TraceLogLevel.Warning, "FBO: Framebuffer object can not be created");
+        }
+
+        return target;
+    }
+    
     public void Unload()
     {
         Raylib.UnloadShader(fogShader);
