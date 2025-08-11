@@ -121,14 +121,14 @@ public class TerrainGameplay
             // Check current voxel
             var currentChunkPos = new Vector3(
                 MathF.Floor(mapPos.X / ChunkSize) * ChunkSize,
-                0f,
+                MathF.Floor(mapPos.Y / ChunkSize) * ChunkSize,
                 MathF.Floor(mapPos.Z / ChunkSize) * ChunkSize
             );
     
             if (!Chunks.TryGetValue(currentChunkPos, out var chunk)) continue;
     
             var localX = (int)(mapPos.X - currentChunkPos.X);
-            var localY = (int)mapPos.Y;
+            var localY = (int)(mapPos.Y - currentChunkPos.Y);
             var localZ = (int)(mapPos.Z - currentChunkPos.Z);
     
             if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkSize || localZ < 0 || localZ >= ChunkSize) continue;
@@ -179,9 +179,9 @@ public class TerrainGameplay
         chunk.Info.Modified = true;
 
         // Update lighting if the broken block was opaque or emissive
-        Lighting.Generate(chunk);
-        Lighting.UpdateNeighborChunkLighting(blockPos);
-        Lighting.UpdateSkyLightColumn(chunk, (int)blockPos.X, (int)blockPos.Z);
+        //Lighting.Generate(chunk);
+        //Lighting.UpdateNeighborChunkLighting(blockPos);
+        //Lighting.UpdateSkyLightColumn(chunk, (int)blockPos.X, (int)blockPos.Z);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
@@ -251,9 +251,9 @@ public class TerrainGameplay
         chunk.Info.Modified = true;
         
         // Update lighting for the placed block
-        Lighting.Generate(chunk);
-        Lighting.UpdateNeighborChunkLighting(newBlockPos);
-        Lighting.UpdateSkyLightColumn(chunk, (int)newBlockPos.X, (int)newBlockPos.Z);
+        //Lighting.Generate(chunk);
+        //Lighting.UpdateNeighborChunkLighting(newBlockPos);
+        //Lighting.UpdateSkyLightColumn(chunk, (int)newBlockPos.X, (int)newBlockPos.Z);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
