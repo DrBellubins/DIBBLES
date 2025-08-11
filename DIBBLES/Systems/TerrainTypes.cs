@@ -87,7 +87,7 @@ public class Block
     public static Dictionary<BlockType, Rectangle> AtlasUVs = new Dictionary<BlockType, Rectangle>(); // Store UV mappings
     
     // Helper property to get the effective light level (max of sky and block light)
-    public byte LightLevel => Math.Max(SkyLight, BlockLight);
+    public byte LightLevel => (byte)Math.Max(SkyLight, BlockLight);
     
     public Block()
     {

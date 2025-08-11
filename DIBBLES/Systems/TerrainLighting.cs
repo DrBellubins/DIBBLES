@@ -20,25 +20,32 @@ public class TerrainLighting
     
     private void initializeSkyLighting(Chunk chunk)
     {
-        // Initialize sky light from the top of the world down
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                byte skyLight = 15; // Maximum sky light at the top
-                
+                byte skyLight = 15;
+                bool surfaceLit = false;
                 for (int y = ChunkHeight - 1; y >= 0; y--)
                 {
                     var block = chunk.Blocks[x, y, z];
-                    
                     if (block.Info.Type == BlockType.Air || block.Info.IsTransparent)
                     {
                         block.SkyLight = skyLight;
                     }
                     else
                     {
-                        block.SkyLight = 0;
-                        skyLight = 0; // Block the light from going further down
+                        if (!surfaceLit)
+                        {
+                            // Light the first solid (surface) block with the current skylight
+                            block.SkyLight = skyLight;
+                            surfaceLit = true;
+                        }
+                        else
+                        {
+                            block.SkyLight = 0;
+                        }
+                        skyLight = 0;
                     }
                 }
             }
@@ -109,37 +116,37 @@ public class TerrainLighting
                 var neighbor = chunk.Blocks[neighborPos.X, neighborPos.Y, neighborPos.Z];
                 
                 // Skip if neighbor is opaque
-                if (!neighbor.Info.IsTransparent && neighbor.Info.Type != BlockType.Air)
-                    continue;
-                
                 bool updated = false;
-                
-                // Propagate sky light
-                if (block.SkyLight > 1)
+
+                // Propagate sky light ONLY to air/transparent
+                if (neighbor.Info.IsTransparent || neighbor.Info.Type == BlockType.Air)
                 {
-                    byte newSkyLight = (byte)(block.SkyLight - 1);
-                    if (newSkyLight > neighbor.SkyLight)
-                    {
-                        neighbor.SkyLight = newSkyLight;
-                        updated = true;
+                    if (block.SkyLight > 1) {
+                        byte newSkyLight = (byte)(block.SkyLight - 1);
+                        if (newSkyLight > neighbor.SkyLight) {
+                            neighbor.SkyLight = newSkyLight;
+                            updated = true;
+                        }
                     }
                 }
-                
-                // Propagate block light
+
+                // Propagate block light to ALL block types (even opaque)
                 if (block.BlockLight > 1)
                 {
                     byte newBlockLight = (byte)(block.BlockLight - 1);
+                    
                     if (newBlockLight > neighbor.BlockLight)
                     {
                         neighbor.BlockLight = newBlockLight;
                         updated = true;
                     }
                 }
-                
-                // Add to queue if lighting was updated
+
+                // Only add neighbor to queue if it is air/transparent OR if we updated its block light for the first time (so emission can light up one layer of stone, but not pass through)
                 if (updated)
                 {
-                    lightQueue.Enqueue(neighborPos);
+                    if (neighbor.Info.IsTransparent || neighbor.Info.Type == BlockType.Air)
+                        lightQueue.Enqueue(neighborPos);
                 }
             }
         }
