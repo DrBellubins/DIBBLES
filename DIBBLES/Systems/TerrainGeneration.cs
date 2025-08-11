@@ -33,7 +33,7 @@ public class TerrainGeneration
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3, Chunk> pendingChunks = new();
-    private HashSet<Vector3> generatingChunks = new();
+    private ConcurrentDictionary<Vector3, bool> generatingChunks = new();
 
     public void Start()
     {
@@ -79,7 +79,7 @@ public class TerrainGeneration
             var meshData = entry.meshData;
 
             // Upload mesh on main thread
-            //if (chunk.Model != null)
+            if (chunk.Model != null)
                 Raylib.UnloadModel(chunk.Model);
 
             chunk.Model = TMesh.UploadMesh(meshData);
@@ -98,28 +98,36 @@ public class TerrainGeneration
         {
             Vector3 chunkPos = new Vector3(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            if (!Chunks.ContainsKey(chunkPos) && !generatingChunks.Contains(chunkPos))
+            if (!Chunks.ContainsKey(chunkPos) && !generatingChunks.ContainsKey(chunkPos))
                 chunksToGenerate.Add(chunkPos);
         }
 
         foreach (var pos in chunksToGenerate)
         {
-            generatingChunks.Add(pos);
+            generatingChunks.TryAdd(pos, true);
 
             // Spawn a background task for chunk generation
             Task.Run(() =>
             {
-                var chunk = new Chunk(pos);
-                GenerateChunkData(chunk);
-                Lighting.Generate(chunk);
+                try
+                {
+                    var chunk = new Chunk(pos);
+                    GenerateChunkData(chunk);
+                    Lighting.Generate(chunk);
 
-                // Generate mesh data in this thread (not Raylib mesh!)
-                var meshData = TMesh.GenerateMeshData(chunk);
+                    // Generate mesh data in this thread (not Raylib mesh!)
+                    var meshData = TMesh.GenerateMeshData(chunk);
 
-                // Enqueue for main thread mesh upload
-                meshUploadQueue.Enqueue((chunk, meshData));
+                    // Enqueue for main thread mesh upload
+                    meshUploadQueue.Enqueue((chunk, meshData));
 
-                generatingChunks.Remove(pos);
+                    generatingChunks.TryRemove(pos, out _);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             });
         }
     }
