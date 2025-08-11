@@ -87,8 +87,6 @@ public static class Resource
                 var file = findTexture(fileName, isItem);
                 
                 var texture = Raylib.LoadTexture(file);
-                Raylib.GenTextureMipmaps(ref texture);
-                Raylib.SetTextureFilter(texture, TextureFilter.Bilinear);
                 
                 textures.Add(texture);
                 

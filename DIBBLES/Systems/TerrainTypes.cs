@@ -207,9 +207,17 @@ public class Block
             //Raylib.ExportImage(atlasImage, "atlas_debug.png");
             //Raylib.UnloadImage(atlasImage);
 
-            Raylib.GenTextureMipmaps(ref atlasRenderTexture.Texture);
+            // Generate atlas mipmaps
+            var atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
+            var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
             
-            TextureAtlas = atlasRenderTexture.Texture;
+            Raylib.GenTextureMipmaps(ref atlasTexture);
+            Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);
+            
+            Raylib.UnloadImage(atlasImage);
+            Raylib.UnloadRenderTexture(atlasRenderTexture);
+            
+            TextureAtlas = atlasTexture;
 
             // Unload temporary textures
             foreach (var texture in tempTextures)
