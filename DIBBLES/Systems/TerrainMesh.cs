@@ -349,29 +349,35 @@ public class TerrainMesh
     {
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
         {
-            // Calculate the current chunk's coordinates from its Position
+            // Compute which chunk to check in all axes
             Vector3 chunkCoord = new Vector3(
                 (int)(chunk.Position.X / ChunkSize),
-                0f,
+                (int)(chunk.Position.Y / ChunkSize),
                 (int)(chunk.Position.Z / ChunkSize)
             );
 
-            // Adjust chunk coordinates based on out-of-bounds voxel
             Vector3 neighborCoord = chunkCoord;
-            int nx = x, nz = z;
+            int nx = x, ny = y, nz = z;
 
             if (x < 0) { nx = ChunkSize - 1; neighborCoord.X -= 1; }
             else if (x >= ChunkSize) { nx = 0; neighborCoord.X += 1; }
 
+            if (y < 0) { ny = ChunkSize - 1; neighborCoord.Y -= 1; }
+            else if (y >= ChunkSize) { ny = 0; neighborCoord.Y += 1; }
+
             if (z < 0) { nz = ChunkSize - 1; neighborCoord.Z -= 1; }
             else if (z >= ChunkSize) { nz = 0; neighborCoord.Z += 1; }
 
-            if (y < 0 || y >= ChunkSize) return false;
+            Vector3 neighborChunkPos = new Vector3(
+                neighborCoord.X * ChunkSize,
+                neighborCoord.Y * ChunkSize,
+                neighborCoord.Z * ChunkSize
+            );
 
             // Look up the neighboring chunk
-            if (Chunks.TryGetValue(neighborCoord, out var neighborChunk))
+            if (Chunks.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
-                return neighborChunk.Blocks[nx, y, nz]?.Info.Type != BlockType.Air;
+                return neighborChunk.Blocks[nx, ny, nz]?.Info.Type != BlockType.Air;
             }
 
             return false;
