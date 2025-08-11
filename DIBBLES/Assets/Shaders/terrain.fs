@@ -1,4 +1,3 @@
-// soft_lighting.fs
 #version 330
 in vec2 fragTexCoord;
 in vec4 fragColor;

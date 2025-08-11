@@ -15,6 +15,7 @@ public class TerrainGeneration
     
     public static Dictionary<Vector3, Chunk> Chunks = new Dictionary<Vector3, Chunk>();
     
+    public static Shader terrainShader;
     public static TerrainMesh TMesh = new TerrainMesh();
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
@@ -35,6 +36,8 @@ public class TerrainGeneration
             Seed = WorldSave.Data.Seed;
         else
             Seed = new Random().Next(int.MaxValue);
+
+        terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
         
         Noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         Noise.SetSeed(1337);
