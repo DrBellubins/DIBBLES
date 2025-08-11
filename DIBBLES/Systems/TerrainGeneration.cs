@@ -3,6 +3,8 @@ using DIBBLES.Systems;
 using System.Numerics;
 using System.Collections.Generic;
 using DIBBLES.Utils;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace DIBBLES.Systems;
 
@@ -27,7 +29,12 @@ public class TerrainGeneration
     private Vector3 lastCameraChunk = Vector3.One; // Needs to != zero for first gen
 
     public int Seed;
-    
+
+    // Thread-safe queues for chunk and mesh work
+    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
+    private ConcurrentDictionary<Vector3, Chunk> pendingChunks = new();
+    private HashSet<Vector3> generatingChunks = new();
+
     public void Start()
     {
         Block.InitializeBlockPrefabs();
@@ -56,90 +63,64 @@ public class TerrainGeneration
             0f,
             (int)Math.Floor(camera.Position.Z / ChunkSize)
         );
-        
+
         // Only update if the camera has moved to a new chunk
         if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
-            GenerateTerrain(currentChunk);
+            GenerateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
         }
 
+        // Try to upload any queued meshes (must be done on main thread)
+        while (meshUploadQueue.TryDequeue(out var entry))
+        {
+            var chunk = entry.chunk;
+            var meshData = entry.meshData;
+
+            // Upload mesh on main thread
+            //if (chunk.Model != null)
+                Raylib.UnloadModel(chunk.Model);
+
+            chunk.Model = TMesh.UploadMesh(meshData);
+            Chunks[chunk.Position] = chunk;
+        }
     }
     
-    private void GenerateTerrain(Vector3 centerChunk)
+    private void GenerateTerrainAsync(Vector3 centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
         List<Vector3> chunksToGenerate = new List<Vector3>();
-        
+
         for (int cx = (int)centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
         for (int cy = (int)centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
         for (int cz = (int)centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
         {
             Vector3 chunkPos = new Vector3(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            
-            if (!Chunks.ContainsKey(chunkPos))
+
+            if (!Chunks.ContainsKey(chunkPos) && !generatingChunks.Contains(chunkPos))
                 chunksToGenerate.Add(chunkPos);
         }
-    
-        // Collect all unique neighbors that need remeshing
-        var neighborsToRemesh = new HashSet<Vector3>();
-        
+
         foreach (var pos in chunksToGenerate)
         {
-            var chunk = new Chunk(pos);
-            GenerateChunkData(chunk);
-            Lighting.Generate(chunk);
+            generatingChunks.Add(pos);
 
-            Chunks[pos] = chunk;
-            
-            var meshData = TMesh.GenerateMeshData(chunk);
-            chunk.Model = TMesh.UploadMesh(meshData);
+            // Spawn a background task for chunk generation
+            Task.Run(() =>
+            {
+                var chunk = new Chunk(pos);
+                GenerateChunkData(chunk);
+                Lighting.Generate(chunk);
 
-            // Neighbor chunk collection
-            var neighborOffsets = new Vector3[]
-            {
-                new Vector3(ChunkSize, 0, 0),
-                new Vector3(-ChunkSize, 0, 0),
-                new Vector3(0, ChunkSize, 0),
-                new Vector3(0, -ChunkSize, 0),
-                new Vector3(0, 0, ChunkSize),
-                new Vector3(0, 0, -ChunkSize)
-            };
-            
-            foreach (var offset in neighborOffsets)
-            {
-                var neighborPos = pos + offset;
-                
-                if (Chunks.ContainsKey(neighborPos))
-                    neighborsToRemesh.Add(neighborPos);
-            }
-            
-            // Update lighting for neighbors
-            for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-            for (int dz = -1; dz <= 1; dz++)
-            {
-                if (Math.Abs(dx) + Math.Abs(dz) != 1) continue; // only direct neighbors
-                
-                Vector3 neighborPos = pos + new Vector3(dx * ChunkSize, dy * ChunkSize, dz * ChunkSize);
+                // Generate mesh data in this thread (not Raylib mesh!)
+                var meshData = TMesh.GenerateMeshData(chunk);
 
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                    Lighting.Generate(neighborChunk);
-            }
-        }
-        
-        // Remesh direct neighbors in all 6 directions
-        // Fixes faces inside islands at chunk borders
-        foreach (var neighborPos in neighborsToRemesh)
-        {
-            if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-            {
-                Raylib.UnloadModel(neighborChunk.Model);
-                
-                var meshData = TMesh.GenerateMeshData(neighborChunk);
-                neighborChunk.Model = TMesh.UploadMesh(meshData);
-            }
+                // Enqueue for main thread mesh upload
+                meshUploadQueue.Enqueue((chunk, meshData));
+
+                generatingChunks.Remove(pos);
+            });
         }
     }
     
