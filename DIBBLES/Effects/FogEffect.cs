@@ -24,15 +24,22 @@ public class FogEffect
         Raylib.SetTextureFilter(fogRT.Texture, TextureFilter.Bilinear);
     }
 
-    public void DrawStart()
+    public void DrawStart(Vector3 position)
     {
-        Raylib.BeginShaderMode(fogShader);
+        Raylib.SetShaderValue(fogShader, Raylib.GetShaderLocation(fogShader, "viewPos"), position, ShaderUniformDataType.Vec3);
+        
         Raylib.BeginTextureMode(fogRT);
+        Raylib.BeginShaderMode(fogShader);
     }
     
     public void DrawEnd()
     {
-        Raylib.EndTextureMode();
         Raylib.EndShaderMode();
+        Raylib.EndTextureMode();
+    }
+
+    public void DrawBuffer()
+    {
+        Raylib.DrawTexture(fogRT.Texture, 0, 0, Color.White);
     }
 }

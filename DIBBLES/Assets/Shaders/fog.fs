@@ -11,6 +11,7 @@ uniform sampler2D texture0;
 uniform vec4 colDiffuse;
 
 // Custom uniforms
+uniform vec3 viewPos;
 uniform vec3 fogColor;
 uniform float fogStart;
 uniform float fogEnd;
@@ -22,7 +23,7 @@ void main()
 {
     vec4 color = texture(texture0, fragTexCoord);
     vec3 normal = normalize(fragNormal);
-    float depth = length(viewPos - fragPosition)
+    float depth = length(viewPos - fragPosition);
 
     float fogFactor = clamp((depth - fogStart) / (fogEnd - fogStart), 0.0, 1.0);
     finalColor = mix(color, vec4(fogColor, 1.0), fogFactor);
