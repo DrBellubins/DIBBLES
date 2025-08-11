@@ -117,7 +117,17 @@ public class Block
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
 
         // Define block types in the exact order for the atlas
-        BlockType[] atlasBlockTypes = { BlockType.Dirt, BlockType.Grass, BlockType.Stone, BlockType.Sand, BlockType.Snow };
+        var atlasBlockTypes = new List<BlockType>();
+
+        for (int i = 0; i < sizeof(BlockType); i++)
+        {
+            var blockType = (BlockType)i;
+            
+            // Add textures that shouldn't be in the atlas here.
+            if (blockType != BlockType.Air && blockType != BlockType.Water)
+                atlasBlockTypes.Add(blockType);
+        }
+        
         List<Texture2D> tempTextures = new List<Texture2D>();
         
         int maxWidth = 0;
@@ -127,9 +137,9 @@ public class Block
         foreach (BlockType blockType in atlasBlockTypes)
         {
             var texture = loadBlockTexture(blockType);
-            
+
             if (texture.Id == 0) // Check if texture failed to load
-                texture = Raylib.LoadTexture("Assets/Textures/Blocks/error.png");
+                texture = Resource.Load<Texture2D>("error.png");
             
             tempTextures.Add(texture);
             Textures.Add(blockType, texture); // Also store in Textures for reference
@@ -197,6 +207,8 @@ public class Block
             //Raylib.ExportImage(atlasImage, "atlas_debug.png");
             //Raylib.UnloadImage(atlasImage);
 
+            Raylib.GenTextureMipmaps(ref atlasRenderTexture.Texture);
+            
             TextureAtlas = atlasRenderTexture.Texture;
 
             // Unload temporary textures
@@ -208,6 +220,7 @@ public class Block
         }
     }
     
+    // TODO: Make sound/texture loading automatic for each block type
     private static Texture2D loadBlockTexture(BlockType blockType)
     {
         switch (blockType)
@@ -215,19 +228,19 @@ public class Block
             case BlockType.Air:
                 return default;
             case BlockType.Dirt:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/dirt.png");
+                return Resource.Load<Texture2D>("dirt.png");
             case BlockType.Grass:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/grass.png");
+                return Resource.Load<Texture2D>("grass.png");
             case BlockType.Stone:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/stone.png");
+                return Resource.Load<Texture2D>("stone.png");
             case BlockType.Sand:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/sand.png");
+                return Resource.Load<Texture2D>("sand.png");
             case BlockType.Snow:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/snow.png");
+                return Resource.Load<Texture2D>("snow.png");
             case BlockType.Water:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/water.png");
+                return Resource.Load<Texture2D>("water.png");
             default:
-                return Raylib.LoadTexture("Assets/Textures/Blocks/error.png");
+                return Resource.Load<Texture2D>("error.png");
         }
     }
     
@@ -240,17 +253,17 @@ public class Block
             case BlockType.Air:
                 return default;
             case BlockType.Dirt:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Dirt/dirt{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
             case BlockType.Grass:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Dirt/dirt{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
             case BlockType.Stone:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Stone", $"stone{i}.ogg"));
             case BlockType.Sand:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Sand/sand{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Sand", $"sand{i}.ogg"));
             case BlockType.Snow:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Snow/snow{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Snow", $"snow{i}.ogg"));
             default:
-                return Raylib.LoadSound($"Assets/Sounds/Blocks/Stone/stone{i}.ogg");
+                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
         }
     }
 }
