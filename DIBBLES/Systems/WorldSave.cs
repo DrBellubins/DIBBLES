@@ -63,7 +63,7 @@ public class WorldSave
 
                     for (int x = 0; x < ChunkSize; x++)
                     {
-                        for (int y = 0; y < ChunkHeight; y++)
+                        for (int y = 0; y < ChunkSize; y++)
                         {
                             for (int z = 0; z < ChunkSize; z++)
                             {
@@ -118,7 +118,7 @@ public class WorldSave
 
                             for (int x = 0; x < ChunkSize; x++)
                             {
-                                for (int y = 0; y < ChunkHeight; y++)
+                                for (int y = 0; y < ChunkSize; y++)
                                 {
                                     for (int z = 0; z < ChunkSize; z++)
                                     {

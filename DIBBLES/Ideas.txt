@@ -1,0 +1,7 @@
+A 3D voxel game with cubed chunks.
+The world is dark with no sun except snake-like wisps hovering throughout the casms.
+
+Story:
+The world is falling apart, wisps are the only glue that holds it together.
+Creativity was lost when the Dregs (pre-historic humans) wiped eachother out.
+Ever since then, the world has been pulling itself apart.

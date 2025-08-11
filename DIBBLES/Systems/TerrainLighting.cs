@@ -24,51 +24,22 @@ public class TerrainLighting
     
     public void UpdateSkyLightColumn(Chunk chunk, int x, int z)
     {
-        bool hasSkyAccess = true;
-
-        // Check for sky access by scanning from top down
-        for (int y = ChunkHeight - 1; y >= 0; y--)
+        bool blocked = false;
+        
+        for (int y = ChunkSize - 1; y >= 0; y--)
         {
             var block = chunk.Blocks[x, y, z];
 
-            // If we hit an opaque block, no more sky access below
-            if (!block.Info.IsTransparent && block.Info.Type != BlockType.Air)
+            if (!blocked && (block.Info.Type == BlockType.Air || block.Info.IsTransparent))
             {
-                hasSkyAccess = false;
-                break;
+                block.SkyLight = 15;
             }
-        }
-
-        // If there is sky access, shadow blocks beneath the first opaque block
-        if (hasSkyAccess)
-        {
-            bool blocked = false;
-            
-            for (int y = ChunkHeight - 1; y >= 0; y--)
+            else
             {
-                var block = chunk.Blocks[x, y, z];
-
-                if (!blocked && (block.Info.Type == BlockType.Air || block.Info.IsTransparent))
-                {
-                    block.SkyLight = 15;
-                }
-                else
-                {
-                    blocked = true;
-                    block.SkyLight = 0;
-                }
-            }
-        }
-        /*else
-        {
-            // No sky access: Do not cast shadow, leave existing sky light (for torch/cave cases)
-            // Optionally, set all to 0 if you want total darkness
-            for (int y = ChunkHeight - 1; y >= 0; y--)
-            {
-                var block = chunk.Blocks[x, y, z];
+                blocked = true;
                 block.SkyLight = 0;
             }
-        }*/
+        }
     }
     
     private void initializeSkyLighting(Chunk chunk)
@@ -78,7 +49,7 @@ public class TerrainLighting
             for (int z = 0; z < ChunkSize; z++)
             {
                 // Set all air/transparent blocks at the top to full sky light
-                for (int y = ChunkHeight - 1; y >= 0; y--)
+                for (int y = ChunkSize - 1; y >= 0; y--)
                 {
                     var block = chunk.Blocks[x, y, z];
                     
@@ -96,7 +67,7 @@ public class TerrainLighting
         // Initialize block light from emissive blocks
         for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkHeight; y++)
+            for (int y = 0; y < ChunkSize; y++)
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
@@ -115,7 +86,7 @@ public class TerrainLighting
         // Add all blocks with light to the queue for propagation
         for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkHeight; y++)
+            for (int y = 0; y < ChunkSize; y++)
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
@@ -150,7 +121,7 @@ public class TerrainLighting
                 Vector3Int localPos = neighborPos;
                 
                 if (neighborPos.X < 0 || neighborPos.X >= ChunkSize ||
-                    neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight ||
+                    neighborPos.Y < 0 || neighborPos.Y >= ChunkSize ||
                     neighborPos.Z < 0 || neighborPos.Z >= ChunkSize)
                 {
                     // Compute neighbor chunk position
@@ -161,7 +132,7 @@ public class TerrainLighting
                     else if (neighborPos.X >= ChunkSize) { chunkOffset.X = ChunkSize; localPos.X = 0; }
                     if (neighborPos.Z < 0) { chunkOffset.Z = -ChunkSize; localPos.Z = ChunkSize - 1; }
                     else if (neighborPos.Z >= ChunkSize) { chunkOffset.Z = ChunkSize; localPos.Z = 0; }
-                    if (neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight) continue; // No chunk up/down in Y
+                    if (neighborPos.Y < 0 || neighborPos.Y >= ChunkSize) continue; // No chunk up/down in Y
 
                     var neighborChunkPos = chunkPos + chunkOffset;
                     

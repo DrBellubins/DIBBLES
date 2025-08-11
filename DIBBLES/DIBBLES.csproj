@@ -34,4 +34,16 @@
       <Folder Include="Assets\Sounds\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Remove="Artwork\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="Artwork\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Artwork\**" />
+    </ItemGroup>
+
 </Project>

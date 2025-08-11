@@ -17,7 +17,7 @@ public class TerrainMesh
 
         for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkHeight; y++)
+            for (int y = 0; y < ChunkSize; y++)
             {
                 for (int z = 0; z < ChunkSize; z++)
                 {
@@ -71,10 +71,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x, y, z - 1))
                     {
                         // Vertices: 0,3,2,1
-                        float l0 = getVertexLight(chunk, x,   y,   z  );
-                        float l1 = getVertexLight(chunk, x,   y+1, z  );
-                        float l2 = getVertexLight(chunk, x+1, y+1, z  );
-                        float l3 = getVertexLight(chunk, x+1, y,   z  );
+                        //float l0 = getVertexLight(chunk, x,   y,   z  );
+                        //float l1 = getVertexLight(chunk, x,   y+1, z  );
+                        //float l2 = getVertexLight(chunk, x+1, y+1, z  );
+                        //float l3 = getVertexLight(chunk, x+1, y,   z  );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -92,10 +97,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x, y, z + 1))
                     {
                         // Vertices: 5,6,7,4
-                        float l0 = getVertexLight(chunk, x+1, y,   z+1 );
-                        float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
-                        float l2 = getVertexLight(chunk, x,   y+1, z+1 );
-                        float l3 = getVertexLight(chunk, x,   y,   z+1 );
+                        //float l0 = getVertexLight(chunk, x+1, y,   z+1 );
+                        //float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
+                        //float l2 = getVertexLight(chunk, x,   y+1, z+1 );
+                        //float l3 = getVertexLight(chunk, x,   y,   z+1 );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -113,10 +123,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x - 1, y, z))
                     {
                         // Vertices: 4,7,3,0
-                        float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                        float l1 = getVertexLight(chunk, x,   y+1, z+1 );
-                        float l2 = getVertexLight(chunk, x,   y+1, z   );
-                        float l3 = getVertexLight(chunk, x,   y,   z   );
+                        //float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                        //float l1 = getVertexLight(chunk, x,   y+1, z+1 );
+                        //float l2 = getVertexLight(chunk, x,   y+1, z   );
+                        //float l3 = getVertexLight(chunk, x,   y,   z   );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -134,10 +149,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x + 1, y, z))
                     {
                         // Vertices: 1,2,6,5
-                        float l0 = getVertexLight(chunk, x+1, y,   z   );
-                        float l1 = getVertexLight(chunk, x+1, y+1, z   );
-                        float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
-                        float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                        //float l0 = getVertexLight(chunk, x+1, y,   z   );
+                        //float l1 = getVertexLight(chunk, x+1, y+1, z   );
+                        //float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
+                        //float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -155,10 +175,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x, y - 1, z))
                     {
                         // Vertices: 4,0,1,5
-                        float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                        float l1 = getVertexLight(chunk, x,   y,   z   );
-                        float l2 = getVertexLight(chunk, x+1, y,   z   );
-                        float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                        //float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                        //float l1 = getVertexLight(chunk, x,   y,   z   );
+                        //float l2 = getVertexLight(chunk, x+1, y,   z   );
+                        //float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -176,10 +201,15 @@ public class TerrainMesh
                     if (!isVoxelSolid(chunk, x, y + 1, z))
                     {
                         // Vertices: 3,7,6,2
-                        float l0 = getVertexLightTopFace(chunk, x,   y, z   );
-                        float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
-                        float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
-                        float l3 = getVertexLightTopFace(chunk, x+1, y, z   );
+                        //float l0 = getVertexLightTopFace(chunk, x,   y, z   );
+                        //float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
+                        //float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
+                        //float l3 = getVertexLightTopFace(chunk, x+1, y, z   );
+                        
+                        float l0 = 1f;
+                        float l1 = 1f;
+                        float l2 = 1f;
+                        float l3 = 1f;
                         
                         colors.AddRange([
                             ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -317,7 +347,7 @@ public class TerrainMesh
     
     private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
     {
-        if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkHeight || z < 0 || z >= ChunkSize)
+        if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
         {
             // Calculate the current chunk's coordinates from its Position
             Vector3 chunkCoord = new Vector3(
@@ -336,7 +366,7 @@ public class TerrainMesh
             if (z < 0) { nz = ChunkSize - 1; neighborCoord.Z -= 1; }
             else if (z >= ChunkSize) { nz = 0; neighborCoord.Z += 1; }
 
-            if (y < 0 || y >= ChunkHeight) return false;
+            if (y < 0 || y >= ChunkSize) return false;
 
             // Look up the neighboring chunk
             if (Chunks.TryGetValue(neighborCoord, out var neighborChunk))
@@ -353,7 +383,7 @@ public class TerrainMesh
     // Helper local function
     private byte NeighborLightLevel(Chunk chunk, int nx, int ny, int nz)
     {
-        if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkHeight || nz < 0 || nz >= ChunkSize)
+        if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
         {
             // Calculate the current chunk's coordinates from its Position
             Vector3 chunkCoord = new Vector3(
@@ -372,7 +402,7 @@ public class TerrainMesh
             if (nz < 0) { tz = ChunkSize - 1; neighborCoord.Z -= 1; }
             else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
 
-            if (ny < 0 || ny >= ChunkHeight) return 0;
+            if (ny < 0 || ny >= ChunkSize) return 0;
 
             // Look up the neighboring chunk
             if (Chunks.TryGetValue(neighborCoord, out var neighborChunk))

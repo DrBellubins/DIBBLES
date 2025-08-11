@@ -44,7 +44,7 @@ public class Chunk
     public Chunk(Vector3 pos)
     {
         Position = pos;
-        Blocks = new Block[ChunkSize, ChunkHeight, ChunkSize];
+        Blocks = new Block[ChunkSize, ChunkSize, ChunkSize];
         Info =  new ChunkInfo();
     }
 }

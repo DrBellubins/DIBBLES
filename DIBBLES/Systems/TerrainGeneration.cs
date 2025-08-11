@@ -8,9 +8,8 @@ namespace DIBBLES.Systems;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 16;
+    public const int RenderDistance = 8;
     public const int ChunkSize = 16;
-    public const int ChunkHeight = 64;
     public const float ReachDistance = 100f; // Has to be finite!
     public const bool DrawDebug = false;
     
@@ -71,16 +70,13 @@ public class TerrainGeneration
         List<Vector3> chunksToGenerate = new List<Vector3>();
         
         for (int cx = (int)centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = (int)centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = (int)centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
         {
-            for (int cz = (int)centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
-            {
-                Vector3 chunkPos = new Vector3(cx * ChunkSize, 0f, cz * ChunkSize);
-                
-                if (!Chunks.ContainsKey(chunkPos))
-                {
-                    chunksToGenerate.Add(chunkPos);
-                }
-            }
+            Vector3 chunkPos = new Vector3(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+            
+            if (!Chunks.ContainsKey(chunkPos))
+                chunksToGenerate.Add(chunkPos);
         }
     
         foreach (var pos in chunksToGenerate)
@@ -94,11 +90,12 @@ public class TerrainGeneration
 
             // Update lighting for neighbors
             for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
             for (int dz = -1; dz <= 1; dz++)
             {
                 if (Math.Abs(dx) + Math.Abs(dz) != 1) continue; // only direct neighbors
                 
-                Vector3 neighborPos = pos + new Vector3(dx * ChunkSize, 0, dz * ChunkSize);
+                Vector3 neighborPos = pos + new Vector3(dx * ChunkSize, dy * ChunkSize, dz * ChunkSize);
 
                 if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
                     Lighting.Generate(neighborChunk);
@@ -110,15 +107,35 @@ public class TerrainGeneration
     {
         for (int x = 0; x < ChunkSize; x++)
         {
+            for (int y = 0; y < ChunkSize; y++)
+            {
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    var worldPos = chunk.Position + new Vector3(x, y, z);
+                    var noise = Noise.GetNoise(chunk.Position.X + x,  chunk.Position.Y + y, chunk.Position.Z + z) + 0.5f * 0.5f;
+                    
+                    if (noise < 0.5f)
+                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Air]);
+                    else
+                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Grass]);
+                }
+            }
+        }
+    }
+    
+    /*public static void GenerateChunkData(Chunk chunk)
+    {
+        for (int x = 0; x < ChunkSize; x++)
+        {
             for (int z = 0; z < ChunkSize; z++)
             {
                 var amplitude = 10f;
-                var baseHeight = ChunkHeight * 0.5f;
+                var baseHeight = ChunkSize * 0.5f;
                 var height = Noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * amplitude;
                 
                 int terrainHeight = (int)baseHeight + (int)height;
 
-                for (int y = 0; y < ChunkHeight; y++)
+                for (int y = 0; y < ChunkSize; y++)
                 {
                     var worldPos = chunk.Position + new Vector3(x, y, z);
                     
@@ -141,7 +158,7 @@ public class TerrainGeneration
                 }
             }
         }
-    }
+    }*/
     
     private void UnloadDistantChunks(Vector3 centerChunk)
     {
@@ -189,8 +206,8 @@ public class TerrainGeneration
                 else
                     debugColor = Color.Blue;
             
-                Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-                    ChunkSize, ChunkHeight, ChunkSize, debugColor);
+                Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkSize / 2f, ChunkSize / 2f),
+                    ChunkSize, ChunkSize, ChunkSize, debugColor);
             }
         }
         
@@ -199,7 +216,7 @@ public class TerrainGeneration
             // Draw chunk coordinates in 2D after 3D rendering
             foreach (var pos in TerrainGeneration.Chunks.Keys)
             {
-                var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+                var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkSize + 2f, TerrainGeneration.ChunkSize / 2f);
                 Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter, Color.White);
             }
         }

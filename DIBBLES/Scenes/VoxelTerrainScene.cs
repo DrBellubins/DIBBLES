@@ -19,8 +19,8 @@ public class VoxelTerrainScene : Scene
     {
         _camera = new Camera3D
         {
-            Position = new Vector3(0f, TerrainGeneration.ChunkHeight, 0f),
-            Target = new Vector3(0f, TerrainGeneration.ChunkHeight, 1f),
+            Position = new Vector3(0f, TerrainGeneration.ChunkSize, 0f),
+            Target = new Vector3(0f, TerrainGeneration.ChunkSize, 1f),
             Up = new Vector3(0, 1, 0),
             FovY = 60.0f,
             Projection = CameraProjection.Perspective

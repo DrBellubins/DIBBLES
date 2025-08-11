@@ -71,7 +71,7 @@ public class TerrainGameplay
             var localY = (int)mapPos.Y;
             var localZ = (int)(mapPos.Z - startChunkPos.Z);
             
-            if (localX >= 0 && localX < ChunkSize && localY >= 0 && localY < ChunkHeight && localZ >= 0 && localZ < ChunkSize)
+            if (localX >= 0 && localX < ChunkSize && localY >= 0 && localY < ChunkSize && localZ >= 0 && localZ < ChunkSize)
             {
                 var block = startChunk.Blocks[localX, localY, localZ];
                 
@@ -131,7 +131,7 @@ public class TerrainGameplay
             var localY = (int)mapPos.Y;
             var localZ = (int)(mapPos.Z - currentChunkPos.Z);
     
-            if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkHeight || localZ < 0 || localZ >= ChunkSize) continue;
+            if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkSize || localZ < 0 || localZ >= ChunkSize) continue;
     
             var block = chunk.Blocks[localX, localY, localZ];
     
@@ -155,7 +155,7 @@ public class TerrainGameplay
         
         var chunkCoord = new Vector3(
             (int)Math.Floor(blockPos.X / ChunkSize) * ChunkSize,
-            0f,
+            (int)Math.Floor(blockPos.Y / ChunkSize) * ChunkSize,
             (int)Math.Floor(blockPos.Z / ChunkSize) * ChunkSize
         );
 
@@ -169,7 +169,7 @@ public class TerrainGameplay
         var localZ = (int)localPos.Z;
 
         if (localX < 0 || localX >= ChunkSize ||
-            localY < 0 || localY >= ChunkHeight ||
+            localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize)
             return;
 
@@ -181,7 +181,7 @@ public class TerrainGameplay
         // Update lighting if the broken block was opaque or emissive
         Lighting.Generate(chunk);
         Lighting.UpdateNeighborChunkLighting(blockPos);
-        Lighting.UpdateSkyLightColumn(chunk, localX, localZ);
+        Lighting.UpdateSkyLightColumn(chunk, (int)blockPos.X, (int)blockPos.Z);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
@@ -218,7 +218,7 @@ public class TerrainGameplay
         // Determine the chunk for the new block position
         var chunkCoord = new Vector3(
             (int)Math.Floor(newBlockPos.X / ChunkSize) * ChunkSize,
-            0f,
+            (int)Math.Floor(newBlockPos.Y / ChunkSize) * ChunkSize,
             (int)Math.Floor(newBlockPos.Z / ChunkSize) * ChunkSize
         );
         
@@ -240,7 +240,7 @@ public class TerrainGameplay
         
         // Check if the position is within bounds and not occupied
         if (localX < 0 || localX >= ChunkSize ||
-            localY < 0 || localY >= ChunkHeight ||
+            localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize ||
             chunk.Blocks[localX, localY, localZ]?.Info.Type != BlockType.Air)
             return;
@@ -253,7 +253,7 @@ public class TerrainGameplay
         // Update lighting for the placed block
         Lighting.Generate(chunk);
         Lighting.UpdateNeighborChunkLighting(newBlockPos);
-        Lighting.UpdateSkyLightColumn(chunk, localX, localZ);
+        Lighting.UpdateSkyLightColumn(chunk, (int)newBlockPos.X, (int)newBlockPos.Z);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
