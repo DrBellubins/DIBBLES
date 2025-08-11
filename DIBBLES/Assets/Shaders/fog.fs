@@ -5,20 +5,22 @@ in vec2 fragTexCoord;
 uniform sampler2D sceneTex;   // Rendered scene color
 uniform sampler2D depthTex;   // Depth buffer texture
 
+uniform float zNear;
+uniform float zFar;
+
 uniform float fogNear;
 uniform float fogFar;
+
 uniform vec4 fogColor;
 
 out vec4 finalColor;
 
 void main()
 {
-    float depth = texture(depthTex, fragTexCoord).r;
+    float linearDepth = texture(depthTex, fragTexCoord).r;
+    float depth = zNear + (zFar - zNear) * linearDepth;
 
-    // Reconstruct linear depth (depends on depth buffer encoding)
-    float linearDepth = depth; // For default, may need custom logic
-
-    float fogFactor = smoothstep(fogNear, fogFar, linearDepth);
+    float fogFactor = smoothstep(fogNear, fogFar, depth);
 
     vec4 scene = texture(sceneTex, fragTexCoord);
 

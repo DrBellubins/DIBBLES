@@ -9,10 +9,10 @@ public class FogEffect
     private RenderTexture2D target;
     private int sceneTexLoc;
     private int depthTexLoc;
-    private int fogNearLoc, fogFarLoc, fogColorLoc;
+    private int zNearLoc, zFarLoc, fogNearLoc, fogFarLoc, fogColorLoc;
     
-    private float fogNear = 5.0f;
-    private float fogFar = 40.0f;
+    private float fogNear = 900.0f;
+    private float fogFar = 1000.0f;
     private Vector4 fogColor = new Vector4(0.5f, 0.6f, 0.7f, 1.0f);
 
     public void Start()
@@ -24,10 +24,18 @@ public class FogEffect
         sceneTexLoc = Raylib.GetShaderLocation(fogShader, "sceneTex");
         depthTexLoc = Raylib.GetShaderLocation(fogShader, "depthTex");
         
+        zNearLoc = Raylib.GetShaderLocation(fogShader, "zNear");
+        zFarLoc = Raylib.GetShaderLocation(fogShader, "zFar");
+        
         fogNearLoc = Raylib.GetShaderLocation(fogShader, "fogNear");
         fogFarLoc = Raylib.GetShaderLocation(fogShader, "fogFar");
         fogColorLoc = Raylib.GetShaderLocation(fogShader, "fogColor");
-
+        
+        Console.WriteLine($"Cull plane: {(float)Rlgl.GetCullDistanceNear()}, {(float)Rlgl.GetCullDistanceFar()}");
+        
+        Raylib.SetShaderValue(fogShader, zNearLoc, (float)Rlgl.GetCullDistanceNear(), ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(fogShader, zFarLoc, (float)Rlgl.GetCullDistanceFar(), ShaderUniformDataType.Float);
+        
         Raylib.SetShaderValue(fogShader, fogNearLoc, fogNear, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(fogShader, fogFarLoc, fogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(fogShader, fogColorLoc, fogColor, ShaderUniformDataType.Vec4);
