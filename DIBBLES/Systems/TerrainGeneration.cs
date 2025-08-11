@@ -88,10 +88,21 @@ public class TerrainGeneration
             var chunk = new Chunk(pos);
             GenerateChunkData(chunk);
             Lighting.Generate(chunk);
-            
+
             Chunks[pos] = chunk;
-        
             chunk.Model = TMesh.Generate(chunk);
+
+            // Update lighting for neighbors
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                if (Math.Abs(dx) + Math.Abs(dz) != 1) continue; // only direct neighbors
+                
+                Vector3 neighborPos = pos + new Vector3(dx * ChunkSize, 0, dz * ChunkSize);
+
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                    Lighting.Generate(neighborChunk);
+            }
         }
     }
     

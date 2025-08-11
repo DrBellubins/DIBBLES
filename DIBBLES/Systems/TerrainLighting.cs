@@ -1,6 +1,6 @@
 using System.Numerics;
 using DIBBLES.Utils;
-
+using Raylib_cs;
 using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES.Systems;
@@ -176,9 +176,15 @@ public class TerrainLighting
         {
             if ((localX == 0 && dx == -1) || (localX == ChunkSize - 1 && dx == 1))
             {
-                Vector3 neighborChunk = chunkCoord + new Vector3(dx * ChunkSize, 0, 0);
-                if (Chunks.TryGetValue(neighborChunk, out var nChunk))
+                Vector3 nChunkCoord = chunkCoord + new Vector3(0, 0, dx * ChunkSize);
+
+                if (Chunks.TryGetValue(nChunkCoord, out var nChunk))
+                {
                     Lighting.Generate(nChunk);
+                    
+                    Raylib.UnloadModel(nChunk.Model);
+                    nChunk.Model = TMesh.Generate(nChunk);
+                }
             }
         }
         
@@ -186,10 +192,15 @@ public class TerrainLighting
         {
             if ((localZ == 0 && dz == -1) || (localZ == ChunkSize - 1 && dz == 1))
             {
-                Vector3 neighborChunk = chunkCoord + new Vector3(0, 0, dz * ChunkSize);
-                
-                if (Chunks.TryGetValue(neighborChunk, out var nChunk))
+                Vector3 nChunkCoord = chunkCoord + new Vector3(0, 0, dz * ChunkSize);
+
+                if (Chunks.TryGetValue(nChunkCoord, out var nChunk))
+                {
                     Lighting.Generate(nChunk);
+                    
+                    Raylib.UnloadModel(nChunk.Model);
+                    nChunk.Model = TMesh.Generate(nChunk);
+                }
             }
         }
     }
