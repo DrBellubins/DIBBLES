@@ -110,58 +110,48 @@ public class TerrainGeneration
     {
         for (int x = 0; x < ChunkSize; x++)
         {
-            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
             {
-                for (int z = 0; z < ChunkSize; z++)
+                var foundSurface = false;
+                var islandDepth = 0;
+                
+                for (int y = ChunkSize - 1; y >= 0; y--)
                 {
-                    var worldPos = chunk.Position + new Vector3(x, y, z);
-                    var noise = Noise.GetNoise(chunk.Position.X + x,  chunk.Position.Y + y, chunk.Position.Z + z) + 0.5f * 0.5f;
-                    
-                    if (noise < 0.5f)
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Air]);
+                    var worldX = chunk.Position.X + x;
+                    var worldY = chunk.Position.Y + y;
+                    var worldZ = chunk.Position.Z + z;
+
+                    var noise = Noise.GetNoise(worldX, worldY, worldZ);
+
+                    if (noise > 0.5f)
+                    {
+                        if (!foundSurface)
+                        {
+                            // This is the surface
+                            chunk.Blocks[x, y, z] = new Block(new Vector3(worldX, worldY, worldZ), Block.Prefabs[BlockType.Grass]);
+                            foundSurface = true;
+                            islandDepth = 0;
+                        }
+                        else if (islandDepth < 3) // dirt thickness = 3
+                        {
+                            chunk.Blocks[x, y, z] = new Block(new Vector3(worldX, worldY, worldZ), Block.Prefabs[BlockType.Dirt]);
+                            islandDepth++;
+                        }
+                        else
+                        {
+                            chunk.Blocks[x, y, z] = new Block(new Vector3(worldX, worldY, worldZ), Block.Prefabs[BlockType.Stone]);
+                            islandDepth++;
+                        }
+                    }
                     else
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Grass]);
+                    {
+                        chunk.Blocks[x, y, z] = new Block(new Vector3(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        islandDepth = 0;
+                    }
                 }
             }
         }
     }
-    
-    /*public static void GenerateChunkData(Chunk chunk)
-    {
-        for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int z = 0; z < ChunkSize; z++)
-            {
-                var amplitude = 10f;
-                var baseHeight = ChunkSize * 0.5f;
-                var height = Noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * amplitude;
-                
-                int terrainHeight = (int)baseHeight + (int)height;
-
-                for (int y = 0; y < ChunkSize; y++)
-                {
-                    var worldPos = chunk.Position + new Vector3(x, y, z);
-                    
-                    if (y >= terrainHeight) // Air
-                    {
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Air]);
-                    }
-                    else if (y == terrainHeight - 1) // Top layer: Grass
-                    {
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Grass]);
-                    }
-                    else if (y >= terrainHeight - 3) // Near surface: Dirt
-                    {
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Dirt]);
-                    }
-                    else // Deeper: Stone
-                    {
-                        chunk.Blocks[x, y, z] = new Block(worldPos, Block.Prefabs[BlockType.Stone]);
-                    }
-                }
-            }
-        }
-    }*/
     
     private void UnloadDistantChunks(Vector3 centerChunk)
     {
