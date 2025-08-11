@@ -2,6 +2,7 @@ using Raylib_cs;
 using DIBBLES.Systems;
 using System.Numerics;
 using System.Collections.Generic;
+using DIBBLES.Effects;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Scenes;
@@ -13,7 +14,9 @@ public class VoxelTerrainScene : Scene
     private float cameraYaw = 0f;
     private float cameraPitch = 0f;
     
-    public Vector3 CameraDirection = Vector3.Zero;
+    private Vector3 cameraDirection = Vector3.Zero;
+    
+    private FogEffect fogEffect = new FogEffect();
 
     public override void Start()
     {
@@ -31,6 +34,8 @@ public class VoxelTerrainScene : Scene
         // Initial terrain generation
         terrainGen.Start();
         terrainGen.UpdateTerrain(_camera);
+        
+        fogEffect.Start();
         
         WorldSave.Initialize();
     }
@@ -81,13 +86,13 @@ public class VoxelTerrainScene : Scene
         cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
 
         // Calculate camera direction
-        CameraDirection = new Vector3(
+        cameraDirection = new Vector3(
             MathF.Cos(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch)),
             MathF.Sin(GMath.ToRadians(cameraPitch)),
             MathF.Sin(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch))
         );
         
-        _camera.Target = _camera.Position + CameraDirection;
+        _camera.Target = _camera.Position + cameraDirection;
         
         // --- Block breaking and placing ---
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
@@ -105,7 +110,11 @@ public class VoxelTerrainScene : Scene
         Raylib.ClearBackground(Color.SkyBlue);
         Raylib.BeginMode3D(_camera);
 
+        fogEffect.DrawStart();
+        
         terrainGen.Draw();
+        
+        fogEffect.DrawEnd();
 
         Raylib.EndMode3D();
         
