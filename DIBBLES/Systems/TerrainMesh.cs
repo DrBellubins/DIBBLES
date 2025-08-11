@@ -287,7 +287,7 @@ public class TerrainMesh
         {
             unsafe
             {
-                model.Materials[0].Shader = terrainShader;
+                model.Materials[0].Shader = Raylib.LoadMaterialDefault().Shader;
                 model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = Block.TextureAtlas;
             }
         }
