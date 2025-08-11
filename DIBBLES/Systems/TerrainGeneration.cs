@@ -55,6 +55,7 @@ public class TerrainGeneration
         Noise.SetFractalGain(0.5f);
     }
 
+    private bool hasGenerated = false; // FOR TESTING PURPOSES
     public void UpdateTerrain(Camera3D camera)
     {
         // Calculate current chunk coordinates based on camera position
@@ -65,11 +66,13 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        if (currentChunk != lastCameraChunk)
+        if (!hasGenerated)
         {
             lastCameraChunk = currentChunk;
             GenerateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
+            
+            hasGenerated = true;
         }
 
         // Try to upload any queued meshes (must be done on main thread)
@@ -79,7 +82,7 @@ public class TerrainGeneration
             var meshData = entry.meshData;
 
             // Upload mesh on main thread
-            if (chunk.Model != null)
+            if (chunk.Model.MeshCount > 0)
                 Raylib.UnloadModel(chunk.Model);
 
             chunk.Model = TMesh.UploadMesh(meshData);

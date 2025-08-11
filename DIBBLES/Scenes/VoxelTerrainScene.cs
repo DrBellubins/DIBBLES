@@ -47,7 +47,7 @@ public class VoxelTerrainScene : Scene
     {
         Debug.Update(_camera);
         
-        //terrainGen.UpdateTerrain(_camera);
+        terrainGen.UpdateTerrain(_camera);
         TerrainGeneration.Gameplay.Update(_camera);
         
         // Temporary world saving/loading
