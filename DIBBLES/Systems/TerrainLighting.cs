@@ -1,3 +1,4 @@
+using System.Numerics;
 using DIBBLES.Utils;
 
 using static DIBBLES.Systems.TerrainGeneration;
@@ -57,7 +58,7 @@ public class TerrainLighting
     private void propagateLighting(Chunk chunk)
     {
         // Use BFS to propagate both sky and block light
-        Queue<Vector3Int> lightQueue = new Queue<Vector3Int>();
+        Queue<(Chunk, Vector3Int)> lightQueue = new();
         
         // Add all blocks with light to the queue for propagation
         for (int x = 0; x < ChunkSize; x++)
@@ -67,10 +68,9 @@ public class TerrainLighting
                 for (int z = 0; z < ChunkSize; z++)
                 {
                     var block = chunk.Blocks[x, y, z];
+                    
                     if (block.SkyLight > 0 || block.BlockLight > 0)
-                    {
-                        lightQueue.Enqueue(new Vector3Int(x, y, z));
-                    }
+                        lightQueue.Enqueue((chunk, new Vector3Int(x, y, z)));
                 }
             }
         }
@@ -78,8 +78,8 @@ public class TerrainLighting
         // Process light propagation
         while (lightQueue.Count > 0)
         {
-            var pos = lightQueue.Dequeue();
-            var block = chunk.Blocks[pos.X, pos.Y, pos.Z];
+            var (curChunk, pos) = lightQueue.Dequeue();
+            var block = curChunk.Blocks[pos.X, pos.Y, pos.Z];
             
             // Check all 6 neighboring positions
             Vector3Int[] neighbors = {
@@ -93,13 +93,31 @@ public class TerrainLighting
             
             foreach (var neighborPos in neighbors)
             {
-                // Skip if outside chunk bounds (we'll handle cross-chunk later)
+                // Check for out-of-bounds (cross-chunk)
+                Chunk neighborChunk = curChunk;
+                Vector3Int localPos = neighborPos;
+                
                 if (neighborPos.X < 0 || neighborPos.X >= ChunkSize ||
                     neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight ||
                     neighborPos.Z < 0 || neighborPos.Z >= ChunkSize)
-                    continue;
+                {
+                    // Compute neighbor chunk position
+                    var chunkPos = curChunk.Position;
+                    Vector3 chunkOffset = Vector3.Zero;
+                    
+                    if (neighborPos.X < 0) { chunkOffset.X = -ChunkSize; localPos.X = ChunkSize - 1; }
+                    else if (neighborPos.X >= ChunkSize) { chunkOffset.X = ChunkSize; localPos.X = 0; }
+                    if (neighborPos.Z < 0) { chunkOffset.Z = -ChunkSize; localPos.Z = ChunkSize - 1; }
+                    else if (neighborPos.Z >= ChunkSize) { chunkOffset.Z = ChunkSize; localPos.Z = 0; }
+                    if (neighborPos.Y < 0 || neighborPos.Y >= ChunkHeight) continue; // No chunk up/down in Y
+
+                    var neighborChunkPos = chunkPos + chunkOffset;
+                    
+                    if (!Chunks.TryGetValue(neighborChunkPos, out neighborChunk))
+                        continue; // No neighbor chunk loaded
+                }
                 
-                var neighbor = chunk.Blocks[neighborPos.X, neighborPos.Y, neighborPos.Z];
+                var neighbor = neighborChunk.Blocks[localPos.X, localPos.Y, localPos.Z];
                 
                 // Skip if neighbor is opaque
                 bool updated = false;
@@ -107,9 +125,12 @@ public class TerrainLighting
                 // Propagate sky light ONLY to air/transparent
                 if (neighbor.Info.IsTransparent || neighbor.Info.Type == BlockType.Air)
                 {
-                    if (block.SkyLight > 1) {
+                    if (block.SkyLight > 1)
+                    {
                         byte newSkyLight = (byte)(block.SkyLight - 1);
-                        if (newSkyLight > neighbor.SkyLight) {
+                        
+                        if (newSkyLight > neighbor.SkyLight)
+                        {
                             neighbor.SkyLight = newSkyLight;
                             updated = true;
                         }
@@ -132,8 +153,43 @@ public class TerrainLighting
                 if (updated)
                 {
                     if (neighbor.Info.IsTransparent || neighbor.Info.Type == BlockType.Air)
-                        lightQueue.Enqueue(neighborPos);
+                        lightQueue.Enqueue((neighborChunk, localPos));
                 }
+            }
+        }
+    }
+    
+    public void UpdateNeighborChunkLighting(Vector3 blockPos)
+    {
+        int[] edgeOffsets = { -1, 1 };
+
+        var localX = (int)(blockPos.X % ChunkSize);
+        var localZ = (int)(blockPos.Z % ChunkSize);
+
+        Vector3 chunkCoord = new Vector3(
+            (int)Math.Floor(blockPos.X / ChunkSize) * ChunkSize,
+            0f,
+            (int)Math.Floor(blockPos.Z / ChunkSize) * ChunkSize
+        );
+
+        foreach (int dx in edgeOffsets)
+        {
+            if ((localX == 0 && dx == -1) || (localX == ChunkSize - 1 && dx == 1))
+            {
+                Vector3 neighborChunk = chunkCoord + new Vector3(dx * ChunkSize, 0, 0);
+                if (Chunks.TryGetValue(neighborChunk, out var nChunk))
+                    Lighting.Generate(nChunk);
+            }
+        }
+        
+        foreach (int dz in edgeOffsets)
+        {
+            if ((localZ == 0 && dz == -1) || (localZ == ChunkSize - 1 && dz == 1))
+            {
+                Vector3 neighborChunk = chunkCoord + new Vector3(0, 0, dz * ChunkSize);
+                
+                if (Chunks.TryGetValue(neighborChunk, out var nChunk))
+                    Lighting.Generate(nChunk);
             }
         }
     }
