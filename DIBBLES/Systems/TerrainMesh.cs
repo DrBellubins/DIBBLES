@@ -347,6 +347,8 @@ public class TerrainMesh
     
     private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
     {
+        BlockInfo info = null;
+
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
         {
             // Compute which chunk to check in all axes
@@ -377,13 +379,18 @@ public class TerrainMesh
             // Look up the neighboring chunk
             if (Chunks.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
-                return neighborChunk.Blocks[nx, ny, nz]?.Info.Type != BlockType.Air;
+                info = neighborChunk.Blocks[nx, ny, nz]?.Info;
             }
-
-            return false;
+        }
+        else
+        {
+            info = chunk.Blocks[x, y, z]?.Info;
         }
 
-        return chunk.Blocks[x, y, z]?.Info.Type != BlockType.Air;
+        // Air or transparent blocks are NOT solid
+        if (info == null)
+            return false;
+        return info.Type != BlockType.Air && !info.IsTransparent;
     }
     
     // Helper local function
