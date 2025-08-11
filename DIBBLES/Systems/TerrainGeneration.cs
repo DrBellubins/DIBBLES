@@ -91,6 +91,8 @@ public class TerrainGeneration
             Chunks[pos] = chunk;
             chunk.Model = TMesh.Generate(chunk);
 
+            // Remesh direct neighbors in all 6 directions
+            // Fixes faces inside islands at chunk borders
             var neighborOffsets = new Vector3[]
             {
                 new Vector3(ChunkSize, 0, 0),
