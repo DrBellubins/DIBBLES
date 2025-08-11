@@ -24,29 +24,15 @@ public class TerrainLighting
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                byte skyLight = 15;
-                bool surfaceLit = false;
+                // Set all air/transparent blocks at the top to full sky light
                 for (int y = ChunkHeight - 1; y >= 0; y--)
                 {
                     var block = chunk.Blocks[x, y, z];
+                    
                     if (block.Info.Type == BlockType.Air || block.Info.IsTransparent)
-                    {
-                        block.SkyLight = skyLight;
-                    }
+                        block.SkyLight = 15;
                     else
-                    {
-                        if (!surfaceLit)
-                        {
-                            // Light the first solid (surface) block with the current skylight
-                            block.SkyLight = skyLight;
-                            surfaceLit = true;
-                        }
-                        else
-                        {
-                            block.SkyLight = 0;
-                        }
-                        skyLight = 0;
-                    }
+                        break; // As soon as we hit a solid block, stop
                 }
             }
         }
