@@ -12,6 +12,7 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const int ChunkHeight = 32;
     public const float ReachDistance = 100f; // Has to be finite!
+    public const bool DrawDebug = true;
     
     public static Dictionary<Vector3, Chunk> Chunks = new Dictionary<Vector3, Chunk>();
     
@@ -162,18 +163,31 @@ public class TerrainGeneration
         {
             Raylib.DrawModel(chunk.Model, chunk.Position, 1.0f, Color.White);
             
-            var debugColor = Color.Black;
-            
-            if (chunk.Info.Modified)
-                debugColor = Color.Red;
-            else
-                debugColor = Color.Blue;
-            
             if (SelectedBlock != null)
                 Raylib.DrawCubeWires(SelectedBlock.Position + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+
+            if (DrawDebug)
+            {
+                Color debugColor;
             
-            //Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
-            //    ChunkSize, ChunkHeight, ChunkSize, debugColor);
+                if (chunk.Info.Modified)
+                    debugColor = Color.Red;
+                else
+                    debugColor = Color.Blue;
+            
+                Raylib.DrawCubeWires(chunk.Position + new Vector3(ChunkSize / 2f, ChunkHeight / 2f, ChunkSize / 2f),
+                    ChunkSize, ChunkHeight, ChunkSize, debugColor);
+            }
+        }
+        
+        if (DrawDebug)
+        {
+            // Draw chunk coordinates in 2D after 3D rendering
+            foreach (var pos in TerrainGeneration.Chunks.Keys)
+            {
+                var chunkCenter = pos + new Vector3(TerrainGeneration.ChunkSize / 2f, TerrainGeneration.ChunkHeight + 2f, TerrainGeneration.ChunkSize / 2f);
+                Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter, Color.White);
+            }
         }
     }
 }
