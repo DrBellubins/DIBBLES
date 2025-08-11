@@ -185,7 +185,9 @@ public class TerrainGameplay
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
-        chunk.Model = TMesh.Generate(chunk);
+        
+        var meshData = TMesh.GenerateMeshData(chunk);
+        chunk.Model = TMesh.UploadMesh(meshData);
 
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
@@ -257,7 +259,9 @@ public class TerrainGameplay
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
-        chunk.Model = TMesh.Generate(chunk);
+        
+        var meshData = TMesh.GenerateMeshData(chunk);
+        chunk.Model = TMesh.UploadMesh(meshData);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))

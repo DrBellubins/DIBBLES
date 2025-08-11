@@ -92,7 +92,9 @@ public class TerrainGeneration
             Lighting.Generate(chunk);
 
             Chunks[pos] = chunk;
-            chunk.Model = TMesh.Generate(chunk);
+            
+            var meshData = TMesh.GenerateMeshData(chunk);
+            chunk.Model = TMesh.UploadMesh(meshData);
 
             // Neighbor chunk collection
             var neighborOffsets = new Vector3[]
@@ -134,7 +136,9 @@ public class TerrainGeneration
             if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
             {
                 Raylib.UnloadModel(neighborChunk.Model);
-                neighborChunk.Model = TMesh.Generate(neighborChunk);
+                
+                var meshData = TMesh.GenerateMeshData(neighborChunk);
+                neighborChunk.Model = TMesh.UploadMesh(meshData);
             }
         }
     }

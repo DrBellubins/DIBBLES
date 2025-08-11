@@ -206,7 +206,9 @@ public class TerrainLighting
                     Lighting.Generate(nChunk);
                     
                     Raylib.UnloadModel(nChunk.Model);
-                    nChunk.Model = TMesh.Generate(nChunk);
+                    
+                    var meshData = TMesh.GenerateMeshData(nChunk);
+                    nChunk.Model = TMesh.UploadMesh(meshData);
                 }
             }
         }
@@ -222,7 +224,9 @@ public class TerrainLighting
                     Lighting.Generate(nChunk);
                     
                     Raylib.UnloadModel(nChunk.Model);
-                    nChunk.Model = TMesh.Generate(nChunk);
+                    
+                    var meshData = TMesh.GenerateMeshData(nChunk);
+                    nChunk.Model = TMesh.UploadMesh(meshData);
                 }
             }
         }
