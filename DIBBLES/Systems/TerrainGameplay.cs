@@ -264,7 +264,7 @@ public class TerrainGameplay
             WorldSave.Data.ModifiedChunks.Add(chunk);
         
         // Play place sound
-        var sound = Block.Sounds[SelectedBlock.Info.Type].RND;
+        var sound = Block.Sounds[blockType].RND;
         
         if (sound.FrameCount != 0)
             Raylib.PlaySound(sound);

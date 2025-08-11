@@ -17,10 +17,11 @@ out vec4 finalColor;
 
 void main()
 {
-    float linearDepth = texture(depthTex, fragTexCoord).r;
-    float depth = zNear + (zFar - zNear) * linearDepth;
+    float depth = texture(depthTex, fragTexCoord).r;
+    float ndcDepth = depth * 2.0 - 1.0;
+    float linearDepth = (2.0 * zNear * zFar) / (zFar + zNear - ndcDepth * (zFar - zNear));
 
-    float fogFactor = smoothstep(fogNear, fogFar, depth);
+    float fogFactor = smoothstep(fogNear, fogFar, linearDepth);
 
     vec4 scene = texture(sceneTex, fragTexCoord);
 

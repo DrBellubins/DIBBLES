@@ -11,8 +11,8 @@ public class FogEffect
     private int depthTexLoc;
     private int zNearLoc, zFarLoc, fogNearLoc, fogFarLoc, fogColorLoc;
     
-    private float fogNear = 900.0f;
-    private float fogFar = 1000.0f;
+    private float fogNear = 50.0f;
+    private float fogFar = 100.0f;
     private Vector4 fogColor = new Vector4(0.5f, 0.6f, 0.7f, 1.0f);
 
     public void Start()
