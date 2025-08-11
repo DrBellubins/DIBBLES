@@ -7,7 +7,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainMesh
 {
-    public Model GenerateChunkMesh(Chunk chunk)
+    public Model Generate(Chunk chunk)
     {
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -31,14 +31,12 @@ public class TerrainMesh
                     // Normalize light level from 0-15 to 0-1, ensuring minimum visibility
                     float lightValue = Math.Max(0.1f, lightLevel / 15.0f);
                     
-                    //var color = new Color(
-                    //    (byte)(255 * lightValue),
-                    //    (byte)(255 * lightValue),
-                    //    (byte)(255 * lightValue),
-                    //    (byte)255
-                    //);
-                    
-                    var color = Color.White;
+                    var color = new Color(
+                        (byte)(255f * lightValue),
+                        (byte)(255f * lightValue),
+                        (byte)(255f * lightValue),
+                        (byte)255f
+                    );
                     
                     int vertexOffset = vertices.Count;
 

@@ -86,11 +86,11 @@ public class TerrainGeneration
         {
             var chunk = new Chunk(pos);
             GenerateChunkData(chunk);
-            Lighting.GenerateLighting(chunk);
+            Lighting.Generate(chunk);
             
             Chunks[pos] = chunk;
         
-            chunk.Model = TMesh.GenerateChunkMesh(chunk);
+            chunk.Model = TMesh.Generate(chunk);
         }
     }
     

@@ -179,11 +179,11 @@ public class TerrainGameplay
         chunk.Info.Modified = true;
 
         // Update lighting if the broken block was opaque or emissive
-        Lighting.GenerateLighting(chunk);
+        Lighting.Generate(chunk);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
-        chunk.Model = TMesh.GenerateChunkMesh(chunk);
+        chunk.Model = TMesh.Generate(chunk);
 
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
@@ -225,7 +225,7 @@ public class TerrainGameplay
         {
             chunk = new Chunk(chunkCoord);
             GenerateChunkData(chunk);
-            Lighting.GenerateLighting(chunk);
+            Lighting.Generate(chunk);
             Chunks[chunkCoord] = chunk;
         }
         
@@ -248,11 +248,11 @@ public class TerrainGameplay
         chunk.Info.Modified = true;
         
         // Update lighting for the placed block
-        Lighting.GenerateLighting(chunk);
+        Lighting.Generate(chunk);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
-        chunk.Model = TMesh.GenerateChunkMesh(chunk);
+        chunk.Model = TMesh.Generate(chunk);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))

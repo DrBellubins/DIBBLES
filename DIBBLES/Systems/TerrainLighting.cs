@@ -6,7 +6,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainLighting
 {
-    public void GenerateLighting(Chunk chunk)
+    public void Generate(Chunk chunk)
     {
         // Initialize sky lighting - propagate from top down
         initializeSkyLighting(chunk);

@@ -94,7 +94,7 @@ public class VoxelTerrainScene : Scene
             TerrainGeneration.Gameplay.BreakBlock();
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Dirt); // Default to placing dirt blocks
+            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Snow); // Default to placing dirt blocks
         
         //terrainGen.UpdateTerrain(_camera.Position);
     }

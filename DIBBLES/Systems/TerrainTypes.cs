@@ -113,7 +113,7 @@ public class Block
         Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 15));
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
 
         // Define block types in the exact order for the atlas
@@ -193,9 +193,9 @@ public class Block
             Raylib.EndTextureMode();
             
             // Export atlas for debugging
-            Image atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
-            Raylib.ExportImage(atlasImage, "atlas_debug.png");
-            Raylib.UnloadImage(atlasImage);
+            //Image atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
+            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
+            //Raylib.UnloadImage(atlasImage);
 
             TextureAtlas = atlasRenderTexture.Texture;
 
