@@ -82,6 +82,9 @@ public class TerrainGeneration
                 chunksToGenerate.Add(chunkPos);
         }
     
+        // Collect all unique neighbors that need remeshing
+        var neighborsToRemesh = new HashSet<Vector3>();
+        
         foreach (var pos in chunksToGenerate)
         {
             var chunk = new Chunk(pos);
@@ -91,8 +94,7 @@ public class TerrainGeneration
             Chunks[pos] = chunk;
             chunk.Model = TMesh.Generate(chunk);
 
-            // Remesh direct neighbors in all 6 directions
-            // Fixes faces inside islands at chunk borders
+            // Neighbor chunk collection
             var neighborOffsets = new Vector3[]
             {
                 new Vector3(ChunkSize, 0, 0),
@@ -107,11 +109,8 @@ public class TerrainGeneration
             {
                 var neighborPos = pos + offset;
                 
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                {
-                    Raylib.UnloadModel(neighborChunk.Model);
-                    neighborChunk.Model = TMesh.Generate(neighborChunk);
-                }
+                if (Chunks.ContainsKey(neighborPos))
+                    neighborsToRemesh.Add(neighborPos);
             }
             
             // Update lighting for neighbors
@@ -125,6 +124,17 @@ public class TerrainGeneration
 
                 if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
                     Lighting.Generate(neighborChunk);
+            }
+        }
+        
+        // Remesh direct neighbors in all 6 directions
+        // Fixes faces inside islands at chunk borders
+        foreach (var neighborPos in neighborsToRemesh)
+        {
+            if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+            {
+                Raylib.UnloadModel(neighborChunk.Model);
+                neighborChunk.Model = TMesh.Generate(neighborChunk);
             }
         }
     }
