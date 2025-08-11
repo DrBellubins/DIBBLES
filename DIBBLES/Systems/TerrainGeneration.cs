@@ -10,9 +10,9 @@ public class TerrainGeneration
 {
     public const int RenderDistance = 16;
     public const int ChunkSize = 16;
-    public const int ChunkHeight = 32;
+    public const int ChunkHeight = 64;
     public const float ReachDistance = 100f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static Dictionary<Vector3, Chunk> Chunks = new Dictionary<Vector3, Chunk>();
     
@@ -112,8 +112,11 @@ public class TerrainGeneration
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                float height = Noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * 0.5f + 0.5f;
-                int terrainHeight = (int)(height * (ChunkHeight - 10)) + 10;
+                var amplitude = 10f;
+                var baseHeight = ChunkHeight * 0.5f;
+                var height = Noise.GetNoise(chunk.Position.X + x, chunk.Position.Z + z) * amplitude;
+                
+                int terrainHeight = (int)baseHeight + (int)height;
 
                 for (int y = 0; y < ChunkHeight; y++)
                 {

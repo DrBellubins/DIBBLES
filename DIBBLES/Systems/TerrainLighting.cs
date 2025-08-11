@@ -5,6 +5,8 @@ using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
+// TODO: Adjacent chunks need to be updated regardless
+// of distance to edge.
 public class TerrainLighting
 {
     public void Generate(Chunk chunk)

@@ -65,127 +65,130 @@ public class TerrainMesh
                         uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0] // Rotate 90 degrees CW
                     };
 
-                    // --- Per-face lighting: sample neighbor's light ---
-                    
-                    // --- Faces ---
+                    // --- Smooth Per-Vertex Lighting ---
+
                     // Front face (-Z)
                     if (!isVoxelSolid(chunk, x, y, z - 1))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x, y, z - 1);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 0,3,2,1
+                        float l0 = GetVertexLight(chunk, x,   y,   z  );
+                        float l1 = GetVertexLight(chunk, x,   y+1, z  );
+                        float l2 = GetVertexLight(chunk, x+1, y+1, z  );
+                        float l3 = GetVertexLight(chunk, x+1, y,   z  );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[0], cubeVertices[3], cubeVertices[2], cubeVertices[1]]);
                         normals.AddRange([new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 2, vertexOffset + 3, vertexOffset, vertexOffset + 1, vertexOffset + 2]);
+                        
                         vertexOffset += 4;
                     }
 
                     // Back face (+Z)
                     if (!isVoxelSolid(chunk, x, y, z + 1))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x, y, z + 1);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 5,6,7,4
+                        float l0 = GetVertexLight(chunk, x+1, y,   z+1 );
+                        float l1 = GetVertexLight(chunk, x+1, y+1, z+1 );
+                        float l2 = GetVertexLight(chunk, x,   y+1, z+1 );
+                        float l3 = GetVertexLight(chunk, x,   y,   z+1 );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[5], cubeVertices[6], cubeVertices[7], cubeVertices[4]]);
                         normals.AddRange([new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                        
                         vertexOffset += 4;
                     }
 
                     // Left face (-X)
                     if (!isVoxelSolid(chunk, x - 1, y, z))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x - 1, y, z);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 4,7,3,0
+                        float l0 = GetVertexLight(chunk, x,   y,   z+1 );
+                        float l1 = GetVertexLight(chunk, x,   y+1, z+1 );
+                        float l2 = GetVertexLight(chunk, x,   y+1, z   );
+                        float l3 = GetVertexLight(chunk, x,   y,   z   );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[4], cubeVertices[7], cubeVertices[3], cubeVertices[0]]);
                         normals.AddRange([new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                        
                         vertexOffset += 4;
                     }
 
                     // Right face (+X)
                     if (!isVoxelSolid(chunk, x + 1, y, z))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x + 1, y, z);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 1,2,6,5
+                        float l0 = GetVertexLight(chunk, x+1, y,   z   );
+                        float l1 = GetVertexLight(chunk, x+1, y+1, z   );
+                        float l2 = GetVertexLight(chunk, x+1, y+1, z+1 );
+                        float l3 = GetVertexLight(chunk, x+1, y,   z+1 );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[1], cubeVertices[2], cubeVertices[6], cubeVertices[5]]);
                         normals.AddRange([new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                        
                         vertexOffset += 4;
                     }
 
                     // Bottom face (-Y)
                     if (!isVoxelSolid(chunk, x, y - 1, z))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x, y - 1, z);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 4,0,1,5
+                        float l0 = GetVertexLight(chunk, x,   y,   z+1 );
+                        float l1 = GetVertexLight(chunk, x,   y,   z   );
+                        float l2 = GetVertexLight(chunk, x+1, y,   z   );
+                        float l3 = GetVertexLight(chunk, x+1, y,   z+1 );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[4], cubeVertices[0], cubeVertices[1], cubeVertices[5]]);
                         normals.AddRange([new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                        
                         vertexOffset += 4;
                     }
 
                     // Top face (+Y)
                     if (!isVoxelSolid(chunk, x, y + 1, z))
                     {
-                        byte faceLight = NeighborLightLevel(chunk, x, y + 1, z);
-                        float lightValue = Math.Max(0.1f, faceLight / 15.0f);
-                        var color = new Color(
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)(255f * lightValue),
-                            (byte)255f
-                        );
-
+                        // Vertices: 3,7,6,2
+                        float l0 = GetVertexLight(chunk, x,   y+1, z   );
+                        float l1 = GetVertexLight(chunk, x,   y+1, z+1 );
+                        float l2 = GetVertexLight(chunk, x+1, y+1, z+1 );
+                        float l3 = GetVertexLight(chunk, x+1, y+1, z   );
+                        
+                        colors.AddRange([
+                            ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                        ]);
+                        
                         vertices.AddRange([cubeVertices[3], cubeVertices[7], cubeVertices[6], cubeVertices[2]]);
                         normals.AddRange([new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0)]);
                         texcoords.AddRange(rotatedUvCoords);
-                        colors.AddRange([color, color, color, color]);
                         indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                        // vertexOffset += 4; // Not needed at end
                     }
                 }
             }
@@ -202,6 +205,7 @@ public class TerrainMesh
         unsafe
         {
             mesh.Vertices = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
+            
             for (int i = 0; i < vertices.Count; i++)
             {
                 mesh.Vertices[i * 3] = vertices[i].X;
@@ -210,6 +214,7 @@ public class TerrainMesh
             }
 
             mesh.Normals = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 3 * sizeof(float));
+            
             for (int i = 0; i < normals.Count; i++)
             {
                 mesh.Normals[i * 3] = normals[i].X;
@@ -218,6 +223,7 @@ public class TerrainMesh
             }
 
             mesh.TexCoords = (float*)Raylib.MemAlloc((uint)mesh.VertexCount * 2 * sizeof(float));
+            
             for (int i = 0; i < texcoords.Count; i++)
             {
                 mesh.TexCoords[i * 2] = texcoords[i].X;
@@ -225,6 +231,7 @@ public class TerrainMesh
             }
 
             mesh.Colors = (byte*)Raylib.MemAlloc((uint)mesh.VertexCount * 4 * sizeof(byte));
+            
             for (int i = 0; i < colors.Count; i++)
             {
                 mesh.Colors[i * 4] = colors[i].R;
@@ -234,6 +241,7 @@ public class TerrainMesh
             }
 
             mesh.Indices = (ushort*)Raylib.MemAlloc((uint)indices.Count * sizeof(ushort));
+            
             for (int i = 0; i < indices.Count; i++)
             {
                 mesh.Indices[i] = (ushort)indices[i];
@@ -255,6 +263,38 @@ public class TerrainMesh
         }
 
         return model;
+    }
+
+    // Helper: map [0,1] to Color
+    private static Color ToColor(float light)
+    {
+        light = MathF.Max(0.1f, light); // Prevent fully dark
+        
+        var color = (byte)(255f * light);
+        
+        return new Color(color, color, color, (byte)255);
+    }
+
+    // This computes the average light at a vertex, by sampling the 8 blocks touching it
+    private float GetVertexLight(Chunk chunk, int vx, int vy, int vz)
+    {
+        float total = 0f;
+        int count = 0;
+        
+        for (int dx = 0; dx <= 1; dx++)
+        for (int dy = 0; dy <= 1; dy++)
+        for (int dz = 0; dz <= 1; dz++)
+        {
+            int nx = vx - dx;
+            int ny = vy - dy;
+            int nz = vz - dz;
+            
+            total += NeighborLightLevel(chunk, nx, ny, nz);
+            
+            count++;
+        }
+        
+        return total / (count * 15f); // Normalize to [0,1]
     }
 
     private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
