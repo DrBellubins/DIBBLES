@@ -181,6 +181,7 @@ public class TerrainGameplay
         // Update lighting if the broken block was opaque or emissive
         Lighting.Generate(chunk);
         Lighting.UpdateNeighborChunkLighting(blockPos);
+        Lighting.UpdateSkyLightColumn(chunk, localX, localZ);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
@@ -252,6 +253,7 @@ public class TerrainGameplay
         // Update lighting for the placed block
         Lighting.Generate(chunk);
         Lighting.UpdateNeighborChunkLighting(newBlockPos);
+        Lighting.UpdateSkyLightColumn(chunk, localX, localZ);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model

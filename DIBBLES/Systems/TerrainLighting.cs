@@ -5,6 +5,7 @@ using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
+// TODO: Overhangs don't create shadows.
 // TODO: Adjacent chunks need to be updated regardless
 // of distance to edge.
 public class TerrainLighting
@@ -19,6 +20,55 @@ public class TerrainLighting
         
         // Propagate lighting using BFS
         propagateLighting(chunk);
+    }
+    
+    public void UpdateSkyLightColumn(Chunk chunk, int x, int z)
+    {
+        bool hasSkyAccess = true;
+
+        // Check for sky access by scanning from top down
+        for (int y = ChunkHeight - 1; y >= 0; y--)
+        {
+            var block = chunk.Blocks[x, y, z];
+
+            // If we hit an opaque block, no more sky access below
+            if (!block.Info.IsTransparent && block.Info.Type != BlockType.Air)
+            {
+                hasSkyAccess = false;
+                break;
+            }
+        }
+
+        // If there is sky access, shadow blocks beneath the first opaque block
+        if (hasSkyAccess)
+        {
+            bool blocked = false;
+            
+            for (int y = ChunkHeight - 1; y >= 0; y--)
+            {
+                var block = chunk.Blocks[x, y, z];
+
+                if (!blocked && (block.Info.Type == BlockType.Air || block.Info.IsTransparent))
+                {
+                    block.SkyLight = 15;
+                }
+                else
+                {
+                    blocked = true;
+                    block.SkyLight = 0;
+                }
+            }
+        }
+        /*else
+        {
+            // No sky access: Do not cast shadow, leave existing sky light (for torch/cave cases)
+            // Optionally, set all to 0 if you want total darkness
+            for (int y = ChunkHeight - 1; y >= 0; y--)
+            {
+                var block = chunk.Blocks[x, y, z];
+                block.SkyLight = 0;
+            }
+        }*/
     }
     
     private void initializeSkyLighting(Chunk chunk)
