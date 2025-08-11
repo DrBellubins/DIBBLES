@@ -91,6 +91,27 @@ public class TerrainGeneration
             Chunks[pos] = chunk;
             chunk.Model = TMesh.Generate(chunk);
 
+            var neighborOffsets = new Vector3[]
+            {
+                new Vector3(ChunkSize, 0, 0),
+                new Vector3(-ChunkSize, 0, 0),
+                new Vector3(0, ChunkSize, 0),
+                new Vector3(0, -ChunkSize, 0),
+                new Vector3(0, 0, ChunkSize),
+                new Vector3(0, 0, -ChunkSize)
+            };
+            
+            foreach (var offset in neighborOffsets)
+            {
+                var neighborPos = pos + offset;
+                
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                {
+                    Raylib.UnloadModel(neighborChunk.Model);
+                    neighborChunk.Model = TMesh.Generate(neighborChunk);
+                }
+            }
+            
             // Update lighting for neighbors
             for (int dx = -1; dx <= 1; dx++)
             for (int dy = -1; dy <= 1; dy++)
