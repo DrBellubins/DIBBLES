@@ -8,13 +8,14 @@ using System.Collections.Concurrent;
 
 namespace DIBBLES.Systems;
 
+// TODO: Chunks no longer cull blocks inside of neighboring chunk islands
 // TODO: There are edge cases where faces in neighbor chunks don't regen when breaking/placing
 public class TerrainGeneration
 {
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 100f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static Dictionary<Vector3, Chunk> Chunks = new Dictionary<Vector3, Chunk>();
     
@@ -154,7 +155,7 @@ public class TerrainGeneration
 
                     var noise = Noise.GetNoise(worldX, worldY, worldZ);
 
-                    if (noise > 0.5f)
+                    if (noise > 0.25f)
                     {
                         if (!foundSurface)
                         {
