@@ -68,8 +68,8 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        //if (currentChunk != lastCameraChunk)
-        if (!hasGenerated)
+        if (currentChunk != lastCameraChunk)
+        //if (!hasGenerated)
         {
             lastCameraChunk = currentChunk;
             GenerateTerrainAsync(currentChunk);
