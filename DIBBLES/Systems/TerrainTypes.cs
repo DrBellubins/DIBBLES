@@ -15,7 +15,7 @@ public enum BlockType
     Sand,
     Snow,
     Water,
-    //Wisp
+    Wisp
 }
 
 public enum TerrainBiome
@@ -111,8 +111,9 @@ public class Block
         Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 15));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
+        Prefabs.Add(BlockType.Wisp, new BlockInfo(BlockType.Wisp, 10, 0.5f, 64, true, 15));
 
         // Define block types in the exact order for the atlas
         var atlasBlockTypes = new List<BlockType>();
@@ -206,7 +207,7 @@ public class Block
             var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
             
             // Export atlas for debugging
-            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
+            Raylib.ExportImage(atlasImage, "atlas_debug.png");
             
             Raylib.GenTextureMipmaps(ref atlasTexture);
             Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);

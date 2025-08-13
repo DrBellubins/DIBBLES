@@ -173,31 +173,35 @@ public class TerrainGameplay
             localZ < 0 || localZ >= ChunkSize)
             return;
 
-        // Set block to Air
+        // Set block to Air If block is breakable
         var oldBlock = chunk.Blocks[localX, localY, localZ];
-        chunk.Blocks[localX, localY, localZ] = new Block(blockPos, Block.Prefabs[BlockType.Air]);
-        chunk.Info.Modified = true;
 
-        // Update lighting if the broken block was opaque or emissive
-        Lighting.Generate(chunk);
-        
-        // Regenerate mesh
-        Raylib.UnloadModel(chunk.Model); // Unload old model
-        
-        var meshData = TMesh.GenerateMeshData(chunk);
-        chunk.Model = TMesh.UploadMesh(meshData);
+        if (oldBlock.Info.Hardness != 10)
+        {
+            chunk.Blocks[localX, localY, localZ] = new Block(blockPos, Block.Prefabs[BlockType.Air]);
+            chunk.Info.Modified = true;
 
-        TMesh.RemeshNeighborsIfBlockOnEdge(chunk, blockPos);
+            // Update lighting if the broken block was opaque or emissive
+            Lighting.Generate(chunk);
         
-        // Add to modified chunks for saving
-        if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
-            WorldSave.Data.ModifiedChunks.Add(chunk);
+            // Regenerate mesh
+            Raylib.UnloadModel(chunk.Model); // Unload old model
+        
+            var meshData = TMesh.GenerateMeshData(chunk);
+            chunk.Model = TMesh.UploadMesh(meshData);
 
-        // Play break sound
-        var sound = Block.Sounds[SelectedBlock.Info.Type].RND;
+            TMesh.RemeshNeighborsIfBlockOnEdge(chunk, blockPos);
         
-        if (sound.FrameCount != 0)
-            Raylib.PlaySound(sound);
+            // Add to modified chunks for saving
+            if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
+                WorldSave.Data.ModifiedChunks.Add(chunk);
+
+            // Play break sound
+            var sound = Block.Sounds[SelectedBlock.Info.Type].RND;
+        
+            if (sound.FrameCount != 0)
+                Raylib.PlaySound(sound);
+        }
     }
     
     public void PlaceBlock(BlockType blockType)

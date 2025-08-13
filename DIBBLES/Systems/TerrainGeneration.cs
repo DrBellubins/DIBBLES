@@ -49,13 +49,7 @@ public class TerrainGeneration
 
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
         
-        Noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         Noise.SetSeed(1337);
-        Noise.SetFrequency(0.02f);
-        Noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        Noise.SetFractalOctaves(4);
-        Noise.SetFractalLacunarity(2.0f);
-        Noise.SetFractalGain(0.5f);
     }
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
@@ -170,9 +164,16 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
 
-                    var noise = Noise.GetNoise(worldX, worldY, worldZ);
+                    Noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+                    Noise.SetFrequency(0.02f);
+                    Noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+                    Noise.SetFractalOctaves(4);
+                    Noise.SetFractalLacunarity(2.0f);
+                    Noise.SetFractalGain(0.5f);
+                    
+                    var islandNoise = Noise.GetNoise(worldX, worldY, worldZ);
 
-                    if (noise > 0.25f)
+                    if (islandNoise > 0.25f)
                     {
                         if (!foundSurface)
                         {
@@ -194,9 +195,20 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        
-                        
                         chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        islandDepth = 0;
+                    }
+                    
+                    Noise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
+                    Noise.SetFrequency(0.02f);
+                    Noise.SetFractalType(FastNoiseLite.FractalType.None);
+                    Noise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
+                    
+                    var wispNoise = Noise.GetNoise(worldX, worldY, worldZ);
+                    
+                    if (wispNoise < -0.7f)
+                    {
+                        chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
                         islandDepth = 0;
                     }
                 }
