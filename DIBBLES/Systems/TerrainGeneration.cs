@@ -91,7 +91,15 @@ public class TerrainGeneration
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
 
-            remeshNeigbors(chunk.Position);
+            int[] offsets = { -ChunkSize, ChunkSize };
+            foreach (int dx in offsets)
+                remeshNeighborIfPresent(chunk.Position + new Vector3Int(dx, 0, 0));
+            foreach (int dy in offsets)
+                remeshNeighborIfPresent(chunk.Position + new Vector3Int(0, dy, 0));
+            foreach (int dz in offsets)
+                remeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, dz));
+            
+            //remeshNeigbors(chunk.Position);
         }
     }
     
