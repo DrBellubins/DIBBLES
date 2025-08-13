@@ -23,7 +23,7 @@ public class TerrainGeneration
     
     public static Shader terrainShader;
     public static TerrainMesh TMesh = new TerrainMesh();
-    public static TerrainLighting2 Lighting = new TerrainLighting2();
+    public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static FastNoiseLite Noise = new FastNoiseLite();

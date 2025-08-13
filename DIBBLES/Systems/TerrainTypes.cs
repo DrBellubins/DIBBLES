@@ -116,10 +116,8 @@ public class Block
         // Define block types in the exact order for the atlas
         var atlasBlockTypes = new List<BlockType>();
 
-        for (int i = 0; i < sizeof(BlockType); i++)
+        foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
-            var blockType = (BlockType)i;
-            
             // Add textures that shouldn't be in the atlas here.
             if (blockType != BlockType.Air && blockType != BlockType.Water)
                 atlasBlockTypes.Add(blockType);
@@ -204,7 +202,7 @@ public class Block
             var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
             
             // Export atlas for debugging
-            Raylib.ExportImage(atlasImage, "atlas_debug.png");
+            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
             
             Raylib.GenTextureMipmaps(ref atlasTexture);
             Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);
