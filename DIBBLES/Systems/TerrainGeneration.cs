@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using DIBBLES.Utils;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Systems;
 
@@ -33,10 +35,12 @@ public class TerrainGeneration
     public int Seed;
 
     // Thread-safe queues for chunk and mesh work
-    private ConcurrentDictionary<Vector3Int, Chunk> pendingChunks = new();
+    private HashSet<Vector3Int> recentlyRemeshedNeighbors = new();
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
 
+    private Stopwatch timer = new Stopwatch();
+    
     public void Start()
     {
         Block.InitializeBlockPrefabs();
@@ -79,11 +83,12 @@ public class TerrainGeneration
         }
 
         // Try to upload any queued meshes (must be done on main thread)
+        timer.Start();
         while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
-
+            
             // Upload mesh on main thread
             if (chunk.Model.MeshCount > 0)
                 Raylib.UnloadModel(chunk.Model);
@@ -91,16 +96,14 @@ public class TerrainGeneration
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
 
-            int[] offsets = { -ChunkSize, ChunkSize };
-            foreach (int dx in offsets)
-                remeshNeighborIfPresent(chunk.Position + new Vector3Int(dx, 0, 0));
-            foreach (int dy in offsets)
-                remeshNeighborIfPresent(chunk.Position + new Vector3Int(0, dy, 0));
-            foreach (int dz in offsets)
-                remeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, dz));
-            
             //remeshNeigbors(chunk.Position);
         }
+        
+        timer.Stop();
+        Console.WriteLine($"Elapsed time: {timer.ElapsedMilliseconds}ms");
+        timer.Reset();
+        
+        recentlyRemeshedNeighbors.Clear();
     }
     
     private void generateTerrainAsync(Vector3Int centerChunk)
@@ -130,7 +133,7 @@ public class TerrainGeneration
                     var chunk = new Chunk(pos);
                     GenerateChunkData(chunk);
                     //Lighting.Generate(chunk);
-
+                    
                     // Generate mesh data in this thread (not Raylib mesh!)
                     var meshData = TMesh.GenerateMeshData(chunk);
 
@@ -253,11 +256,17 @@ public class TerrainGeneration
     
     private void remeshNeighborIfPresent(Vector3Int neighborPos)
     {
+        if (recentlyRemeshedNeighbors.Contains(neighborPos))
+            return; // Already remeshed this frame
+        
         if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
         {
             Raylib.UnloadModel(neighborChunk.Model);
+            
             var meshData = TMesh.GenerateMeshData(neighborChunk);
             neighborChunk.Model = TMesh.UploadMesh(meshData);
+            
+            recentlyRemeshedNeighbors.Add(neighborPos);
         }
     }
     
