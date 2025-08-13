@@ -17,7 +17,7 @@ public class TerrainGeneration
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 100f; // Has to be finite!
-    public const bool DrawDebug = false;
+    public const bool DrawDebug = true;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
@@ -59,6 +59,7 @@ public class TerrainGeneration
     }
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
+    private bool hasRemeshed = false;
     public void Update(Camera3D camera)
     {
         // Calculate current chunk coordinates based on camera position
@@ -76,27 +77,34 @@ public class TerrainGeneration
             generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
             
-            if (areAllChunksLoaded(currentChunk))
-            {
-                foreach (var chunk in Chunks.Values)
-                    remeshNeigbors(chunk.Position);
-            }
-            
             hasGenerated = true;
+        }
+        
+        // TODO: Doesn't work with infinite world
+        // TODO: Remeshing is very slow. Needs to be multi-threaded
+        if (!hasRemeshed && areAllChunksLoaded(currentChunk))
+        {
+            foreach (var chunk in Chunks.Values)
+                remeshNeigbors(chunk.Position);
+            
+            hasRemeshed =  true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
         {
-            var chunk = entry.chunk;
-            var meshData = entry.meshData;
+            if (!hasRemeshed)
+            {
+                var chunk = entry.chunk;
+                var meshData = entry.meshData;
             
-            // Upload mesh on main thread
-            if (chunk.Model.MeshCount > 0)
-                Raylib.UnloadModel(chunk.Model);
+                // Upload mesh on main thread
+                if (chunk.Model.MeshCount > 0)
+                    Raylib.UnloadModel(chunk.Model);
 
-            chunk.Model = TMesh.UploadMesh(meshData);
-            Chunks[chunk.Position] = chunk;
+                chunk.Model = TMesh.UploadMesh(meshData);
+                Chunks[chunk.Position] = chunk;
+            }
         };
         
         TMesh.RecentlyRemeshedNeighbors.Clear();
@@ -259,33 +267,8 @@ public class TerrainGeneration
         return true;
     }
     
-    private bool areAllNeighborsLoaded(Vector3Int chunkPos)
-    {
-        int[] offsets = { -ChunkSize, ChunkSize };
-        foreach (int dx in offsets)
-        {
-            var pos = chunkPos + new Vector3Int(dx, 0, 0);
-            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
-        }
-        foreach (int dy in offsets)
-        {
-            var pos = chunkPos + new Vector3Int(0, dy, 0);
-            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
-        }
-        foreach (int dz in offsets)
-        {
-            var pos = chunkPos + new Vector3Int(0, 0, dz);
-            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
-        }
-        return true;
-    }
-    
     private void remeshNeigbors(Vector3Int chunkPos)
     {
-        //if (!areAllNeighborsLoaded(chunkPos)) return;
-        
-        Console.WriteLine("Remesh");
-        
         // For each axis neighbor
         int[] offsets = { -ChunkSize, ChunkSize };
         
@@ -342,7 +325,7 @@ public class TerrainGeneration
             // Draw chunk coordinates in 2D after 3D rendering
             foreach (var pos in Chunks.Keys)
             {
-                var chunkCenter = pos + new Vector3Int(ChunkSize / 2, ChunkSize + 2, ChunkSize / 2);
+                var chunkCenter = pos + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
                 Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter.ToVector3(), Color.White);
             }
         }

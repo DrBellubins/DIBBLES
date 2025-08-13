@@ -226,15 +226,11 @@ public class TerrainGameplay
             (newBlockPos.Z / ChunkSize) * ChunkSize
         );
         
-        // Create chunk if it doesn't exist
-        // TODO: DONT CREATE NEW CHUNKS!
-        if (!Chunks.TryGetValue(chunkCoord, out var chunk))
-        {
-            chunk = new Chunk(chunkCoord);
-            GenerateChunkData(chunk);
-            Lighting.Generate(chunk);
-            Chunks[chunkCoord] = chunk;
-        }
+        Chunks.TryGetValue(chunkCoord, out var chunk);
+        
+        // There is no chunk to build in
+        if (chunk == null)
+            return;
         
         // Calculate local block coordinates within the chunk
         var localPos = newBlockPos - chunkCoord;
