@@ -153,11 +153,11 @@ public class TerrainGameplay
         // Get the chunk containing the selected block
         var blockPos = SelectedBlock.Position;
         
-        var chunkCoord = new Vector3Int(
-            (blockPos.X / ChunkSize) * ChunkSize,
-            (blockPos.Y / ChunkSize) * ChunkSize,
-            (blockPos.Z / ChunkSize) * ChunkSize
-        );
+        int chunkX = (int)Math.Floor((float)blockPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)blockPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)blockPos.Z / ChunkSize) * ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
         if (!Chunks.TryGetValue(chunkCoord, out var chunk))
             return;
@@ -220,11 +220,11 @@ public class TerrainGameplay
         var newBlockPos = SelectedBlock.Position + quantizedNormal;
         
         // Determine the chunk for the new block position
-        var chunkCoord = new Vector3Int(
-            (newBlockPos.X / ChunkSize) * ChunkSize,
-            (newBlockPos.Y / ChunkSize) * ChunkSize,
-            (newBlockPos.Z / ChunkSize) * ChunkSize
-        );
+        int chunkX = (int)Math.Floor((float)newBlockPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)newBlockPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)newBlockPos.Z / ChunkSize) * ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
         
         Chunks.TryGetValue(chunkCoord, out var chunk);
         
