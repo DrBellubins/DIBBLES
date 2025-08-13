@@ -83,7 +83,7 @@ public class TerrainGeneration
         }
 
         // Try to upload any queued meshes (must be done on main thread)
-        timer.Start();
+        //timer.Start();
         while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
@@ -96,12 +96,12 @@ public class TerrainGeneration
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
 
-            //remeshNeigbors(chunk.Position); // Adds 100-200ms when moving
+            remeshNeigbors(chunk.Position); // Adds ~1000ms
         }
         
-        timer.Stop();
-        Console.WriteLine($"Elapsed time: {timer.ElapsedMilliseconds}ms");
-        timer.Reset();
+        //timer.Stop();
+        //Console.WriteLine($"Elapsed time: {timer.ElapsedMilliseconds}ms");
+        //timer.Reset();
         
         recentlyRemeshedNeighbors.Clear();
     }
