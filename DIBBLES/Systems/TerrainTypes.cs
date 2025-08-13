@@ -76,7 +76,6 @@ public class Block
 {
     public Vector3Int Position;
     public BlockInfo Info;
-    public byte SkyLight;   // Sky light level (0-15)
     public byte BlockLight; // Block light level (0-15)
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
@@ -87,13 +86,12 @@ public class Block
     public static Dictionary<BlockType, Rectangle> AtlasUVs = new Dictionary<BlockType, Rectangle>(); // Store UV mappings
     
     // Helper property to get the effective light level (max of sky and block light)
-    public byte LightLevel => (byte)Math.Max(SkyLight, BlockLight);
+    public byte LightLevel => BlockLight;
     
     public Block()
     {
         Position = Vector3Int.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        SkyLight = 0;
         BlockLight = 0;
     }
 
@@ -101,7 +99,6 @@ public class Block
     {
         Position = position;
         Info = info;
-        SkyLight = 0;
         BlockLight = info.LightEmission; // Set initial block light from emission
     }
     
@@ -113,7 +110,7 @@ public class Block
         Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 15));
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
 
         // Define block types in the exact order for the atlas

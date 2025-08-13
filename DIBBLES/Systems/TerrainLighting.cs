@@ -8,7 +8,7 @@ namespace DIBBLES.Systems;
 // TODO: Overhangs don't create shadows.
 // TODO: Adjacent chunks need to be updated regardless
 // of distance to edge.
-public class TerrainLighting
+/*public class TerrainLighting
 {
     public void Generate(Chunk chunk)
     {
@@ -231,4 +231,4 @@ public class TerrainLighting
             }
         }
     }
-}
+}*/

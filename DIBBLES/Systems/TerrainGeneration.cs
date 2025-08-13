@@ -23,7 +23,7 @@ public class TerrainGeneration
     
     public static Shader terrainShader;
     public static TerrainMesh TMesh = new TerrainMesh();
-    public static TerrainLighting Lighting = new TerrainLighting();
+    public static TerrainLighting2 Lighting = new TerrainLighting2();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static FastNoiseLite Noise = new FastNoiseLite();
@@ -128,15 +128,15 @@ public class TerrainGeneration
         foreach (var pos in chunksToGenerate)
         {
             // Spawn a background task for chunk generation
-            Task.Run(() =>
-            {
-                try
-                {
+            //Task.Run(() =>
+            //{
+            //    try
+            //    {
                     generatingChunks.TryAdd(pos, true);
                     
                     var chunk = new Chunk(pos);
                     GenerateChunkData(chunk);
-                    //Lighting.Generate(chunk);
+                    Lighting.Generate(chunk);
                     
                     // Generate mesh data in this thread (not Raylib mesh!)
                     var meshData = TMesh.GenerateMeshData(chunk);
@@ -145,13 +145,13 @@ public class TerrainGeneration
                     meshUploadQueue.Enqueue((chunk, meshData));
 
                     generatingChunks.TryRemove(pos, out _);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-            });
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        Console.WriteLine(e);
+            //        throw;
+            //    }
+            //});
         }
     }
     

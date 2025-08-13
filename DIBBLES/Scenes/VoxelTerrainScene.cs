@@ -102,7 +102,7 @@ public class VoxelTerrainScene : Scene
             TerrainGeneration.Gameplay.BreakBlock();
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Stone);
+            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Snow);
     }
 
     public override void Draw()
