@@ -128,10 +128,10 @@ public class TerrainGeneration
         foreach (var pos in chunksToGenerate)
         {
             // Spawn a background task for chunk generation
-            //Task.Run(() =>
-            //{
-            //    try
-            //    {
+            Task.Run(() =>
+            {
+                try
+                {
                     generatingChunks.TryAdd(pos, true);
                     
                     var chunk = new Chunk(pos);
@@ -145,13 +145,13 @@ public class TerrainGeneration
                     meshUploadQueue.Enqueue((chunk, meshData));
 
                     generatingChunks.TryRemove(pos, out _);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Console.WriteLine(e);
-            //        throw;
-            //    }
-            //});
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            });
         }
     }
     
@@ -194,6 +194,8 @@ public class TerrainGeneration
                     }
                     else
                     {
+                        
+                        
                         chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
                         islandDepth = 0;
                     }

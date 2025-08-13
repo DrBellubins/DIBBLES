@@ -15,7 +15,7 @@ public static class Resource
     {
         if (!Directory.Exists(assetsPath))
             throw new DirectoryNotFoundException(assetsPath);
-
+        
         // Search recursively for the file
         string path;
         
@@ -23,13 +23,15 @@ public static class Resource
             path = Path.Combine(assetsPath, "Textures", "Items");
         else
             path = Path.Combine(assetsPath, "Textures", "Blocks");
+
+        var fullpath = Path.Combine(path, fileName);
+        
+        if (!File.Exists(fullpath))
+            throw new FileNotFoundException($"File '{fullpath}' not found.");
         
         var files = Directory.EnumerateFiles(path, fileName, SearchOption.AllDirectories);
 
         var file = files.First();
-        
-        if (file == string.Empty)
-            throw new FileNotFoundException($"File '{fileName}' not found.");
         
         return file;
     }

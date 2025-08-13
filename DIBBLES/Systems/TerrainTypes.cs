@@ -14,7 +14,8 @@ public enum BlockType
     Stone,
     Sand,
     Snow,
-    Water
+    Water,
+    //Wisp
 }
 
 public enum TerrainBiome
@@ -146,18 +147,21 @@ public class Block
         // Load textures and sounds for remaining block types (Air, Water)
         foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
-            if (!atlasBlockTypes.Contains(blockType))
+            if (blockType != BlockType.Air  && blockType != BlockType.Water)
             {
-                var texture = loadBlockTexture(blockType);
-                Textures.Add(blockType, texture);
+                if (!atlasBlockTypes.Contains(blockType))
+                {
+                    var texture = loadBlockTexture(blockType);
+                    Textures.Add(blockType, texture);
+                }
+            
+                var blockSounds = new BlockSounds();
+            
+                for (int i = 0; i < 4; i++)
+                    blockSounds.Sounds[i] = loadBlockSounds(blockType, i);
+            
+                Sounds.Add(blockType, blockSounds);
             }
-            
-            var blockSounds = new BlockSounds();
-            
-            for (int i = 0; i < 4; i++)
-                blockSounds.Sounds[i] = loadBlockSounds(blockType, i);
-            
-            Sounds.Add(blockType, blockSounds);
         }
 
         // Create texture atlas in a 5x1 layout
@@ -221,51 +225,16 @@ public class Block
         }
     }
     
-    // TODO: Make sound/texture loading automatic for each block type
     private static Texture2D loadBlockTexture(BlockType blockType)
     {
-        switch (blockType)
-        {
-            case BlockType.Air:
-                return default;
-            case BlockType.Dirt:
-                return Resource.Load<Texture2D>("dirt.png");
-            case BlockType.Grass:
-                return Resource.Load<Texture2D>("grass.png");
-            case BlockType.Stone:
-                return Resource.Load<Texture2D>("stone.png");
-            case BlockType.Sand:
-                return Resource.Load<Texture2D>("sand.png");
-            case BlockType.Snow:
-                return Resource.Load<Texture2D>("snow.png");
-            case BlockType.Water:
-                return Resource.Load<Texture2D>("water.png");
-            default:
-                return Resource.Load<Texture2D>("error.png");
-        }
+        return Resource.Load<Texture2D>($"{blockType.ToString().ToLower()}.png");
     }
     
     private static Sound loadBlockSounds(BlockType blockType, int index)
     {
-        var i = index + 1;
-
-        switch (blockType)
-        {
-            case BlockType.Air:
-                return default;
-            case BlockType.Dirt:
-                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
-            case BlockType.Grass:
-                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
-            case BlockType.Stone:
-                return Resource.Load<Sound>(Path.Combine("Stone", $"stone{i}.ogg"));
-            case BlockType.Sand:
-                return Resource.Load<Sound>(Path.Combine("Sand", $"sand{i}.ogg"));
-            case BlockType.Snow:
-                return Resource.Load<Sound>(Path.Combine("Snow", $"snow{i}.ogg"));
-            default:
-                return Resource.Load<Sound>(Path.Combine("Dirt", $"dirt{i}.ogg"));
-        }
+        var i = index + 1; // Sounds start at 1
+        var blockName = blockType.ToString().ToLower();
+        return Resource.Load<Sound>(Path.Combine(blockName, $"{blockName}{i}.ogg"));
     }
 }
 

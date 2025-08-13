@@ -6,14 +6,9 @@ using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
-/// <summary>
-/// New 3D block lighting system. No skylight; only propagates block light from emissive blocks using BFS.
-/// </summary>
+// TODO: Multi-threading broke neighboring chunk updates (they didn't really work single-threaded.)
 public class TerrainLighting
 {
-    /// <summary>
-    /// Generate block lighting for a chunk. Propagates only block light (no skylight).
-    /// </summary>
     public void Generate(Chunk chunk)
     {
         // Step 1: Initialize block light from emissive blocks
