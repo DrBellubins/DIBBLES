@@ -59,7 +59,7 @@ public class TerrainGeneration
     }
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
-    public void UpdateTerrain(Camera3D camera)
+    public void Update(Camera3D camera)
     {
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3Int(

@@ -36,7 +36,7 @@ public class VoxelTerrainScene : Scene
         
         // Initial terrain generation
         terrainGen.Start();
-        terrainGen.UpdateTerrain(_camera);
+        terrainGen.Update(_camera);
         
         fogEffect.Start();
         
@@ -47,7 +47,7 @@ public class VoxelTerrainScene : Scene
     {
         Debug.Update(_camera);
         
-        terrainGen.UpdateTerrain(_camera);
+        terrainGen.Update(_camera);
         TerrainGeneration.Gameplay.Update(_camera);
         
         // Temporary world saving/loading
