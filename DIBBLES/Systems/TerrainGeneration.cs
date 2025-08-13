@@ -26,13 +26,13 @@ public class TerrainGeneration
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
-    public static FastNoiseLite Noise = new FastNoiseLite();
+    //public static FastNoiseLite Noise = new FastNoiseLite();
     
     public static Block? SelectedBlock;
     
+    public int Seed = 1337;
+    
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
-
-    public int Seed;
 
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
@@ -45,11 +45,9 @@ public class TerrainGeneration
         if (WorldSave.Data.Seed != 0)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(int.MaxValue);
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
 
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
-        
-        Noise.SetSeed(1337);
     }
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
@@ -151,6 +149,8 @@ public class TerrainGeneration
     
     public static void GenerateChunkData(Chunk chunk)
     {
+        var noise = new FastNoiseLite();
+        
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
@@ -164,16 +164,16 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
 
-                    Noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                    Noise.SetFrequency(0.02f);
-                    Noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-                    Noise.SetFractalOctaves(4);
-                    Noise.SetFractalLacunarity(2.0f);
-                    Noise.SetFractalGain(0.5f);
+                    noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+                    noise.SetFrequency(0.02f);
+                    noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+                    noise.SetFractalOctaves(4);
+                    noise.SetFractalLacunarity(2.0f);
+                    noise.SetFractalGain(0.5f);
                     
-                    var islandNoise = Noise.GetNoise(worldX, worldY, worldZ);
+                    var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
-                    if (islandNoise > 0.25f)
+                    if (islandNoise > 0.7f)
                     {
                         if (!foundSurface)
                         {
@@ -196,19 +196,6 @@ public class TerrainGeneration
                     else
                     {
                         chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
-                        islandDepth = 0;
-                    }
-                    
-                    Noise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
-                    Noise.SetFrequency(0.02f);
-                    Noise.SetFractalType(FastNoiseLite.FractalType.None);
-                    Noise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
-                    
-                    var wispNoise = Noise.GetNoise(worldX, worldY, worldZ);
-                    
-                    if (wispNoise < -0.7f)
-                    {
-                        chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
                         islandDepth = 0;
                     }
                 }

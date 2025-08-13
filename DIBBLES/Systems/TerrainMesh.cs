@@ -9,6 +9,8 @@ namespace DIBBLES.Systems;
 
 public class TerrainMesh
 {
+    public const bool Fullbright = true;
+    
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
@@ -74,6 +76,14 @@ public class TerrainMesh
                 float l2 = getVertexLight(chunk, x+1, y+1, z  );
                 float l3 = getVertexLight(chunk, x+1, y,   z  );
                 
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
                 ]);
@@ -94,6 +104,14 @@ public class TerrainMesh
                 float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
                 float l2 = getVertexLight(chunk, x,   y+1, z+1 );
                 float l3 = getVertexLight(chunk, x,   y,   z+1 );
+
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
                 
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -116,6 +134,14 @@ public class TerrainMesh
                 float l2 = getVertexLight(chunk, x,   y+1, z   );
                 float l3 = getVertexLight(chunk, x,   y,   z   );
                 
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
                 ]);
@@ -136,6 +162,14 @@ public class TerrainMesh
                 float l1 = getVertexLight(chunk, x+1, y+1, z   );
                 float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
                 float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
                 
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
@@ -158,6 +192,14 @@ public class TerrainMesh
                 float l2 = getVertexLight(chunk, x+1, y,   z   );
                 float l3 = getVertexLight(chunk, x+1, y,   z+1 );
                 
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
                 ]);
@@ -178,6 +220,14 @@ public class TerrainMesh
                 float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
                 float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
                 float l3 = getVertexLightTopFace(chunk, x+1, y, z   );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
                 
                 colors.AddRange([
                     ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)

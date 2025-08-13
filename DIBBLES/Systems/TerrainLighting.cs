@@ -80,9 +80,11 @@ public class TerrainLighting
                 if (neighborBlock.Info.Type == BlockType.Air || neighborBlock.Info.IsTransparent)
                 {
                     byte newLight = (byte)(lightLevel - 1);
+                    
                     if (newLight > neighborBlock.BlockLight)
                     {
                         neighborBlock.BlockLight = newLight;
+                        
                         queue.Enqueue((neighborChunk, localPos));
                     }
                 }
