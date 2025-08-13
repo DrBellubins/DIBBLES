@@ -197,14 +197,18 @@ public class TerrainGeneration
         {
             // Convert world-space key to chunk coordinates
             int chunkX = (int)Math.Floor(chunk.Key.X / ChunkSize);
+            int chunkY = (int)Math.Floor(chunk.Key.Y / ChunkSize);
             int chunkZ = (int)Math.Floor(chunk.Key.Z / ChunkSize);
+            
             int centerX = (int)centerChunk.X;
+            int centerY = (int)centerChunk.Y;
             int centerZ = (int)centerChunk.Z;
 
             int dx = Math.Abs(chunkX - centerX);
+            int dy = Math.Abs(chunkY - centerY);
             int dz = Math.Abs(chunkZ - centerZ);
         
-            if (dx > RenderDistance / 2 || dz > RenderDistance / 2)
+            if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
             {
                 chunksToRemove.Add(chunk.Key);
             }
@@ -238,28 +242,16 @@ public class TerrainGeneration
     
     private void checkPendingMeshes(Vector3 newChunkPos)
     {
-        int[] offsets = { -ChunkSize, ChunkSize };
-        List<Vector3> neighborPositions = new List<Vector3>();
-        
-        foreach (int dx in offsets)
-            neighborPositions.Add(new Vector3(newChunkPos.X + dx, newChunkPos.Y, newChunkPos.Z));
-        
-        foreach (int dy in offsets)
-            neighborPositions.Add(new Vector3(newChunkPos.X, newChunkPos.Y + dy, newChunkPos.Z));
-        
-        foreach (int dz in offsets)
-            neighborPositions.Add(new Vector3(newChunkPos.X, newChunkPos.Y, newChunkPos.Z + dz));
-
-        foreach (var pos in neighborPositions)
+        // Instead of only checking direct neighbors, check all pending chunks
+        foreach (var kvp in pendingChunks)
         {
-            if (pendingChunks.TryGetValue(pos, out var pendingChunk))
+            var pos = kvp.Key;
+            if (allNeighborsGenerated(pos))
             {
-                if (allNeighborsGenerated(pos))
-                {
-                    var meshData = TMesh.GenerateMeshData(pendingChunk);
-                    meshUploadQueue.Enqueue((pendingChunk, meshData));
-                    pendingChunks.TryRemove(pos, out _);
-                }
+                var chunk = kvp.Value;
+                var meshData = TMesh.GenerateMeshData(chunk);
+                meshUploadQueue.Enqueue((chunk, meshData));
+                pendingChunks.TryRemove(pos, out _);
             }
         }
     }

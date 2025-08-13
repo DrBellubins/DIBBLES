@@ -112,9 +112,8 @@ public class VoxelTerrainScene : Scene
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.SkyBlue);
         
-        fogEffect.DrawStart();
-        
-        Raylib.ClearBackground(Color.SkyBlue);
+        //fogEffect.DrawStart();
+        //Raylib.ClearBackground(Color.SkyBlue);
         
         Raylib.BeginMode3D(_camera);
         
@@ -122,7 +121,7 @@ public class VoxelTerrainScene : Scene
         
         Raylib.EndMode3D();
         
-        fogEffect.DrawEnd();
+        //fogEffect.DrawEnd();
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
         
