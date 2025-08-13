@@ -15,7 +15,7 @@ public class TerrainGeneration
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 100f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static Dictionary<Vector3, Chunk> Chunks = new Dictionary<Vector3, Chunk>();
     
@@ -63,7 +63,7 @@ public class TerrainGeneration
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3(
             (int)Math.Floor(camera.Position.X / ChunkSize),
-            0f,
+            (int)Math.Floor(camera.Position.Y / ChunkSize),
             (int)Math.Floor(camera.Position.Z / ChunkSize)
         );
 
