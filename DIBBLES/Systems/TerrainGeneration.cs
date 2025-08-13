@@ -90,7 +90,9 @@ public class TerrainGeneration
 
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
+            
             checkPendingMeshes(chunk.Position);
+            onChunkGenerated(chunk.Position);
         }
     }
     
@@ -252,6 +254,44 @@ public class TerrainGeneration
                 var meshData = TMesh.GenerateMeshData(chunk);
                 meshUploadQueue.Enqueue((chunk, meshData));
                 pendingChunks.TryRemove(pos, out _);
+            }
+        }
+    }
+    
+    private void onChunkGenerated(Vector3Int chunkPos)
+    {
+        int[] offsets = { -ChunkSize, ChunkSize };
+        
+        foreach (int dx in offsets)
+        {
+            var neighborPos = new Vector3Int(chunkPos.X + dx, chunkPos.Y, chunkPos.Z);
+            
+            if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+            {
+                var meshData = TMesh.GenerateMeshData(neighborChunk);
+                meshUploadQueue.Enqueue((neighborChunk, meshData));
+            }
+        }
+        
+        foreach (int dy in offsets)
+        {
+            var neighborPos = new Vector3Int(chunkPos.X, chunkPos.Y + dy, chunkPos.Z);
+            
+            if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+            {
+                var meshData = TMesh.GenerateMeshData(neighborChunk);
+                meshUploadQueue.Enqueue((neighborChunk, meshData));
+            }
+        }
+        
+        foreach (int dz in offsets)
+        {
+            var neighborPos = new Vector3Int(chunkPos.X, chunkPos.Y, chunkPos.Z + dz);
+            
+            if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+            {
+                var meshData = TMesh.GenerateMeshData(neighborChunk);
+                meshUploadQueue.Enqueue((neighborChunk, meshData));
             }
         }
     }

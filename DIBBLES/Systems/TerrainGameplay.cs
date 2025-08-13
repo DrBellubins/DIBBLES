@@ -93,7 +93,6 @@ public class TerrainGameplay
             steps++;
     
             float nextT;
-            Vector3Int stepAxis = Vector3Int.Zero;
     
             if (sideDist.X <= sideDist.Y && sideDist.X <= sideDist.Z)
             {
