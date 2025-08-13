@@ -1,6 +1,6 @@
 using System.Numerics;
 using System.Text;
-
+using DIBBLES.Utils;
 using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES.Systems;
@@ -59,6 +59,7 @@ public class WorldSave
                     writer.Write(Data.ModifiedChunks[i].Info.Generated);
                     writer.Write(Data.ModifiedChunks[i].Info.Modified);
                     writer.Write(Data.ModifiedChunks[i].Position.X);
+                    writer.Write(Data.ModifiedChunks[i].Position.Y);
                     writer.Write(Data.ModifiedChunks[i].Position.Z);
 
                     for (int x = 0; x < ChunkSize; x++)
@@ -113,7 +114,7 @@ public class WorldSave
                             currentChunkInfo.Generated = reader.ReadBoolean();
                             currentChunkInfo.Modified = reader.ReadBoolean();
 
-                            var currentChunk = new Chunk(new Vector3(reader.ReadSingle(), 0f, reader.ReadSingle()));
+                            var currentChunk = new Chunk(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
                             currentChunk.Info = currentChunkInfo;
 
                             for (int x = 0; x < ChunkSize; x++)
@@ -126,7 +127,7 @@ public class WorldSave
                                         var info = Block.Prefabs[type];
                                         var currentBlock = new Block();
 
-                                        currentBlock.Position = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                                        currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
 
                                         currentBlock.Info = info;
 

@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using DIBBLES.Utils;
 using Raylib_cs;
 
 using static DIBBLES.Systems.TerrainGeneration;
@@ -356,13 +357,13 @@ public class TerrainMesh
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
         {
             // Compute which chunk to check in all axes
-            Vector3 chunkCoord = new Vector3(
-                (int)(chunk.Position.X / ChunkSize),
-                (int)(chunk.Position.Y / ChunkSize),
-                (int)(chunk.Position.Z / ChunkSize)
+            Vector3Int chunkCoord = new Vector3Int(
+                chunk.Position.X / ChunkSize,
+                chunk.Position.Y / ChunkSize,
+                chunk.Position.Z / ChunkSize
             );
 
-            Vector3 neighborCoord = chunkCoord;
+            Vector3Int neighborCoord = chunkCoord;
             int nx = x, ny = y, nz = z;
 
             if (x < 0) { nx = ChunkSize - 1; neighborCoord.X -= 1; }
@@ -374,7 +375,7 @@ public class TerrainMesh
             if (z < 0) { nz = ChunkSize - 1; neighborCoord.Z -= 1; }
             else if (z >= ChunkSize) { nz = 0; neighborCoord.Z += 1; }
 
-            Vector3 neighborChunkPos = new Vector3(
+            Vector3Int neighborChunkPos = new Vector3Int(
                 neighborCoord.X * ChunkSize,
                 neighborCoord.Y * ChunkSize,
                 neighborCoord.Z * ChunkSize
@@ -403,23 +404,24 @@ public class TerrainMesh
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
         {
             // Calculate the current chunk's coordinates from its Position
-            Vector3 chunkCoord = new Vector3(
-                (int)(chunk.Position.X / ChunkSize),
-                0f,
-                (int)(chunk.Position.Z / ChunkSize)
+            Vector3Int chunkCoord = new Vector3Int(
+                chunk.Position.X / ChunkSize,
+                chunk.Position.Y / ChunkSize,
+                chunk.Position.Z / ChunkSize
             );
 
             // Adjust chunk coordinates based on out-of-bounds voxel
-            Vector3 neighborCoord = chunkCoord;
-            int tx = nx, tz = nz;
+            Vector3Int neighborCoord = chunkCoord;
+            int tx = nx, ty = ny, tz = nz;
 
             if (nx < 0) { tx = ChunkSize - 1; neighborCoord.X -= 1; }
             else if (nx >= ChunkSize) { tx = 0; neighborCoord.X += 1; }
+            
+            if (ny < 0) { ty = ChunkSize - 1; neighborCoord.Y -= 1; }
+            else if (ny >= ChunkSize) { ty = 0; neighborCoord.Y += 1; }
 
             if (nz < 0) { tz = ChunkSize - 1; neighborCoord.Z -= 1; }
             else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
-
-            if (ny < 0 || ny >= ChunkSize) return 0;
 
             // Look up the neighboring chunk
             if (Chunks.TryGetValue(neighborCoord, out var neighborChunk))
@@ -427,6 +429,7 @@ public class TerrainMesh
                 var neighborBlock = neighborChunk.Blocks[tx, ny, tz];
                 return (byte)Math.Max(neighborBlock.SkyLight, neighborBlock.BlockLight);
             }
+            
             return 0;
         }
         else

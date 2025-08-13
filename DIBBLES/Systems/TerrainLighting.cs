@@ -126,7 +126,7 @@ public class TerrainLighting
                 {
                     // Compute neighbor chunk position
                     var chunkPos = curChunk.Position;
-                    Vector3 chunkOffset = Vector3.Zero;
+                    Vector3Int chunkOffset = Vector3Int.Zero;
                     
                     if (neighborPos.X < 0) { chunkOffset.X = -ChunkSize; localPos.X = ChunkSize - 1; }
                     else if (neighborPos.X >= ChunkSize) { chunkOffset.X = ChunkSize; localPos.X = 0; }
@@ -189,17 +189,17 @@ public class TerrainLighting
         var localX = (int)(blockPos.X % ChunkSize);
         var localZ = (int)(blockPos.Z % ChunkSize);
 
-        Vector3 chunkCoord = new Vector3(
-            (int)Math.Floor(blockPos.X / ChunkSize) * ChunkSize,
-            0f,
-            (int)Math.Floor(blockPos.Z / ChunkSize) * ChunkSize
+        Vector3Int chunkCoord = new Vector3Int(
+            ((int)blockPos.X / ChunkSize) * ChunkSize,
+            ((int)blockPos.Y / ChunkSize) * ChunkSize,
+            ((int)blockPos.Z / ChunkSize) * ChunkSize
         );
 
         foreach (int dx in edgeOffsets)
         {
             if ((localX == 0 && dx == -1) || (localX == ChunkSize - 1 && dx == 1))
             {
-                Vector3 nChunkCoord = chunkCoord + new Vector3(0, 0, dx * ChunkSize);
+                Vector3Int nChunkCoord = chunkCoord + new Vector3Int(0, 0, dx * ChunkSize);
 
                 if (Chunks.TryGetValue(nChunkCoord, out var nChunk))
                 {
@@ -217,7 +217,7 @@ public class TerrainLighting
         {
             if ((localZ == 0 && dz == -1) || (localZ == ChunkSize - 1 && dz == 1))
             {
-                Vector3 nChunkCoord = chunkCoord + new Vector3(0, 0, dz * ChunkSize);
+                Vector3Int nChunkCoord = chunkCoord + new Vector3Int(0, 0, dz * ChunkSize);
 
                 if (Chunks.TryGetValue(nChunkCoord, out var nChunk))
                 {

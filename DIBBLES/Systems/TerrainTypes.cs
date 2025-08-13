@@ -36,12 +36,12 @@ public class ChunkInfo
 
 public class Chunk
 {
-    public Vector3 Position;
+    public Vector3Int Position;
     public Block[,,] Blocks;
     public ChunkInfo Info;
     public Model Model;
 
-    public Chunk(Vector3 pos)
+    public Chunk(Vector3Int pos)
     {
         Position = pos;
         Blocks = new Block[ChunkSize, ChunkSize, ChunkSize];
@@ -74,7 +74,7 @@ public class BlockInfo
 
 public class Block
 {
-    public Vector3 Position;
+    public Vector3Int Position;
     public BlockInfo Info;
     public byte SkyLight;   // Sky light level (0-15)
     public byte BlockLight; // Block light level (0-15)
@@ -91,13 +91,13 @@ public class Block
     
     public Block()
     {
-        Position = Vector3.Zero;
+        Position = Vector3Int.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
         SkyLight = 0;
         BlockLight = 0;
     }
 
-    public Block(Vector3 position, BlockInfo info)
+    public Block(Vector3Int position, BlockInfo info)
     {
         Position = position;
         Info = info;
