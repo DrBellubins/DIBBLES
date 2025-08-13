@@ -92,7 +92,11 @@ public class TerrainGeneration
             Chunks[chunk.Position] = chunk;
             
             checkPendingMeshes(chunk.Position);
-            onChunkGenerated(chunk.Position);
+            
+            var isNewChunk = !Chunks.ContainsKey(chunk.Position);
+            
+            if (isNewChunk)
+                onChunkGenerated(chunk.Position);
         }
     }
     
