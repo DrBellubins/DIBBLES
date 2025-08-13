@@ -61,9 +61,9 @@ public class TerrainGameplay
     
         // Check starting voxel first
         var startChunkPos = new Vector3Int(
-            (mapPos.X / ChunkSize) * ChunkSize,
-            (mapPos.X / ChunkSize) * ChunkSize,
-            (mapPos.Z / ChunkSize) * ChunkSize
+            (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
+            (int)Math.Floor((float)mapPos.Y / ChunkSize) * ChunkSize,
+            (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
         );
         
         if (Chunks.TryGetValue(startChunkPos, out var startChunk))
@@ -120,9 +120,9 @@ public class TerrainGameplay
     
             // Check current voxel
             var currentChunkPos = new Vector3Int(
-                (mapPos.X / ChunkSize) * ChunkSize,
-                (mapPos.Y / ChunkSize) * ChunkSize,
-                (mapPos.Z / ChunkSize) * ChunkSize
+                (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
+                (int)Math.Floor((float)mapPos.Y / ChunkSize) * ChunkSize,
+                (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
             );
     
             if (!Chunks.TryGetValue(currentChunkPos, out var chunk)) continue;
