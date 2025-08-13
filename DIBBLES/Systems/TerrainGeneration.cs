@@ -96,7 +96,7 @@ public class TerrainGeneration
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
 
-            //remeshNeigbors(chunk.Position);
+            //remeshNeigbors(chunk.Position); // Adds 100-200ms when moving
         }
         
         timer.Stop();
