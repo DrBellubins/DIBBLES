@@ -455,7 +455,7 @@ public class TerrainMesh
 
             if (nx < 0) { tx = ChunkSize - 1; neighborCoord.X -= 1; }
             else if (nx >= ChunkSize) { tx = 0; neighborCoord.X += 1; }
-            
+
             if (ny < 0) { ty = ChunkSize - 1; neighborCoord.Y -= 1; }
             else if (ny >= ChunkSize) { ty = 0; neighborCoord.Y += 1; }
 
@@ -463,18 +463,29 @@ public class TerrainMesh
             else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
 
             // Look up the neighboring chunk
-            if (Chunks.TryGetValue(neighborCoord, out var neighborChunk))
+            if (Chunks.TryGetValue(new Vector3Int(
+                    neighborCoord.X * ChunkSize,
+                    neighborCoord.Y * ChunkSize,
+                    neighborCoord.Z * ChunkSize
+                ), out var neighborChunk))
             {
-                var neighborBlock = neighborChunk.Blocks[tx, ny, tz];
-                return neighborBlock.BlockLight;
+                // Defensive: check indices and block existence
+                if (tx >= 0 && tx < ChunkSize && ty >= 0 && ty < ChunkSize && tz >= 0 && tz < ChunkSize)
+                {
+                    var neighborBlock = neighborChunk.Blocks[tx, ty, tz];
+                    if (neighborBlock != null)
+                        return neighborBlock.BlockLight;
+                }
             }
-            
+
             return 0;
         }
         else
         {
-            var neighborBlock = chunk.Blocks[nx, ny, nz];
-            return neighborBlock.BlockLight;
+            var block = chunk.Blocks[nx, ny, nz];
+            if (block != null)
+                return block.BlockLight;
+            return 0;
         }
     }
 }

@@ -146,7 +146,7 @@ public class Block
         }
 
         // Load textures and sounds for remaining block types (Air, Water)
-        foreach (BlockType blockType in Enum.GetValues(typeof(BlockType)))
+        foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
             if (!atlasBlockTypes.Contains(blockType))
             {
@@ -198,15 +198,13 @@ public class Block
             }
 
             Raylib.EndTextureMode();
-            
-            // Export atlas for debugging
-            //Image atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
-            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
-            //Raylib.UnloadImage(atlasImage);
 
             // Generate atlas mipmaps
             var atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
             var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
+            
+            // Export atlas for debugging
+            Raylib.ExportImage(atlasImage, "atlas_debug.png");
             
             Raylib.GenTextureMipmaps(ref atlasTexture);
             Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);
