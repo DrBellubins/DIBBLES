@@ -407,22 +407,22 @@ public class TerrainMesh
         var localZ = blockPos.Z - chunk.Position.Z;
 
         if (localX == 0)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(-ChunkSize, 0, 0));
+            RemeshNeighbor(chunk.Position + new Vector3Int(-ChunkSize, 0, 0));
         else if (localX == ChunkSize - 1)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(ChunkSize, 0, 0));
+            RemeshNeighbor(chunk.Position + new Vector3Int(ChunkSize, 0, 0));
 
         if (localY == 0)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, -ChunkSize, 0));
+            RemeshNeighbor(chunk.Position + new Vector3Int(0, -ChunkSize, 0));
         else if (localY == ChunkSize - 1)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, ChunkSize, 0));
+            RemeshNeighbor(chunk.Position + new Vector3Int(0, ChunkSize, 0));
 
         if (localZ == 0)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, -ChunkSize));
+            RemeshNeighbor(chunk.Position + new Vector3Int(0, 0, -ChunkSize));
         else if (localZ == ChunkSize - 1)
-            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, ChunkSize));
+            RemeshNeighbor(chunk.Position + new Vector3Int(0, 0, ChunkSize));
     }
     
-    public void RemeshNeighborIfPresent(Vector3Int neighborPos)
+    public void RemeshNeighbor(Vector3Int neighborPos)
     {
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame

@@ -37,8 +37,6 @@ public class TerrainGeneration
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
-
-    private Stopwatch timer = new Stopwatch();
     
     public void Start()
     {
@@ -82,7 +80,6 @@ public class TerrainGeneration
         }
 
         // Try to upload any queued meshes (must be done on main thread)
-        //timer.Start();
         while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
@@ -95,12 +92,8 @@ public class TerrainGeneration
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
 
-            remeshNeigbors(chunk.Position); // Adds ~1000ms
-        }
-        
-        //timer.Stop();
-        //Console.WriteLine($"Elapsed time: {timer.ElapsedMilliseconds}ms");
-        //timer.Reset();
+            remeshNeigbors(chunk.Position, currentChunk);
+        };
         
         TMesh.RecentlyRemeshedNeighbors.Clear();
     }
@@ -228,28 +221,73 @@ public class TerrainGeneration
             Chunks.Remove(coord);
         }
     }
-
-    private void remeshNeigbors(Vector3Int chunkPos)
+    
+    private bool isChunkWithinRenderDistance(Vector3Int chunkPos, Vector3Int centerChunk)
     {
+        int half = RenderDistance / 2;
+        int cx = chunkPos.X / ChunkSize;
+        int cy = chunkPos.Y / ChunkSize;
+        int cz = chunkPos.Z / ChunkSize;
+
+        int ccx = centerChunk.X;
+        int ccy = centerChunk.Y;
+        int ccz = centerChunk.Z;
+
+        return Math.Abs(cx - ccx) <= half &&
+               Math.Abs(cy - ccy) <= half &&
+               Math.Abs(cz - ccz) <= half;
+    }
+
+    private bool areAllNeighborsLoaded(Vector3Int chunkPos)
+    {
+        int[] offsets = { -ChunkSize, ChunkSize };
+        foreach (int dx in offsets)
+        {
+            var pos = chunkPos + new Vector3Int(dx, 0, 0);
+            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
+        }
+        foreach (int dy in offsets)
+        {
+            var pos = chunkPos + new Vector3Int(0, dy, 0);
+            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
+        }
+        foreach (int dz in offsets)
+        {
+            var pos = chunkPos + new Vector3Int(0, 0, dz);
+            if (!Chunks.ContainsKey(pos) || generatingChunks.ContainsKey(pos)) return false;
+        }
+        return true;
+    }
+    
+    private void remeshNeigbors(Vector3Int chunkPos, Vector3Int centerChunk)
+    {
+        if (!areAllNeighborsLoaded(chunkPos)) return;
+        
         // For each axis neighbor
         int[] offsets = { -ChunkSize, ChunkSize };
         
         foreach (int dx in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
-            TMesh.RemeshNeighborIfPresent(neighborPos);
+            
+            if (isChunkWithinRenderDistance(neighborPos, centerChunk))
+                TMesh.RemeshNeighbor(neighborPos);
         }
         
         foreach (int dy in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
-            TMesh.RemeshNeighborIfPresent(neighborPos);
+            
+            if (isChunkWithinRenderDistance(neighborPos, centerChunk))
+                TMesh.RemeshNeighbor(neighborPos);
         }
         
         foreach (int dz in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
-            TMesh.RemeshNeighborIfPresent(neighborPos);
+            
+            if (isChunkWithinRenderDistance(neighborPos, centerChunk))
+                TMesh.RemeshNeighbor(neighborPos);
         }
     }
     
