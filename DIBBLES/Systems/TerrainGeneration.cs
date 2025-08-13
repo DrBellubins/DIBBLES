@@ -76,9 +76,15 @@ public class TerrainGeneration
             generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
             
+            if (areAllChunksLoaded(currentChunk))
+            {
+                foreach (var chunk in Chunks.Values)
+                    remeshNeigbors(chunk.Position);
+            }
+            
             hasGenerated = true;
         }
-
+        
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
         {
@@ -236,6 +242,23 @@ public class TerrainGeneration
                Math.Abs(cz - ccz) <= half;
     }
 
+    private bool areAllChunksLoaded(Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        
+        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        {
+            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+            
+            if (!Chunks.ContainsKey(chunkPos))
+                return false;
+        }
+        
+        return true;
+    }
+    
     private bool areAllNeighborsLoaded(Vector3Int chunkPos)
     {
         int[] offsets = { -ChunkSize, ChunkSize };
@@ -259,7 +282,7 @@ public class TerrainGeneration
     
     private void remeshNeigbors(Vector3Int chunkPos)
     {
-        if (!areAllNeighborsLoaded(chunkPos)) return;
+        //if (!areAllNeighborsLoaded(chunkPos)) return;
         
         Console.WriteLine("Remesh");
         
