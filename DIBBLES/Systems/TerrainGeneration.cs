@@ -33,8 +33,8 @@ public class TerrainGeneration
     public int Seed;
 
     // Thread-safe queues for chunk and mesh work
-    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3, Chunk> pendingChunks = new();
+    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3, bool> generatingChunks = new();
 
     public void Start()
@@ -72,7 +72,7 @@ public class TerrainGeneration
         //if (!hasGenerated)
         {
             lastCameraChunk = currentChunk;
-            GenerateTerrainAsync(currentChunk);
+            generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
             
             hasGenerated = true;
@@ -90,10 +90,11 @@ public class TerrainGeneration
 
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
+            checkPendingMeshes(chunk.Position);
         }
     }
     
-    private void GenerateTerrainAsync(Vector3 centerChunk)
+    private void generateTerrainAsync(Vector3 centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
         List<Vector3> chunksToGenerate = new List<Vector3>();
@@ -119,13 +120,16 @@ public class TerrainGeneration
                 {
                     var chunk = new Chunk(pos);
                     GenerateChunkData(chunk);
-                    Lighting.Generate(chunk);
+                    //Lighting.Generate(chunk);
 
                     // Generate mesh data in this thread (not Raylib mesh!)
                     var meshData = TMesh.GenerateMeshData(chunk);
 
                     // Enqueue for main thread mesh upload
-                    meshUploadQueue.Enqueue((chunk, meshData));
+                    if (allNeighborsGenerated(chunk.Position))
+                        meshUploadQueue.Enqueue((chunk, meshData));
+                    else
+                        pendingChunks.TryAdd(chunk.Position, chunk);
 
                     generatingChunks.TryRemove(pos, out _);
                 }
@@ -210,6 +214,46 @@ public class TerrainGeneration
         {
             Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
             Chunks.Remove(coord);
+        }
+    }
+    
+    private bool allNeighborsGenerated(Vector3 chunkPos)
+    {
+        int[] offsets = { -ChunkSize, ChunkSize };
+        
+        foreach (int dx in offsets)
+            if (!Chunks.ContainsKey(new Vector3(chunkPos.X + dx, chunkPos.Y, chunkPos.Z)))
+                return false;
+        
+        foreach (int dz in offsets)
+            if (!Chunks.ContainsKey(new Vector3(chunkPos.X, chunkPos.Y, chunkPos.Z + dz)))
+                return false;
+        
+        // Add Y if your world is 3D in chunk space
+        return true;
+    }
+    
+    private void checkPendingMeshes(Vector3 newChunkPos)
+    {
+        int[] offsets = { -ChunkSize, ChunkSize };
+        List<Vector3> neighborPositions = new List<Vector3>();
+        foreach (int dx in offsets)
+            neighborPositions.Add(new Vector3(newChunkPos.X + dx, newChunkPos.Y, newChunkPos.Z));
+        foreach (int dz in offsets)
+            neighborPositions.Add(new Vector3(newChunkPos.X, newChunkPos.Y, newChunkPos.Z + dz));
+        // Add Y offsets if needed
+
+        foreach (var pos in neighborPositions)
+        {
+            if (pendingChunks.TryGetValue(pos, out var pendingChunk))
+            {
+                if (allNeighborsGenerated(pos))
+                {
+                    var meshData = TMesh.GenerateMeshData(pendingChunk);
+                    meshUploadQueue.Enqueue((pendingChunk, meshData));
+                    pendingChunks.TryRemove(pos, out _);
+                }
+            }
         }
     }
     
