@@ -225,11 +225,14 @@ public class TerrainGeneration
             if (!Chunks.ContainsKey(new Vector3(chunkPos.X + dx, chunkPos.Y, chunkPos.Z)))
                 return false;
         
+        foreach (int dy in offsets)
+            if (!Chunks.ContainsKey(new Vector3(chunkPos.X, chunkPos.Y + dy, chunkPos.Z)))
+                return false;
+        
         foreach (int dz in offsets)
             if (!Chunks.ContainsKey(new Vector3(chunkPos.X, chunkPos.Y, chunkPos.Z + dz)))
                 return false;
         
-        // Add Y if your world is 3D in chunk space
         return true;
     }
     
@@ -237,11 +240,15 @@ public class TerrainGeneration
     {
         int[] offsets = { -ChunkSize, ChunkSize };
         List<Vector3> neighborPositions = new List<Vector3>();
+        
         foreach (int dx in offsets)
             neighborPositions.Add(new Vector3(newChunkPos.X + dx, newChunkPos.Y, newChunkPos.Z));
+        
+        foreach (int dy in offsets)
+            neighborPositions.Add(new Vector3(newChunkPos.X, newChunkPos.Y + dy, newChunkPos.Z));
+        
         foreach (int dz in offsets)
             neighborPositions.Add(new Vector3(newChunkPos.X, newChunkPos.Y, newChunkPos.Z + dz));
-        // Add Y offsets if needed
 
         foreach (var pos in neighborPositions)
         {
