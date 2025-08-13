@@ -9,6 +9,8 @@ namespace DIBBLES.Systems;
 
 public class TerrainMesh
 {
+    public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
+    
     // MeshData generation (thread-safe, no Raylib calls)
     public MeshData GenerateMeshData(Chunk chunk)
     {
@@ -398,7 +400,44 @@ public class TerrainMesh
         return info.Type != BlockType.Air && !info.IsTransparent;
     }
     
-    // Helper local function
+    public void RemeshNeighborsIfBlockOnEdge(Chunk chunk, Vector3Int blockPos)
+    {
+        var localX = blockPos.X - chunk.Position.X;
+        var localY = blockPos.Y - chunk.Position.Y;
+        var localZ = blockPos.Z - chunk.Position.Z;
+
+        if (localX == 0)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(-ChunkSize, 0, 0));
+        else if (localX == ChunkSize - 1)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(ChunkSize, 0, 0));
+
+        if (localY == 0)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, -ChunkSize, 0));
+        else if (localY == ChunkSize - 1)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, ChunkSize, 0));
+
+        if (localZ == 0)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, -ChunkSize));
+        else if (localZ == ChunkSize - 1)
+            RemeshNeighborIfPresent(chunk.Position + new Vector3Int(0, 0, ChunkSize));
+    }
+    
+    public void RemeshNeighborIfPresent(Vector3Int neighborPos)
+    {
+        if (RecentlyRemeshedNeighbors.Contains(neighborPos))
+            return; // Already remeshed this frame
+        
+        if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+        {
+            Raylib.UnloadModel(neighborChunk.Model);
+            
+            var meshData = TMesh.GenerateMeshData(neighborChunk);
+            neighborChunk.Model = TMesh.UploadMesh(meshData);
+            
+            RecentlyRemeshedNeighbors.Add(neighborPos);
+        }
+    }
+    
     private byte NeighborLightLevel(Chunk chunk, int nx, int ny, int nz)
     {
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)

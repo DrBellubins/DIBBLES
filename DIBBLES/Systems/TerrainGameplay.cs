@@ -154,9 +154,9 @@ public class TerrainGameplay
         var blockPos = SelectedBlock.Position;
         
         var chunkCoord = new Vector3Int(
-            ((int)blockPos.X / ChunkSize) * ChunkSize,
-            ((int)blockPos.Y / ChunkSize) * ChunkSize,
-            ((int)blockPos.Z / ChunkSize) * ChunkSize
+            (blockPos.X / ChunkSize) * ChunkSize,
+            (blockPos.Y / ChunkSize) * ChunkSize,
+            (blockPos.Z / ChunkSize) * ChunkSize
         );
 
         if (!Chunks.TryGetValue(chunkCoord, out var chunk))
@@ -189,6 +189,8 @@ public class TerrainGameplay
         var meshData = TMesh.GenerateMeshData(chunk);
         chunk.Model = TMesh.UploadMesh(meshData);
 
+        TMesh.RemeshNeighborsIfBlockOnEdge(chunk, blockPos);
+        
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
             WorldSave.Data.ModifiedChunks.Add(chunk);
@@ -262,6 +264,8 @@ public class TerrainGameplay
         
         var meshData = TMesh.GenerateMeshData(chunk);
         chunk.Model = TMesh.UploadMesh(meshData);
+        
+        TMesh.RemeshNeighborsIfBlockOnEdge(chunk, newBlockPos);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))

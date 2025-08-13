@@ -35,7 +35,6 @@ public class TerrainGeneration
     public int Seed;
 
     // Thread-safe queues for chunk and mesh work
-    private HashSet<Vector3Int> recentlyRemeshedNeighbors = new();
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
 
@@ -103,7 +102,7 @@ public class TerrainGeneration
         //Console.WriteLine($"Elapsed time: {timer.ElapsedMilliseconds}ms");
         //timer.Reset();
         
-        recentlyRemeshedNeighbors.Clear();
+        TMesh.RecentlyRemeshedNeighbors.Clear();
     }
     
     private void generateTerrainAsync(Vector3Int centerChunk)
@@ -238,35 +237,19 @@ public class TerrainGeneration
         foreach (int dx in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
-            remeshNeighborIfPresent(neighborPos);
+            TMesh.RemeshNeighborIfPresent(neighborPos);
         }
         
         foreach (int dy in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
-            remeshNeighborIfPresent(neighborPos);
+            TMesh.RemeshNeighborIfPresent(neighborPos);
         }
         
         foreach (int dz in offsets)
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
-            remeshNeighborIfPresent(neighborPos);
-        }
-    }
-    
-    private void remeshNeighborIfPresent(Vector3Int neighborPos)
-    {
-        if (recentlyRemeshedNeighbors.Contains(neighborPos))
-            return; // Already remeshed this frame
-        
-        if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-        {
-            Raylib.UnloadModel(neighborChunk.Model);
-            
-            var meshData = TMesh.GenerateMeshData(neighborChunk);
-            neighborChunk.Model = TMesh.UploadMesh(meshData);
-            
-            recentlyRemeshedNeighbors.Add(neighborPos);
+            TMesh.RemeshNeighborIfPresent(neighborPos);
         }
     }
     

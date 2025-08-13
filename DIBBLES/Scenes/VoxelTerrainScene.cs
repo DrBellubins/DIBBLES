@@ -103,8 +103,6 @@ public class VoxelTerrainScene : Scene
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             TerrainGeneration.Gameplay.PlaceBlock(BlockType.Stone);
-        
-        //terrainGen.UpdateTerrain(_camera.Position);
     }
 
     public override void Draw()
