@@ -90,6 +90,8 @@ public class TerrainGeneration
 
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
+
+            remeshNeigbors(chunk.Position);
         }
     }
     
@@ -216,24 +218,39 @@ public class TerrainGeneration
             Chunks.Remove(coord);
         }
     }
-    
-    private bool allNeighborsGenerated(Vector3Int chunkPos)
+
+    private void remeshNeigbors(Vector3Int chunkPos)
     {
+        // For each axis neighbor
         int[] offsets = { -ChunkSize, ChunkSize };
         
         foreach (int dx in offsets)
-            if (!Chunks.ContainsKey(new Vector3Int(chunkPos.X + dx, chunkPos.Y, chunkPos.Z)))
-                return false;
+        {
+            Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
+            remeshNeighborIfPresent(neighborPos);
+        }
         
         foreach (int dy in offsets)
-            if (!Chunks.ContainsKey(new Vector3Int(chunkPos.X, chunkPos.Y + dy, chunkPos.Z)))
-                return false;
+        {
+            Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
+            remeshNeighborIfPresent(neighborPos);
+        }
         
         foreach (int dz in offsets)
-            if (!Chunks.ContainsKey(new Vector3Int(chunkPos.X, chunkPos.Y, chunkPos.Z + dz)))
-                return false;
-        
-        return true;
+        {
+            Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
+            remeshNeighborIfPresent(neighborPos);
+        }
+    }
+    
+    private void remeshNeighborIfPresent(Vector3Int neighborPos)
+    {
+        if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+        {
+            Raylib.UnloadModel(neighborChunk.Model);
+            var meshData = TMesh.GenerateMeshData(neighborChunk);
+            neighborChunk.Model = TMesh.UploadMesh(meshData);
+        }
     }
     
     public void Draw()
