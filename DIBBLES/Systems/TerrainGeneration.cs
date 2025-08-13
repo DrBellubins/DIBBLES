@@ -69,8 +69,8 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        if (currentChunk != lastCameraChunk)
-        //if (!hasGenerated)
+        //if (currentChunk != lastCameraChunk)
+        if (!hasGenerated)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
@@ -91,8 +91,6 @@ public class TerrainGeneration
 
             chunk.Model = TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
-
-            remeshNeigbors(chunk.Position, currentChunk);
         };
         
         TMesh.RecentlyRemeshedNeighbors.Clear();
@@ -115,13 +113,13 @@ public class TerrainGeneration
 
         foreach (var pos in chunksToGenerate)
         {
-            generatingChunks.TryAdd(pos, true);
-
             // Spawn a background task for chunk generation
             Task.Run(() =>
             {
                 try
                 {
+                    generatingChunks.TryAdd(pos, true);
+                    
                     var chunk = new Chunk(pos);
                     GenerateChunkData(chunk);
                     //Lighting.Generate(chunk);
@@ -259,9 +257,11 @@ public class TerrainGeneration
         return true;
     }
     
-    private void remeshNeigbors(Vector3Int chunkPos, Vector3Int centerChunk)
+    private void remeshNeigbors(Vector3Int chunkPos)
     {
         if (!areAllNeighborsLoaded(chunkPos)) return;
+        
+        Console.WriteLine("Remesh");
         
         // For each axis neighbor
         int[] offsets = { -ChunkSize, ChunkSize };
@@ -270,7 +270,7 @@ public class TerrainGeneration
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
             
-            if (Chunks.ContainsKey(neighborPos) && isChunkWithinRenderDistance(neighborPos, centerChunk))
+            if (Chunks.ContainsKey(neighborPos))
                 TMesh.RemeshNeighbor(neighborPos);
         }
         
@@ -278,7 +278,7 @@ public class TerrainGeneration
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
             
-            if (Chunks.ContainsKey(neighborPos) && isChunkWithinRenderDistance(neighborPos, centerChunk))
+            if (Chunks.ContainsKey(neighborPos))
                 TMesh.RemeshNeighbor(neighborPos);
         }
         
@@ -286,7 +286,7 @@ public class TerrainGeneration
         {
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
             
-            if (Chunks.ContainsKey(neighborPos) && isChunkWithinRenderDistance(neighborPos, centerChunk))
+            if (Chunks.ContainsKey(neighborPos))
                 TMesh.RemeshNeighbor(neighborPos);
         }
     }
