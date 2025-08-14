@@ -16,7 +16,7 @@ public class TerrainGeneration
 {
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
-    public const float ReachDistance = 100f; // Has to be finite!
+    public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();

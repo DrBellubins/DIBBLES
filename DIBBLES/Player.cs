@@ -7,6 +7,7 @@ using static DIBBLES.Systems.TerrainGeneration;
 
 namespace DIBBLES;
 
+// TODO: Crouching freezes player
 public class Player
 {
     // HL2 movement values, converted to meters and m/s.
@@ -22,13 +23,15 @@ public class Player
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
 
-    public Vector3 Position = new Vector3(48.0f, 70.0f, 20.0f);
+    public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
     public Vector3 CameraDirection = Vector3.Zero;
     
     public Camera3D Camera;
 
     public bool ShouldUpdate = false;
+    
+    public readonly Vector3 SpawnPosition = new Vector3(48f, 70f, 20f);
     
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
@@ -54,6 +57,8 @@ public class Player
         Camera.FovY = 90.0f;
         Camera.Projection = CameraProjection.Perspective;
 
+        respawn();
+        
         Raylib.DisableCursor();
     }
 
@@ -61,6 +66,9 @@ public class Player
     {
         if (!ShouldUpdate)
             return;
+
+        if (Position.Y < -100f)
+            respawn();
         
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
@@ -222,14 +230,14 @@ public class Player
         Debug.Draw2DText($"Position: {Position}", Color.White);
         //Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
     }
-
+    
     public void CheckCollisions(BoundingBox playerBox)
     {
         var moveDelta = Velocity * Time.DeltaTime;
         var newPosition = Position;
 
         // Call once per frame before axis checks!
-        var blockBoxes = GetBoundingBoxes(Position, 10f);
+        var blockBoxes = getBoundingBoxes(Position, 10f);
 
         // X axis
         newPosition.X += moveDelta.X;
@@ -272,7 +280,13 @@ public class Player
         Position = newPosition;
     }
     
-    public static List<BoundingBox> GetBoundingBoxes(Vector3 center, float radius)
+    private void respawn()
+    {
+        Position = SpawnPosition;
+        Velocity = Vector3.Zero;
+    }
+    
+    private static List<BoundingBox> getBoundingBoxes(Vector3 center, float radius)
     {
         var result = new List<BoundingBox>();
         
