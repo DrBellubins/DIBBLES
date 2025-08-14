@@ -101,7 +101,7 @@ public class Player
         justLanded = false;
         
         // Collision detection
-        CheckCollisions();
+        CheckCollisions(playerBox);
 
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
@@ -217,7 +217,7 @@ public class Player
         Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
     }
 
-    public void CheckCollisions()
+    public void CheckCollisions(BoundingBox playerBox)
     {
         var moveDelta = Velocity * Time.DeltaTime;
         var newPosition = Position;
