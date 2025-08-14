@@ -42,14 +42,9 @@ public class Player
     private bool justLanded = false;
     
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
-    //private Sound jumpSound;
-    //private Sound landSound;
     
     public void Start()
     {
-        //jumpSound = Resource.Load<Sound>("grass_jump.ogg");
-        //landSound = Resource.Load<Sound>("grass_land.ogg");
-        
         Camera = new Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
@@ -93,20 +88,6 @@ public class Player
 
         // TODO: Add justJumped and justLanded
         
-        // Player audio
-        //var magnitude = MathF.Abs(Velocity.Length());
-        
-        /*if (justJumped)
-        {
-            jumpLandPlayer.Sound = jumpSound;
-            //jumpLandPlayer.Play2D();
-        }
-        else if (justLanded)
-        {
-            jumpLandPlayer.Sound = landSound;
-            //jumpLandPlayer.Play2D();
-        }*/
-        
         // --- Gravity & Vertical Movement ---
         Velocity.Y -= Gravity * Time.DeltaTime;
         Position.Y += Velocity.Y * Time.DeltaTime;
@@ -120,20 +101,7 @@ public class Player
         justLanded = false;
         
         // Collision detection
-        CheckCollisions(playerBox);
-        
-        /*if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
-        {
-            Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
-            Velocity.Y = 0.0f;
-            isGrounded = true;
-            
-            // Detect landing (transition from not grounded to grounded)
-            if (!wasGrounded)
-                justLanded = true;
-        }
-        else
-            isGrounded = false;*/
+        CheckCollisions();
 
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
@@ -249,19 +217,52 @@ public class Player
         Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
     }
 
-    public void CheckCollisions(BoundingBox playerBox)
+    public void CheckCollisions()
     {
-        var surroundingBoxes = GetBoundingBoxes(Position, 10f);
+        var moveDelta = Velocity * Time.DeltaTime;
+        var newPosition = Position;
 
-        foreach (var box in surroundingBoxes)
+        // Call once per frame before axis checks!
+        var blockBoxes = GetBoundingBoxes(Position, 10f);
+
+        // X axis
+        newPosition.X += moveDelta.X;
+        
+        var playerBoxX = GetPlayerBox(newPosition, currentHeight);
+        var collidedX = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxX, box));
+        
+        if (collidedX)
         {
-            if (Raylib.CheckCollisionBoxes(playerBox, box))
-            {
-                Position.Y = box.Max.Y + currentHeight * 0.5f;
-                Velocity.Y = 0.0f;
-                isGrounded = true;
-            }
+            newPosition.X -= moveDelta.X;
+            Velocity.X = 0;
         }
+
+        // Y axis
+        newPosition.Y += moveDelta.Y;
+        
+        var playerBoxY = GetPlayerBox(newPosition, currentHeight);
+        var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
+        
+        if (collidedY)
+        {
+            newPosition.Y -= moveDelta.Y;
+            Velocity.Y = 0;
+            isGrounded = true;
+        }
+
+        // Z axis
+        newPosition.Z += moveDelta.Z;
+        
+        var playerBoxZ = GetPlayerBox(newPosition, currentHeight);
+        var collidedZ = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxZ, box));
+        
+        if (collidedZ)
+        {
+            newPosition.Z -= moveDelta.Z;
+            Velocity.Z = 0;
+        }
+
+        Position = newPosition;
     }
     
     public static List<BoundingBox> GetBoundingBoxes(Vector3 center, float radius)
