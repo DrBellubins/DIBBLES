@@ -322,8 +322,7 @@ public class TerrainGeneration
             if (SelectedBlock != null)
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
-                Raylib.DrawSphere(SelectedBlock.Position.ToVector3() + SelectedNormal.ToVector3(), 0.5f, Color.White);
-                //RayEx.DrawPlane(SelectedBlock.Position.ToVector3(), new Vector2(2f, 2f), Color.White, SelectedNormal.ToVector3());
+                RayEx.DrawPlane((SelectedBlock.Position + SelectedNormal).ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), new Vector2(1f, 1f), Color.White, SelectedNormal.ToVector3());
             }
 
             if (DrawDebug)
