@@ -28,7 +28,7 @@ public class TerrainGeneration
     
     public static Block? SelectedBlock;
     
-    public static int Seed = 1337;
+    public static int Seed = 13373;
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
@@ -40,10 +40,10 @@ public class TerrainGeneration
     {
         Block.InitializeBlockPrefabs();
         
-        if (WorldSave.Data.Seed != 0)
-            Seed = WorldSave.Data.Seed;
-        else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        //if (WorldSave.Data.Seed != 0)
+        //    Seed = WorldSave.Data.Seed;
+        //else
+        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
 
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }

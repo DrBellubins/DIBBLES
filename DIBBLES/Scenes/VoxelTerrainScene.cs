@@ -39,7 +39,7 @@ public class VoxelTerrainScene : Scene
     {
         Debug.Update(player.Camera);
         
-        //player.Update();
+        player.Update();
         //freecam.Update();
         
         terrainGen.Update(player.Camera);
@@ -71,6 +71,7 @@ public class VoxelTerrainScene : Scene
         Raylib.BeginMode3D(player.Camera);
         
         terrainGen.Draw();
+        player.Draw();
         
         Raylib.EndMode3D();
         

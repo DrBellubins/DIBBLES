@@ -3,6 +3,8 @@ using System.Numerics;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
+using static DIBBLES.Systems.TerrainGeneration;
+
 namespace DIBBLES;
 
 public class Player
@@ -119,6 +121,7 @@ public class Player
         
         // Collision detection
         CheckCollisions(playerBox);
+        
         /*if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
             Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
@@ -241,34 +244,79 @@ public class Player
         jumpLandPlayer.Update();
     }
 
+    public void Draw()
+    {
+        Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
+    }
+
     public void CheckCollisions(BoundingBox playerBox)
     {
-        foreach (var chunk in TerrainGeneration.Chunks.Values)
+        var surroundingBoxes = GetBoundingBoxes(Position, 10f);
+
+        foreach (var box in surroundingBoxes)
         {
-            for (int x = 0; x < TerrainGeneration.ChunkSize; x++)
-            for (int y = 0; y < TerrainGeneration.ChunkSize; y++)
-            for (int z = 0; z < TerrainGeneration.ChunkSize; z++)
+            if (Raylib.CheckCollisionBoxes(playerBox, box))
             {
-                var block = chunk.Blocks[x, y, z];
-                
-                if (block.Info.Type == BlockType.Air || block.Info.IsTransparent)
-                    continue;
-
-                var blockPos = new Vector3(
-                    chunk.Position.X + x,
-                    chunk.Position.Y + y,
-                    chunk.Position.Z + z);
-
-                var blockBox = new BoundingBox(blockPos, blockPos + Vector3.One);
-
-                if (Raylib.CheckCollisionBoxes(playerBox, blockBox))
-                {
-                    Position.Y = blockBox.Max.Y + currentHeight * 0.5f;
-                    Velocity.Y = 0.0f;
-                    isGrounded = true;
-                }
+                Position.Y = box.Max.Y + currentHeight * 0.5f;
+                Velocity.Y = 0.0f;
+                isGrounded = true;
             }
         }
+    }
+    
+    public static List<BoundingBox> GetBoundingBoxes(Vector3 center, float radius)
+    {
+        var result = new List<BoundingBox>();
+        
+        int minX = (int)MathF.Floor(center.X - radius);
+        int maxX = (int)MathF.Floor(center.X + radius);
+        int minY = (int)MathF.Floor(center.Y - radius);
+        int maxY = (int)MathF.Floor(center.Y + radius);
+        int minZ = (int)MathF.Floor(center.Z - radius);
+        int maxZ = (int)MathF.Floor(center.Z + radius);
+
+        float radiusSquared = radius * radius;
+
+        for (int x = minX; x <= maxX; x++)
+        for (int y = minY; y <= maxY; y++)
+        for (int z = minZ; z <= maxZ; z++)
+        {
+            var blockCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
+            
+            if (Vector3.DistanceSquared(center, blockCenter) > radiusSquared)
+                continue;
+
+            // Find which chunk this block belongs to
+            int chunkX = (int)Math.Floor((float)x / ChunkSize) * ChunkSize;
+            int chunkY = (int)Math.Floor((float)y / ChunkSize) * ChunkSize;
+            int chunkZ = (int)Math.Floor((float)z / ChunkSize) * ChunkSize;
+            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+            if (!Chunks.TryGetValue(chunkCoord, out var chunk))
+                continue;
+
+            int localX = x - chunkX;
+            int localY = y - chunkY;
+            int localZ = z - chunkZ;
+
+            // Bounds check
+            if (localX < 0 || localX >= ChunkSize ||
+                localY < 0 || localY >= ChunkSize ||
+                localZ < 0 || localZ >= ChunkSize)
+                continue;
+
+            var block = chunk.Blocks[localX, localY, localZ];
+            
+            // Only add solid blocks
+            if (block != null && block.Info.Type != BlockType.Air && !block.Info.IsTransparent)
+            {
+                var blockMin = new Vector3(x, y, z);
+                var blockMax = blockMin + Vector3.One;
+                result.Add(new BoundingBox(blockMin, blockMax));
+            }
+        }
+        
+        return result;
     }
     
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
