@@ -8,12 +8,31 @@ public class Debug
 {
     private static Camera3D debugCamera;
 
+    private static Dictionary<string, Color> textBuffer2d = new ();
+    
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new Dictionary<(string, Vector3), Texture2D>();
     
     public static void Update(Camera3D camera)
     {
         debugCamera = camera;
+        textBuffer2d.Clear();
+    }
+
+    public static void Draw2D()
+    {
+        int index = 0;
+        
+        foreach (var text in textBuffer2d)
+        {
+            index += 24;
+            Raylib.DrawTextEx(Engine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
+        }
+    }
+    
+    public static void Draw2DText(string text, Color color)
+    {
+        textBuffer2d.Add(text, color);
     }
     
     public static void Draw3DText(string text, Vector3 position, Color color, int fontSize = 24)

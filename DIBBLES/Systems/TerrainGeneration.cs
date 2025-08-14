@@ -28,7 +28,7 @@ public class TerrainGeneration
     
     public static Block? SelectedBlock;
     
-    public static int Seed = 13373;
+    public static int Seed = 1337;
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
@@ -50,13 +50,13 @@ public class TerrainGeneration
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
     private bool hasRemeshed = false;
-    public void Update(Camera3D camera)
+    public void Update(Player player)
     {
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3Int(
-            (int)Math.Floor(camera.Position.X / ChunkSize),
-            (int)Math.Floor(camera.Position.Y / ChunkSize),
-            (int)Math.Floor(camera.Position.Z / ChunkSize)
+            (int)Math.Floor(player.Camera.Position.X / ChunkSize),
+            (int)Math.Floor(player.Camera.Position.Y / ChunkSize),
+            (int)Math.Floor(player.Camera.Position.Z / ChunkSize)
         );
 
         // Only update if the camera has moved to a new chunk
@@ -77,6 +77,7 @@ public class TerrainGeneration
             foreach (var chunk in Chunks.Values)
                 remeshNeigbors(chunk.Position);
             
+            player.ShouldUpdate = true;
             hasRemeshed =  true;
         }
         

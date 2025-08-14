@@ -17,17 +17,19 @@ public class Player
     public const float GroundFriction = 8.0f;    // HL2 style ground friction
     public const float AirFriction = 0.0f;       // Less friction in air
     public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
-    public const float JumpImpulse = 3.048f * 2f;       // HL2 jump velocity ≈ 5 m/s
+    public const float JumpImpulse = 3.048f * 2.3f;       // HL2 jump velocity ≈ 5 m/s
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
 
-    public Vector3 Position = new Vector3(0.0f, 0.0f, 0.0f);
+    public Vector3 Position = new Vector3(48.0f, 70.0f, 20.0f);
     public Vector3 Velocity = Vector3.Zero;
     public Vector3 CameraDirection = Vector3.Zero;
     
     public Camera3D Camera;
 
+    public bool ShouldUpdate = false;
+    
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
@@ -57,6 +59,9 @@ public class Player
 
     public void Update()
     {
+        if (!ShouldUpdate)
+            return;
+        
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
 
@@ -90,7 +95,7 @@ public class Player
         
         // --- Gravity & Vertical Movement ---
         Velocity.Y -= Gravity * Time.DeltaTime;
-        Position.Y += Velocity.Y * Time.DeltaTime;
+        //Position.Y += Velocity.Y * Time.DeltaTime;
 
         // --- Ground Collision ---
         var playerBox = GetPlayerBox(Position, currentHeight);
@@ -192,8 +197,8 @@ public class Player
         Velocity.X = velXZ.X;
         Velocity.Z = velXZ.Z;
 
-        Position.X += Velocity.X * Time.DeltaTime;
-        Position.Z += Velocity.Z * Time.DeltaTime;
+        //Position.X += Velocity.X * Time.DeltaTime;
+        //Position.Z += Velocity.Z * Time.DeltaTime;
 
         // --- Crouching ---
         var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
@@ -214,7 +219,8 @@ public class Player
 
     public void Draw()
     {
-        Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
+        Debug.Draw2DText($"Position: {Position}", Color.White);
+        //Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
     }
 
     public void CheckCollisions(BoundingBox playerBox)
@@ -234,7 +240,7 @@ public class Player
         if (collidedX)
         {
             newPosition.X -= moveDelta.X;
-            Velocity.X = 0;
+            Velocity.X = 0f;
         }
 
         // Y axis
@@ -243,10 +249,11 @@ public class Player
         var playerBoxY = GetPlayerBox(newPosition, currentHeight);
         var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
         
+        // TODO: Check if hitting ceiling
         if (collidedY)
         {
             newPosition.Y -= moveDelta.Y;
-            Velocity.Y = 0;
+            Velocity.Y = 0f;
             isGrounded = true;
         }
 
@@ -259,7 +266,7 @@ public class Player
         if (collidedZ)
         {
             newPosition.Z -= moveDelta.Z;
-            Velocity.Z = 0;
+            Velocity.Z = 0f;
         }
 
         Position = newPosition;

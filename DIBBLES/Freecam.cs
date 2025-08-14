@@ -66,4 +66,9 @@ public class Freecam
         
         Camera.Target = Camera.Position + cameraDirection;
     }
+
+    public void Draw()
+    {
+        Debug.Draw2DText($"Position: {Camera.Position}",  Color.White);
+    }
 }

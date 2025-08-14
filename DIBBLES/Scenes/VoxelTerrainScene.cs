@@ -28,7 +28,7 @@ public class VoxelTerrainScene : Scene
         
         // Initial terrain generation
         terrainGen.Start();
-        terrainGen.Update(player.Camera);
+        terrainGen.Update(player);
         
         fogEffect.Start();
         
@@ -37,12 +37,10 @@ public class VoxelTerrainScene : Scene
 
     public override void Update()
     {
-        Debug.Update(player.Camera);
-        
         player.Update();
         //freecam.Update();
         
-        terrainGen.Update(player.Camera);
+        terrainGen.Update(player);
         TerrainGeneration.Gameplay.Update(player.Camera);
         
         // Temporary world saving/loading
@@ -58,6 +56,8 @@ public class VoxelTerrainScene : Scene
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             TerrainGeneration.Gameplay.PlaceBlock(BlockType.Snow);
+        
+        Debug.Update(player.Camera); // Must run after everything
     }
 
     public override void Draw()
@@ -72,11 +72,13 @@ public class VoxelTerrainScene : Scene
         
         terrainGen.Draw();
         player.Draw();
+        //freecam.Draw();
         
         Raylib.EndMode3D();
         
         //fogEffect.DrawEnd();
         
+        Debug.Draw2D();
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
         
         Raylib.DrawFPS(10, 10);
