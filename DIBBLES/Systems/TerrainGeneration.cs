@@ -322,7 +322,14 @@ public class TerrainGeneration
             if (SelectedBlock != null)
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
-                RayEx.DrawPlane((SelectedBlock.Position + SelectedNormal).ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), new Vector2(1f, 1f), Color.White, SelectedNormal.ToVector3());
+                
+                // Center of the block
+                Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+
+                // Offset by half a block in the direction of the normal
+                Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
+                
+                RayEx.DrawPlane(faceCenter, new Vector2(1f, 1f), new Color(1f, 1f, 1f, 0f), SelectedNormal.ToVector3());
             }
 
             if (DrawDebug)
