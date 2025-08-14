@@ -321,7 +321,8 @@ public class TerrainGeneration
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
             
             if (SelectedBlock != null)
-                Raylib.DrawCubeWires(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+                Debug.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black, 0.25f);
+                //Raylib.DrawCubeWires(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
 
             if (DrawDebug)
             {
