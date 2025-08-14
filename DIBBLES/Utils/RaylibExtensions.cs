@@ -93,7 +93,7 @@ public static class RayEx
     {
         // Default up is +Y
         Vector3 upDir = up ?? Vector3.UnitY;
-        upDir = -Vector3.Normalize(upDir); // Needs to be flipped
+        upDir = Vector3.Normalize(upDir);
 
         // Choose an arbitrary right vector
         Vector3 arbitrary = Math.Abs(Vector3.Dot(upDir, Vector3.UnitX)) < 0.99f ? Vector3.UnitX : Vector3.UnitZ;
@@ -103,13 +103,13 @@ public static class RayEx
         float halfWidth = size.X * 0.5f;
         float halfLength = size.Y * 0.5f;
 
-        // Plane corners (clockwise)
-        Vector3 p0 = centerPos + (-right * halfWidth) + (-forward * halfLength);
-        Vector3 p1 = centerPos + ( right * halfWidth) + (-forward * halfLength);
-        Vector3 p2 = centerPos + ( right * halfWidth) + ( forward * halfLength);
-        Vector3 p3 = centerPos + (-right * halfWidth) + ( forward * halfLength);
+        // Plane corners (counter-clockwise winding for visible front face)
+        Vector3 p0 = centerPos + (-right * halfWidth) + (-forward * halfLength); // Bottom-left
+        Vector3 p1 = centerPos + (-right * halfWidth) + ( forward * halfLength); // Top-left
+        Vector3 p2 = centerPos + ( right * halfWidth) + ( forward * halfLength); // Top-right
+        Vector3 p3 = centerPos + ( right * halfWidth) + (-forward * halfLength); // Bottom-right
 
-        // Draw as two triangles
+        // Draw as two triangles (counter-clockwise)
         Raylib.DrawTriangle3D(p0, p1, p2, color);
         Raylib.DrawTriangle3D(p0, p2, p3, color);
     }
