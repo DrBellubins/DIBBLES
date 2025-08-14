@@ -46,7 +46,7 @@ public class TestScene : Scene
 
     public override void Update()
     {
-        player.Update(groundBox);
+        //player.Update(groundBox);
     }
 
     public override void Draw()

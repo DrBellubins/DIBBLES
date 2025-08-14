@@ -58,7 +58,7 @@ public class Player
         Raylib.DisableCursor();
     }
 
-    public void Update(BoundingBox groundBox)
+    public void Update()
     {
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
@@ -117,7 +117,9 @@ public class Player
         justJumped = false;
         justLanded = false;
         
-        if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
+        // Collision detection
+        CheckCollisions(playerBox);
+        /*if (Raylib.CheckCollisionBoxes(playerBox, groundBox))
         {
             Position.Y = groundBox.Max.Y + currentHeight * 0.5f;
             Velocity.Y = 0.0f;
@@ -128,7 +130,7 @@ public class Player
                 justLanded = true;
         }
         else
-            isGrounded = false;
+            isGrounded = false;*/
 
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
@@ -239,6 +241,36 @@ public class Player
         jumpLandPlayer.Update();
     }
 
+    public void CheckCollisions(BoundingBox playerBox)
+    {
+        foreach (var chunk in TerrainGeneration.Chunks.Values)
+        {
+            for (int x = 0; x < TerrainGeneration.ChunkSize; x++)
+            for (int y = 0; y < TerrainGeneration.ChunkSize; y++)
+            for (int z = 0; z < TerrainGeneration.ChunkSize; z++)
+            {
+                var block = chunk.Blocks[x, y, z];
+                
+                if (block.Info.Type == BlockType.Air || block.Info.IsTransparent)
+                    continue;
+
+                var blockPos = new Vector3(
+                    chunk.Position.X + x,
+                    chunk.Position.Y + y,
+                    chunk.Position.Z + z);
+
+                var blockBox = new BoundingBox(blockPos, blockPos + Vector3.One);
+
+                if (Raylib.CheckCollisionBoxes(playerBox, blockBox))
+                {
+                    Position.Y = blockBox.Max.Y + currentHeight * 0.5f;
+                    Velocity.Y = 0.0f;
+                    isGrounded = true;
+                }
+            }
+        }
+    }
+    
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
     private BoundingBox GetPlayerBox(Vector3 position, float height)
     {
