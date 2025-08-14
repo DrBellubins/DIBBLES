@@ -116,7 +116,7 @@ public class TerrainGameplay
             if (nextT > ReachDistance) break;
     
             // Set normal
-            SelectedNormal = hitNormal;
+            SelectedNormal = QuantizedNormal(hitNormal);
             
             // Check current voxel
             var currentChunkPos = new Vector3Int(
@@ -213,7 +213,7 @@ public class TerrainGameplay
         Vector3Int normal = SelectedNormal;
         
         // Calculate the position to place the new block
-        var newBlockPos = SelectedBlock.Position + QuantizedNormal(normal);
+        var newBlockPos = SelectedBlock.Position + normal;
         
         // Determine the chunk for the new block position
         int chunkX = (int)Math.Floor((float)newBlockPos.X / ChunkSize) * ChunkSize;
@@ -230,9 +230,9 @@ public class TerrainGameplay
         
         // Calculate local block coordinates within the chunk
         var localPos = newBlockPos - chunkCoord;
-        var localX = (int)localPos.X;
-        var localY = (int)localPos.Y;
-        var localZ = (int)localPos.Z;
+        var localX = localPos.X;
+        var localY = localPos.Y;
+        var localZ = localPos.Z;
         
         // Check if the position is within bounds and not occupied
         if (localX < 0 || localX >= ChunkSize ||
