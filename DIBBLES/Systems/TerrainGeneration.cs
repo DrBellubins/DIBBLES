@@ -10,8 +10,6 @@ using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Systems;
 
-// TODO: Chunks no longer cull blocks inside of neighboring chunk islands
-// TODO: There are edge cases where faces in neighbor chunks don't regen when breaking/placing
 public class TerrainGeneration
 {
     public const int RenderDistance = 8;
@@ -27,6 +25,7 @@ public class TerrainGeneration
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static Block? SelectedBlock;
+    public static Vector3Int SelectedNormal;
     
     public static int Seed = 1337;
     
@@ -321,7 +320,7 @@ public class TerrainGeneration
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
             
             if (SelectedBlock != null)
-                Debug.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black, 0.25f);
+                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
                 //Raylib.DrawCubeWires(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
 
             if (DrawDebug)

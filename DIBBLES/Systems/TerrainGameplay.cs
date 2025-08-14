@@ -8,13 +8,10 @@ namespace DIBBLES.Systems;
 
 public class TerrainGameplay
 {
-    private Vector3Int selectedNormal;
-    
     public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
-        selectedNormal = normal;
     }
     
     private (Block?, Vector3Int) selectBlock(Camera3D camera)
@@ -118,6 +115,9 @@ public class TerrainGameplay
     
             if (nextT > ReachDistance) break;
     
+            // Set normal
+            SelectedNormal = hitNormal;
+            
             // Check current voxel
             var currentChunkPos = new Vector3Int(
                 (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
@@ -210,7 +210,7 @@ public class TerrainGameplay
             return;
 
         // Quantize the normal to the nearest axis-aligned direction
-        Vector3Int normal = selectedNormal;
+        Vector3Int normal = SelectedNormal;
         
         Vector3Int quantizedNormal = new Vector3Int(
             Math.Abs(normal.X) > Math.Abs(normal.Y) && Math.Abs(normal.X) > Math.Abs(normal.Z) ? Math.Sign(normal.X) : 0,
