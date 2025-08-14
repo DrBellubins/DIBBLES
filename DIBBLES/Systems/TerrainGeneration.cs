@@ -164,6 +164,14 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
 
+                    // Seeded RNG noise
+                    noise.SetNoiseType(FastNoiseLite.NoiseType.Value);
+                    noise.SetFrequency(0.2f);
+                    noise.SetFractalType(FastNoiseLite.FractalType.None);
+                    
+                    var rngNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                    
+                    // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
                     noise.SetFrequency(0.02f);
                     noise.SetFractalType(FastNoiseLite.FractalType.FBm);
@@ -195,8 +203,16 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
-                        islandDepth = 0;
+                        if (rngNoise > 0.95f)
+                        {
+                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
+                            islandDepth = 0;
+                        }
+                        else
+                        {
+                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                            islandDepth = 0;
+                        }
                     }
                 }
             }

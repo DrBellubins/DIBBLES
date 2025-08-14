@@ -77,4 +77,18 @@ public static class GMath
     {
         return a + (b - a) * t;
     }
+    
+    public static float Smoothstep(float input)
+    {
+        // Clamp x to the range [0, 1]
+        input = Math.Clamp(input, 0f, 1f);
+    
+        // Smoothstep formula: 3x² - 2x³
+        return input * input * (3f - 2f * input);
+    }
+
+    public static bool InRange(float input, float min, float max)
+    {
+        return input >= min && input <= max;
+    }
 }

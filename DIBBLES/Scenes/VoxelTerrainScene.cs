@@ -108,7 +108,7 @@ public class VoxelTerrainScene : Scene
     public override void Draw()
     {
         Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.SkyBlue);
+        Raylib.ClearBackground(Color.Black);
         
         //fogEffect.DrawStart();
         //Raylib.ClearBackground(Color.SkyBlue);
