@@ -81,4 +81,36 @@ public static class RayEx
         Raylib.DrawTriangle3D(v1, v2, v3, color);
         Raylib.DrawTriangle3D(v1, v3, v4, color);
     }
+    
+    /// <summary>
+    /// Draws a plane at the given position, size, and up direction.
+    /// </summary>
+    /// <param name="centerPos">Center position of the plane.</param>
+    /// <param name="size">Size of the plane (X=width, Y=length).</param>
+    /// <param name="color">Color of the plane.</param>
+    /// <param name="up">Up direction of the plane (default: Vector3.UnitY).</param>
+    public static void DrawPlane(Vector3 centerPos, Vector2 size, Color color, Vector3? up = null)
+    {
+        // Default up is +Y
+        Vector3 upDir = up ?? Vector3.UnitY;
+        upDir = -Vector3.Normalize(upDir); // Needs to be flipped
+
+        // Choose an arbitrary right vector
+        Vector3 arbitrary = Math.Abs(Vector3.Dot(upDir, Vector3.UnitX)) < 0.99f ? Vector3.UnitX : Vector3.UnitZ;
+        Vector3 right = Vector3.Normalize(Vector3.Cross(upDir, arbitrary));
+        Vector3 forward = Vector3.Normalize(Vector3.Cross(right, upDir));
+
+        float halfWidth = size.X * 0.5f;
+        float halfLength = size.Y * 0.5f;
+
+        // Plane corners (clockwise)
+        Vector3 p0 = centerPos + (-right * halfWidth) + (-forward * halfLength);
+        Vector3 p1 = centerPos + ( right * halfWidth) + (-forward * halfLength);
+        Vector3 p2 = centerPos + ( right * halfWidth) + ( forward * halfLength);
+        Vector3 p3 = centerPos + (-right * halfWidth) + ( forward * halfLength);
+
+        // Draw as two triangles
+        Raylib.DrawTriangle3D(p0, p1, p2, color);
+        Raylib.DrawTriangle3D(p0, p2, p3, color);
+    }
 }

@@ -212,14 +212,8 @@ public class TerrainGameplay
         // Quantize the normal to the nearest axis-aligned direction
         Vector3Int normal = SelectedNormal;
         
-        Vector3Int quantizedNormal = new Vector3Int(
-            Math.Abs(normal.X) > Math.Abs(normal.Y) && Math.Abs(normal.X) > Math.Abs(normal.Z) ? Math.Sign(normal.X) : 0,
-            Math.Abs(normal.Y) > Math.Abs(normal.X) && Math.Abs(normal.Y) > Math.Abs(normal.Z) ? Math.Sign(normal.Y) : 0,
-            Math.Abs(normal.Z) > Math.Abs(normal.X) && Math.Abs(normal.Z) > Math.Abs(normal.Y) ? Math.Sign(normal.Z) : 0
-        );
-        
         // Calculate the position to place the new block
-        var newBlockPos = SelectedBlock.Position + quantizedNormal;
+        var newBlockPos = SelectedBlock.Position + QuantizedNormal(normal);
         
         // Determine the chunk for the new block position
         int chunkX = (int)Math.Floor((float)newBlockPos.X / ChunkSize) * ChunkSize;
@@ -272,5 +266,14 @@ public class TerrainGameplay
         
         if (sound.FrameCount != 0)
             Raylib.PlaySound(sound);
+    }
+
+    public Vector3Int QuantizedNormal(Vector3Int normal)
+    {
+        return new Vector3Int(
+            Math.Abs(normal.X) > Math.Abs(normal.Y) && Math.Abs(normal.X) > Math.Abs(normal.Z) ? Math.Sign(normal.X) : 0,
+            Math.Abs(normal.Y) > Math.Abs(normal.X) && Math.Abs(normal.Y) > Math.Abs(normal.Z) ? Math.Sign(normal.Y) : 0,
+            Math.Abs(normal.Z) > Math.Abs(normal.X) && Math.Abs(normal.Z) > Math.Abs(normal.Y) ? Math.Sign(normal.Z) : 0
+        );
     }
 }

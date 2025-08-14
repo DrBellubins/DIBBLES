@@ -318,10 +318,12 @@ public class TerrainGeneration
         foreach (var chunk in Chunks.Values)
         {
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
-            
+
             if (SelectedBlock != null)
+            {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
-                //Raylib.DrawCubeWires(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+                RayEx.DrawPlane(SelectedBlock.Position.ToVector3(), new Vector2(2f, 2f), Color.White, SelectedNormal.ToVector3());
+            }
 
             if (DrawDebug)
             {
