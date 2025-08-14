@@ -40,13 +40,13 @@ public class Player
     private bool justLanded = false;
     
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
-    private Sound jumpSound;
-    private Sound landSound;
+    //private Sound jumpSound;
+    //private Sound landSound;
     
     public void Start()
     {
-        jumpSound = Resource.Load<Sound>("grass_jump.ogg");
-        landSound = Resource.Load<Sound>("grass_land.ogg");
+        //jumpSound = Resource.Load<Sound>("grass_jump.ogg");
+        //landSound = Resource.Load<Sound>("grass_land.ogg");
         
         Camera = new Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
@@ -94,7 +94,7 @@ public class Player
         // Player audio
         //var magnitude = MathF.Abs(Velocity.Length());
         
-        if (justJumped)
+        /*if (justJumped)
         {
             jumpLandPlayer.Sound = jumpSound;
             //jumpLandPlayer.Play2D();
@@ -103,7 +103,7 @@ public class Player
         {
             jumpLandPlayer.Sound = landSound;
             //jumpLandPlayer.Play2D();
-        }
+        }*/
         
         // --- Gravity & Vertical Movement ---
         Velocity.Y -= Gravity * Time.DeltaTime;

@@ -17,7 +17,7 @@ public class TerrainGeneration
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 100f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
@@ -26,11 +26,9 @@ public class TerrainGeneration
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
-    //public static FastNoiseLite Noise = new FastNoiseLite();
-    
     public static Block? SelectedBlock;
     
-    public int Seed = 1337;
+    public static int Seed = 1337;
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
@@ -150,6 +148,7 @@ public class TerrainGeneration
     public static void GenerateChunkData(Chunk chunk)
     {
         var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
         
         for (int x = 0; x < ChunkSize; x++)
         {
