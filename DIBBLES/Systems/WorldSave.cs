@@ -96,71 +96,58 @@ public class WorldSave
         {
             Exists = true;
             
-            try
+            using (var stream = File.Open(fileName, FileMode.Open))
             {
-                using (var stream = File.Open(fileName, FileMode.Open))
+                using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
                 {
-                    using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
+                    // World data
+                    Data.Seed = reader.ReadInt32();
+                    Data.WorldName = reader.ReadString();
+                    Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                    Data.HotbarPosition = reader.ReadInt32();
+
+                    // Chunk data
+                    Data.ModifiedChunks.Clear(); // THIS PREVENTS CHUNK DUPING!
+
+                    var modifiedChunkCount = reader.ReadInt32();
+
+                    for (int i = 0; i < modifiedChunkCount; i++)
                     {
-                        // World data
-                        Data.Seed = reader.ReadInt32();
-                        Data.WorldName = reader.ReadString();
-                        Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                        Data.HotbarPosition = reader.ReadInt32();
+                        var currentChunkInfo = new ChunkInfo();
+                        currentChunkInfo.Generated = reader.ReadBoolean();
+                        currentChunkInfo.Modified = reader.ReadBoolean();
 
-                        // Chunk data
-                        Data.ModifiedChunks.Clear(); // THIS PREVENTS CHUNK DUPING!
+                        var currentChunk = new Chunk(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
+                        currentChunk.Info = currentChunkInfo;
 
-                        var modifiedChunkCount = reader.ReadInt32();
-
-                        for (int i = 0; i < modifiedChunkCount; i++)
+                        for (int x = 0; x < ChunkSize; x++)
                         {
-                            var currentChunkInfo = new ChunkInfo();
-                            currentChunkInfo.Generated = reader.ReadBoolean();
-                            currentChunkInfo.Modified = reader.ReadBoolean();
-
-                            var currentChunk = new Chunk(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
-                            currentChunk.Info = currentChunkInfo;
-
-                            for (int x = 0; x < ChunkSize; x++)
+                            for (int y = 0; y < ChunkSize; y++)
                             {
-                                for (int y = 0; y < ChunkSize; y++)
+                                for (int z = 0; z < ChunkSize; z++)
                                 {
-                                    for (int z = 0; z < ChunkSize; z++)
+                                    var type = (BlockType)reader.ReadInt32();
+                                    
+                                    if (type != BlockType.Air)
                                     {
-                                        var type = (BlockType)reader.ReadInt32();
+                                        var info = Block.Prefabs[type];
+                                        var currentBlock = new Block();
 
-                                        if ((int)type > Enum.GetValues(typeof(BlockType)).Length)
-                                        {
-                                            Console.WriteLine("TEST");
-                                            throw new Exception($"Invalid type {type}");
-                                        }
-                                        
-                                        if (type != BlockType.Air)
-                                        {
-                                            var info = Block.Prefabs[type];
-                                            var currentBlock = new Block();
+                                        currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
 
-                                            currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
+                                        currentBlock.Info = info;
 
-                                            currentBlock.Info = info;
-
-                                            currentChunk.Blocks[x, y, z] = currentBlock;
-                                        }
+                                        currentChunk.Blocks[x, y, z] = currentBlock;
                                     }
                                 }
                             }
-
-                            Data.ModifiedChunks.Add(currentChunk.Position, currentChunk);
                         }
 
-                        Console.WriteLine($"Loaded world '{Data.WorldName}'");
+                        Data.ModifiedChunks.Add(currentChunk.Position, currentChunk);
                     }
+
+                    Console.WriteLine($"Loaded world '{Data.WorldName}'");
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
             }
         }
     }
