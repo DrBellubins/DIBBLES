@@ -6,6 +6,8 @@ using DIBBLES.Utils;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using DIBBLES.Gameplay.Player;
+using DIBBLES.Gameplay.Terrain;
 using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Systems;
@@ -249,22 +251,6 @@ public class TerrainGeneration
             Chunks.Remove(coord);
         }
     }
-    
-    private bool isChunkWithinRenderDistance(Vector3Int chunkPos, Vector3Int centerChunk)
-    {
-        int half = RenderDistance / 2;
-        int cx = chunkPos.X / ChunkSize;
-        int cy = chunkPos.Y / ChunkSize;
-        int cz = chunkPos.Z / ChunkSize;
-
-        int ccx = centerChunk.X;
-        int ccy = centerChunk.Y;
-        int ccz = centerChunk.Z;
-
-        return Math.Abs(cx - ccx) <= half &&
-               Math.Abs(cy - ccy) <= half &&
-               Math.Abs(cz - ccz) <= half;
-    }
 
     private bool areAllChunksLoaded(Vector3Int centerChunk)
     {
@@ -319,19 +305,6 @@ public class TerrainGeneration
         {
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
 
-            if (SelectedBlock != null)
-            {
-                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
-                
-                // Center of the block
-                Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-
-                // Offset by half a block in the direction of the normal
-                Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
-                
-                RayEx.DrawPlane(faceCenter, new Vector2(1f, 1f), new Color(1f, 1f, 1f, 0f), SelectedNormal.ToVector3());
-            }
-
             if (DrawDebug)
             {
                 Color debugColor;
@@ -354,6 +327,20 @@ public class TerrainGeneration
                 var chunkCenter = pos + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
                 Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter.ToVector3(), Color.White);
             }
+        }
+        
+        // Face selection overlay
+        if (SelectedBlock != null)
+        {
+            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+                
+            // Center of the block
+            Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+
+            // Offset by half a block in the direction of the normal
+            Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
+                
+            RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
         }
     }
 }

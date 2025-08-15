@@ -3,6 +3,7 @@ using DIBBLES.Systems;
 using System.Numerics;
 using System.Collections.Generic;
 using DIBBLES.Effects;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Scenes;
@@ -12,7 +13,7 @@ public class VoxelTerrainScene : Scene
     private TerrainGeneration terrainGen = new TerrainGeneration();
     
     public static Player Player = new Player();
-    //private Freecam freecam = new Freecam();
+    //public static Freecam Freecam = new Freecam();
     
     private FogEffect fogEffect = new FogEffect();
 
@@ -24,7 +25,7 @@ public class VoxelTerrainScene : Scene
         Raylib.DisableCursor();
         
         Player.Start();
-        //freecam.Start();
+        //Freecam.Start();
         
         // Initial terrain generation
         terrainGen.Start();
@@ -38,7 +39,7 @@ public class VoxelTerrainScene : Scene
     public override void Update()
     {
         Player.Update();
-        //freecam.Update();
+        //Freecam.Update();
         
         terrainGen.Update(Player);
         TerrainGeneration.Gameplay.Update(Player.Camera);
@@ -71,10 +72,13 @@ public class VoxelTerrainScene : Scene
         Raylib.BeginMode3D(Player.Camera);
         
         terrainGen.Draw();
+        
         Player.Draw();
-        //freecam.Draw();
+        //Freecam.Draw();
         
         Raylib.EndMode3D();
+        
+        Player.DrawUI();
         
         //fogEffect.DrawEnd();
         

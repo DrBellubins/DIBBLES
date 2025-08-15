@@ -207,7 +207,7 @@ public class Block
             var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
             
             // Export atlas for debugging
-            Raylib.ExportImage(atlasImage, "atlas_debug.png");
+            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
             
             Raylib.GenTextureMipmaps(ref atlasTexture);
             Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);

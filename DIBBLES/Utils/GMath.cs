@@ -87,6 +87,33 @@ public static class GMath
         return input * input * (3f - 2f * input);
     }
 
+    public static float Repeat(float value, float min, float max)
+    {
+        if (value < min)
+            value = max;
+        else
+        {
+            if (value > max)
+                value = min;
+        }
+
+        return value;
+    }
+
+    public static int Repeat(int value, int min, int max)
+    {
+        if (value < min)
+            value = max;
+        else
+        {
+            if (value > max)
+                value = min;
+        }
+
+        return value;
+    }
+
+    
     public static bool InRange(float input, float min, float max)
     {
         return input >= min && input <= max;

@@ -5,7 +5,7 @@ using DIBBLES.Utils;
 
 using static DIBBLES.Systems.TerrainGeneration;
 
-namespace DIBBLES;
+namespace DIBBLES.Gameplay.Player;
 
 // TODO: Crouching freezes player
 public class Player
@@ -23,15 +23,20 @@ public class Player
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
 
+    // Gameplay
+    public int Health = 100;
+    public Hotbar hotbar = new Hotbar();
+    
+    private readonly Vector3 spawnPosition = new Vector3(40f, 55f, -20f); // Temporary
+    
+    // Systems
     public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
-    public Vector3 CameraDirection = Vector3.Zero;
     
     public Camera3D Camera;
+    public Vector3 CameraDirection = Vector3.Zero;
 
     public bool ShouldUpdate = false;
-    
-    public readonly Vector3 SpawnPosition = new Vector3(48f, 70f, 20f);
     
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
@@ -57,6 +62,8 @@ public class Player
         Camera.FovY = 90.0f;
         Camera.Projection = CameraProjection.Perspective;
 
+        hotbar.Start(false);
+        
         respawn();
         
         Raylib.DisableCursor();
@@ -69,6 +76,8 @@ public class Player
 
         if (Position.Y < -100f)
             respawn();
+
+        hotbar.Update();
         
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
@@ -101,9 +110,8 @@ public class Player
 
         // TODO: Add justJumped and justLanded
         
-        // --- Gravity & Vertical Movement ---
+        // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
-        //Position.Y += Velocity.Y * Time.DeltaTime;
 
         // --- Ground Collision ---
         var playerBox = GetPlayerBox(Position, currentHeight);
@@ -205,9 +213,6 @@ public class Player
         Velocity.X = velXZ.X;
         Velocity.Z = velXZ.Z;
 
-        //Position.X += Velocity.X * Time.DeltaTime;
-        //Position.Z += Velocity.Z * Time.DeltaTime;
-
         // --- Crouching ---
         var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
         var heightLerpSpeed = 20f;
@@ -227,8 +232,13 @@ public class Player
 
     public void Draw()
     {
-        Debug.Draw2DText($"Position: {Position}", Color.White);
         //Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
+    }
+
+    public void DrawUI()
+    {
+        hotbar.Draw();
+        Debug.Draw2DText($"Position: {Position}", Color.White);
     }
     
     public void CheckCollisions(BoundingBox playerBox)
@@ -282,7 +292,7 @@ public class Player
     
     private void respawn()
     {
-        Position = SpawnPosition;
+        Position = spawnPosition;
         Velocity = Vector3.Zero;
     }
     
