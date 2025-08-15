@@ -60,8 +60,6 @@ public class BlockInfo
     public bool IsTransparent; // True if light can pass through
     public byte LightEmission; // Light level emitted by this block (0-15)
 
-    public BlockInfo() {}
-
     public BlockInfo(BlockType type, int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
         Type = type;

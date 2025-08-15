@@ -72,6 +72,12 @@ public class WorldSave
                             {
                                 var currentBlock = chunk.Value.Blocks[x, y, z];
                                 
+                                if (!Enum.IsDefined(typeof(BlockType), (int)currentBlock.Info.Type))
+                                {
+                                    Console.WriteLine($"Invalid block type in save: {(int)currentBlock.Info.Type} at {currentBlock.Position}");
+                                    continue;
+                                }
+                                
                                 // TODO: Shouldn't write air blocks
                                 writer.Write((int)currentBlock.Info.Type);
                                     

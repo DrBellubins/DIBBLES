@@ -22,7 +22,7 @@ public class VoxelTerrainScene : Scene
         // Must be set for proper depth buffers
         Rlgl.SetClipPlanes(0.01f, 1000f);
         
-        Raylib.DisableCursor();
+        //Raylib.DisableCursor();
         
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
@@ -45,7 +45,7 @@ public class VoxelTerrainScene : Scene
         terrainGen.Update(Player);
         TerrainGeneration.Gameplay.Update(Player.Camera);
 
-        if (Raylib.IsKeyDown(KeyboardKey.L))
+        if (Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
         
         Debug.Update(Player.Camera); // Must run after everything
