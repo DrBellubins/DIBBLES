@@ -10,7 +10,7 @@ namespace DIBBLES.Systems;
 public class TerrainMesh
 {
     public const bool Fullbright = false;
-    public const bool SmoothLighting = true;
+    public const bool SmoothLighting = false;
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
     
@@ -86,10 +86,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x, y, z - 1);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -130,10 +132,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x, y, z + 1);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -174,10 +178,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x - 1, y, z);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -218,10 +224,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x + 1, y, z);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -262,10 +270,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x, y - 1, z);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -299,11 +309,6 @@ public class TerrainMesh
                 
                 if (SmoothLighting)
                 {
-                    //l0 = getVertexLight(chunk, x,   y+1, z   );
-                    //l1 = getVertexLight(chunk, x,   y+1, z+1 );
-                    //l2 = getVertexLight(chunk, x+1, y+1, z+1 );
-                    //l3 = getVertexLight(chunk, x+1, y+1, z   );
-                    
                     l0 = getVertexLightTopFace(chunk, x,   y, z   );  
                     l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
                     l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
@@ -311,10 +316,12 @@ public class TerrainMesh
                 }
                 else
                 {
-                    l0 = chunk.Blocks[x, y, z].LightLevel;
-                    l1 = chunk.Blocks[x, y, z].LightLevel;
-                    l2 = chunk.Blocks[x, y, z].LightLevel;
-                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                    var neighborLight = neighborLightLevel(chunk, x, y + 1, z);
+                    
+                    l0 = neighborLight;
+                    l1 = neighborLight;
+                    l2 = neighborLight;
+                    l3 = neighborLight;
                 }
                 
                 if (Fullbright)
@@ -450,6 +457,7 @@ public class TerrainMesh
         return total / (count * 15f); // Normalize to [0,1]
     }
 
+    // TODO: Bottom blocks do not run this check
     private float getVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
     {
         // For each vertex, sample only the 4 blocks directly above it
