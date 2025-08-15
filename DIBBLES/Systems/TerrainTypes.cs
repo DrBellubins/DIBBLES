@@ -14,6 +14,7 @@ public enum BlockType
     Stone,
     Sand,
     Snow,
+    Wood,
     Water,
     Wisp
 }
@@ -101,12 +102,15 @@ public class Block
     public static void InitializeBlockPrefabs()
     {
         // Initialize block prefabs with transparency and light emission
-        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0));
         Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Wood, new BlockInfo(BlockType.Wood, 3, 0.0f, 64, false, 0));
+        
+        // Special blocks
+        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0));
         Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
         Prefabs.Add(BlockType.Wisp, new BlockInfo(BlockType.Wisp, 10, 0.5f, 64, true, 15));
 
@@ -115,7 +119,7 @@ public class Block
 
         foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
-            // Add textures that shouldn't be in the atlas here.
+            // Ignore textures that shouldn't be in the atlas here.
             if (blockType != BlockType.Air && blockType != BlockType.Water)
                 atlasBlockTypes.Add(blockType);
         }

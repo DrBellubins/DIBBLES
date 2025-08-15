@@ -36,6 +36,8 @@ public class Player
     public Camera3D Camera;
     public Vector3 CameraDirection = Vector3.Zero;
 
+    public BoundingBox CollisionBox = new BoundingBox();
+    
     public bool ShouldUpdate = false;
     
     private float currentSpeed = WalkSpeed;
@@ -114,7 +116,6 @@ public class Player
         Velocity.Y -= Gravity * Time.DeltaTime;
 
         // --- Ground Collision ---
-        var playerBox = GetPlayerBox(Position, currentHeight);
         var wasGrounded = isGrounded; // Track previous grounded state for jump timing
 
         // Reset one-frame flags at the start of each frame
@@ -122,7 +123,9 @@ public class Player
         justLanded = false;
         
         // Collision detection
-        CheckCollisions(playerBox);
+        CheckCollisions();
+        
+        CollisionBox = GetPlayerBox(Position, currentHeight); // Needs to be set after collision detection
 
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
@@ -260,7 +263,7 @@ public class Player
         CameraDirection = direction;
     }
     
-    public void CheckCollisions(BoundingBox playerBox)
+    public void CheckCollisions()
     {
         var moveDelta = Velocity * Time.DeltaTime;
         var newPosition = Position;
