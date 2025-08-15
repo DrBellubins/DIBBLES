@@ -93,10 +93,7 @@ public class Hotbar
 
         hotbarSelectionRect.X = hotbarRect.X + hotBarSelectionPosX;
         hotbarSelectionRect.Y = hotbarRect.Y;
-    }
-
-    public void SaveInventoryData()
-    {
+        
         WorldSave.Data.HotbarPosition = hotBarSelectionIndex;
     }
 

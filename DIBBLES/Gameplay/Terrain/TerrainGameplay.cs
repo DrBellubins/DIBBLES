@@ -194,9 +194,8 @@ public class TerrainGameplay
             TMesh.RemeshNeighborsIfBlockOnEdge(chunk, blockPos);
         
             // Add to modified chunks for saving
-            WorldSave.Data.ModifiedChunks.Add(chunk);
-            //if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
-            //    WorldSave.Data.ModifiedChunks.Add(chunk);
+            if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
+                WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
 
             // Play break sound
             var sound = Block.Sounds[SelectedBlock.Info.Type].RND;
@@ -260,9 +259,8 @@ public class TerrainGameplay
         TMesh.RemeshNeighborsIfBlockOnEdge(chunk, newBlockPos);
         
         // Add to modified chunks for saving
-        WorldSave.Data.ModifiedChunks.Add(chunk);
-        //if (WorldSave.Data.ModifiedChunks.All(c => c.Position != chunk.Position))
-        //    WorldSave.Data.ModifiedChunks.Add(chunk);
+        if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
+            WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
         
         // Play place sound
         var sound = Block.Sounds[blockType].RND;

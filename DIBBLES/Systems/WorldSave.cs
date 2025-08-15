@@ -12,7 +12,7 @@ public struct SaveData
     public Vector3 PlayerPosition;
     public int HotbarPosition;
 
-    public List<Chunk> ModifiedChunks = new List<Chunk>();
+    public Dictionary<Vector3Int, Chunk> ModifiedChunks = new ();
 
     public SaveData()
     {
@@ -28,6 +28,8 @@ public class WorldSave
     // Public API
     public static string SaveDirectory = Path.Combine(AppContext.BaseDirectory, "Saves");
     public static SaveData Data = new SaveData();
+    
+    public static bool Exists = false;
 
     public static void Initialize()
     {
@@ -54,13 +56,13 @@ public class WorldSave
                 // Chunk data
                 writer.Write(Data.ModifiedChunks.Count);
 
-                for (int i = 0; i < Data.ModifiedChunks.Count; i++)
+                foreach (var chunk in Data.ModifiedChunks)
                 {
-                    writer.Write(Data.ModifiedChunks[i].Info.Generated);
-                    writer.Write(Data.ModifiedChunks[i].Info.Modified);
-                    writer.Write(Data.ModifiedChunks[i].Position.X);
-                    writer.Write(Data.ModifiedChunks[i].Position.Y);
-                    writer.Write(Data.ModifiedChunks[i].Position.Z);
+                    writer.Write(chunk.Value.Info.Generated);
+                    writer.Write(chunk.Value.Info.Modified);
+                    writer.Write(chunk.Value.Position.X);
+                    writer.Write(chunk.Value.Position.Y);
+                    writer.Write(chunk.Value.Position.Z);
 
                     for (int x = 0; x < ChunkSize; x++)
                     {
@@ -68,7 +70,7 @@ public class WorldSave
                         {
                             for (int z = 0; z < ChunkSize; z++)
                             {
-                                var currentBlock = Data.ModifiedChunks[i].Blocks[x, y, z];
+                                var currentBlock = chunk.Value.Blocks[x, y, z];
                                     
                                 writer.Write((int)currentBlock.Info.Type);
                                     
@@ -91,6 +93,8 @@ public class WorldSave
 
         if (File.Exists(fileName))
         {
+            Exists = true;
+            
             try
             {
                 using (var stream = File.Open(fileName, FileMode.Open))
@@ -136,7 +140,7 @@ public class WorldSave
                                 }
                             }
 
-                            Data.ModifiedChunks.Add(currentChunk);
+                            Data.ModifiedChunks.Add(currentChunk.Position, currentChunk);
                         }
 
                         Console.WriteLine($"Loaded world '{Data.WorldName}'");

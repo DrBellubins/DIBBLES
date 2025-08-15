@@ -126,9 +126,20 @@ public class TerrainGeneration
                 {
                     generatingChunks.TryAdd(pos, true);
                     
-                    var chunk = new Chunk(pos);
-                    GenerateChunkData(chunk);
-                    Lighting.Generate(chunk);
+                    Chunk chunk;
+
+                    // Check if chunk is in WorldSave.ModifiedChunks
+                    if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                    {
+                        chunk = savedChunk;
+                        Lighting.Generate(chunk);
+                    }
+                    else
+                    {
+                        chunk = new Chunk(pos);
+                        GenerateChunkData(chunk);
+                        Lighting.Generate(chunk);
+                    }
                     
                     // Generate mesh data in this thread (not Raylib mesh!)
                     var meshData = TMesh.GenerateMeshData(chunk);
@@ -313,9 +324,11 @@ public class TerrainGeneration
                     debugColor = Color.Red;
                 else
                     debugColor = Color.Blue;
-            
-                Raylib.DrawCubeWires(chunk.Position.ToVector3() + new Vector3(ChunkSize / 2f, ChunkSize / 2f, ChunkSize / 2f),
-                    ChunkSize, ChunkSize, ChunkSize, debugColor);
+
+                var padding = 0.01f;
+                
+                Raylib.DrawCubeWires(chunk.Position.ToVector3() + new Vector3(ChunkSize / 2f + padding, ChunkSize / 2f + padding, ChunkSize / 2f + padding),
+                    ChunkSize - padding, ChunkSize - padding, ChunkSize - padding, debugColor);
             }
         }
         

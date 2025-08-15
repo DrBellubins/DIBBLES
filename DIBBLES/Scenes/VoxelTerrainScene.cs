@@ -44,10 +44,6 @@ public class VoxelTerrainScene : Scene
         
         terrainGen.Update(Player);
         TerrainGeneration.Gameplay.Update(Player.Camera);
-        
-        // Temporary world saving/loading
-        if (Raylib.IsKeyDown(KeyboardKey.O))
-            WorldSave.LoadWorldData("test");
 
         if (Raylib.IsKeyDown(KeyboardKey.L))
             WorldSave.SaveWorldData("test");

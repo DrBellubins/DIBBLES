@@ -64,7 +64,7 @@ public class Player
 
         hotbar.Start(false);
         
-        respawn();
+        spawn();
         
         Raylib.DisableCursor();
     }
@@ -235,6 +235,8 @@ public class Player
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
+
+        WorldSave.Data.PlayerPosition = Position;
     }
 
     public void Draw()
@@ -295,6 +297,19 @@ public class Player
         }
 
         Position = newPosition;
+    }
+
+    private void spawn()
+    {
+        if (WorldSave.Exists)
+        {
+            Console.WriteLine("WORLD LOADED");
+            Position = WorldSave.Data.PlayerPosition;
+        }
+        else
+            Position = spawnPosition;
+        
+        Velocity = Vector3.Zero;
     }
     
     private void respawn()
