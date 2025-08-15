@@ -228,6 +228,13 @@ public class Player
         }
         
         jumpLandPlayer.Update();
+        
+        // --- Block breaking and placing ---
+        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            TerrainGeneration.Gameplay.BreakBlock();
+        
+        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
+            TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
     }
 
     public void Draw()

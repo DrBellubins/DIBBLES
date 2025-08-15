@@ -51,13 +51,6 @@ public class VoxelTerrainScene : Scene
         if (Raylib.IsKeyDown(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
         
-        // --- Block breaking and placing ---
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-            TerrainGeneration.Gameplay.BreakBlock();
-        
-        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            TerrainGeneration.Gameplay.PlaceBlock(BlockType.Snow);
-        
         Debug.Update(Player.Camera); // Must run after everything
     }
 
@@ -82,10 +75,12 @@ public class VoxelTerrainScene : Scene
         
         //fogEffect.DrawEnd();
         
-        Debug.Draw2D();
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
+
+        Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
         
-        Raylib.DrawFPS(10, 10);
+        Debug.Draw2D();
+        
         Raylib.EndDrawing();
     }
 }

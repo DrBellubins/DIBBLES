@@ -26,8 +26,8 @@ public class Debug
         
         foreach (var text in textBuffer2d)
         {
-            index += 24;
             Raylib.DrawTextEx(Engine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
+            index += 24;
         }
     }
     

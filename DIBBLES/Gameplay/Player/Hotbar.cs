@@ -116,7 +116,7 @@ public class Hotbar
         Raylib.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
 
         // Hotbar items
-        /*for (int i = 0; i < hotbarSlots.Length; i++)
+        for (int i = 0; i < hotbarSlots.Length; i++)
         {
             if (hotbarSlots[i].StackAmount > 0)
             {
@@ -130,13 +130,6 @@ public class Hotbar
 
                 Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
-        }*/
-
-        int index = 0;
-        foreach (var texture in Block.Textures.Values)
-        {
-            Raylib.DrawTexture(texture, index * texture.Width, 0, Color.White);
-            index++;
         }
     }
 

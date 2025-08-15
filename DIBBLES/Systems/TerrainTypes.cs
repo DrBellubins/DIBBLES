@@ -220,8 +220,8 @@ public class Block
             // Unload temporary textures
             foreach (var texture in tempTextures)
             {
-                if (texture.Id != 0)
-                    Raylib.UnloadTexture(texture);
+                //if (texture.Id != 0)
+                //    Raylib.UnloadTexture(texture);
             }
         }
     }
