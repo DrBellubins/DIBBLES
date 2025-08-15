@@ -10,6 +10,7 @@ public struct SaveData
     public int Seed;
     public string? WorldName;
     public Vector3 PlayerPosition;
+    public Vector3 CameraDirection;
     public int HotbarPosition;
 
     public Dictionary<Vector3Int, Chunk> ModifiedChunks = new ();
@@ -19,6 +20,7 @@ public struct SaveData
         Seed = 0;
         WorldName = "";
         PlayerPosition = Vector3.Zero;
+        CameraDirection = Vector3.Zero;
         HotbarPosition = 0;
     }
 }
@@ -46,11 +48,15 @@ public class WorldSave
                 // World data
                 writer.Write(Data.Seed);
                 writer.Write(worldName);
-                    
+                
                 writer.Write(Data.PlayerPosition.X);
                 writer.Write(Data.PlayerPosition.Y);
                 writer.Write(Data.PlayerPosition.Z);
-                    
+                
+                writer.Write(Data.CameraDirection.X);
+                writer.Write(Data.CameraDirection.Y);
+                writer.Write(Data.CameraDirection.Z);
+                
                 writer.Write(Data.HotbarPosition);
 
                 // Chunk data
@@ -71,16 +77,17 @@ public class WorldSave
                             for (int z = 0; z < ChunkSize; z++)
                             {
                                 var currentBlock = chunk.Value.Blocks[x, y, z];
+                                var typeInt = (int)currentBlock.Info.Type;
                                 
-                                if (!Enum.IsDefined(typeof(BlockType), (int)currentBlock.Info.Type))
+                                if (!Enum.IsDefined(typeof(BlockType), typeInt))
                                 {
-                                    Console.WriteLine($"Invalid block type in save: {(int)currentBlock.Info.Type} at {currentBlock.Position}");
-                                    continue;
+                                    Console.WriteLine($"Invalid block type in save: {typeInt} at {currentBlock.Position}");
+                                    typeInt = (int)BlockType.Air; // fallback to Air
                                 }
                                 
                                 // TODO: Shouldn't write air blocks
-                                writer.Write((int)currentBlock.Info.Type);
-                                    
+                                writer.Write(typeInt);
+                                
                                 writer.Write(currentBlock.Position.X);
                                 writer.Write(currentBlock.Position.Y);
                                 writer.Write(currentBlock.Position.Z);
@@ -110,7 +117,11 @@ public class WorldSave
                     Data.Seed = reader.ReadInt32();
                     Data.WorldName = reader.ReadString();
                     Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                    Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                     Data.HotbarPosition = reader.ReadInt32();
+                    
+                    Console.WriteLine("BIG");
+                    Console.WriteLine(Data.CameraDirection);
 
                     // Chunk data
                     Data.ModifiedChunks.Clear(); // THIS PREVENTS CHUNK DUPING!
@@ -133,18 +144,15 @@ public class WorldSave
                                 for (int z = 0; z < ChunkSize; z++)
                                 {
                                     var type = (BlockType)reader.ReadInt32();
-                                    
-                                    if (type != BlockType.Air)
+                                    var info = Block.Prefabs[type];
+                                        
+                                    var currentBlock = new Block
                                     {
-                                        var info = Block.Prefabs[type];
-                                        var currentBlock = new Block();
+                                        Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
+                                        Info = info
+                                    };
 
-                                        currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
-
-                                        currentBlock.Info = info;
-
-                                        currentChunk.Blocks[x, y, z] = currentBlock;
-                                    }
+                                    currentChunk.Blocks[x, y, z] = currentBlock;
                                 }
                             }
                         }

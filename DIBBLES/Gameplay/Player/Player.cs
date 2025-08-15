@@ -66,7 +66,7 @@ public class Player
         
         spawn();
         
-        //Raylib.DisableCursor();
+        Raylib.DisableCursor();
     }
 
     public void Update()
@@ -90,8 +90,8 @@ public class Player
         var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
                                 mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
         
-        //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left))
-        //    Raylib.DisableCursor();
+        if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left))
+            Raylib.DisableCursor();
         
         if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
         if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
@@ -237,6 +237,7 @@ public class Player
             TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
 
         WorldSave.Data.PlayerPosition = Position;
+        WorldSave.Data.CameraDirection = CameraDirection;
     }
 
     public void Draw()
@@ -303,8 +304,8 @@ public class Player
     {
         if (WorldSave.Exists)
         {
-            Console.WriteLine("WORLD LOADED");
             Position = WorldSave.Data.PlayerPosition;
+            CameraDirection = WorldSave.Data.CameraDirection;
         }
         else
             Position = spawnPosition;

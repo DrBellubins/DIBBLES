@@ -41,6 +41,9 @@ public class TerrainGeneration
     {
         Block.InitializeBlockPrefabs();
         
+        WorldSave.Initialize();
+        WorldSave.LoadWorldData("test");
+        
         //if (WorldSave.Data.Seed != 0)
         //    Seed = WorldSave.Data.Seed;
         //else
@@ -120,10 +123,10 @@ public class TerrainGeneration
         foreach (var pos in chunksToGenerate)
         {
             // Spawn a background task for chunk generation
-            //Task.Run(() =>
-            //{
-            //    try
-            //    {
+            Task.Run(() =>
+            {
+                try
+                {
                     generatingChunks.TryAdd(pos, true);
                     
                     Chunk chunk;
@@ -148,13 +151,13 @@ public class TerrainGeneration
                     meshUploadQueue.Enqueue((chunk, meshData));
 
                     generatingChunks.TryRemove(pos, out _);
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        Console.WriteLine(e);
-            //        throw;
-            //    }
-            //});
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            });
         }
     }
     

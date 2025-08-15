@@ -22,17 +22,12 @@ public class VoxelTerrainScene : Scene
         // Must be set for proper depth buffers
         Rlgl.SetClipPlanes(0.01f, 1000f);
         
-        //Raylib.DisableCursor();
-        
-        WorldSave.Initialize();
-        WorldSave.LoadWorldData("test");
-        
-        Player.Start();
-        //Freecam.Start();
-        
         // Initial terrain generation
         terrainGen.Start();
         terrainGen.Update(Player);
+        
+        Player.Start(); // Must be started after terrain
+        //Freecam.Start();
         
         fogEffect.Start();
     }
