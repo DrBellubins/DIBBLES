@@ -34,6 +34,7 @@ public class VoxelTerrainScene : Scene
         fogEffect.Start();
         
         WorldSave.Initialize();
+        WorldSave.LoadWorldData("test");
     }
 
     public override void Update()

@@ -72,27 +72,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y, z - 1))
             {
                 // Vertices: 0,3,2,1
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLight(chunk, x,   y,   z  );
-                    l1 = getVertexLight(chunk, x,   y+1, z  );
-                    l2 = getVertexLight(chunk, x+1, y+1, z  );
-                    l3 = getVertexLight(chunk, x+1, y,   z  );
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x, y, z - 1);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLight(chunk, x,   y,   z  );
+                float l1 = getVertexLight(chunk, x,   y+1, z  );
+                float l2 = getVertexLight(chunk, x+1, y+1, z  );
+                float l3 = getVertexLight(chunk, x+1, y,   z  );
                 
                 if (Fullbright)
                 {
@@ -118,27 +101,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y, z + 1))
             {
                 // Vertices: 5,6,7,4
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLight(chunk, x+1, y,   z+1 );
-                    l1 = getVertexLight(chunk, x+1, y+1, z+1 );
-                    l2 = getVertexLight(chunk, x,   y+1, z+1 );
-                    l3 = getVertexLight(chunk, x,   y,   z+1 );
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x, y, z + 1);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLight(chunk, x+1, y,   z+1 );
+                float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
+                float l2 = getVertexLight(chunk, x,   y+1, z+1 );
+                float l3 = getVertexLight(chunk, x,   y,   z+1 );
                 
                 if (Fullbright)
                 {
@@ -164,27 +130,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x - 1, y, z))
             {
                 // Vertices: 4,7,3,0
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-                
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLight(chunk, x,   y,   z+1 );
-                    l1 = getVertexLight(chunk, x,   y+1, z+1 );
-                    l2 = getVertexLight(chunk, x,   y+1, z   );
-                    l3 = getVertexLight(chunk, x,   y,   z   );
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x - 1, y, z);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                float l1 = getVertexLight(chunk, x,   y+1, z+1 );
+                float l2 = getVertexLight(chunk, x,   y+1, z   );
+                float l3 = getVertexLight(chunk, x,   y,   z   );
                 
                 if (Fullbright)
                 {
@@ -210,27 +159,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x + 1, y, z))
             {
                 // Vertices: 1,2,6,5
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-                
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLight(chunk, x+1, y,   z   );
-                    l1 = getVertexLight(chunk, x+1, y+1, z   );
-                    l2 = getVertexLight(chunk, x+1, y+1, z+1 );
-                    l3 = getVertexLight(chunk, x+1, y,   z+1 );
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x + 1, y, z);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLight(chunk, x+1, y,   z   );
+                float l1 = getVertexLight(chunk, x+1, y+1, z   );
+                float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
+                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
                 
                 if (Fullbright)
                 {
@@ -256,27 +188,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y - 1, z))
             {
                 // Vertices: 4,0,1,5
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-                
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLight(chunk, x,   y,   z+1 );
-                    l1 = getVertexLight(chunk, x,   y,   z   );
-                    l2 = getVertexLight(chunk, x+1, y,   z   );
-                    l3 = getVertexLight(chunk, x+1, y,   z+1 );
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x, y - 1, z);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                float l1 = getVertexLight(chunk, x,   y,   z   );
+                float l2 = getVertexLight(chunk, x+1, y,   z   );
+                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
                 
                 if (Fullbright)
                 {
@@ -302,27 +217,10 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y + 1, z))
             {
                 // Vertices: 3,7,6,2
-                float l0;
-                float l1;
-                float l2;
-                float l3;
-                
-                if (SmoothLighting)
-                {
-                    l0 = getVertexLightTopFace(chunk, x,   y, z   );  
-                    l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
-                    l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
-                    l3 = getVertexLightTopFace(chunk, x+1, y, z   );  
-                }
-                else
-                {
-                    var neighborLight = neighborLightLevel(chunk, x, y + 1, z);
-                    
-                    l0 = neighborLight;
-                    l1 = neighborLight;
-                    l2 = neighborLight;
-                    l3 = neighborLight;
-                }
+                float l0 = getVertexLightTopFace(chunk, x,   y, z   );  
+                float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
+                float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
+                float l3 = getVertexLightTopFace(chunk, x+1, y, z   );  
                 
                 if (Fullbright)
                 {
@@ -560,6 +458,30 @@ public class TerrainMesh
             
             RecentlyRemeshedNeighbors.Add(neighborPos);
         }
+    }
+    
+    public byte averageNeighborLightLevel(Chunk chunk, int x, int y, int z)
+    {
+        int[] dx = { -1, 1, 0, 0, 0, 0 };
+        int[] dy = { 0, 0, -1, 1, 0, 0 };
+        int[] dz = { 0, 0, 0, 0, -1, 1 };
+
+        int totalLight = 0;
+        int count = 0;
+
+        for (int i = 0; i < 6; i++)
+        {
+            int nx = x + dx[i];
+            int ny = y + dy[i];
+            int nz = z + dz[i];
+            byte light = neighborLightLevel(chunk, nx, ny, nz);
+            totalLight += light;
+            count++;
+        }
+
+        // Clamp and cast to byte
+        int averaged = count > 0 ? (totalLight / count) : 0;
+        return (byte)Math.Clamp(averaged, 0, 15);
     }
     
     private byte neighborLightLevel(Chunk chunk, int nx, int ny, int nz)
