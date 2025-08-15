@@ -131,15 +131,13 @@ public class Hotbar
                 Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }*/
-        
-        Raylib.DrawTexture(Block.TextureAtlas, 0, 0, Color.White);
 
-        /*int index = 0;
+        int index = 0;
         foreach (var texture in Block.Textures.Values)
         {
             Raylib.DrawTexture(texture, index * texture.Width, 0, Color.White);
             index++;
-        }*/
+        }
     }
 
     public void Resize()
