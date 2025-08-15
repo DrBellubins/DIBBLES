@@ -10,6 +10,7 @@ namespace DIBBLES.Systems;
 public class TerrainMesh
 {
     public const bool Fullbright = false;
+    public const bool SmoothLighting = true;
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
     
@@ -71,10 +72,25 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y, z - 1))
             {
                 // Vertices: 0,3,2,1
-                float l0 = getVertexLight(chunk, x,   y,   z  );
-                float l1 = getVertexLight(chunk, x,   y+1, z  );
-                float l2 = getVertexLight(chunk, x+1, y+1, z  );
-                float l3 = getVertexLight(chunk, x+1, y,   z  );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
+
+                if (SmoothLighting)
+                {
+                    l0 = getVertexLight(chunk, x,   y,   z  );
+                    l1 = getVertexLight(chunk, x,   y+1, z  );
+                    l2 = getVertexLight(chunk, x+1, y+1, z  );
+                    l3 = getVertexLight(chunk, x+1, y,   z  );
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
                 
                 if (Fullbright)
                 {
@@ -100,11 +116,26 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y, z + 1))
             {
                 // Vertices: 5,6,7,4
-                float l0 = getVertexLight(chunk, x+1, y,   z+1 );
-                float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
-                float l2 = getVertexLight(chunk, x,   y+1, z+1 );
-                float l3 = getVertexLight(chunk, x,   y,   z+1 );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
 
+                if (SmoothLighting)
+                {
+                    l0 = getVertexLight(chunk, x+1, y,   z+1 );
+                    l1 = getVertexLight(chunk, x+1, y+1, z+1 );
+                    l2 = getVertexLight(chunk, x,   y+1, z+1 );
+                    l3 = getVertexLight(chunk, x,   y,   z+1 );
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
+                
                 if (Fullbright)
                 {
                     l0 = 1f;
@@ -129,10 +160,25 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x - 1, y, z))
             {
                 // Vertices: 4,7,3,0
-                float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                float l1 = getVertexLight(chunk, x,   y+1, z+1 );
-                float l2 = getVertexLight(chunk, x,   y+1, z   );
-                float l3 = getVertexLight(chunk, x,   y,   z   );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
+                
+                if (SmoothLighting)
+                {
+                    l0 = getVertexLight(chunk, x,   y,   z+1 );
+                    l1 = getVertexLight(chunk, x,   y+1, z+1 );
+                    l2 = getVertexLight(chunk, x,   y+1, z   );
+                    l3 = getVertexLight(chunk, x,   y,   z   );
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
                 
                 if (Fullbright)
                 {
@@ -158,10 +204,25 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x + 1, y, z))
             {
                 // Vertices: 1,2,6,5
-                float l0 = getVertexLight(chunk, x+1, y,   z   );
-                float l1 = getVertexLight(chunk, x+1, y+1, z   );
-                float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
-                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
+                
+                if (SmoothLighting)
+                {
+                    l0 = getVertexLight(chunk, x+1, y,   z   );
+                    l1 = getVertexLight(chunk, x+1, y+1, z   );
+                    l2 = getVertexLight(chunk, x+1, y+1, z+1 );
+                    l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
                 
                 if (Fullbright)
                 {
@@ -187,10 +248,25 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y - 1, z))
             {
                 // Vertices: 4,0,1,5
-                float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                float l1 = getVertexLight(chunk, x,   y,   z   );
-                float l2 = getVertexLight(chunk, x+1, y,   z   );
-                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
+                
+                if (SmoothLighting)
+                {
+                    l0 = getVertexLight(chunk, x,   y,   z+1 );
+                    l1 = getVertexLight(chunk, x,   y,   z   );
+                    l2 = getVertexLight(chunk, x+1, y,   z   );
+                    l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
                 
                 if (Fullbright)
                 {
@@ -216,10 +292,30 @@ public class TerrainMesh
             if (!isVoxelSolid(chunk, x, y + 1, z))
             {
                 // Vertices: 3,7,6,2
-                float l0 = getVertexLightTopFace(chunk, x,   y, z   );
-                float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
-                float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
-                float l3 = getVertexLightTopFace(chunk, x+1, y, z   );
+                float l0;
+                float l1;
+                float l2;
+                float l3;
+                
+                if (SmoothLighting)
+                {
+                    //l0 = getVertexLight(chunk, x,   y+1, z   );
+                    //l1 = getVertexLight(chunk, x,   y+1, z+1 );
+                    //l2 = getVertexLight(chunk, x+1, y+1, z+1 );
+                    //l3 = getVertexLight(chunk, x+1, y+1, z   );
+                    
+                    l0 = getVertexLightTopFace(chunk, x,   y, z   );  
+                    l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
+                    l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
+                    l3 = getVertexLightTopFace(chunk, x+1, y, z   );  
+                }
+                else
+                {
+                    l0 = chunk.Blocks[x, y, z].LightLevel;
+                    l1 = chunk.Blocks[x, y, z].LightLevel;
+                    l2 = chunk.Blocks[x, y, z].LightLevel;
+                    l3 = chunk.Blocks[x, y, z].LightLevel;
+                }
                 
                 if (Fullbright)
                 {
@@ -493,8 +589,9 @@ public class TerrainMesh
                 if (tx >= 0 && tx < ChunkSize && ty >= 0 && ty < ChunkSize && tz >= 0 && tz < ChunkSize)
                 {
                     var neighborBlock = neighborChunk.Blocks[tx, ty, tz];
+                    
                     if (neighborBlock != null)
-                        return neighborBlock.BlockLight;
+                        return neighborBlock.LightLevel;
                 }
             }
 
@@ -503,8 +600,9 @@ public class TerrainMesh
         else
         {
             var block = chunk.Blocks[nx, ny, nz];
+            
             if (block != null)
-                return block.BlockLight;
+                return block.LightLevel;
             return 0;
         }
     }

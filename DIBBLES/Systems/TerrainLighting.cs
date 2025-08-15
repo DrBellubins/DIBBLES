@@ -17,7 +17,7 @@ public class TerrainLighting
         for (int z = 0; z < ChunkSize; z++)
         {
             var block = chunk.Blocks[x, y, z];
-            block.BlockLight = block.Info.LightEmission;
+            block.LightLevel = block.Info.LightEmission;
         }
 
         // Step 2: Propagate block light using BFS
@@ -29,7 +29,8 @@ public class TerrainLighting
         for (int z = 0; z < ChunkSize; z++)
         {
             var block = chunk.Blocks[x, y, z];
-            if (block.BlockLight > 0)
+            
+            if (block.LightLevel > 0)
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
         }
 
@@ -37,7 +38,7 @@ public class TerrainLighting
         {
             var (curChunk, pos) = queue.Dequeue();
             var block = curChunk.Blocks[pos.X, pos.Y, pos.Z];
-            byte lightLevel = block.BlockLight;
+            byte lightLevel = block.LightLevel;
 
             // Check all 6 neighboring positions
             Vector3Int[] neighbors = {
@@ -81,9 +82,9 @@ public class TerrainLighting
                 {
                     byte newLight = (byte)(lightLevel - 1);
                     
-                    if (newLight > neighborBlock.BlockLight)
+                    if (newLight > neighborBlock.LightLevel)
                     {
-                        neighborBlock.BlockLight = newLight;
+                        neighborBlock.LightLevel = newLight;
                         
                         queue.Enqueue((neighborChunk, localPos));
                     }

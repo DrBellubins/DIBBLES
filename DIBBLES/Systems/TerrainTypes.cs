@@ -77,7 +77,7 @@ public class Block
 {
     public Vector3Int Position;
     public BlockInfo Info;
-    public byte BlockLight; // Block light level (0-15)
+    public byte LightLevel; // Block light level (0-15)
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();
@@ -86,21 +86,18 @@ public class Block
     public static Texture2D TextureAtlas; // Store the atlas
     public static Dictionary<BlockType, Rectangle> AtlasUVs = new Dictionary<BlockType, Rectangle>(); // Store UV mappings
     
-    // Helper property to get the effective light level (max of sky and block light)
-    public byte LightLevel => BlockLight;
-    
     public Block()
     {
         Position = Vector3Int.Zero;
         Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
-        BlockLight = 0;
+        LightLevel = 0;
     }
 
     public Block(Vector3Int position, BlockInfo info)
     {
         Position = position;
         Info = info;
-        BlockLight = info.LightEmission; // Set initial block light from emission
+        LightLevel = info.LightEmission; // Set initial block light from emission
     }
     
     public static void InitializeBlockPrefabs()
