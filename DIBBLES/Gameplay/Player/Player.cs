@@ -251,6 +251,15 @@ public class Player
         Debug.Draw2DText($"Position: {Position}", Color.White);
     }
     
+    public void SetCameraDirection(Vector3 direction)
+    {
+        direction = Vector3.Normalize(direction);
+
+        cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
+        cameraYaw = MathF.Atan2(direction.Z, direction.X) * (180.0f / MathF.PI);
+        CameraDirection = direction;
+    }
+    
     public void CheckCollisions(BoundingBox playerBox)
     {
         var moveDelta = Velocity * Time.DeltaTime;
@@ -305,7 +314,7 @@ public class Player
         if (WorldSave.Exists)
         {
             Position = WorldSave.Data.PlayerPosition;
-            CameraDirection = WorldSave.Data.CameraDirection;
+            SetCameraDirection(WorldSave.Data.CameraDirection);
         }
         else
             Position = spawnPosition;
