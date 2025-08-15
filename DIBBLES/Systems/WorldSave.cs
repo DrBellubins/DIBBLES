@@ -71,7 +71,8 @@ public class WorldSave
                             for (int z = 0; z < ChunkSize; z++)
                             {
                                 var currentBlock = chunk.Value.Blocks[x, y, z];
-                                    
+                                
+                                // TODO: Shouldn't write air blocks
                                 writer.Write((int)currentBlock.Info.Type);
                                     
                                 writer.Write(currentBlock.Position.X);
@@ -128,14 +129,24 @@ public class WorldSave
                                     for (int z = 0; z < ChunkSize; z++)
                                     {
                                         var type = (BlockType)reader.ReadInt32();
-                                        var info = Block.Prefabs[type];
-                                        var currentBlock = new Block();
 
-                                        currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
+                                        if ((int)type > Enum.GetValues(typeof(BlockType)).Length)
+                                        {
+                                            Console.WriteLine("TEST");
+                                            throw new Exception($"Invalid type {type}");
+                                        }
+                                        
+                                        if (type != BlockType.Air)
+                                        {
+                                            var info = Block.Prefabs[type];
+                                            var currentBlock = new Block();
 
-                                        currentBlock.Info = info;
+                                            currentBlock.Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
 
-                                        currentChunk.Blocks[x, y, z] = currentBlock;
+                                            currentBlock.Info = info;
+
+                                            currentChunk.Blocks[x, y, z] = currentBlock;
+                                        }
                                     }
                                 }
                             }

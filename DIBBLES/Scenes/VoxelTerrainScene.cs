@@ -24,6 +24,9 @@ public class VoxelTerrainScene : Scene
         
         Raylib.DisableCursor();
         
+        WorldSave.Initialize();
+        WorldSave.LoadWorldData("test");
+        
         Player.Start();
         //Freecam.Start();
         
@@ -32,9 +35,6 @@ public class VoxelTerrainScene : Scene
         terrainGen.Update(Player);
         
         fogEffect.Start();
-        
-        WorldSave.Initialize();
-        WorldSave.LoadWorldData("test");
     }
 
     public override void Update()
