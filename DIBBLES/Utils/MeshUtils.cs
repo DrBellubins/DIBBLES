@@ -19,7 +19,8 @@ public static class MeshUtils
         Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
 
         // Combine transformations: Translate -> Rotate -> Scale
-        Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
+        Matrix4x4 transformMat = scaleMat * rotationMat * translationMat;
+        //Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
 
         // Instead, use Raylib.DrawModelEx which has a matrix override in some bindings
         // If Raylib.DrawModelEx doesn't support a matrix, you can set the model's transform:
