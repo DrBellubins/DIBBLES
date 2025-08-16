@@ -252,9 +252,22 @@ public class Player
         {
             MeshUtils.SetModelTexture(handBlockModel, Block.Textures[hotbar.SelectedItem.Type]);
 
-            var handPos = Camera.Target + new Vector3(1f, 0f, 0f);
-            
-            Raylib.DrawModel(handBlockModel, handPos, 1f, Color.White);
+            // Calculate camera vectors
+            Vector3 camForward = Vector3.Normalize(Camera.Target - Camera.Position);
+            Vector3 camUp = Vector3.Normalize(Camera.Target - Camera.Position);
+            Vector3 camRight = Vector3.Normalize(Vector3.Cross(camForward, camUp));
+
+            // Adjust these distances for the best effect
+            float forwardDistance = 0.5f; // In front of camera
+            float rightDistance = 0.5f;   // To the right
+            float upDistance = -0.3f;     // Down a bit (optional)
+
+            Vector3 handPos = Camera.Position 
+                              + camForward * forwardDistance
+                              + camRight * rightDistance
+                              + camUp * upDistance;
+
+            Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
         }
     }
 

@@ -118,4 +118,20 @@ public static class GMath
     {
         return input >= min && input <= max;
     }
+    
+    public static void MatrixToAxisAngle(Matrix4x4 m, out Vector3 axis, out float angleDeg)
+    {
+        float angleRad = MathF.Acos((m.M11 + m.M22 + m.M33 - 1f) / 2f);
+        angleDeg = angleRad * (180f / MathF.PI);
+
+        axis = new Vector3(
+            m.M32 - m.M23,
+            m.M13 - m.M31,
+            m.M21 - m.M12
+        );
+        if (axis.LengthSquared() > 0.0001f)
+            axis = Vector3.Normalize(axis);
+        else
+            axis = Vector3.UnitY; // fallback axis
+    }
 }
