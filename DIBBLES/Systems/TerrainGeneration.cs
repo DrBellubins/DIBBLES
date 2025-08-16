@@ -165,7 +165,12 @@ public class TerrainGeneration
     
     public static void GenerateChunkData(Chunk chunk)
     {
-        var rng = new SeededRandom(Seed);
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
         var noise = new FastNoiseLite();
         noise.SetSeed(Seed);
         
