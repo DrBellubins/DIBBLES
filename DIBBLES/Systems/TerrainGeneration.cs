@@ -30,7 +30,8 @@ public class TerrainGeneration
     public static Vector3Int SelectedNormal;
     
     public static int Seed = 1337;
-    
+
+    private static SeededRandom sRand;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
@@ -44,11 +45,13 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Data.Seed != 0)
+        //if (WorldSave.Exists)
         //    Seed = WorldSave.Data.Seed;
         //else
         //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
 
+        sRand = new SeededRandom(Seed);
+        
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
 
@@ -178,13 +181,8 @@ public class TerrainGeneration
                     var worldX = chunk.Position.X + x;
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
-
-                    // Seeded RNG noise
-                    noise.SetNoiseType(FastNoiseLite.NoiseType.Value);
-                    noise.SetFrequency(0.2f);
-                    noise.SetFractalType(FastNoiseLite.FractalType.None);
                     
-                    var rngNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                    var rng = sRand.NextFloat();
                     
                     // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -218,7 +216,7 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        if (rngNoise > 0.95f)
+                        if (rng < 0.001f)
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
                             islandDepth = 0;

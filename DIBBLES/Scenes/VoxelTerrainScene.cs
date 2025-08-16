@@ -70,6 +70,7 @@ public class VoxelTerrainScene : Scene
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
+        Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
         
         Debug.Draw2D();
         
