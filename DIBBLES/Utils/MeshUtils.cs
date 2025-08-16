@@ -7,6 +7,29 @@ namespace DIBBLES.Utils;
 
 public static class MeshUtils
 {
+    public static void DrawModelEx(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
+    {
+        // Create translation matrix
+        Matrix4x4 translationMat = Matrix4x4.CreateTranslation(position);
+        
+        // Convert quaternion to rotation matrix
+        Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rotation);
+
+        // Create scaling matrix
+        Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
+
+        // Combine transformations: Translate -> Rotate -> Scale
+        Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
+
+        // Instead, use Raylib.DrawModelEx which has a matrix override in some bindings
+        // If Raylib.DrawModelEx doesn't support a matrix, you can set the model's transform:
+        model.Transform = transformMat;
+        Raylib.DrawModel(model, Vector3.Zero, 1.0f, tint);
+        
+        // After drawing, restore the transform if needed
+        model.Transform = Matrix4x4.Identity;
+    }
+    
     public static Model GenTexturedCube(Texture2D texture, Vector3 scale)
     {
         Mesh cubeMesh = Raylib.GenMeshCube(scale.X, scale.Y, scale.Z);
