@@ -52,7 +52,8 @@ public class Player
 
     private bool justJumped = false;
     private bool justLanded = false;
-    
+
+    private Model handBlockModel;
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
     
     public void Start()
@@ -65,6 +66,8 @@ public class Player
         Camera.Projection = CameraProjection.Perspective;
 
         hotbar.Start(false);
+        
+        handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt], Vector3.One);
         
         spawn();
         
@@ -236,7 +239,7 @@ public class Player
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             TerrainGeneration.Gameplay.BreakBlock();
         
-        if (Raylib.IsMouseButtonPressed(MouseButton.Right))
+        if (Raylib.IsMouseButtonPressed(MouseButton.Right) && hotbar.SelectedItem != null)
             TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
 
         WorldSave.Data.PlayerPosition = Position;
@@ -245,7 +248,14 @@ public class Player
 
     public void Draw()
     {
-        //Raylib.DrawSphereWires(Position, 10f, 8, 8, Color.Red);
+        if (hotbar.SelectedItem != null)
+        {
+            MeshUtils.SetModelTexture(handBlockModel, Block.Textures[hotbar.SelectedItem.Type]);
+
+            var handPos = Camera.Target + new Vector3(1f, 0f, 0f);
+            
+            Raylib.DrawModel(handBlockModel, handPos, 1f, Color.White);
+        }
     }
 
     public void DrawUI()

@@ -219,7 +219,6 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        // TODO: Chance doesn't gen on chunk borders (x+ dir 4 blocks from chunk border have no wisps)
                         if (rng.NextChance(0.1f)) // Wisps
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);

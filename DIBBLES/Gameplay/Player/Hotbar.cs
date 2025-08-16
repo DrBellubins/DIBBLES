@@ -5,7 +5,7 @@ using Raylib_cs;
 
 namespace DIBBLES.Gameplay.Player;
 
-public struct ItemSlot
+public class ItemSlot
 {
     public int StackAmount;
     public BlockType Type;
@@ -19,7 +19,7 @@ public struct ItemSlot
 
 public class Hotbar
 {
-    public ItemSlot SelectedItem;
+    public ItemSlot? SelectedItem;
 
     private ItemSlot[] hotbarSlots = new ItemSlot[9];
 
@@ -116,7 +116,7 @@ public class Hotbar
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
-            if (hotbarSlots[i].StackAmount > 0)
+            if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
             {
                 var xPos = hotbarRect.X + i * hotbarRect.Height;
                 var itemTexture = Block.Textures[hotbarSlots[i].Type];

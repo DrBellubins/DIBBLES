@@ -1,11 +1,32 @@
 using Raylib_cs;
 using System;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace DIBBLES.Utils;
 
 public static class MeshUtils
 {
+    public static Model GenTexturedCube(Texture2D texture, Vector3 scale)
+    {
+        Mesh cubeMesh = Raylib.GenMeshCube(scale.X, scale.Y, scale.Z);
+        Model cubeModel = Raylib.LoadModelFromMesh(cubeMesh);
+        
+        // Use the default material or create your own
+        Material material = Raylib.LoadMaterialDefault();
+        Raylib.SetMaterialTexture(ref material, MaterialMapIndex.Albedo, texture);
+
+        // Set the model's material
+        unsafe { cubeModel.Materials[0] = material; }
+        
+        return cubeModel;
+    }
+
+    public static void SetModelTexture(Model model, Texture2D texture)
+    {
+        unsafe{ Raylib.SetMaterialTexture(ref model.Materials[0], MaterialMapIndex.Albedo, texture); }
+    }
+    
     // Generates a plane mesh with configurable UV tiling
     public static unsafe Mesh GenMeshPlaneTiled(float width, float length, int resX, int resZ, float tileU, float tileV)
     {
