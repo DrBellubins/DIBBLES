@@ -72,7 +72,7 @@ public class Player
 
         hotbar.Start(false);
         
-        handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt], Vector3.One);
+        handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt]);
         
         spawn();
         

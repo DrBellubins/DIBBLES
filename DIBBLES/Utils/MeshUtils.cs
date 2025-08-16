@@ -31,9 +31,9 @@ public static class MeshUtils
         model.Transform = Matrix4x4.Identity;
     }
     
-    public static Model GenTexturedCube(Texture2D texture, Vector3 scale)
+    public static Model GenTexturedCube(Texture2D texture)
     {
-        Mesh cubeMesh = Raylib.GenMeshCube(scale.X, scale.Y, scale.Z);
+        Mesh cubeMesh = Raylib.GenMeshCube(1f, 1f, 1f);
         Model cubeModel = Raylib.LoadModelFromMesh(cubeMesh);
         
         // Use the default material or create your own
