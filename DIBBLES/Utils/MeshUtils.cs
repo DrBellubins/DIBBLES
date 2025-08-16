@@ -9,14 +9,14 @@ public static class MeshUtils
 {
     public static void DrawModelEx(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
     {
-        // Create translation matrix
-        Matrix4x4 translationMat = Matrix4x4.CreateTranslation(position);
+        // Create scaling matrix
+        Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
         
         // Convert quaternion to rotation matrix
         Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rotation);
-
-        // Create scaling matrix
-        Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
+        
+        // Create translation matrix
+        Matrix4x4 translationMat = Matrix4x4.CreateTranslation(position);
 
         // Combine transformations: Translate -> Rotate -> Scale
         Matrix4x4 transformMat = scaleMat * rotationMat * translationMat;
