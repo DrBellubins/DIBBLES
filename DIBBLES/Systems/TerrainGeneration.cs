@@ -17,7 +17,7 @@ public class TerrainGeneration
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = false;
+    public const bool DrawDebug = true;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
@@ -29,7 +29,7 @@ public class TerrainGeneration
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
     
-    public static int Seed = 1337;
+    public static int Seed = 997996781;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
@@ -102,6 +102,9 @@ public class TerrainGeneration
         };
         
         TMesh.RecentlyRemeshedNeighbors.Clear();
+
+        if (Raylib.IsKeyPressed(KeyboardKey.U))
+            Console.WriteLine($"Seed: {Seed}");
     }
     
     private void generateTerrainAsync(Vector3Int centerChunk)
@@ -181,7 +184,7 @@ public class TerrainGeneration
                     
                     // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                    noise.SetFrequency(0.02f);
+                    noise.SetFrequency(0.01f);
                     noise.SetFractalType(FastNoiseLite.FractalType.FBm);
                     noise.SetFractalOctaves(4);
                     noise.SetFractalLacunarity(2.0f);
@@ -211,6 +214,7 @@ public class TerrainGeneration
                     }
                     else
                     {
+                        // TODO: Chance doesn't gen on chunk borders (x+ dir 4 blocks from chunk border have no wisps)
                         if (rng.NextChance(0.1f)) // Wisps
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
@@ -335,6 +339,12 @@ public class TerrainGeneration
             {
                 var chunkCenter = pos + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
                 Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter.ToVector3(), Color.White);
+            }
+
+            if (SelectedBlock != null)
+            {
+                var pos = new Vector3(SelectedBlock.Position.X + 0.5f, SelectedBlock.Position.Y + 1.5f, SelectedBlock.Position.Z + 0.5f);
+                Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Color.White, 0.25f);
             }
         }
         

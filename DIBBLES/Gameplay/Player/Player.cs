@@ -399,6 +399,7 @@ public class Player
             position.Y + height * 0.5f,
             position.Z + 0.25f
         );
+        
         return new BoundingBox(min, max);
     }
 }

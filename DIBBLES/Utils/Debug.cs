@@ -36,7 +36,8 @@ public class Debug
         textBuffer2d.Add(text, color);
     }
     
-    public static void Draw3DText(string text, Vector3 position, Color color, int fontSize = 24)
+    // TODO: Strings too long get cut off
+    public static void Draw3DText(string text, Vector3 position, Color color, float scale = 1f)
     {
         // Create a unique key for the text and position
         var cacheKey = (text, position);
@@ -47,9 +48,9 @@ public class Debug
             unsafe
             {
                 // Measure text to get precise dimensions
-                var textSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), text, fontSize, 1);
-                var width = (int)textSize.X + fontSize; // Add padding
-                var height = (int)textSize.Y + fontSize;
+                var textSize = Raylib.MeasureTextEx(Raylib.GetFontDefault(), text, 24, 1);
+                var width = (int)textSize.X + 24; // Add padding
+                var height = (int)textSize.Y + 24;
                 
                 // Create a blank image with a transparent background
                 var textImg = Raylib.GenImageColor(width, height, new Color(0, 0, 0, 0));
@@ -60,7 +61,7 @@ public class Debug
                     var sbytePtr = (sbyte*)bytePtr;
                     
                     // Draw text using the custom font
-                    Raylib.ImageDrawTextEx(&textImg, Raylib.GetFontDefault(), sbytePtr, Vector2.Zero, fontSize, 1, color);
+                    Raylib.ImageDrawTextEx(&textImg, Raylib.GetFontDefault(), sbytePtr, Vector2.Zero, 24, 1, color);
                 }
 
                 // Load texture from image
@@ -73,8 +74,8 @@ public class Debug
                 Raylib.UnloadImage(textImg);
             }
         }
-
+        
         // Draw the billboard with the cached texture
-        Raylib.DrawBillboard(debugCamera, imgTexture, position, 1f, Color.White);
+        Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);
     }
 }
