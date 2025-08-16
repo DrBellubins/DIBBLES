@@ -34,17 +34,20 @@ public class Player
     public Vector3 Velocity = Vector3.Zero;
     
     public Camera3D Camera;
-    public Vector3 CameraDirection = Vector3.Zero;
 
     public BoundingBox CollisionBox = new BoundingBox();
+
+    public Vector3 CameraForward = Vector3.Zero;
+    public Vector3 CameraUp = Vector3.Zero;
+    public Vector3 CameraRight = Vector3.Zero;
     
     public bool ShouldUpdate = false;
     
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
-    private float cameraYaw = 0f;
-    private float cameraPitch = 0f;
+    
+    private Quaternion cameraRotation = Quaternion.Identity;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -134,39 +137,34 @@ public class Player
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
         
-        cameraYaw += mouseDeltaX;
-        cameraPitch -= mouseDeltaY;
-        cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
+        // Clamp pitch
+        float pitchLimit = MathF.PI / 2 - 0.01f;
+
+        // Convert to radians
+        float deltaYaw = GMath.ToRadians(mouseDeltaX);
+        float deltaPitch = GMath.ToRadians(mouseDeltaY);
+
+        // Create rotation quaternions
+        Quaternion yawRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -deltaYaw); // Negative because mouse is inverted
+        Quaternion pitchRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitX, deltaPitch);
+
+        // Apply rotations
+        cameraRotation = Quaternion.Normalize(yawRotation * cameraRotation);      // Yaw first
+        cameraRotation = Quaternion.Normalize(cameraRotation * pitchRotation);    // Then pitch
+        
+        //cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
 
         // Calculate camera direction
-        CameraDirection = new Vector3(
-            MathF.Cos(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch)),
-            MathF.Sin(GMath.ToRadians(cameraPitch)),
-            MathF.Sin(GMath.ToRadians(cameraYaw)) * MathF.Cos(GMath.ToRadians(cameraPitch))
-        );
+        CameraForward = Vector3.Transform(Vector3.UnitZ, cameraRotation); // Forward
+        CameraUp = Vector3.Transform(Vector3.UnitY, cameraRotation);
+        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
-        Camera.Target = Camera.Position + CameraDirection;
-        
-        // Camera-relative movement
-        Vector3 cameraForward = new Vector3(
-            MathF.Cos(GMath.ToRadians(cameraYaw)),
-            0.0f,
-            MathF.Sin(GMath.ToRadians(cameraYaw))
-        );
-        
-        cameraForward = Vector3.Normalize(cameraForward);
+        Camera.Target = Camera.Position + CameraForward;
+        Camera.Up = CameraUp;
 
-        Vector3 cameraRight = new Vector3(
-            MathF.Cos(GMath.ToRadians(cameraYaw + 90.0f)),
-            0.0f,
-            MathF.Sin(GMath.ToRadians(cameraYaw + 90.0f))
-        );
-        
-        cameraRight = Vector3.Normalize(cameraRight);
-
-        Vector3 wishDir = (cameraForward * inputDir.Z) + (cameraRight * inputDir.X);
+        Vector3 wishDir = (CameraForward * inputDir.Z) + (CameraRight * inputDir.X);
 
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
@@ -243,7 +241,7 @@ public class Player
             TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
 
         WorldSave.Data.PlayerPosition = Position;
-        WorldSave.Data.CameraDirection = CameraDirection;
+        WorldSave.Data.CameraDirection = CameraForward;
     }
 
     public void Draw()
@@ -279,10 +277,10 @@ public class Player
     public void SetCameraDirection(Vector3 direction)
     {
         direction = Vector3.Normalize(direction);
-
-        cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
-        cameraYaw = MathF.Atan2(direction.Z, direction.X) * (180.0f / MathF.PI);
-        CameraDirection = direction;
+        
+        // Calculate quaternion that rotates UnitZ to 'direction'
+        cameraRotation = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, Vector3.UnitY));
+        CameraForward = direction;
     }
     
     public void CheckCollisions()
