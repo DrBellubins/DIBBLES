@@ -9,6 +9,19 @@ public static class MeshUtils
 {
     public static void DrawModelEx(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
     {
+        Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
+        Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rotation);
+
+        Matrix4x4 transformMat = scaleMat * rotationMat;
+        transformMat.Translation = position;
+
+        model.Transform = transformMat;
+        Raylib.DrawModel(model, Vector3.Zero, 1.0f, tint);
+        model.Transform = Matrix4x4.Identity;
+    }
+    
+    /*public static void DrawModelEx(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
+    {
         // Create scaling matrix
         Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
         
@@ -18,8 +31,9 @@ public static class MeshUtils
         // Create translation matrix
         Matrix4x4 translationMat = Matrix4x4.CreateTranslation(position);
 
-        // Combine transformations: Translate -> Rotate -> Scale
-        Matrix4x4 transformMat = scaleMat * rotationMat * translationMat;
+        // Combine transformations: Scale -> Rotate -> Translate
+        Matrix4x4 transformMat = scaleMat * rotationMat;
+        transformMat.Translation = position;
         //Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
 
         // Instead, use Raylib.DrawModelEx which has a matrix override in some bindings
@@ -29,7 +43,7 @@ public static class MeshUtils
         
         // After drawing, restore the transform if needed
         model.Transform = Matrix4x4.Identity;
-    }
+    }*/
     
     public static Model GenTexturedCube(Texture2D texture)
     {
