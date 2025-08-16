@@ -211,7 +211,7 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        if (rng.NextFloat() < 0.001f) // Wisps
+                        if (rng.NextChance(0.1f)) // Wisps
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
                             islandDepth = 0;

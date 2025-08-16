@@ -63,4 +63,11 @@ public class SeededRandom
     {
         return ((long)Next(32) << 32) + Next(32);
     }
+    
+    public bool NextChance(float percent)
+    {
+        // Clamp percent between 0 and 100
+        percent = Math.Clamp(percent, 0f, 100f);
+        return NextFloat() < (percent / 100f);
+    }
 }
