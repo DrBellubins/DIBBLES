@@ -254,8 +254,7 @@ public class Player
 
             // Calculate camera vectors
             Vector3 camForward = Vector3.Normalize(Camera.Target - Camera.Position);
-            Vector3 camUp = Vector3.Normalize(Camera.Target - Camera.Position);
-            Vector3 camRight = Vector3.Normalize(Vector3.Cross(camForward, camUp));
+            Vector3 camRight = Vector3.Normalize(Vector3.Cross(camForward, Camera.Up));
 
             // Adjust these distances for the best effect
             float forwardDistance = 0.5f; // In front of camera
@@ -265,7 +264,7 @@ public class Player
             Vector3 handPos = Camera.Position 
                               + camForward * forwardDistance
                               + camRight * rightDistance
-                              + camUp * upDistance;
+                              + Camera.Up * upDistance;
 
             Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
         }
