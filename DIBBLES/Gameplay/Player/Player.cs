@@ -48,6 +48,8 @@ public class Player
     private float mouseSensitivity = 0.1f;
     
     private Quaternion cameraRotation = Quaternion.Identity;
+    private float cameraPitch = 0f;
+    private float cameraYaw = 0f;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -137,27 +139,29 @@ public class Player
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
         
+        // Update yaw and pitch
+        cameraYaw -= mouseDeltaX;
+        cameraPitch += mouseDeltaY;
+
         // Clamp pitch
-        float pitchLimit = MathF.PI / 2 - 0.01f;
+        float pitchLimit = 90.0f; // degrees
+        cameraPitch = Math.Clamp(cameraPitch, -pitchLimit, pitchLimit);
 
         // Convert to radians
-        float deltaYaw = GMath.ToRadians(mouseDeltaX);
-        float deltaPitch = GMath.ToRadians(mouseDeltaY);
+        float yawRad = GMath.ToRadians(cameraYaw);
+        float pitchRad = GMath.ToRadians(cameraPitch);
 
-        // Create rotation quaternions
-        Quaternion yawRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -deltaYaw); // Negative because mouse is inverted
-        Quaternion pitchRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitX, deltaPitch);
+        // Build quaternion from yaw and pitch
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawRad);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
 
         // Apply rotations
-        cameraRotation = Quaternion.Normalize(yawRotation * cameraRotation);      // Yaw first
-        cameraRotation = Quaternion.Normalize(cameraRotation * pitchRotation);    // Then pitch
-        
-        //cameraPitch = Math.Clamp(cameraPitch, -89.0f, 89.0f);
+        cameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
 
         // Calculate camera direction
         CameraForward = Vector3.Transform(Vector3.UnitZ, cameraRotation); // Forward
         CameraUp = Vector3.Transform(Vector3.UnitY, cameraRotation);
-        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...
+        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...c
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
