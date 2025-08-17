@@ -49,9 +49,6 @@ public class Player
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
     
-    private float cameraPitch = 0f;
-    private float cameraYaw = 0f;
-    
     private bool isJumping = false;
     private bool isGrounded = false;
     private bool isCrouching = false;
@@ -139,14 +136,6 @@ public class Player
         // --- Mouse input for camera rotation ---
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
-        
-        // Update yaw and pitch
-        cameraYaw -= mouseDeltaX;
-        cameraPitch += mouseDeltaY;
-
-        // Clamp pitch
-        float pitchLimit = 90.0f; // degrees
-        cameraPitch = Math.Clamp(cameraPitch, -pitchLimit, pitchLimit);
 
         // Convert deltas to radians
         float yawDeltaRad = GMath.ToRadians(-mouseDeltaX);
@@ -338,16 +327,12 @@ public class Player
         Position = newPosition;
     }
 
-    // TODO: Doesn't work with quaternion rotations now...
     public void SetCameraDirection(Vector3 direction)
     {
         direction = Vector3.Normalize(direction);
         
-        //cameraYaw = MathF.Atan2(direction.X, direction.Z) * (180.0f / MathF.PI);
-        //cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
-        
         float yawRad = MathF.Atan2(direction.X, direction.Z);
-        float pitchRad = MathF.Asin(direction.Y);
+        float pitchRad = -MathF.Asin(direction.Y);
 
         Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawRad);
         Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
