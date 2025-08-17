@@ -29,9 +29,9 @@ public class Hotbar
     private int hotBarSelectionIndex;
     private float hotBarSelectionPosX;
 
-    public void Start(bool loadingNewWorld)
+    public void Start()
     {
-        if (loadingNewWorld)
+        if (WorldSave.Data.HotbarPosition != 0)
             hotBarSelectionIndex = WorldSave.Data.HotbarPosition;
 
         Resize();

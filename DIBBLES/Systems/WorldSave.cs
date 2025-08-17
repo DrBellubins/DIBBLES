@@ -158,6 +158,7 @@ public class WorldSave
                     }
 
                     Console.WriteLine($"Loaded world '{Data.WorldName}'");
+                    Console.WriteLine($"Data: Seed '{Data.Seed}' PlayerPos '{Data.PlayerPosition}' CamDir '{Data.CameraDirection}' Hotbar '{Data.HotbarPosition}' chunkCount '{modifiedChunkCount}'");
                 }
             }
         }

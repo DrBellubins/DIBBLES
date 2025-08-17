@@ -48,6 +48,8 @@ public class TerrainGeneration
         //else
         //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
+        WorldSave.Data.Seed  = Seed;
+        
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
 

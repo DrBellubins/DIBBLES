@@ -49,6 +49,8 @@ public class Player
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
     
+    private float cameraPitch = 0f;
+    
     private bool isJumping = false;
     private bool isGrounded = false;
     private bool isCrouching = false;
@@ -68,7 +70,7 @@ public class Player
         Camera.FovY = 90.0f;
         Camera.Projection = CameraProjection.Perspective;
 
-        hotbar.Start(false);
+        hotbar.Start();
         
         handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt]);
         
@@ -137,17 +139,18 @@ public class Player
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
 
-        // Convert deltas to radians
+        // Update and clamp pitch
+        cameraPitch += GMath.ToRadians(mouseDeltaY);
+        cameraPitch = Math.Clamp(cameraPitch, GMath.ToRadians(-89f), GMath.ToRadians(89f));
+
+        // Apply yaw (accumulate)
         float yawDeltaRad = GMath.ToRadians(-mouseDeltaX);
-        float pitchDeltaRad = GMath.ToRadians(mouseDeltaY);
-
-        // Build delta quaternions
         Quaternion yawDelta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawDeltaRad);
-        Quaternion pitchDelta = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchDeltaRad);
+        CameraRotation = Quaternion.Normalize(yawDelta * CameraRotation);
 
-        // Apply to current rotation: yaw first, then pitch (typical order)
-        CameraRotation = Quaternion.Normalize(yawDelta * CameraRotation); // yaw around world Y
-        CameraRotation = Quaternion.Normalize(CameraRotation * pitchDelta); // pitch around camera's X
+        // Set pitch directly (overwrite previous pitch)
+        Quaternion pitchRot = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
+        CameraRotation = Quaternion.Normalize(CameraRotation * pitchRot);
 
         // Calculate camera direction
         CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
@@ -273,9 +276,6 @@ public class Player
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
-        
-        Console.WriteLine("BIG2");
-        Console.WriteLine(CameraForward);
     }
     
     public void CheckCollisions()
@@ -326,8 +326,24 @@ public class Player
 
         Position = newPosition;
     }
-
+    
     public void SetCameraDirection(Vector3 direction)
+    {
+        direction = Vector3.Normalize(direction);
+
+        var cameraYaw = 0f;
+        
+        cameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
+        cameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
+
+        // Now construct CameraRotation as usual
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, cameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
+
+        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+    }
+
+    /*public void SetCameraDirection(Vector3 direction)
     {
         direction = Vector3.Normalize(direction);
         
@@ -338,17 +354,14 @@ public class Player
         Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-    }
+    }*/
     
     private void spawn()
     {
         if (WorldSave.Exists)
         {
-            Console.WriteLine("BIG1");
-            Console.WriteLine(WorldSave.Data.CameraDirection);
-            
             Position = WorldSave.Data.PlayerPosition;
-            SetCameraDirection(WorldSave.Data.CameraDirection);
+            //SetCameraDirection(WorldSave.Data.CameraDirection);
         }
         else
             Position = spawnPosition;
