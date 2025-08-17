@@ -7,6 +7,18 @@ namespace DIBBLES.Utils;
 
 public static class MeshUtils
 {
+    public static void DrawModelWithQuaternion(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
+    {
+        var transform =
+            Matrix4x4.CreateScale(scale)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
+
+        model.Transform = transform; // Apply full transform
+        Raylib.DrawModel(model, Vector3.Zero, 1.0f, tint); // Don't pass position/scale!
+        model.Transform = Matrix4x4.Identity; // Restore if reused elsewhere
+    }
+    
     public static void DrawModelEx(Model model, Vector3 position, Quaternion rotation, Vector3 scale, Color tint)
     {
         // Create translation matrix
@@ -19,7 +31,8 @@ public static class MeshUtils
         Matrix4x4 scaleMat = Matrix4x4.CreateScale(scale);
 
         // Combine transformations: Translate -> Rotate -> Scale
-        Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
+        //Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
+        Matrix4x4 transformMat = scaleMat * rotationMat * translationMat;
         
         model.Transform = transformMat;
         

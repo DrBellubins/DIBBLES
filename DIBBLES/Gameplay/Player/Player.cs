@@ -264,7 +264,8 @@ public class Player
                               + CameraRight * rightDistance
                               + CameraUp * upDistance;
 
-            MeshUtils.DrawModelEx(handBlockModel, handPos, Quaternion.Identity, Vector3.One, Color.White);
+            MeshUtils.DrawModelWithQuaternion(handBlockModel, handPos, Quaternion.Identity, Vector3.One, Color.White);
+            //MeshUtils.DrawModelEx(handBlockModel, handPos, Quaternion.Identity, Vector3.One, Color.White);
             //Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
         }
     }
