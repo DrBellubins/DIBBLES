@@ -148,16 +148,17 @@ public class Player
         float pitchLimit = 90.0f; // degrees
         cameraPitch = Math.Clamp(cameraPitch, -pitchLimit, pitchLimit);
 
-        // Convert to radians
-        float yawRad = GMath.ToRadians(cameraYaw);
-        float pitchRad = GMath.ToRadians(cameraPitch);
+        // Convert deltas to radians
+        float yawDeltaRad = GMath.ToRadians(-mouseDeltaX);
+        float pitchDeltaRad = GMath.ToRadians(mouseDeltaY);
 
-        // Build quaternion from yaw and pitch
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawRad);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
+        // Build delta quaternions
+        Quaternion yawDelta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawDeltaRad);
+        Quaternion pitchDelta = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchDeltaRad);
 
-        // Apply rotations
-        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+        // Apply to current rotation: yaw first, then pitch (typical order)
+        CameraRotation = Quaternion.Normalize(yawDelta * CameraRotation); // yaw around world Y
+        CameraRotation = Quaternion.Normalize(CameraRotation * pitchDelta); // pitch around camera's X
 
         // Calculate camera direction
         CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
@@ -342,16 +343,16 @@ public class Player
     {
         direction = Vector3.Normalize(direction);
         
-        cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
-        cameraYaw = MathF.Atan2(direction.Z, direction.X) * (180.0f / MathF.PI);
+        //cameraYaw = MathF.Atan2(direction.X, direction.Z) * (180.0f / MathF.PI);
+        //cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
         
-        Quaternion q = Quaternion.CreateFromAxisAngle(
-            Vector3.Normalize(Vector3.Cross(Vector3.UnitZ, direction)),
-            MathF.Acos(Vector3.Dot(Vector3.UnitZ, direction))
-        );
-        
-        CameraRotation = q;
-        CameraForward = direction;
+        float yawRad = MathF.Atan2(direction.X, direction.Z);
+        float pitchRad = MathF.Asin(direction.Y);
+
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawRad);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
+
+        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }
     
     private void spawn()
