@@ -71,6 +71,7 @@ public class TerrainLighting
                     else if (neighborPos.Z >= ChunkSize) { chunkOffset.Z = ChunkSize; localPos.Z = 0; }
 
                     var neighborChunkPos = chunkPos + chunkOffset;
+                    
                     if (!Chunks.TryGetValue(neighborChunkPos, out neighborChunk))
                         continue;
                 }
@@ -92,24 +93,90 @@ public class TerrainLighting
             }
         }
     }
-
-    public void GenerateNeighbors(Chunk chunk)
+    
+    public void GenerateGlobalLighting(IEnumerable<Chunk> loadedChunks)
     {
-        // Generate lighting for all 6 neighboring chunks
-        int[] offsets = { -ChunkSize, ChunkSize };
-        
-        foreach (var axis in new[] { 0, 1, 2 })
+        // Step 1: Clear light for all blocks in all chunks
+        foreach (var chunk in loadedChunks)
         {
-            foreach (int offset in offsets)
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
             {
-                Vector3Int neighborPos = chunk.Position;
-                
-                if (axis == 0) neighborPos.X += offset;
-                if (axis == 1) neighborPos.Y += offset;
-                if (axis == 2) neighborPos.Z += offset;
+                var block = chunk.Blocks[x, y, z];
+                block.LightLevel = block.Info.LightEmission;
+            }
+        }
 
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                    Lighting.Generate(neighborChunk);
+        // Step 2: Propagate light globally using BFS
+        var queue = new Queue<(Chunk chunk, Vector3Int pos)>();
+        foreach (var chunk in loadedChunks)
+        {
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var block = chunk.Blocks[x, y, z];
+                
+                if (block.LightLevel > 0)
+                    queue.Enqueue((chunk, new Vector3Int(x, y, z)));
+            }
+        }
+
+        while (queue.Count > 0)
+        {
+            var (curChunk, pos) = queue.Dequeue();
+            var block = curChunk.Blocks[pos.X, pos.Y, pos.Z];
+            byte lightLevel = block.LightLevel;
+
+            // Check all 6 neighboring positions
+            Vector3Int[] neighbors = {
+                new Vector3Int(pos.X - 1, pos.Y, pos.Z),
+                new Vector3Int(pos.X + 1, pos.Y, pos.Z),
+                new Vector3Int(pos.X, pos.Y - 1, pos.Z),
+                new Vector3Int(pos.X, pos.Y + 1, pos.Z),
+                new Vector3Int(pos.X, pos.Y, pos.Z - 1),
+                new Vector3Int(pos.X, pos.Y, pos.Z + 1)
+            };
+            
+            foreach (var neighborPos in neighbors)
+            {
+                Chunk neighborChunk = curChunk;
+                Vector3Int localPos = neighborPos;
+
+                // Handle cross-chunk neighbors
+                if (neighborPos.X < 0 || neighborPos.X >= ChunkSize ||
+                    neighborPos.Y < 0 || neighborPos.Y >= ChunkSize ||
+                    neighborPos.Z < 0 || neighborPos.Z >= ChunkSize)
+                {
+                    var chunkPos = curChunk.Position;
+                    Vector3Int chunkOffset = Vector3Int.Zero;
+
+                    if (neighborPos.X < 0) { chunkOffset.X = -ChunkSize; localPos.X = ChunkSize - 1; }
+                    else if (neighborPos.X >= ChunkSize) { chunkOffset.X = ChunkSize; localPos.X = 0; }
+                    if (neighborPos.Y < 0) { chunkOffset.Y = -ChunkSize; localPos.Y = ChunkSize - 1; }
+                    else if (neighborPos.Y >= ChunkSize) { chunkOffset.Y = ChunkSize; localPos.Y = 0; }
+                    if (neighborPos.Z < 0) { chunkOffset.Z = -ChunkSize; localPos.Z = ChunkSize - 1; }
+                    else if (neighborPos.Z >= ChunkSize) { chunkOffset.Z = ChunkSize; localPos.Z = 0; }
+
+                    var neighborChunkPos = chunkPos + chunkOffset;
+                    
+                    if (!Chunks.TryGetValue(neighborChunkPos, out neighborChunk))
+                        continue;
+                }
+
+                var neighborBlock = neighborChunk.Blocks[localPos.X, localPos.Y, localPos.Z];
+
+                if (neighborBlock.Info.Type == BlockType.Air || neighborBlock.Info.IsTransparent)
+                {
+                    byte newLight = (byte)(lightLevel - 1);
+                    
+                    if (newLight > neighborBlock.LightLevel)
+                    {
+                        neighborBlock.LightLevel = newLight;
+                        queue.Enqueue((neighborChunk, localPos));
+                    }
+                }
             }
         }
     }

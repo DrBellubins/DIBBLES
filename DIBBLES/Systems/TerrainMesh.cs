@@ -9,7 +9,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainMesh
 {
-    public const bool Fullbright = false;
+    public const bool Fullbright = true;
     public const bool SmoothLighting = false;
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();

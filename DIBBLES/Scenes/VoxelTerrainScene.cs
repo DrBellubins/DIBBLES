@@ -13,7 +13,6 @@ public class VoxelTerrainScene : Scene
     private TerrainGeneration terrainGen = new TerrainGeneration();
     
     public static Player Player = new Player();
-    //public static Freecam Freecam = new Freecam();
     
     private FogEffect fogEffect = new FogEffect();
 
@@ -27,7 +26,6 @@ public class VoxelTerrainScene : Scene
         terrainGen.Update(Player);
         
         Player.Start(); // Must be started after terrain
-        //Freecam.Start();
         
         fogEffect.Start();
     }
@@ -35,7 +33,6 @@ public class VoxelTerrainScene : Scene
     public override void Update()
     {
         Player.Update();
-        //Freecam.Update();
         
         terrainGen.Update(Player);
         TerrainGeneration.Gameplay.Update(Player.Camera);
@@ -59,7 +56,6 @@ public class VoxelTerrainScene : Scene
         terrainGen.Draw();
         
         Player.Draw();
-        //Freecam.Draw();
         
         Raylib.EndMode3D();
         

@@ -17,7 +17,7 @@ public class TerrainGeneration
     public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = false;
+    public const bool DrawDebug = true;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
@@ -55,18 +55,18 @@ public class TerrainGeneration
 
     private bool hasGenerated = false; // FOR TESTING PURPOSES
     private bool hasRemeshed = false;
+    
     public void Update(Player player)
     {
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3Int(
-            (int)Math.Floor(player.Camera.Position.X / ChunkSize),
-            (int)Math.Floor(player.Camera.Position.Y / ChunkSize),
-            (int)Math.Floor(player.Camera.Position.Z / ChunkSize)
+            (int)Math.Floor(player.Position.X / ChunkSize),
+            (int)Math.Floor(player.Position.Y / ChunkSize),
+            (int)Math.Floor(player.Position.Z / ChunkSize)
         );
 
         // Only update if the camera has moved to a new chunk
-        //if (currentChunk != lastCameraChunk)
-        if (!hasGenerated)
+        if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
@@ -77,14 +77,20 @@ public class TerrainGeneration
         
         // TODO: Doesn't work with infinite world
         // TODO: Remeshing is very slow. Needs to be multi-threaded
-        if (!hasRemeshed && areAllChunksLoaded(currentChunk))
+        /*if (areAllChunksLoaded(currentChunk))
         {
-            foreach (var chunk in Chunks.Values)
-                remeshNeigbors(chunk.Position);
+            Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
-            player.ShouldUpdate = true;
-            hasRemeshed =  true;
-        }
+            if (!hasRemeshed)
+            {
+                // Regen all meshes after first gen for chunk border culling
+                foreach (var chunk in Chunks.Values)
+                    remeshNeigbors(chunk.Position);
+                
+                hasRemeshed =  true;
+                player.ShouldUpdate = true;
+            }
+        }*/
         
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))

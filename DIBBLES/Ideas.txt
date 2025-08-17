@@ -2,6 +2,8 @@ A 3D voxel game with cubed chunks.
 The world is dark with no sun except snake-like wisps hovering throughout the casms.
 
 Mechanics:
+Has technology similar to IndustrialCraft from Minecraft.
+Incorporates skill leveling and progression similar to factorio
 Theres a grapplehook item for getting to ledges.
 
 Story:

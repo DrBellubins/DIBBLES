@@ -22,7 +22,7 @@ public class Player
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
-
+    
     // Gameplay
     public int Health = 100;
     public Hotbar hotbar = new Hotbar();
@@ -42,6 +42,10 @@ public class Player
     public Vector3 CameraForward = Vector3.Zero;
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
+    
+    public bool FreeCamEnabled = false;
+    public Freecam freecam = new Freecam();
+    public Vector3 previousPosition = Vector3.Zero; // For freecam toggle
     
     public bool ShouldUpdate = false;
     
@@ -82,11 +86,24 @@ public class Player
 
     public void Update()
     {
-        if (!ShouldUpdate)
-            return;
+        //if (!ShouldUpdate)
+        //    return;
 
-        if (Position.Y < -100f)
-            respawn();
+        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
+        {
+            if (FreeCamEnabled)
+                Position = previousPosition;
+            else
+                previousPosition = Position;
+            
+            FreeCamEnabled = !FreeCamEnabled;
+        }
+
+        if (FreeCamEnabled)
+        {
+            freecam.Update(this);
+            return;
+        }
 
         hotbar.Update();
         
