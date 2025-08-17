@@ -161,7 +161,7 @@ public class Player
         // Calculate camera direction
         CameraForward = Vector3.Transform(Vector3.UnitZ, cameraRotation); // Forward
         CameraUp = Vector3.Transform(Vector3.UnitY, cameraRotation);
-        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...c
+        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
@@ -333,7 +333,7 @@ public class Player
         Position = newPosition;
     }
 
-    // TODO: Doesn't working with quaternion rotations now...
+    // TODO: Doesn't work with quaternion rotations now...
     public void SetCameraDirection(Vector3 direction)
     {
         direction = Vector3.Normalize(direction);
@@ -342,6 +342,7 @@ public class Player
             Vector3.Normalize(Vector3.Cross(Vector3.UnitZ, direction)),
             MathF.Acos(Vector3.Dot(Vector3.UnitZ, direction))
         );
+        
         cameraRotation = q;
         CameraForward = direction;
     }
