@@ -250,6 +250,7 @@ public class Player
 
     public void Draw()
     {
+        // Hand drawing (should be separated out)
         if (hotbar.SelectedItem != null)
         {
             MeshUtils.SetModelTexture(handBlockModel, Block.Textures[hotbar.SelectedItem.Type]);
@@ -264,24 +265,23 @@ public class Player
                               + CameraRight * rightDistance
                               + CameraUp * upDistance;
 
-            //MeshUtils.DrawModelEx(handBlockModel, handPos, testRotation, Vector3.One, Color.White);
-            Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
+            var rot = Quaternion.Inverse(cameraRotation);
+            Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rot);
+            
+            Vector3 axis;
+            float angleDeg;
+            GMath.MatrixToAxisAngle(rotationMat, out axis, out angleDeg);
+            
+            Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);
         }
     }
 
     public void DrawUI()
     {
         hotbar.Draw();
-        Debug.Draw2DText($"Position: {Position}", Color.White);
-    }
-    
-    public void SetCameraDirection(Vector3 direction)
-    {
-        direction = Vector3.Normalize(direction);
         
-        // Calculate quaternion that rotates UnitZ to 'direction'
-        cameraRotation = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, Vector3.UnitY));
-        CameraForward = direction;
+        Debug.Draw2DText($"Position: {Position}", Color.White);
+        Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
     }
     
     public void CheckCollisions()
@@ -333,6 +333,16 @@ public class Player
         Position = newPosition;
     }
 
+    // TODO: Doesn't working with quaternion rotations now...
+    public void SetCameraDirection(Vector3 direction)
+    {
+        direction = Vector3.Normalize(direction);
+        
+        // Calculate quaternion that rotates UnitZ to 'direction'
+        cameraRotation = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, Vector3.UnitY));
+        CameraForward = direction;
+    }
+    
     private void spawn()
     {
         if (WorldSave.Exists)
