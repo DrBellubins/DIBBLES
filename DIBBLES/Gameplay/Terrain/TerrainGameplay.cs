@@ -184,14 +184,15 @@ public class TerrainGameplay
 
             // Update lighting if the broken block was opaque or emissive
             Lighting.Generate(chunk);
-        
+            Lighting.GenerateNeighbors(chunk);
+            
             // Regenerate mesh
             Raylib.UnloadModel(chunk.Model); // Unload old model
         
             var meshData = TMesh.GenerateMeshData(chunk);
             chunk.Model = TMesh.UploadMesh(meshData);
-
-            TMesh.RemeshNeighborsIfBlockOnEdge(chunk, blockPos);
+            
+            TMesh.RemeshNeighbors(chunk);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -249,6 +250,7 @@ public class TerrainGameplay
         
         // Update lighting for the placed block
         Lighting.Generate(chunk);
+        Lighting.GenerateNeighbors(chunk);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
@@ -256,7 +258,7 @@ public class TerrainGameplay
         var meshData = TMesh.GenerateMeshData(chunk);
         chunk.Model = TMesh.UploadMesh(meshData);
         
-        TMesh.RemeshNeighborsIfBlockOnEdge(chunk, newBlockPos);
+        TMesh.RemeshNeighbors(chunk);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

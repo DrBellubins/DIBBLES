@@ -92,4 +92,25 @@ public class TerrainLighting
             }
         }
     }
+
+    public void GenerateNeighbors(Chunk chunk)
+    {
+        // Generate lighting for all 6 neighboring chunks
+        int[] offsets = { -ChunkSize, ChunkSize };
+        
+        foreach (var axis in new[] { 0, 1, 2 })
+        {
+            foreach (int offset in offsets)
+            {
+                Vector3Int neighborPos = chunk.Position;
+                
+                if (axis == 0) neighborPos.X += offset;
+                if (axis == 1) neighborPos.Y += offset;
+                if (axis == 2) neighborPos.Z += offset;
+
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                    Lighting.Generate(neighborChunk);
+            }
+        }
+    }
 }

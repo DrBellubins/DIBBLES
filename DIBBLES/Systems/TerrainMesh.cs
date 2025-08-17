@@ -419,32 +419,31 @@ public class TerrainMesh
         // Air or transparent blocks are NOT solid
         if (info == null)
             return false;
+        
         return info.Type != BlockType.Air && !info.IsTransparent;
     }
-    
-    public void RemeshNeighborsIfBlockOnEdge(Chunk chunk, Vector3Int blockPos)
+
+    public void RemeshNeighbors(Chunk chunk)
     {
-        var localX = blockPos.X - chunk.Position.X;
-        var localY = blockPos.Y - chunk.Position.Y;
-        var localZ = blockPos.Z - chunk.Position.Z;
+        int[] offsets = { -ChunkSize, ChunkSize };
+        
+        foreach (var axis in new[] { 0, 1, 2 })
+        {
+            foreach (int offset in offsets)
+            {
+                Vector3Int neighborPos = chunk.Position;
+                
+                if (axis == 0) neighborPos.X += offset;
+                if (axis == 1) neighborPos.Y += offset;
+                if (axis == 2) neighborPos.Z += offset;
 
-        if (localX == 0)
-            RemeshNeighbor(chunk.Position + new Vector3Int(-ChunkSize, 0, 0));
-        else if (localX == ChunkSize - 1)
-            RemeshNeighbor(chunk.Position + new Vector3Int(ChunkSize, 0, 0));
-
-        if (localY == 0)
-            RemeshNeighbor(chunk.Position + new Vector3Int(0, -ChunkSize, 0));
-        else if (localY == ChunkSize - 1)
-            RemeshNeighbor(chunk.Position + new Vector3Int(0, ChunkSize, 0));
-
-        if (localZ == 0)
-            RemeshNeighbor(chunk.Position + new Vector3Int(0, 0, -ChunkSize));
-        else if (localZ == ChunkSize - 1)
-            RemeshNeighbor(chunk.Position + new Vector3Int(0, 0, ChunkSize));
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                    RemeshNeighborPos(neighborChunk.Position);
+            }
+        }
     }
     
-    public void RemeshNeighbor(Vector3Int neighborPos)
+    public void RemeshNeighborPos(Vector3Int neighborPos)
     {
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame

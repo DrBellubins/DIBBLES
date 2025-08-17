@@ -310,7 +310,7 @@ public class TerrainGeneration
             Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
             
             if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighbor(neighborPos);
+                TMesh.RemeshNeighborPos(neighborPos);
         }
         
         foreach (int dy in offsets)
@@ -318,7 +318,7 @@ public class TerrainGeneration
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
             
             if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighbor(neighborPos);
+                TMesh.RemeshNeighborPos(neighborPos);
         }
         
         foreach (int dz in offsets)
@@ -326,7 +326,7 @@ public class TerrainGeneration
             Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
             
             if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighbor(neighborPos);
+                TMesh.RemeshNeighborPos(neighborPos);
         }
     }
     
