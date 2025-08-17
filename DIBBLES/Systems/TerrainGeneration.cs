@@ -200,6 +200,7 @@ public class TerrainGeneration
                     
                     var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
+                    // Loop downward
                     if (islandNoise > 0.7f) // Islands
                     {
                         if (!foundSurface)
@@ -223,20 +224,26 @@ public class TerrainGeneration
                     }
                     else // Not islands
                     {
-                        if (foundSurface && worldY == surfaceY + 3)
+                        chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                    }
+                    
+                    // Loop upward
+                    if (foundSurface)
+                    {
+                        int wispOffset = 4;
+                        int wispY = surfaceY + wispOffset;
+                        int maxWorldY = chunk.Position.Y + ChunkSize - 1;
+
+                        if (wispY >= chunk.Position.Y && wispY <= maxWorldY)
                         {
-                            if (rng.NextChance(100f)) // Wisps
+                            int localWispY = wispY - chunk.Position.Y;
+
+                            // Only place wisp if air
+                            if (chunk.Blocks[x, localWispY, z].Info.Type == BlockType.Air)
                             {
-                                chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
+                                if (rng.NextChance(0.2f))
+                                    chunk.Blocks[x, localWispY, z] = new Block(new Vector3Int(worldX, wispY, worldZ), Block.Prefabs[BlockType.Wisp]);
                             }
-                            else
-                            {
-                                chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
-                            }
-                        }
-                        else
-                        {
-                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
                         }
                     }
                 }
