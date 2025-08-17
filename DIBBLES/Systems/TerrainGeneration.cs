@@ -182,6 +182,7 @@ public class TerrainGeneration
             {
                 var foundSurface = false;
                 var islandDepth = 0;
+                var aboveIslandHeight = 0;
                 
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
@@ -199,7 +200,7 @@ public class TerrainGeneration
                     
                     var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
-                    if (islandNoise > 0.7f)
+                    if (islandNoise > 0.7f) // Islands
                     {
                         if (!foundSurface)
                         {
@@ -219,17 +220,15 @@ public class TerrainGeneration
                             islandDepth++;
                         }
                     }
-                    else
+                    else // Not islands
                     {
                         if (rng.NextChance(0.1f)) // Wisps
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
-                            islandDepth = 0;
                         }
                         else
                         {
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
-                            islandDepth = 0;
                         }
                     }
                 }
