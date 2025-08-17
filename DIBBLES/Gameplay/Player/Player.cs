@@ -263,11 +263,8 @@ public class Player
                               + CameraForward * forwardDistance
                               + CameraRight * rightDistance
                               + CameraUp * upDistance;
-            
-            var testRotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 4);
 
-            //MeshUtils.DrawModelWithQuaternion(handBlockModel, handPos, testRotation, Vector3.One, Color.White);
-            //MeshUtils.DrawModelEx(handBlockModel, handPos, Quaternion.Identity, Vector3.One, Color.White);
+            //MeshUtils.DrawModelEx(handBlockModel, handPos, testRotation, Vector3.One, Color.White);
             Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
         }
     }
