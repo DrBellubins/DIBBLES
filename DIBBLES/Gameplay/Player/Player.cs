@@ -338,8 +338,11 @@ public class Player
     {
         direction = Vector3.Normalize(direction);
         
-        // Calculate quaternion that rotates UnitZ to 'direction'
-        cameraRotation = Quaternion.CreateFromRotationMatrix(Matrix4x4.CreateLookAt(Vector3.Zero, direction, Vector3.UnitY));
+        Quaternion q = Quaternion.CreateFromAxisAngle(
+            Vector3.Normalize(Vector3.Cross(Vector3.UnitZ, direction)),
+            MathF.Acos(Vector3.Dot(Vector3.UnitZ, direction))
+        );
+        cameraRotation = q;
         CameraForward = direction;
     }
     
