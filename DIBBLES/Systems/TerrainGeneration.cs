@@ -182,7 +182,7 @@ public class TerrainGeneration
             {
                 var foundSurface = false;
                 var islandDepth = 0;
-                var aboveIslandHeight = 0;
+                var surfaceY = -1;
                 
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
@@ -208,6 +208,7 @@ public class TerrainGeneration
                             chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Grass]);
                             foundSurface = true;
                             islandDepth = 0;
+                            surfaceY = worldY;
                         }
                         else if (islandDepth < 3) // dirt thickness = 3
                         {
@@ -222,9 +223,16 @@ public class TerrainGeneration
                     }
                     else // Not islands
                     {
-                        if (rng.NextChance(0.1f)) // Wisps
+                        if (foundSurface && worldY == surfaceY + 3)
                         {
-                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
+                            if (rng.NextChance(100f)) // Wisps
+                            {
+                                chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Wisp]);
+                            }
+                            else
+                            {
+                                chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                            }
                         }
                         else
                         {
