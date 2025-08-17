@@ -37,6 +37,8 @@ public class Player
 
     public BoundingBox CollisionBox = new BoundingBox();
 
+    public Quaternion CameraRotation = Quaternion.Identity;
+    
     public Vector3 CameraForward = Vector3.Zero;
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
@@ -47,7 +49,6 @@ public class Player
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
     
-    private Quaternion cameraRotation = Quaternion.Identity;
     private float cameraPitch = 0f;
     private float cameraYaw = 0f;
     
@@ -156,12 +157,12 @@ public class Player
         Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
 
         // Apply rotations
-        cameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
 
         // Calculate camera direction
-        CameraForward = Vector3.Transform(Vector3.UnitZ, cameraRotation); // Forward
-        CameraUp = Vector3.Transform(Vector3.UnitY, cameraRotation);
-        CameraRight = Vector3.Transform(-Vector3.UnitX, cameraRotation); // This has to be flipped for some reason...
+        CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
+        CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
+        CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
@@ -265,7 +266,7 @@ public class Player
                               + CameraRight * rightDistance
                               + CameraUp * upDistance;
 
-            var rot = Quaternion.Inverse(cameraRotation);
+            var rot = Quaternion.Inverse(CameraRotation);
             Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rot);
             
             Vector3 axis;
@@ -282,6 +283,9 @@ public class Player
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
+        
+        Console.WriteLine("BIG2");
+        Console.WriteLine(CameraForward);
     }
     
     public void CheckCollisions()
@@ -338,12 +342,15 @@ public class Player
     {
         direction = Vector3.Normalize(direction);
         
+        cameraPitch = MathF.Asin(direction.Y) * (180.0f / MathF.PI);
+        cameraYaw = MathF.Atan2(direction.Z, direction.X) * (180.0f / MathF.PI);
+        
         Quaternion q = Quaternion.CreateFromAxisAngle(
             Vector3.Normalize(Vector3.Cross(Vector3.UnitZ, direction)),
             MathF.Acos(Vector3.Dot(Vector3.UnitZ, direction))
         );
         
-        cameraRotation = q;
+        CameraRotation = q;
         CameraForward = direction;
     }
     
@@ -351,7 +358,7 @@ public class Player
     {
         if (WorldSave.Exists)
         {
-            Console.WriteLine("BIG");
+            Console.WriteLine("BIG1");
             Console.WriteLine(WorldSave.Data.CameraDirection);
             
             Position = WorldSave.Data.PlayerPosition;
