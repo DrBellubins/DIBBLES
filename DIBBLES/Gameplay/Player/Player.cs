@@ -45,11 +45,14 @@ public class Player
     
     public bool ShouldUpdate = false;
     
+    private HandModel handModel = new HandModel();
+    
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
     
     private float cameraPitch = 0f;
+    private float cameraYaw = 0f;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -57,8 +60,7 @@ public class Player
 
     private bool justJumped = false;
     private bool justLanded = false;
-
-    private Model handBlockModel;
+    
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
     
     public void Start()
@@ -71,8 +73,7 @@ public class Player
         Camera.Projection = CameraProjection.Perspective;
 
         hotbar.Start();
-        
-        handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt]);
+        handModel.Start();
         
         spawn();
         
@@ -139,18 +140,16 @@ public class Player
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
 
-        // Update and clamp pitch
-        cameraPitch += GMath.ToRadians(mouseDeltaY);
-        cameraPitch = Math.Clamp(cameraPitch, GMath.ToRadians(-89f), GMath.ToRadians(89f));
+        cameraYaw += GMath.ToRadians(-mouseDeltaX); // Yaw: left and right
+        cameraPitch += GMath.ToRadians(mouseDeltaY); // Pitch: up and down
 
-        // Apply yaw (accumulate)
-        float yawDeltaRad = GMath.ToRadians(-mouseDeltaX);
-        Quaternion yawDelta = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawDeltaRad);
-        CameraRotation = Quaternion.Normalize(yawDelta * CameraRotation);
+        cameraPitch = Math.Clamp(cameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
-        // Set pitch directly (overwrite previous pitch)
-        Quaternion pitchRot = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
-        CameraRotation = Quaternion.Normalize(CameraRotation * pitchRot);
+        // Build quaternion from yaw and pitch (yaw first, then pitch)
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, cameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
+
+        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
 
         // Calculate camera direction
         CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
@@ -161,7 +160,7 @@ public class Player
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = Camera.Position + CameraForward;
         Camera.Up = CameraUp;
-
+        
         Vector3 wishDir = (CameraForward * inputDir.Z) + (CameraRight * inputDir.X);
 
         if (wishDir.Length() > 0)
@@ -244,30 +243,7 @@ public class Player
 
     public void Draw()
     {
-        // Hand drawing (should be separated out)
-        if (hotbar.SelectedItem != null)
-        {
-            MeshUtils.SetModelTexture(handBlockModel, Block.Textures[hotbar.SelectedItem.Type]);
-
-            // Adjust these distances for the best effect
-            float forwardDistance = 0.5f; // In front of camera
-            float rightDistance = 0.5f;   // To the right
-            float upDistance = -0.3f;     // Down a bit (optional)
-
-            Vector3 handPos = Camera.Position 
-                              + CameraForward * forwardDistance
-                              + CameraRight * rightDistance
-                              + CameraUp * upDistance;
-
-            var rot = Quaternion.Inverse(CameraRotation);
-            Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rot);
-            
-            Vector3 axis;
-            float angleDeg;
-            GMath.MatrixToAxisAngle(rotationMat, out axis, out angleDeg);
-            
-            Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);
-        }
+        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
     }
 
     public void DrawUI()
@@ -284,7 +260,7 @@ public class Player
         var newPosition = Position;
 
         // Call once per frame before axis checks!
-        var blockBoxes = getBoundingBoxes(Position, 10f);
+        var blockBoxes = getBlockBoxes(Position, 10f);
 
         // X axis
         newPosition.X += moveDelta.X;
@@ -304,12 +280,13 @@ public class Player
         var playerBoxY = GetPlayerBox(newPosition, currentHeight);
         var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
         
-        // TODO: Check if hitting ceiling
         if (collidedY)
         {
+            if (Velocity.Y < 0f)
+                isGrounded = true;
+            
             newPosition.Y -= moveDelta.Y;
             Velocity.Y = 0f;
-            isGrounded = true;
         }
 
         // Z axis
@@ -331,8 +308,6 @@ public class Player
     {
         direction = Vector3.Normalize(direction);
 
-        var cameraYaw = 0f;
-        
         cameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
         cameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
 
@@ -342,26 +317,13 @@ public class Player
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }
-
-    /*public void SetCameraDirection(Vector3 direction)
-    {
-        direction = Vector3.Normalize(direction);
-        
-        float yawRad = MathF.Atan2(direction.X, direction.Z);
-        float pitchRad = -MathF.Asin(direction.Y);
-
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yawRad);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, pitchRad);
-
-        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-    }*/
     
     private void spawn()
     {
         if (WorldSave.Exists)
         {
             Position = WorldSave.Data.PlayerPosition;
-            //SetCameraDirection(WorldSave.Data.CameraDirection);
+            SetCameraDirection(WorldSave.Data.CameraDirection);
         }
         else
             Position = spawnPosition;
@@ -375,7 +337,7 @@ public class Player
         Velocity = Vector3.Zero;
     }
     
-    private static List<BoundingBox> getBoundingBoxes(Vector3 center, float radius)
+    private static List<BoundingBox> getBlockBoxes(Vector3 center, float radius)
     {
         var result = new List<BoundingBox>();
         
