@@ -119,9 +119,6 @@ public class WorldSave
                     Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                     Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                     Data.HotbarPosition = reader.ReadInt32();
-                    
-                    Console.WriteLine("BIG");
-                    Console.WriteLine(Data.CameraDirection);
 
                     // Chunk data
                     Data.ModifiedChunks.Clear(); // THIS PREVENTS CHUNK DUPING!

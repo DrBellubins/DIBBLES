@@ -347,6 +347,9 @@ public class Player
     {
         if (WorldSave.Exists)
         {
+            Console.WriteLine("BIG");
+            Console.WriteLine(WorldSave.Data.CameraDirection);
+            
             Position = WorldSave.Data.PlayerPosition;
             SetCameraDirection(WorldSave.Data.CameraDirection);
         }
