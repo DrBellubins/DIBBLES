@@ -161,7 +161,19 @@ public class Player
         Camera.Target = Camera.Position + CameraForward;
         Camera.Up = CameraUp;
         
-        Vector3 wishDir = (CameraForward * inputDir.Z) + (CameraRight * inputDir.X);
+        // Project camera forward onto XZ plane and normalize
+        Vector3 forwardXZ = new Vector3(CameraForward.X, 0.0f, CameraForward.Z);
+        
+        if (forwardXZ.Length() > 0)
+            forwardXZ = Vector3.Normalize(forwardXZ);
+
+        // Project camera right onto XZ plane and normalize
+        Vector3 rightXZ = new Vector3(CameraRight.X, 0.0f, CameraRight.Z);
+        
+        if (rightXZ.Length() > 0)
+            rightXZ = Vector3.Normalize(rightXZ);
+        
+        Vector3 wishDir = (forwardXZ * inputDir.Z) + (rightXZ * inputDir.X);
 
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
