@@ -27,7 +27,7 @@ public class Player
     public int Health = 100;
     public Hotbar hotbar = new Hotbar();
     
-    private readonly Vector3 spawnPosition = new Vector3(40f, 55f, -20f); // Temporary
+    private readonly Vector3 spawnPosition = new Vector3(0f, 0f, 0f); // Temporary
     
     // Systems
     public Vector3 Position = Vector3.Zero;
@@ -268,7 +268,7 @@ public class Player
                               + camRight * rightDistance
                               + Camera.Up * upDistance;
 
-            MeshUtils.DrawModelEx(handBlockModel, handPos, Quaternion.Identity, Vector3.One, Color.White);
+            MeshUtils.DrawModelEx(handBlockModel, Position, Quaternion.Identity, Vector3.One, Color.White);
             //Raylib.DrawModel(handBlockModel, handPos, 0.25f, Color.White);
         }
     }
