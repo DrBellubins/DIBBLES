@@ -22,6 +22,7 @@ public static class MeshUtils
         Matrix4x4 transformMat = translationMat * rotationMat * scaleMat;
         
         model.Transform = transformMat;
+        
         Raylib.DrawModel(model, Vector3.Zero, 1.0f, tint);
         
         // After drawing, restore the transform if needed
