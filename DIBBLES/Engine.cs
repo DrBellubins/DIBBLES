@@ -43,7 +43,7 @@ public class Engine
         IsRunning = true;
         MainFont = Raylib.LoadFont("Assets/Textures/romulus.png");
 
-        var voxelScene = new VoxelTerrainScene();
+        var voxelScene = new GameScene();
         //var testScene = new TestScene();
         //var bezierScene = new BezierMeshScene();
         //var pathTracerScene = new PathTracerScene();

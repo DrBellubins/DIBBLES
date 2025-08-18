@@ -77,6 +77,7 @@ public class Block
     public Vector3Int Position;
     public BlockInfo Info;
     public byte LightLevel; // Block light level (0-15)
+    public bool InsideIsland = false;
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();

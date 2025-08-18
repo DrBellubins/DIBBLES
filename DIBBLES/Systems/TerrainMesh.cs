@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using Raylib_cs;
 
@@ -9,7 +10,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainMesh
 {
-    public const bool Fullbright = false;
+    public const bool Fullbright = true;
     public const bool SmoothLighting = false;
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
@@ -452,8 +453,8 @@ public class TerrainMesh
         {
             Raylib.UnloadModel(neighborChunk.Model);
             
-            var meshData = TMesh.GenerateMeshData(neighborChunk);
-            neighborChunk.Model = TMesh.UploadMesh(meshData);
+            var meshData = GameScene.TMesh.GenerateMeshData(neighborChunk);
+            neighborChunk.Model = GameScene.TMesh.UploadMesh(meshData);
             
             RecentlyRemeshedNeighbors.Add(neighborPos);
         }

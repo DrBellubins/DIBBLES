@@ -4,13 +4,18 @@ using System.Numerics;
 using System.Collections.Generic;
 using DIBBLES.Effects;
 using DIBBLES.Gameplay.Player;
+using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Scenes;
 
-public class VoxelTerrainScene : Scene
+public class GameScene : Scene
 {
     private TerrainGeneration terrainGen = new TerrainGeneration();
+    
+    public static TerrainMesh TMesh = new TerrainMesh();
+    public static TerrainLighting Lighting = new TerrainLighting();
+    public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static Player Player = new Player();
     
@@ -35,10 +40,13 @@ public class VoxelTerrainScene : Scene
         Player.Update();
         
         terrainGen.Update(Player);
-        TerrainGeneration.Gameplay.Update(Player.Camera);
+        Gameplay.Update(Player.Camera);
 
         if (Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
+        
+        if (Raylib.IsKeyPressed(KeyboardKey.F2))
+            Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
         
         Debug.Update(Player.Camera); // Must run after everything
     }
@@ -48,8 +56,8 @@ public class VoxelTerrainScene : Scene
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
-        //fogEffect.DrawStart();
-        //Raylib.ClearBackground(Color.SkyBlue);
+        fogEffect.DrawStart();
+        Raylib.ClearBackground(Color.Black);
         
         Raylib.BeginMode3D(Player.Camera);
         
@@ -59,9 +67,9 @@ public class VoxelTerrainScene : Scene
         
         Raylib.EndMode3D();
         
-        Player.DrawUI();
+        fogEffect.DrawEnd();
         
-        //fogEffect.DrawEnd();
+        Player.DrawUI();
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 

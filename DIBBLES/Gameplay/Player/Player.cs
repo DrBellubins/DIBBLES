@@ -1,5 +1,6 @@
 using Raylib_cs;
 using System.Numerics;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
@@ -263,10 +264,10 @@ public class Player
         
         // --- Block breaking and placing ---
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-            TerrainGeneration.Gameplay.BreakBlock();
+            GameScene.Gameplay.BreakBlock();
         
         if (Raylib.IsMouseButtonPressed(MouseButton.Right) && hotbar.SelectedItem != null)
-            TerrainGeneration.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
+            GameScene.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
 
         WorldSave.Data.PlayerPosition = Position;
         WorldSave.Data.CameraDirection = CameraForward;

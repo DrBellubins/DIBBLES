@@ -1,4 +1,5 @@
 using System.Numerics;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 using Raylib_cs;
@@ -183,15 +184,15 @@ public class TerrainGameplay
             chunk.Info.Modified = true;
 
             // Update lighting if the broken block was opaque or emissive
-            Lighting.Generate(chunk);
+            GameScene.Lighting.Generate(chunk);
             
             // Regenerate mesh
             Raylib.UnloadModel(chunk.Model); // Unload old model
         
-            var meshData = TMesh.GenerateMeshData(chunk);
-            chunk.Model = TMesh.UploadMesh(meshData);
+            var meshData = GameScene.TMesh.GenerateMeshData(chunk);
+            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             
-            TMesh.RemeshNeighbors(chunk);
+            GameScene.TMesh.RemeshNeighbors(chunk);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -248,15 +249,15 @@ public class TerrainGameplay
         chunk.Info.Modified = true;
         
         // Update lighting for the placed block
-        Lighting.Generate(chunk);
+        GameScene.Lighting.Generate(chunk);
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
         
-        var meshData = TMesh.GenerateMeshData(chunk);
-        chunk.Model = TMesh.UploadMesh(meshData);
+        var meshData = GameScene.TMesh.GenerateMeshData(chunk);
+        chunk.Model = GameScene.TMesh.UploadMesh(meshData);
         
-        TMesh.RemeshNeighbors(chunk);
+        GameScene.TMesh.RemeshNeighbors(chunk);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

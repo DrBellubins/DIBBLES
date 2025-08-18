@@ -6,8 +6,10 @@ using DIBBLES.Utils;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
+using DIBBLES.Scenes;
 using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Systems;
@@ -22,9 +24,6 @@ public class TerrainGeneration
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
     public static Shader terrainShader;
-    public static TerrainMesh TMesh = new TerrainMesh();
-    public static TerrainLighting Lighting = new TerrainLighting();
-    public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static int Seed = 997996781;
     
@@ -87,10 +86,10 @@ public class TerrainGeneration
         // Initial remesh/lighting
         if (areAllChunksLoaded(currentChunk) && !DoneLoading)
         {
-            Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
+            GameScene.Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
             foreach (var chunk in Chunks.Values)
-                TMesh.RemeshNeighbors(chunk);
+                GameScene.TMesh.RemeshNeighbors(chunk);
 
             DoneLoading = true;
         }
@@ -105,11 +104,11 @@ public class TerrainGeneration
             if (chunk.Model.MeshCount > 0)
                 Raylib.UnloadModel(chunk.Model);
 
-            chunk.Model = TMesh.UploadMesh(meshData);
+            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
         };
         
-        TMesh.RecentlyRemeshedNeighbors.Clear();
+        GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");
@@ -145,16 +144,16 @@ public class TerrainGeneration
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
                         chunk = savedChunk;
-                        Lighting.Generate(chunk);
+                        GameScene.Lighting.Generate(chunk);
                     }
                     else
                     {
                         chunk = new Chunk(pos);
                         GenerateChunkData(chunk);
-                        Lighting.Generate(chunk);
+                        GameScene.Lighting.Generate(chunk);
                     }
 
-                    var meshData = TMesh.GenerateMeshData(chunk);
+                    var meshData = GameScene.TMesh.GenerateMeshData(chunk);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -292,39 +291,27 @@ public class TerrainGeneration
         }
     }
     
-    private void remeshAndRelightNeighborsParallel(Chunk chunk)
+    public void ChunkTick()
     {
-        int[] offsets = { -ChunkSize, ChunkSize };
-        var neighborTasks = new List<Task>();
-
-        foreach (var axis in new[] { 0, 1, 2 })
+        foreach (var chunk in Chunks.Values)
         {
-            foreach (int offset in offsets)
-            {
-                Vector3Int neighborPos = chunk.Position;
-                
-                if (axis == 0) neighborPos.X += offset;
-                if (axis == 1) neighborPos.Y += offset;
-                if (axis == 2) neighborPos.Z += offset;
-
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                {
-                    // Lighting and mesh gen in parallel
-                    var lightingTask = Task.Run(() => Lighting.Generate(neighborChunk));
-                    
-                    var meshTask = Task.Run(() =>
-                    {
-                        var meshData = TMesh.GenerateMeshData(neighborChunk);
-                        meshUploadQueue.Enqueue((neighborChunk, meshData));
-                    });
-                    
-                    neighborTasks.Add(lightingTask);
-                    neighborTasks.Add(meshTask);
-                }
-            }
+            UpdateChunkDayNight(chunk);
         }
-        
-        Task.WaitAll(neighborTasks.ToArray());
+    }
+    
+    private void UpdateChunkDayNight(Chunk chunk)
+    {
+        // Example: Update block light levels, spawn mobs, etc.
+        if (DayNightCycle.IsDay)
+        {
+            // Set sunlight, despawn night mobs, etc.
+        }
+        else
+        {
+            // Set moonlight, spawn night mobs, etc.
+        }
+
+        // You could also apply gradual transitions based on Time.WorldTime.
     }
     
     private void OnChunkUnloaded(Vector3Int chunkPos)
@@ -341,8 +328,8 @@ public class TerrainGeneration
     
                 if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
                 {
-                    Lighting.Generate(neighborChunk);
-                    TMesh.RemeshNeighbors(neighborChunk);
+                    GameScene.Lighting.Generate(neighborChunk);
+                    GameScene.TMesh.RemeshNeighbors(neighborChunk);
                 }
             }
             neighborPos = chunkPos;
