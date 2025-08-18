@@ -34,6 +34,7 @@ public class TerrainGeneration
 
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new();
+    private HashSet<Vector3Int> pendingNeighbors = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
     public void Start()
@@ -75,21 +76,16 @@ public class TerrainGeneration
             hasGenerated = true;
         }
         
-        // TODO: Doesn't work with infinite world
-        // TODO: Remeshing is very slow. Needs to be multi-threaded
-        /*if (areAllChunksLoaded(currentChunk))
+        // Initial remesh/lighting
+        /*if (areAllChunksLoaded(currentChunk) && !hasRemeshed)
         {
             Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
-            if (!hasRemeshed)
-            {
-                // Regen all meshes after first gen for chunk border culling
-                foreach (var chunk in Chunks.Values)
-                    remeshNeigbors(chunk.Position);
-                
-                hasRemeshed =  true;
-                player.ShouldUpdate = true;
-            }
+            foreach (var chunk in Chunks.Values)
+                TMesh.RemeshNeighbors(chunk);
+
+            player.ShouldUpdate = true;
+            hasRemeshed = true;
         }*/
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -106,6 +102,9 @@ public class TerrainGeneration
 
                 chunk.Model = TMesh.UploadMesh(meshData);
                 Chunks[chunk.Position] = chunk;
+                
+                // Notify chunk has loaded for neighbor system
+                OnChunkGenerated(chunk.Position);
             }
         };
         
@@ -286,9 +285,78 @@ public class TerrainGeneration
         {
             Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
             Chunks.Remove(coord);
+            OnChunkUnloaded(coord);
         }
     }
 
+    private void OnChunkGenerated(Vector3Int chunkPos)
+    {
+        if (!Chunks.TryGetValue(chunkPos, out var chunk)) return;
+    
+        // Relight and remesh this chunk
+        Lighting.Generate(chunk);
+        TMesh.RemeshNeighbors(chunk);
+    
+        // For each neighbor, update if present, else mark for later
+        int[] offsets = { -ChunkSize, ChunkSize };
+        
+        foreach (var axis in new[] { 0, 1, 2 })
+        {
+            Vector3Int neighborPos = chunkPos;
+            
+            foreach (int offset in offsets)
+            {
+                if (axis == 0) neighborPos.X = chunkPos.X + offset;
+                if (axis == 1) neighborPos.Y = chunkPos.Y + offset;
+                if (axis == 2) neighborPos.Z = chunkPos.Z + offset;
+    
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                {
+                    Lighting.Generate(neighborChunk);
+                    TMesh.RemeshNeighbors(neighborChunk);
+                }
+                else
+                {
+                    // Mark for pending update (neighbor will update this chunk when it loads)
+                    pendingNeighbors.Add(neighborPos);
+                }
+            }
+            
+            // Reset axis for next
+            neighborPos = chunkPos;
+        }
+    
+        // If this chunk had pending updates, now update all its neighbors (and itself)
+        if (pendingNeighbors.Contains(chunkPos))
+        {
+            Lighting.Generate(chunk);
+            TMesh.RemeshNeighbors(chunk);
+            pendingNeighbors.Remove(chunkPos);
+        }
+    }
+    
+    private void OnChunkUnloaded(Vector3Int chunkPos)
+    {
+        int[] offsets = { -ChunkSize, ChunkSize };
+        foreach (var axis in new[] { 0, 1, 2 })
+        {
+            Vector3Int neighborPos = chunkPos;
+            foreach (int offset in offsets)
+            {
+                if (axis == 0) neighborPos.X = chunkPos.X + offset;
+                if (axis == 1) neighborPos.Y = chunkPos.Y + offset;
+                if (axis == 2) neighborPos.Z = chunkPos.Z + offset;
+    
+                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                {
+                    Lighting.Generate(neighborChunk);
+                    TMesh.RemeshNeighbors(neighborChunk);
+                }
+            }
+            neighborPos = chunkPos;
+        }
+    }
+    
     private bool areAllChunksLoaded(Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
