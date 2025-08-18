@@ -14,10 +14,10 @@ namespace DIBBLES.Systems;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 8;
+    public const int RenderDistance = 16;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
@@ -37,6 +37,8 @@ public class TerrainGeneration
     private HashSet<Vector3Int> pendingNeighbors = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
+    private Stopwatch stopwatch = new();
+    
     public void Start()
     {
         Block.InitializeBlockPrefabs();
@@ -54,7 +56,8 @@ public class TerrainGeneration
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
     
-    private bool hasRemeshed = false;
+    private bool FUCK = false;
+    private bool initialLoad = false;
     
     public void Update(Player player)
     {
@@ -66,40 +69,43 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        if (currentChunk != lastCameraChunk)
+        if (!FUCK)
+        //if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
+            
+            FUCK = true;
         }
+
+        if (Raylib.IsKeyPressed(KeyboardKey.H))
+            player.ShouldUpdate = true;
         
         // Initial remesh/lighting
-        if (areAllChunksLoaded(currentChunk) && !hasRemeshed)
+        if (areAllChunksLoaded(currentChunk) && !initialLoad)
         {
             Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
             foreach (var chunk in Chunks.Values)
                 TMesh.RemeshNeighbors(chunk);
 
-            player.ShouldUpdate = true;
-            hasRemeshed = true;
+            //player.ShouldUpdate = true;
+            initialLoad = true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
         {
-            if (!hasRemeshed)
-            {
-                var chunk = entry.chunk;
-                var meshData = entry.meshData;
+            var chunk = entry.chunk;
+            var meshData = entry.meshData;
             
-                // Upload mesh on main thread
-                if (chunk.Model.MeshCount > 0)
-                    Raylib.UnloadModel(chunk.Model);
+            // Upload mesh on main thread
+            if (chunk.Model.MeshCount > 0)
+                Raylib.UnloadModel(chunk.Model);
 
-                chunk.Model = TMesh.UploadMesh(meshData);
-                Chunks[chunk.Position] = chunk;
-            }
+            chunk.Model = TMesh.UploadMesh(meshData);
+            Chunks[chunk.Position] = chunk;
         };
         
         TMesh.RecentlyRemeshedNeighbors.Clear();
