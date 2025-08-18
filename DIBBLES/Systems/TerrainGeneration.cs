@@ -26,10 +26,13 @@ public class TerrainGeneration
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
+    public static int Seed = 997996781;
+    
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
     
-    public static int Seed = 997996781;
+    public static bool DoneLoading = false;
+    
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
@@ -56,7 +59,6 @@ public class TerrainGeneration
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
     
-    private bool FUCK = false;
     private bool initialLoad = false;
     
     public void Update(Player player)
@@ -69,29 +71,28 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        if (!FUCK)
+        if (!initialLoad)
         //if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
             
-            FUCK = true;
+            initialLoad = true;
         }
 
         if (Raylib.IsKeyPressed(KeyboardKey.H))
             player.ShouldUpdate = true;
         
         // Initial remesh/lighting
-        if (areAllChunksLoaded(currentChunk) && !initialLoad)
+        if (areAllChunksLoaded(currentChunk) && !DoneLoading)
         {
             Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
             foreach (var chunk in Chunks.Values)
                 TMesh.RemeshNeighbors(chunk);
 
-            //player.ShouldUpdate = true;
-            initialLoad = true;
+            DoneLoading = true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
