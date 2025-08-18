@@ -54,7 +54,6 @@ public class TerrainGeneration
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
 
-    private bool hasGenerated = false; // FOR TESTING PURPOSES
     private bool hasRemeshed = false;
     
     public void Update(Player player)
@@ -72,8 +71,6 @@ public class TerrainGeneration
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
             UnloadDistantChunks(currentChunk);
-            
-            hasGenerated = true;
         }
         
         // Initial remesh/lighting
@@ -102,9 +99,6 @@ public class TerrainGeneration
 
                 chunk.Model = TMesh.UploadMesh(meshData);
                 Chunks[chunk.Position] = chunk;
-                
-                // Notify chunk has loaded for neighbor system
-                OnChunkGenerated(chunk.Position);
             }
         };
         
@@ -144,20 +138,26 @@ public class TerrainGeneration
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
                         chunk = savedChunk;
-                        Lighting.Generate(chunk);
                     }
                     else
                     {
                         chunk = new Chunk(pos);
                         GenerateChunkData(chunk);
-                        Lighting.Generate(chunk);
                     }
                     
-                    // Generate mesh data in this thread (not Raylib mesh!)
-                    var meshData = TMesh.GenerateMeshData(chunk);
+                    // Lighting and mesh generation can be parallelized
+                    var lightingTask = Task.Run(() => Lighting.Generate(chunk));
+                    var meshTask = Task.Run(() => TMesh.GenerateMeshData(chunk));
+
+                    Task.WaitAll(lightingTask, meshTask);
+
+                    var meshData = meshTask.Result; // MeshData from meshTask
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
+
+                    // Neighbor remesh/lighting in parallel (if neighbors exist)
+                    remeshAndRelightNeighborsParallel(chunk);
 
                     generatingChunks.TryRemove(pos, out _);
                 }
@@ -288,51 +288,40 @@ public class TerrainGeneration
             OnChunkUnloaded(coord);
         }
     }
-
-    private void OnChunkGenerated(Vector3Int chunkPos)
+    
+    private void remeshAndRelightNeighborsParallel(Chunk chunk)
     {
-        if (!Chunks.TryGetValue(chunkPos, out var chunk)) return;
-    
-        // Relight and remesh this chunk
-        Lighting.Generate(chunk);
-        TMesh.RemeshNeighbors(chunk);
-    
-        // For each neighbor, update if present, else mark for later
         int[] offsets = { -ChunkSize, ChunkSize };
-        
+        var neighborTasks = new List<Task>();
+
         foreach (var axis in new[] { 0, 1, 2 })
         {
-            Vector3Int neighborPos = chunkPos;
-            
             foreach (int offset in offsets)
             {
-                if (axis == 0) neighborPos.X = chunkPos.X + offset;
-                if (axis == 1) neighborPos.Y = chunkPos.Y + offset;
-                if (axis == 2) neighborPos.Z = chunkPos.Z + offset;
-    
+                Vector3Int neighborPos = chunk.Position;
+                
+                if (axis == 0) neighborPos.X += offset;
+                if (axis == 1) neighborPos.Y += offset;
+                if (axis == 2) neighborPos.Z += offset;
+
                 if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
                 {
-                    Lighting.Generate(neighborChunk);
-                    TMesh.RemeshNeighbors(neighborChunk);
-                }
-                else
-                {
-                    // Mark for pending update (neighbor will update this chunk when it loads)
-                    pendingNeighbors.Add(neighborPos);
+                    // Lighting and mesh gen in parallel
+                    var lightingTask = Task.Run(() => Lighting.Generate(neighborChunk));
+                    
+                    var meshTask = Task.Run(() =>
+                    {
+                        var meshData = TMesh.GenerateMeshData(neighborChunk);
+                        meshUploadQueue.Enqueue((neighborChunk, meshData));
+                    });
+                    
+                    neighborTasks.Add(lightingTask);
+                    neighborTasks.Add(meshTask);
                 }
             }
-            
-            // Reset axis for next
-            neighborPos = chunkPos;
         }
-    
-        // If this chunk had pending updates, now update all its neighbors (and itself)
-        if (pendingNeighbors.Contains(chunkPos))
-        {
-            Lighting.Generate(chunk);
-            TMesh.RemeshNeighbors(chunk);
-            pendingNeighbors.Remove(chunkPos);
-        }
+        
+        Task.WaitAll(neighborTasks.ToArray());
     }
     
     private void OnChunkUnloaded(Vector3Int chunkPos)
