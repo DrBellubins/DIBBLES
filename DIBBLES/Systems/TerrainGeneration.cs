@@ -53,7 +53,7 @@ public class TerrainGeneration
         
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
-
+    
     private bool hasRemeshed = false;
     
     public void Update(Player player)
@@ -138,26 +138,22 @@ public class TerrainGeneration
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
                         chunk = savedChunk;
+                        Lighting.Generate(chunk);
                     }
                     else
                     {
                         chunk = new Chunk(pos);
                         GenerateChunkData(chunk);
+                        Lighting.Generate(chunk);
                     }
-                    
-                    // Lighting and mesh generation can be parallelized
-                    var lightingTask = Task.Run(() => Lighting.Generate(chunk));
-                    var meshTask = Task.Run(() => TMesh.GenerateMeshData(chunk));
 
-                    Task.WaitAll(lightingTask, meshTask);
-
-                    var meshData = meshTask.Result; // MeshData from meshTask
+                    var meshData = TMesh.GenerateMeshData(chunk);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
 
                     // Neighbor remesh/lighting in parallel (if neighbors exist)
-                    remeshAndRelightNeighborsParallel(chunk);
+                    //remeshAndRelightNeighborsParallel(chunk);
 
                     generatingChunks.TryRemove(pos, out _);
                 }
