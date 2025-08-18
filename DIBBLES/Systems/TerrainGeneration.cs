@@ -77,7 +77,7 @@ public class TerrainGeneration
         }
         
         // Initial remesh/lighting
-        /*if (areAllChunksLoaded(currentChunk) && !hasRemeshed)
+        if (areAllChunksLoaded(currentChunk) && !hasRemeshed)
         {
             Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
             
@@ -86,7 +86,7 @@ public class TerrainGeneration
 
             player.ShouldUpdate = true;
             hasRemeshed = true;
-        }*/
+        }
         
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
@@ -372,36 +372,6 @@ public class TerrainGeneration
         }
         
         return true;
-    }
-    
-    private void remeshNeigbors(Vector3Int chunkPos)
-    {
-        // For each axis neighbor
-        int[] offsets = { -ChunkSize, ChunkSize };
-        
-        foreach (int dx in offsets)
-        {
-            Vector3Int neighborPos = chunkPos + new Vector3Int(dx, 0, 0);
-            
-            if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighborPos(neighborPos);
-        }
-        
-        foreach (int dy in offsets)
-        {
-            Vector3Int neighborPos = chunkPos + new Vector3Int(0, dy, 0);
-            
-            if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighborPos(neighborPos);
-        }
-        
-        foreach (int dz in offsets)
-        {
-            Vector3Int neighborPos = chunkPos + new Vector3Int(0, 0, dz);
-            
-            if (Chunks.ContainsKey(neighborPos))
-                TMesh.RemeshNeighborPos(neighborPos);
-        }
     }
     
     public void Draw()
