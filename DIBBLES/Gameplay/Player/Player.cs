@@ -46,18 +46,18 @@ public class Player
     
     public bool FreeCamEnabled = false;
     public Freecam freecam = new Freecam();
-    public Vector3 previousPosition = Vector3.Zero; // For freecam toggle
+    //public Vector3 previousPosition = Vector3.Zero; // For freecam toggle
     
     public bool ShouldUpdate = false;
+    
+    public float CameraPitch = 0f;
+    public float CameraYaw = 0f;
     
     private HandModel handModel = new HandModel();
     
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
-    
-    private float cameraPitch = 0f;
-    private float cameraYaw = 0f;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -93,9 +93,9 @@ public class Player
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
-                Position = previousPosition;
-            else
-                previousPosition = Position;
+            {
+                Velocity = Vector3.Zero;
+            }
             
             FreeCamEnabled = !FreeCamEnabled;
         }
@@ -158,14 +158,14 @@ public class Player
         var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
         var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
 
-        cameraYaw += GMath.ToRadians(-mouseDeltaX); // Yaw: left and right
-        cameraPitch += GMath.ToRadians(mouseDeltaY); // Pitch: up and down
+        CameraYaw += GMath.ToRadians(-mouseDeltaX); // Yaw: left and right
+        CameraPitch += GMath.ToRadians(mouseDeltaY); // Pitch: up and down
 
-        cameraPitch = Math.Clamp(cameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
+        CameraPitch = Math.Clamp(CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
         // Build quaternion from yaw and pitch (yaw first, then pitch)
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, cameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
 
@@ -181,16 +181,16 @@ public class Player
         
         // Forward on XZ plane ignoring pitch
         Vector3 forwardXZ = new Vector3(
-            MathF.Sin(cameraYaw),
+            MathF.Sin(CameraYaw),
             0.0f,
-            MathF.Cos(cameraYaw)
+            MathF.Cos(CameraYaw)
         );
 
         // Right on XZ plane ignoring pitch
         Vector3 rightXZ = new Vector3(
-            MathF.Cos(cameraYaw),
+            MathF.Cos(CameraYaw),
             0.0f,
-            -MathF.Sin(cameraYaw)
+            -MathF.Sin(CameraYaw)
         );
         
         Vector3 wishDir = (forwardXZ * inputDir.Z) + (-rightXZ * inputDir.X);
@@ -340,12 +340,12 @@ public class Player
     {
         direction = Vector3.Normalize(direction);
 
-        cameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
-        cameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
+        CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
+        CameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
 
         // Now construct CameraRotation as usual
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, cameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, cameraPitch);
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }

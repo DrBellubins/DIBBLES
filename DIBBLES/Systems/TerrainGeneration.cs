@@ -79,18 +79,14 @@ public class TerrainGeneration
             
             initialLoad = true;
         }
-
-        if (Raylib.IsKeyPressed(KeyboardKey.H))
-            player.ShouldUpdate = true;
         
         // Initial remesh/lighting
         if (areAllChunksLoaded(currentChunk) && !DoneLoading)
         {
-            GameScene.Lighting.GenerateGlobalLighting(Chunks.Values.ToList());
-            
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
 
+            player.ShouldUpdate = true;
             DoneLoading = true;
         }
         
@@ -158,9 +154,6 @@ public class TerrainGeneration
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
 
-                    // Neighbor remesh/lighting in parallel (if neighbors exist)
-                    //remeshAndRelightNeighborsParallel(chunk);
-
                     generatingChunks.TryRemove(pos, out _);
                 }
                 catch (Exception e)
@@ -207,35 +200,41 @@ public class TerrainGeneration
                     
                     var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
+                    Block currentBlock;
+                    
                     // Loop downward
                     if (islandNoise > 0.7f) // Islands
                     {
                         if (!foundSurface)
                         {
                             // This is the surface
-                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Grass]);
+                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Grass]);
                             foundSurface = true;
                             islandDepth = 0;
                             surfaceY = worldY;
                         }
                         else if (islandDepth < 3) // dirt thickness = 3
                         {
-                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Dirt]);
+                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Dirt]);
                             islandDepth++;
                         }
                         else
                         {
-                            chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Stone]);
+                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Stone]);
                             islandDepth++;
                         }
+                        
+                        currentBlock.InsideIsland = true;
                     }
                     else // Not islands
                     {
-                        chunk.Blocks[x, y, z] = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
                     }
                     
+                    chunk.Blocks[x, y, z] = currentBlock;
+                    
                     // Loop upward
-                    if (foundSurface)
+                    /*if (foundSurface)
                     {
                         int wispOffset = 4;
                         int wispY = surfaceY + wispOffset;
@@ -252,7 +251,7 @@ public class TerrainGeneration
                                     chunk.Blocks[x, localWispY, z] = new Block(new Vector3Int(worldX, wispY, worldZ), Block.Prefabs[BlockType.Wisp]);
                             }
                         }
-                    }
+                    }*/
                 }
             }
         }
@@ -295,11 +294,11 @@ public class TerrainGeneration
     {
         foreach (var chunk in Chunks.Values)
         {
-            UpdateChunkDayNight(chunk);
+            updateChunkDayNight(chunk);
         }
     }
     
-    private void UpdateChunkDayNight(Chunk chunk)
+    private void updateChunkDayNight(Chunk chunk)
     {
         // Example: Update block light levels, spawn mobs, etc.
         if (DayNightCycle.IsDay)
