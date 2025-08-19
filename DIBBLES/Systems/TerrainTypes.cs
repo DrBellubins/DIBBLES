@@ -137,7 +137,7 @@ public class Block
 
             if (texture.Id == 0) // Check if texture failed to load
                 texture = Resource.Load<Texture2D>("error.png");
-            
+
             tempTextures.Add(texture);
             Textures.Add(blockType, texture); // Also store in Textures for reference
             
@@ -209,7 +209,7 @@ public class Block
             // Export atlas for debugging
             //Raylib.ExportImage(atlasImage, "atlas_debug.png");
             
-            Raylib.GenTextureMipmaps(ref atlasTexture);
+            //Raylib.GenTextureMipmaps(ref atlasTexture); // Texture sampling bleeds to neighboring textures
             Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);
             
             Raylib.UnloadImage(atlasImage);

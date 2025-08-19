@@ -44,7 +44,7 @@ public class Player
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
     
-    public bool FreeCamEnabled = false;
+    public bool FreeCamEnabled = true;
     public Freecam freecam = new Freecam();
     //public Vector3 previousPosition = Vector3.Zero; // For freecam toggle
     
@@ -236,12 +236,8 @@ public class Player
         }
 
         // Relax speed cap for bunnyhopping
-        if (isGrounded && wasGrounded)
-        {
-            // Apply speed cap only when grounded for multiple frames (not a bunnyhop)
-            if (velXZ.Length() > currentSpeed)
-                velXZ = Vector3.Normalize(velXZ) * currentSpeed;
-        }
+        if (velXZ.Length() > currentSpeed)
+            velXZ = Vector3.Normalize(velXZ) * currentSpeed;
 
         Velocity.X = velXZ.X;
         Velocity.Z = velXZ.Z;

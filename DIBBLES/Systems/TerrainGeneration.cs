@@ -25,7 +25,8 @@ public class TerrainGeneration
     
     public static Shader terrainShader;
     
-    public static int Seed = 997996781;
+    public static int Seed = 1337;
+    //public static int Seed = 997996781;
     
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
@@ -53,7 +54,7 @@ public class TerrainGeneration
         //else
         //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
-        WorldSave.Data.Seed  = Seed;
+        WorldSave.Data.Seed = Seed;
         
         terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
@@ -145,11 +146,12 @@ public class TerrainGeneration
                     else
                     {
                         chunk = new Chunk(pos);
-                        GenerateChunkData(chunk);
+                        generateChunkData(chunk);
                         GameScene.Lighting.Generate(chunk);
                     }
 
                     var meshData = GameScene.TMesh.GenerateMeshData(chunk);
+                    var tMeshData = GameScene.TMesh.GenerateTransparentMeshData(chunk);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -164,8 +166,46 @@ public class TerrainGeneration
             });
         }
     }
+
+    private void chunkTickAsync(Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        List<Vector3Int> chunksToTick = new();
+
+        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        {
+            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+
+            if (Chunks.ContainsKey(chunkPos))
+                chunksToTick.Add(chunkPos);
+        }
+
+        foreach (var pos in chunksToTick)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    var chunk = Chunks[pos]; // Might not be thread-safe!
+                    
+                    // Update lighting, then remesh.
+                    GameScene.Lighting.Generate(chunk);
+                    
+                    var meshData = GameScene.TMesh.GenerateMeshData(chunk);
+                    meshUploadQueue.Enqueue((chunk, meshData));
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            });
+        }
+    }
     
-    public static void GenerateChunkData(Chunk chunk)
+    private static void generateChunkData(Chunk chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
@@ -203,7 +243,7 @@ public class TerrainGeneration
                     Block currentBlock;
                     
                     // Loop downward
-                    if (islandNoise > 0.7f) // Islands
+                    if (islandNoise > 0.6f) // Islands
                     {
                         if (!foundSurface)
                         {
@@ -287,14 +327,6 @@ public class TerrainGeneration
             Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
             Chunks.Remove(coord);
             OnChunkUnloaded(coord);
-        }
-    }
-    
-    public void ChunkTick()
-    {
-        foreach (var chunk in Chunks.Values)
-        {
-            updateChunkDayNight(chunk);
         }
     }
     

@@ -28,7 +28,7 @@ public class TerrainMesh
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            if (chunk.Blocks[x, y, z]?.Info.Type == BlockType.Air) continue;
+            if (chunk.Blocks[x, y, z].Info.IsTransparent) continue;
 
             var pos = new Vector3(x, y, z);
             var blockType = chunk.Blocks[x, y, z].Info.Type;
@@ -253,17 +253,20 @@ public class TerrainMesh
             meshData.Vertices[i * 3 + 1] = vertices[i].Y;
             meshData.Vertices[i * 3 + 2] = vertices[i].Z;
         }
+        
         for (int i = 0; i < normals.Count; i++)
         {
             meshData.Normals[i * 3 + 0] = normals[i].X;
             meshData.Normals[i * 3 + 1] = normals[i].Y;
             meshData.Normals[i * 3 + 2] = normals[i].Z;
         }
+        
         for (int i = 0; i < texcoords.Count; i++)
         {
             meshData.TexCoords[i * 2 + 0] = texcoords[i].X;
             meshData.TexCoords[i * 2 + 1] = texcoords[i].Y;
         }
+        
         for (int i = 0; i < colors.Count; i++)
         {
             meshData.Colors[i * 4 + 0] = colors[i].R;
@@ -271,6 +274,275 @@ public class TerrainMesh
             meshData.Colors[i * 4 + 2] = colors[i].B;
             meshData.Colors[i * 4 + 3] = colors[i].A;
         }
+        
+        for (int i = 0; i < indices.Count; i++)
+        {
+            meshData.Indices[i] = (ushort)indices[i];
+        }
+
+        return meshData;
+    }
+    
+    // GENERATE TRANSPARENT MESH DATA
+    public MeshData GenerateTransparentMeshData(Chunk chunk)
+    {
+        List<Vector3> vertices = [];
+        List<int> indices = [];
+        List<Vector3> normals = [];
+        List<Vector2> texcoords = [];
+        List<Color> colors = [];
+
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkSize; y++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            if (!chunk.Blocks[x, y, z].Info.IsTransparent || chunk.Blocks[x,y,z].Info.Type == BlockType.Air) continue;
+
+            var pos = new Vector3(x, y, z);
+            var blockType = chunk.Blocks[x, y, z].Info.Type;
+            int vertexOffset = vertices.Count;
+
+            // Define cube vertices (8 corners)
+            Vector3[] cubeVertices =
+            [
+                pos + new Vector3(0, 0, 0), pos + new Vector3(1, 0, 0),
+                pos + new Vector3(1, 1, 0), pos + new Vector3(0, 1, 0),
+                pos + new Vector3(0, 0, 1), pos + new Vector3(1, 0, 1),
+                pos + new Vector3(1, 1, 1), pos + new Vector3(0, 1, 1)
+            ];
+
+            // Get UVs from atlas
+            Vector2[] uvCoords;
+            if (Block.AtlasUVs.TryGetValue(blockType, out var uvRect))
+            {
+                uvCoords = new Vector2[]
+                {
+                    new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
+                    new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height), // Top-right
+                    new Vector2(uvRect.X + uvRect.Width, uvRect.Y), // Bottom-right
+                    new Vector2(uvRect.X, uvRect.Y) // Bottom-left
+                };
+            }
+            else
+            {
+                uvCoords = new Vector2[]
+                {
+                    new Vector2(0, 1), new Vector2(1, 1),
+                    new Vector2(1, 0), new Vector2(0, 0)
+                };
+            }
+
+            Vector2[] rotatedUvCoords = new Vector2[]
+            {
+                uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0]
+            };
+
+            // Front face (-Z)
+            if (!isVoxelSolid(chunk, x, y, z - 1))
+            {
+                // Vertices: 0,3,2,1
+                float l0 = getVertexLight(chunk, x,   y,   z  );
+                float l1 = getVertexLight(chunk, x,   y+1, z  );
+                float l2 = getVertexLight(chunk, x+1, y+1, z  );
+                float l3 = getVertexLight(chunk, x+1, y,   z  );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[0], cubeVertices[3], cubeVertices[2], cubeVertices[1]]);
+                normals.AddRange([new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 2, vertexOffset + 3, vertexOffset, vertexOffset + 1, vertexOffset + 2]);
+                
+                vertexOffset += 4;
+            }
+            
+            // Back face (+Z)
+            if (!isVoxelSolid(chunk, x, y, z + 1))
+            {
+                // Vertices: 5,6,7,4
+                float l0 = getVertexLight(chunk, x+1, y,   z+1 );
+                float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
+                float l2 = getVertexLight(chunk, x,   y+1, z+1 );
+                float l3 = getVertexLight(chunk, x,   y,   z+1 );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[5], cubeVertices[6], cubeVertices[7], cubeVertices[4]]);
+                normals.AddRange([new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                
+                vertexOffset += 4;
+            }
+            
+            // Left face (-X)
+            if (!isVoxelSolid(chunk, x - 1, y, z))
+            {
+                // Vertices: 4,7,3,0
+                float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                float l1 = getVertexLight(chunk, x,   y+1, z+1 );
+                float l2 = getVertexLight(chunk, x,   y+1, z   );
+                float l3 = getVertexLight(chunk, x,   y,   z   );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[4], cubeVertices[7], cubeVertices[3], cubeVertices[0]]);
+                normals.AddRange([new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                
+                vertexOffset += 4;
+            }
+            
+            // Right face (+X)
+            if (!isVoxelSolid(chunk, x + 1, y, z))
+            {
+                // Vertices: 1,2,6,5
+                float l0 = getVertexLight(chunk, x+1, y,   z   );
+                float l1 = getVertexLight(chunk, x+1, y+1, z   );
+                float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
+                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[1], cubeVertices[2], cubeVertices[6], cubeVertices[5]]);
+                normals.AddRange([new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                
+                vertexOffset += 4;
+            }
+            
+            // Bottom face (-Y)
+            if (!isVoxelSolid(chunk, x, y - 1, z))
+            {
+                // Vertices: 4,0,1,5
+                float l0 = getVertexLight(chunk, x,   y,   z+1 );
+                float l1 = getVertexLight(chunk, x,   y,   z   );
+                float l2 = getVertexLight(chunk, x+1, y,   z   );
+                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[4], cubeVertices[0], cubeVertices[1], cubeVertices[5]]);
+                normals.AddRange([new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                
+                vertexOffset += 4;
+            }
+            
+            // Top face (+Y)
+            if (!isVoxelSolid(chunk, x, y + 1, z))
+            {
+                // Vertices: 3,7,6,2
+                float l0 = getVertexLightTopFace(chunk, x,   y, z   );  
+                float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
+                float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
+                float l3 = getVertexLightTopFace(chunk, x+1, y, z   );  
+                
+                if (Fullbright)
+                {
+                    l0 = 1f;
+                    l1 = 1f;
+                    l2 = 1f;
+                    l3 = 1f;
+                }
+                
+                colors.AddRange([
+                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
+                ]);
+                
+                vertices.AddRange([cubeVertices[3], cubeVertices[7], cubeVertices[6], cubeVertices[2]]);
+                normals.AddRange([new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0)]);
+                texcoords.AddRange(rotatedUvCoords);
+                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+            }
+        }
+
+        // Convert lists to arrays
+        int vcount = vertices.Count;
+        int icount = indices.Count / 3;
+        var meshData = new MeshData(vcount, icount);
+
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            meshData.Vertices[i * 3 + 0] = vertices[i].X;
+            meshData.Vertices[i * 3 + 1] = vertices[i].Y;
+            meshData.Vertices[i * 3 + 2] = vertices[i].Z;
+        }
+        
+        for (int i = 0; i < normals.Count; i++)
+        {
+            meshData.Normals[i * 3 + 0] = normals[i].X;
+            meshData.Normals[i * 3 + 1] = normals[i].Y;
+            meshData.Normals[i * 3 + 2] = normals[i].Z;
+        }
+        
+        for (int i = 0; i < texcoords.Count; i++)
+        {
+            meshData.TexCoords[i * 2 + 0] = texcoords[i].X;
+            meshData.TexCoords[i * 2 + 1] = texcoords[i].Y;
+        }
+        
+        for (int i = 0; i < colors.Count; i++)
+        {
+            meshData.Colors[i * 4 + 0] = colors[i].R;
+            meshData.Colors[i * 4 + 1] = colors[i].G;
+            meshData.Colors[i * 4 + 2] = colors[i].B;
+            meshData.Colors[i * 4 + 3] = colors[i].A;
+        }
+        
         for (int i = 0; i < indices.Count; i++)
         {
             meshData.Indices[i] = (ushort)indices[i];
@@ -363,12 +635,14 @@ public class TerrainMesh
         // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
         float total = 0f;
         int count = 0;
+        
         for (int dx = 0; dx <= 1; dx++)
         for (int dz = 0; dz <= 1; dz++)
         {
             int nx = vx - dx;
             int ny = vy + 1;
             int nz = vz - dz;
+            
             total += neighborLightLevel(chunk, nx, ny, nz);
             count++;
         }
