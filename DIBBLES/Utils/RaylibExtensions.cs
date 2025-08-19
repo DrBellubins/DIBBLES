@@ -41,7 +41,7 @@ public static class RayEx
         };
 
         // Get camera up and forward
-        Camera3D cam = GameScene.Player.Camera;
+        Camera3D cam = GameScene.PlayerCharacter.Camera;
         Vector3 camPos = cam.Position;
         Vector3 camUp = cam.Up;
         Vector3 camForward = Vector3.Normalize(cam.Target - cam.Position);

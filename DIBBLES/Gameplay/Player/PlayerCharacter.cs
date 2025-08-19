@@ -9,7 +9,7 @@ using static DIBBLES.Systems.TerrainGeneration;
 namespace DIBBLES.Gameplay.Player;
 
 // TODO: Crouching freezes player
-public class Player
+public class PlayerCharacter
 {
     // HL2 movement values, converted to meters and m/s.
     public const float WalkSpeed = 3.619f;        // 361.9 Hu
@@ -46,7 +46,6 @@ public class Player
     
     public bool FreeCamEnabled = true;
     public Freecam freecam = new Freecam();
-    //public Vector3 previousPosition = Vector3.Zero; // For freecam toggle
     
     public bool ShouldUpdate = false;
     
@@ -122,20 +121,20 @@ public class Player
         if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left))
             Raylib.DisableCursor();
         
-        if (Raylib.IsKeyDown(KeyboardKey.W)) inputDir.Z += 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.S)) inputDir.Z -= 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.A)) inputDir.X -= 1.0f;
-        if (Raylib.IsKeyDown(KeyboardKey.D)) inputDir.X += 1.0f;
+        if (Input.MoveForward()) inputDir.Z += 1.0f;
+        if (Input.MoveBackward()) inputDir.Z -= 1.0f;
+        if (Input.MoveLeft()) inputDir.X -= 1.0f;
+        if (Input.MoveRight()) inputDir.X += 1.0f;
 
-        if (Raylib.IsKeyDown(KeyboardKey.LeftShift) && !isCrouching)
+        if (Input.Run() && !isCrouching)
             currentSpeed = RunSpeed;
         else
             currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
         
-        var crouchKey = Raylib.IsKeyDown(KeyboardKey.C);
+        var crouchKey = Input.Crouch();
         isCrouching = crouchKey;
         
-        isJumping = isCrouching ? Raylib.IsKeyPressed(KeyboardKey.Space) : Raylib.IsKeyDown(KeyboardKey.Space);
+        isJumping = Input.Jump(isCrouching);
 
         // TODO: Add justJumped and justLanded
         
@@ -152,14 +151,15 @@ public class Player
         // Collision detection
         CheckCollisions();
         
-        CollisionBox = GetPlayerBox(Position, currentHeight); // Needs to be set after collision detection
+        CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
 
         // --- Mouse input for camera rotation ---
-        var mouseDeltaX = Raylib.GetMouseDelta().X * mouseSensitivity;
-        var mouseDeltaY = Raylib.GetMouseDelta().Y * mouseSensitivity;
+        var lookDelta = Input.LookDelta();
+        var lookDeltaX = lookDelta.X * mouseSensitivity;
+        var lookDeltaY = lookDelta.Y * mouseSensitivity;
 
-        CameraYaw += GMath.ToRadians(-mouseDeltaX); // Yaw: left and right
-        CameraPitch += GMath.ToRadians(mouseDeltaY); // Pitch: up and down
+        CameraYaw += GMath.ToRadians(-lookDeltaX); // Yaw: left and right
+        CameraPitch += GMath.ToRadians(lookDeltaY); // Pitch: up and down
 
         CameraPitch = Math.Clamp(CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
@@ -259,11 +259,11 @@ public class Player
         jumpLandPlayer.Update();
         
         // --- Block breaking and placing ---
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        if (Input.Break())
             GameScene.Gameplay.BreakBlock();
         
-        if (Raylib.IsMouseButtonPressed(MouseButton.Right) && hotbar.SelectedItem != null)
-            GameScene.Gameplay.PlaceBlock(hotbar.SelectedItem.Type);
+        if (Input.PlaceInteract() && hotbar.SelectedItem != null)
+            GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
 
         WorldSave.Data.PlayerPosition = Position;
         WorldSave.Data.CameraDirection = CameraForward;
@@ -293,19 +293,21 @@ public class Player
         // X axis
         newPosition.X += moveDelta.X;
         
-        var playerBoxX = GetPlayerBox(newPosition, currentHeight);
+        var playerBoxX = getBoundingBox(newPosition, currentHeight);
         var collidedX = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxX, box));
         
         if (collidedX)
         {
             newPosition.X -= moveDelta.X;
             Velocity.X = 0f;
+            
+            CollisionBox = playerBoxX;
         }
 
         // Y axis
         newPosition.Y += moveDelta.Y;
         
-        var playerBoxY = GetPlayerBox(newPosition, currentHeight);
+        var playerBoxY = getBoundingBox(newPosition, currentHeight);
         var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
         
         if (collidedY)
@@ -315,20 +317,23 @@ public class Player
             
             newPosition.Y -= moveDelta.Y;
             Velocity.Y = 0f;
+            
+            CollisionBox = playerBoxY;
         }
 
         // Z axis
         newPosition.Z += moveDelta.Z;
         
-        var playerBoxZ = GetPlayerBox(newPosition, currentHeight);
+        var playerBoxZ = getBoundingBox(newPosition, currentHeight);
         var collidedZ = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxZ, box));
         
         if (collidedZ)
         {
             newPosition.Z -= moveDelta.Z;
             Velocity.Z = 0f;
-        }
 
+            CollisionBox = playerBoxZ;
+        }
         Position = newPosition;
     }
     
@@ -421,7 +426,7 @@ public class Player
     }
     
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
-    private BoundingBox GetPlayerBox(Vector3 position, float height)
+    private BoundingBox getBoundingBox(Vector3 position, float height)
     {
         Vector3 min = new Vector3(
             position.X - 0.25f,

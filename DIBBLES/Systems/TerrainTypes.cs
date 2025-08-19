@@ -21,12 +21,8 @@ public enum BlockType
 
 public enum TerrainBiome
 {
-    Flatland,
     Plains,
-    Ocean,
-    Beach,
-    Mountains,
-    Forest,
+    Desert,
     Snowlands
 }
 

@@ -17,7 +17,7 @@ public class GameScene : Scene
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
     
-    public static Player Player = new Player();
+    public static PlayerCharacter PlayerCharacter = new PlayerCharacter();
     
     private FogEffect fogEffect = new FogEffect();
 
@@ -28,19 +28,19 @@ public class GameScene : Scene
         
         // Initial terrain generation
         terrainGen.Start();
-        terrainGen.Update(Player);
+        terrainGen.Update(PlayerCharacter);
         
-        Player.Start(); // Must be started after terrain
+        PlayerCharacter.Start(); // Must be started after terrain
         
         fogEffect.Start();
     }
 
     public override void Update()
     {
-        Player.Update();
+        PlayerCharacter.Update();
         
-        terrainGen.Update(Player);
-        Gameplay.Update(Player.Camera);
+        terrainGen.Update(PlayerCharacter);
+        Gameplay.Update(PlayerCharacter.Camera);
 
         if (Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
@@ -48,7 +48,7 @@ public class GameScene : Scene
         if (Raylib.IsKeyPressed(KeyboardKey.F2))
             Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
         
-        Debug.Update(Player.Camera); // Must run after everything
+        Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }
 
     public override void Draw()
@@ -59,17 +59,17 @@ public class GameScene : Scene
         fogEffect.DrawStart();
         Raylib.ClearBackground(Color.Black);
         
-        Raylib.BeginMode3D(Player.Camera);
+        Raylib.BeginMode3D(PlayerCharacter.Camera);
         
         terrainGen.Draw();
         
-        Player.Draw();
+        PlayerCharacter.Draw();
         
         Raylib.EndMode3D();
         
         fogEffect.DrawEnd();
         
-        Player.DrawUI();
+        PlayerCharacter.DrawUI();
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 

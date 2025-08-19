@@ -10,6 +10,7 @@ using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
+using DIBBLES.Terrain;
 using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Systems;
@@ -26,7 +27,6 @@ public class TerrainGeneration
     public static Shader terrainShader;
     
     public static int Seed = 1337;
-    //public static int Seed = 997996781;
     
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
@@ -61,13 +61,13 @@ public class TerrainGeneration
     
     private bool initialLoad = false;
     
-    public void Update(Player player)
+    public void Update(PlayerCharacter playerCharacter)
     {
         // Calculate current chunk coordinates based on camera position
         var currentChunk = new Vector3Int(
-            (int)Math.Floor(player.Position.X / ChunkSize),
-            (int)Math.Floor(player.Position.Y / ChunkSize),
-            (int)Math.Floor(player.Position.Z / ChunkSize)
+            (int)Math.Floor(playerCharacter.Position.X / ChunkSize),
+            (int)Math.Floor(playerCharacter.Position.Y / ChunkSize),
+            (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
 
         // Only update if the camera has moved to a new chunk
@@ -87,7 +87,7 @@ public class TerrainGeneration
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
 
-            player.ShouldUpdate = true;
+            playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
         
@@ -151,7 +151,7 @@ public class TerrainGeneration
                     }
 
                     var meshData = GameScene.TMesh.GenerateMeshData(chunk);
-                    var tMeshData = GameScene.TMesh.GenerateTransparentMeshData(chunk);
+                    //var tMeshData = GameScene.TMesh.GenerateTransparentMeshData(chunk);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -220,15 +220,20 @@ public class TerrainGeneration
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                var foundSurface = false;
-                var islandDepth = 0;
-                var surfaceY = -1;
+                var blockReturnData = new BlockReturnData();
+                blockReturnData.SurfaceY = -1;
                 
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
+                    var plainsBiome = new PlainsBiome();
+                    var desertBiome = new DesertBiome();
+                    var snowlandsBiome = new SnowlandsBiome();
+                    
                     var worldX = chunk.Position.X + x;
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
+                    
+                    blockReturnData.WorldPos = new Vector3Int(worldX, worldY, worldZ);
                     
                     // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -239,40 +244,33 @@ public class TerrainGeneration
                     noise.SetFractalGain(0.5f);
                     
                     var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-
-                    Block currentBlock;
                     
                     // Loop downward
                     if (islandNoise > 0.6f) // Islands
                     {
-                        if (!foundSurface)
-                        {
-                            // This is the surface
-                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Grass]);
-                            foundSurface = true;
-                            islandDepth = 0;
-                            surfaceY = worldY;
-                        }
-                        else if (islandDepth < 3) // dirt thickness = 3
-                        {
-                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Dirt]);
-                            islandDepth++;
-                        }
-                        else
-                        {
-                            currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Stone]);
-                            islandDepth++;
-                        }
+                        // Biome noise
+                        noise.SetFrequency(0.005f);
                         
-                        currentBlock.InsideIsland = true;
+                        var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                        
+                        if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
+                            desertBiome.Generate(ref blockReturnData);
+                        else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
+                            plainsBiome.Generate(ref blockReturnData);
+                        else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
+                            plainsBiome.Generate(ref blockReturnData);
+                        else // Fallback
+                            snowlandsBiome.Generate(ref blockReturnData);
+
+                        blockReturnData.CurrentBlock.InsideIsland = true;
                     }
                     else // Not islands
                     {
-                        currentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
                     }
                     
-                    chunk.Blocks[x, y, z] = currentBlock;
-                    
+                    chunk.Blocks[x, y, z] = blockReturnData.CurrentBlock;
+
                     // Loop upward
                     /*if (foundSurface)
                     {

@@ -119,6 +119,11 @@ public static class GMath
         return input >= min && input <= max;
     }
     
+    public static bool InRangeNotEqual(float input, float min, float max)
+    {
+        return input > min && input < max;
+    }
+    
     public static void MatrixToAxisAngle(Matrix4x4 m, out Vector3 axis, out float angleDeg)
     {
         float angleRad = MathF.Acos((m.M11 + m.M22 + m.M33 - 1f) / 2f);

@@ -7,11 +7,11 @@ namespace DIBBLES.Gameplay.Player;
 
 public class Freecam
 {
-    public void Update(Player player)
+    public void Update(PlayerCharacter playerCharacter)
     {
         float currentMovespeed;
 
-        if (Raylib.IsKeyDown(KeyboardKey.LeftShift))
+        if (Input.Run())
             currentMovespeed = 60f;
         else
             currentMovespeed = 20f;
@@ -20,40 +20,41 @@ public class Freecam
 
         var direction = new Vector3();
 
-        if (Raylib.IsKeyDown(KeyboardKey.W))
-            player.Position += player.CameraForward * moveSpeed;
+        if (Input.MoveForward())
+            playerCharacter.Position += playerCharacter.CameraForward * moveSpeed;
         
-        if (Raylib.IsKeyDown(KeyboardKey.S))
-            player.Position -= player.CameraForward * moveSpeed;
+        if (Input.MoveBackward())
+            playerCharacter.Position -= playerCharacter.CameraForward * moveSpeed;
 
-        if (Raylib.IsKeyDown(KeyboardKey.A))
-            player.Position -= player.CameraRight * moveSpeed;
+        if (Input.MoveLeft())
+            playerCharacter.Position -= playerCharacter.CameraRight * moveSpeed;
         
-        if (Raylib.IsKeyDown(KeyboardKey.D))
-            player.Position += player.CameraRight * moveSpeed;
+        if (Input.MoveRight())
+            playerCharacter.Position += playerCharacter.CameraRight * moveSpeed;
         
-        var mouseDeltaX = Raylib.GetMouseDelta().X * 0.1f;
-        var mouseDeltaY = Raylib.GetMouseDelta().Y * 0.1f;
+        var lookDelta = Input.LookDelta();
+        var lookDeltaX = lookDelta.X * 0.1f;
+        var lookDeltaY = lookDelta.Y * 0.1f;
 
-        player.CameraYaw += GMath.ToRadians(-mouseDeltaX); // Yaw: left and right
-        player.CameraPitch += GMath.ToRadians(mouseDeltaY); // Pitch: up and down
+        playerCharacter.CameraYaw += GMath.ToRadians(-lookDeltaX); // Yaw: left and right
+        playerCharacter.CameraPitch += GMath.ToRadians(lookDeltaY); // Pitch: up and down
 
-        player.CameraPitch = Math.Clamp(player.CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
+        playerCharacter.CameraPitch = Math.Clamp(playerCharacter.CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
         // Build quaternion from yaw and pitch (yaw first, then pitch)
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, player.CameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, player.CameraPitch);
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, playerCharacter.CameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, playerCharacter.CameraPitch);
 
-        player.CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+        playerCharacter.CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
 
         // Calculate camera direction
-        player.CameraForward = Vector3.Transform(Vector3.UnitZ, player.CameraRotation); // Forward
-        player.CameraUp = Vector3.Transform(Vector3.UnitY, player.CameraRotation);
-        player.CameraRight = Vector3.Transform(-Vector3.UnitX, player.CameraRotation); // This has to be flipped for some reason...
+        playerCharacter.CameraForward = Vector3.Transform(Vector3.UnitZ, playerCharacter.CameraRotation); // Forward
+        playerCharacter.CameraUp = Vector3.Transform(Vector3.UnitY, playerCharacter.CameraRotation);
+        playerCharacter.CameraRight = Vector3.Transform(-Vector3.UnitX, playerCharacter.CameraRotation); // This has to be flipped for some reason...
 
         // Camera position
-        player.Camera.Position = player.Position + new Vector3(0.0f, Player.PlayerHeight * 0.5f, 0.0f);
-        player.Camera.Target = player.Camera.Position + player.CameraForward;
-        player.Camera.Up = player.CameraUp;
+        playerCharacter.Camera.Position = playerCharacter.Position + new Vector3(0.0f, PlayerCharacter.PlayerHeight * 0.5f, 0.0f);
+        playerCharacter.Camera.Target = playerCharacter.Camera.Position + playerCharacter.CameraForward;
+        playerCharacter.Camera.Up = playerCharacter.CameraUp;
     }
 }

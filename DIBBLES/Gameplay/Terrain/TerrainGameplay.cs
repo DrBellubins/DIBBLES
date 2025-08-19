@@ -1,4 +1,5 @@
 using System.Numerics;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -206,7 +207,7 @@ public class TerrainGameplay
         }
     }
     
-    public void PlaceBlock(BlockType blockType)
+    public void PlaceBlock(PlayerCharacter player, BlockType blockType)
     {
         if (SelectedBlock == null || blockType == BlockType.Air)
             return;
@@ -241,6 +242,12 @@ public class TerrainGameplay
             localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize ||
             chunk.Blocks[localX, localY, localZ]?.Info.Type != BlockType.Air)
+            return;
+
+        var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());
+
+        // Don't place if collides with player
+        if (Raylib.CheckCollisionBoxes(player.CollisionBox, newBlockBoundingBox))
             return;
         
         // Place the new block
@@ -277,5 +284,21 @@ public class TerrainGameplay
             Math.Abs(normal.Y) > Math.Abs(normal.X) && Math.Abs(normal.Y) > Math.Abs(normal.Z) ? Math.Sign(normal.Y) : 0,
             Math.Abs(normal.Z) > Math.Abs(normal.X) && Math.Abs(normal.Z) > Math.Abs(normal.Y) ? Math.Sign(normal.Z) : 0
         );
+    }
+    
+    private BoundingBox getBlockBB(Vector3 position)
+    {
+        Vector3 min = new Vector3(
+            position.X - 0.5f,
+            position.Y - 0.5f,
+            position.Z - 0.5f
+        );
+        Vector3 max = new Vector3(
+            position.X + 0.5f,
+            position.Y + 0.5f,
+            position.Z + 0.5f
+        );
+        
+        return new BoundingBox(min + new Vector3(0.5f), max + new Vector3(0.5f));
     }
 }

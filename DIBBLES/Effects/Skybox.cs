@@ -100,7 +100,7 @@ public class Skybox
         }
     }
 
-    public void Draw(Player player)
+    public void Draw(PlayerCharacter playerCharacter)
     {
         // Draw skybox
         Rlgl.DisableBackfaceCulling();
@@ -109,9 +109,9 @@ public class Skybox
         
         // Set view and projection matrices
         Matrix4x4 view = Matrix4x4.CreateLookAt(
-            player.Camera.Position,
-            player.Camera.Target,
-            player.Camera.Up
+            playerCharacter.Camera.Position,
+            playerCharacter.Camera.Target,
+            playerCharacter.Camera.Up
         );
         
         Matrix4x4 rotView = Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(view));
@@ -119,13 +119,13 @@ public class Skybox
     
         Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matView"), rotView);
         Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matProjection"), Matrix4x4.CreatePerspectiveFieldOfView(
-            GMath.ToRadians(player.Camera.FovY),
+            GMath.ToRadians(playerCharacter.Camera.FovY),
             (float)Engine.VirtualScreenWidth / Engine.VirtualScreenHeight,
             0.1f, 1000.0f
         ));
         
         Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "Time"), Time.time, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "cameraPosition"), player.Camera.Position, ShaderUniformDataType.Vec3);
+        Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "cameraPosition"), playerCharacter.Camera.Position, ShaderUniformDataType.Vec3);
         
         // Bind cubemap texture explicitly before drawing
         Rlgl.ActiveTextureSlot(2);
