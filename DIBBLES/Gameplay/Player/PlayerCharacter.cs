@@ -156,28 +156,22 @@ public class PlayerCharacter
         
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
+        // Update falling state
+        isFalling = !isGrounded && Velocity.Y < 0f;
+        
         // Grounded/Landing checks
-        if (wasGrounded && !isGrounded && !isFalling) // Airborne
+        if (isGrounded && !wasGrounded) // Just landed
         {
-            Console.WriteLine("Starting fall");
-            fallTimer = 0f;
-            fallTimer += Time.DeltaTime;
-            
-            isFalling = true;
-        }
-        
-        if (!wasGrounded && isGrounded && isFalling) // Landed
-        {
-            Console.WriteLine("Ending fall");
+            Console.WriteLine("Just landed");
             justLanded = true;
-            isFalling = false;
+        }
+        else if (!isGrounded && wasGrounded && Velocity.Y < 0f) // Started falling
+        {
+            Console.WriteLine("Started falling");
         }
         
-        // --- Fall damage ---
-        if (justLanded)
-        {
-            Console.WriteLine($"Fall time: {fallTimer} seconds");
-        }
+        if (isFalling)
+            fallTimer += Time.DeltaTime;
         
         // --- Mouse input for camera rotation ---
         var lookDelta = Input.LookDelta();
@@ -284,6 +278,13 @@ public class PlayerCharacter
         
         jumpLandPlayer.Update();
         
+        // --- Fall damage ---
+        if (justLanded)
+        {
+            Console.WriteLine($"Fall time: {fallTimer} seconds");
+            fallTimer = 0f;
+        }
+        
         // --- Block breaking and placing ---
         placeBreakTimer += Time.DeltaTime;
 
@@ -338,7 +339,7 @@ public class PlayerCharacter
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
-        Debug.Draw2DText($"IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Color.White);
+        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Color.White);
         //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
     }
     
