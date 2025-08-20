@@ -17,7 +17,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 4;
+    public const int RenderDistance = 16;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
@@ -60,6 +60,7 @@ public class TerrainGeneration
     }
     
     private bool initialLoad = false;
+    float progress = 0f;
     
     public void Update(PlayerCharacter playerCharacter)
     {
@@ -81,18 +82,6 @@ public class TerrainGeneration
             initialLoad = true;
         }
         
-        // Initial remesh/lighting
-        // TODO: Doesn't run with save chunks
-        if (areAllChunksLoaded(currentChunk) && !DoneLoading)
-        {
-            foreach (var chunk in Chunks.Values)
-                GameScene.TMesh.RemeshNeighbors(chunk);
-
-            Console.WriteLine("FUH");
-            playerCharacter.ShouldUpdate = true;
-            DoneLoading = true;
-        }
-        
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
         {
@@ -102,10 +91,27 @@ public class TerrainGeneration
             // Upload mesh on main thread
             if (chunk.Model.MeshCount > 0)
                 Raylib.UnloadModel(chunk.Model);
-
+            
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
+           
+            int expectedChunkCount = (RenderDistance + 1) * (RenderDistance + 1) * (RenderDistance + 1);
+            progress++;
+            progress = (progress / expectedChunkCount) * 100f;
+            
+            Console.WriteLine($"{progress}% Chunk Upload Complete");
         };
+        
+        // Initial remesh/lighting
+        /*if (progress == 100 && !DoneLoading)
+        {
+            foreach (var chunk in Chunks.Values)
+                GameScene.TMesh.RemeshNeighbors(chunk);
+
+            playerCharacter.FreeCamEnabled = false;
+            playerCharacter.ShouldUpdate = true;
+            DoneLoading = true;
+        }*/
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
@@ -372,30 +378,15 @@ public class TerrainGeneration
         }
     }
     
-    private bool areAllChunksLoaded(Vector3Int centerChunk)
+    private int chunkLoadProgress()
     {
-        int halfRenderDistance = RenderDistance / 2;
-
-        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
-        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
-        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
-        {
-            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-
-            // Check if the chunk exists in Chunks
-            if (!Chunks.TryGetValue(chunkPos, out var chunk))
-            {
-                // If not present, check if it's in the saved ModifiedChunks
-                if (!WorldSave.Data.ModifiedChunks.TryGetValue(chunkPos, out chunk))
-                    return false;
-            }
-
-            // Optionally, check if the chunk has actually finished generating/loading
-            if (chunk == null || (!chunk.Info.Generated && !chunk.Info.Modified))
-                return false;
-        }
-
-        return true;
+        // The number of chunks in a cube of (RenderDistance + 1) per axis
+        int expectedChunkCount = (RenderDistance + 1) * (RenderDistance + 1) * (RenderDistance + 1);
+        int progress = (Chunks.Count / expectedChunkCount) * 100;
+        
+        Console.WriteLine($"Loading chunks: {progress}%");
+        
+        return progress;
     }
     
     public void Draw()
