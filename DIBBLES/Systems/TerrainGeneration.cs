@@ -95,7 +95,7 @@ public class TerrainGeneration
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
            
-            int expectedChunkCount = (RenderDistance + 1) * (RenderDistance + 1) * (RenderDistance + 1);
+            float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
             progress++;
             progress = (progress / expectedChunkCount) * 100f;
             
@@ -378,15 +378,12 @@ public class TerrainGeneration
         }
     }
     
-    private int chunkLoadProgress()
+    private bool areAllChunksLoaded()
     {
         // The number of chunks in a cube of (RenderDistance + 1) per axis
         int expectedChunkCount = (RenderDistance + 1) * (RenderDistance + 1) * (RenderDistance + 1);
-        int progress = (Chunks.Count / expectedChunkCount) * 100;
         
-        Console.WriteLine($"Loading chunks: {progress}%");
-        
-        return progress;
+        return Chunks.Count == expectedChunkCount;
     }
     
     public void Draw()
