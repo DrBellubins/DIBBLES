@@ -46,7 +46,8 @@ public class PlayerCharacter
     
     public bool FreeCamEnabled = true;
     public Freecam freecam = new Freecam();
-    
+
+    public bool NeedsToSpawn = false;
     public bool ShouldUpdate = false;
     
     public float CameraPitch = 0f;
@@ -289,8 +290,11 @@ public class PlayerCharacter
             }
         }
 
-        WorldSave.Data.PlayerPosition = Position;
-        WorldSave.Data.CameraDirection = CameraForward;
+        if (NeedsToSpawn)
+        {
+            spawn();
+            NeedsToSpawn = false;
+        }
     }
 
     public void Draw()
@@ -358,6 +362,7 @@ public class PlayerCharacter
 
             CollisionBox = playerBoxZ;
         }
+        
         Position = newPosition;
     }
     
@@ -375,7 +380,7 @@ public class PlayerCharacter
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }
     
-    public void Spawn()
+    private void spawn()
     {
         Console.WriteLine($"Spawning at {WorldSave.Data.PlayerPosition}");
         

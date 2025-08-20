@@ -26,7 +26,7 @@ public class TerrainGeneration
     
     public static Shader terrainShader;
     
-    public static int Seed = 1337;
+    public int Seed = 1337;
     
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
@@ -87,11 +87,10 @@ public class TerrainGeneration
         // Initial remesh/lighting
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
-            // TODO: Breaks spawning (puts player at -400-ish
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
-            
-            playerCharacter.Spawn();
+
+            playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
@@ -213,7 +212,7 @@ public class TerrainGeneration
         }
     }
     
-    private static void generateChunkData(Chunk chunk)
+    private void generateChunkData(Chunk chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)

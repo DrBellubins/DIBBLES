@@ -11,8 +11,7 @@ namespace DIBBLES.Scenes;
 
 public class GameScene : Scene
 {
-    private TerrainGeneration terrainGen = new TerrainGeneration();
-    
+    public static TerrainGeneration TerrainGen = new TerrainGeneration();
     public static TerrainMesh TMesh = new TerrainMesh();
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
@@ -27,8 +26,8 @@ public class GameScene : Scene
         Rlgl.SetClipPlanes(0.01f, 1000f);
         
         // Initial terrain generation
-        terrainGen.Start();
-        terrainGen.Update(PlayerCharacter);
+        TerrainGen.Start();
+        TerrainGen.Update(PlayerCharacter);
         
         PlayerCharacter.Start(); // Must be started after terrain
         
@@ -39,7 +38,7 @@ public class GameScene : Scene
     {
         PlayerCharacter.Update();
         
-        terrainGen.Update(PlayerCharacter);
+        TerrainGen.Update(PlayerCharacter);
         Gameplay.Update(PlayerCharacter.Camera);
 
         if (Raylib.IsKeyPressed(KeyboardKey.L))
@@ -61,7 +60,7 @@ public class GameScene : Scene
         
         Raylib.BeginMode3D(PlayerCharacter.Camera);
         
-        terrainGen.Draw();
+        TerrainGen.Draw();
         
         PlayerCharacter.Draw();
         
@@ -74,7 +73,7 @@ public class GameScene : Scene
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
-        Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
+        Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
         
         Debug.Draw2D();
         

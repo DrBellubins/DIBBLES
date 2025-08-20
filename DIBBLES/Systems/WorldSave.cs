@@ -1,5 +1,6 @@
 using System.Numerics;
 using System.Text;
+using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using static DIBBLES.Systems.TerrainGeneration;
 
@@ -46,16 +47,16 @@ public class WorldSave
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
                 // World data
-                writer.Write(Data.Seed);
+                writer.Write(GameScene.TerrainGen.Seed);
                 writer.Write(worldName);
                 
-                writer.Write(Data.PlayerPosition.X);
-                writer.Write(Data.PlayerPosition.Y);
-                writer.Write(Data.PlayerPosition.Z);
+                writer.Write(GameScene.PlayerCharacter.Position.X);
+                writer.Write(GameScene.PlayerCharacter.Position.Y);
+                writer.Write(GameScene.PlayerCharacter.Position.Z);
                 
-                writer.Write(Data.CameraDirection.X);
-                writer.Write(Data.CameraDirection.Y);
-                writer.Write(Data.CameraDirection.Z);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.X);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.Y);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.Z);
                 
                 writer.Write(Data.HotbarPosition);
 
