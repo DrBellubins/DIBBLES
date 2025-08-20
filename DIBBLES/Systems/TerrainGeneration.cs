@@ -62,6 +62,9 @@ public class TerrainGeneration
     private bool initialLoad = false;
     private float progress = 0f;
     
+    const int MAX_MESH_UPLOADS_PER_FRAME = 2;
+    int uploadsThisFrame = 0;
+    
     public void Update(PlayerCharacter playerCharacter)
     {
         // Calculate current chunk coordinates based on camera position
@@ -97,10 +100,7 @@ public class TerrainGeneration
         }*/
         
         // Try to upload any queued meshes (must be done on main thread)
-        stopwatch.Reset();
-        stopwatch.Start();
-        
-        while (meshUploadQueue.TryDequeue(out var entry))
+        while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
@@ -113,11 +113,9 @@ public class TerrainGeneration
             Chunks[chunk.Position] = chunk;
             
             progress = chunkLoadProgress();
+            
+            uploadsThisFrame++;
         }
-        
-        stopwatch.Stop();
-        
-        Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
