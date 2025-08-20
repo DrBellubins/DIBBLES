@@ -88,8 +88,8 @@ public class PlayerCharacter
 
     public void Update()
     {
-        //if (!ShouldUpdate)
-        //    return;
+        if (!ShouldUpdate)
+            return;
 
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {

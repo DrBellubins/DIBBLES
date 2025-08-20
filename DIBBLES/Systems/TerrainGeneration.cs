@@ -17,7 +17,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 16;
+    public const int RenderDistance = 4;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
@@ -82,6 +82,7 @@ public class TerrainGeneration
         }
         
         // Initial remesh/lighting
+        // TODO: Doesn't run with save chunks
         if (areAllChunksLoaded(currentChunk) && !DoneLoading)
         {
             foreach (var chunk in Chunks.Values)
