@@ -89,6 +89,7 @@ public class TerrainGeneration
                 GameScene.TMesh.RemeshNeighbors(chunk);
             
             //playerCharacter.FreeCamEnabled = false;
+            playerCharacter.Spawn();
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }

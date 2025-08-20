@@ -87,11 +87,7 @@ public class PlayerCharacter
     public void Update()
     {
         if (!ShouldUpdate)
-        {
-            Console.WriteLine("SJKFHbkjadsnvjkvd");
-            spawn();
             return;
-        }
 
         /*if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
@@ -379,10 +375,13 @@ public class PlayerCharacter
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }
     
-    private void spawn()
+    public void Spawn()
     {
+        Console.WriteLine($"Spawning {WorldSave.Data.PlayerPosition}");
+        
         if (WorldSave.Exists)
         {
+            
             Position = WorldSave.Data.PlayerPosition;
             SetCameraDirection(WorldSave.Data.CameraDirection);
         }
