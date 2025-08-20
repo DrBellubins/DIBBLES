@@ -64,6 +64,7 @@ public class PlayerCharacter
     private float placeBreakTimer = 0f;
     
     private bool isJumping = false;
+    private bool isFalling = false;
     private bool isGrounded = false;
     private bool isCrouching = false;
 
@@ -73,7 +74,8 @@ public class PlayerCharacter
     private bool justLanded = false;
     
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
-    private Stopwatch fallTimer = new Stopwatch();
+    
+    private float fallTimer = 0f;
     
     public void Start()
     {
@@ -155,24 +157,26 @@ public class PlayerCharacter
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
         // Grounded/Landing checks
-        if (wasGrounded && !isGrounded) // Airborne
+        if (wasGrounded && !isGrounded && !isFalling) // Airborne
         {
             Console.WriteLine("Starting fall");
-            fallTimer.Reset();
-            fallTimer.Start();
+            fallTimer = 0f;
+            fallTimer += Time.DeltaTime;
+            
+            isFalling = true;
         }
-
-        if (!wasGrounded && isGrounded) // Just landed
+        
+        if (!wasGrounded && isGrounded && isFalling) // Landed
         {
             Console.WriteLine("Ending fall");
             justLanded = true;
-            fallTimer.Stop();
+            isFalling = false;
         }
         
         // --- Fall damage ---
         if (justLanded)
         {
-            Console.WriteLine($"Fall time: {fallTimer.ElapsedMilliseconds}ms");
+            Console.WriteLine($"Fall time: {fallTimer} seconds");
         }
         
         // --- Mouse input for camera rotation ---
