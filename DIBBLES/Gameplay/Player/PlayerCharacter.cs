@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Raylib_cs;
 using System.Numerics;
 using DIBBLES.Scenes;
@@ -5,6 +6,7 @@ using DIBBLES.Systems;
 using DIBBLES.Utils;
 
 using static DIBBLES.Systems.TerrainGeneration;
+using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -71,6 +73,7 @@ public class PlayerCharacter
     private bool justLanded = false;
     
     private AudioPlayer jumpLandPlayer = new AudioPlayer();
+    private Stopwatch fallTimer = new Stopwatch();
     
     public void Start()
     {
@@ -143,10 +146,24 @@ public class PlayerCharacter
         Velocity.Y -= Gravity * Time.DeltaTime;
         
         // --- Ground Collision ---
-
+        wasGrounded = isGrounded; // Track previous frame's grounded state
+        
         // Reset one-frame flags at the start of each frame
         justJumped = false;
         justLanded = false;
+        
+        if (wasGrounded && !isGrounded) // Airborne
+        {
+            Console.WriteLine("Starting fall");
+            fallTimer.Start();
+        }
+
+        if (!wasGrounded && isGrounded) // Just landed
+        {
+            Console.WriteLine("Ending fall");
+            justLanded = true;
+            fallTimer.Stop();
+        }
         
         // Collision detection
         CheckCollisions();
@@ -154,7 +171,10 @@ public class PlayerCharacter
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
         // --- Fall damage ---
-        
+        if (justLanded)
+        {
+            Console.WriteLine($"Fall time: {fallTimer.ElapsedMilliseconds}ms");
+        }
         
         // --- Mouse input for camera rotation ---
         var lookDelta = Input.LookDelta();
@@ -300,6 +320,8 @@ public class PlayerCharacter
             spawn();
             NeedsToSpawn = false;
         }
+        
+        wasGrounded = isGrounded;
     }
 
     public void Draw()
@@ -313,6 +335,7 @@ public class PlayerCharacter
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
+        Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
     }
     
     public void CheckCollisions()
