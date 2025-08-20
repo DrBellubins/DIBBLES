@@ -60,7 +60,6 @@ public class TerrainGeneration
     }
     
     private bool initialLoad = false;
-    
     private float progress = 0f;
     
     public void Update(PlayerCharacter playerCharacter)
@@ -88,8 +87,8 @@ public class TerrainGeneration
         {
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
-
-            //playerCharacter.FreeCamEnabled = false;
+            
+            playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
