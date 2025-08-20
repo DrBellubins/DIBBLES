@@ -146,7 +146,6 @@ public class PlayerCharacter
         Velocity.Y -= Gravity * Time.DeltaTime;
         
         // --- Ground Collision ---
-        wasGrounded = isGrounded; // Track previous frame's grounded state
         
         // Reset one-frame flags at the start of each frame
         justJumped = false;
