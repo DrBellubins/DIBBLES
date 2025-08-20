@@ -17,7 +17,7 @@ namespace DIBBLES.Systems;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 16;
+    public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
@@ -72,8 +72,8 @@ public class TerrainGeneration
         );
 
         // Only update if the camera has moved to a new chunk
-        if (!initialLoad)
-        //if (currentChunk != lastCameraChunk)
+        //if (!initialLoad)
+        if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
@@ -85,7 +85,7 @@ public class TerrainGeneration
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
         // Initial remesh/lighting
-        if (chunksLoaded >= expectedChunkCount && !DoneLoading)
+        /*if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
@@ -94,9 +94,12 @@ public class TerrainGeneration
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
-        }
+        }*/
         
         // Try to upload any queued meshes (must be done on main thread)
+        stopwatch.Reset();
+        stopwatch.Start();
+        
         while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
@@ -111,6 +114,10 @@ public class TerrainGeneration
             
             progress = chunkLoadProgress();
         }
+        
+        stopwatch.Stop();
+        
+        Console.WriteLine($"Elapsed time: {stopwatch.ElapsedMilliseconds}ms");
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
