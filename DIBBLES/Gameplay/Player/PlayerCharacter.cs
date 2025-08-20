@@ -111,6 +111,8 @@ public class PlayerCharacter
 
         hotbar.Update();
         
+        isGrounded = false; // Reset ground state 
+        
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
 
@@ -139,13 +141,9 @@ public class PlayerCharacter
         isCrouching = crouchKey;
         
         isJumping = Input.Jump(isCrouching);
-
-        // TODO: Add justLanded
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
-        
-        // --- Ground Collision ---
         
         // Reset one-frame flags at the start of each frame
         justJumped = false;
@@ -156,9 +154,11 @@ public class PlayerCharacter
         
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
+        // Grounded/Landing checks
         if (wasGrounded && !isGrounded) // Airborne
         {
             Console.WriteLine("Starting fall");
+            fallTimer.Reset();
             fallTimer.Start();
         }
 
@@ -334,7 +334,8 @@ public class PlayerCharacter
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
-        Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
+        Debug.Draw2DText($"IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Color.White);
+        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
     }
     
     public void CheckCollisions()
