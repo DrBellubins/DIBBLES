@@ -60,10 +60,9 @@ public class TerrainGeneration
     }
     
     private bool initialLoad = false;
-    private float progress = 0f;
+    private int chunksLoaded = 0;
     
     const int MAX_MESH_UPLOADS_PER_FRAME = 2;
-    int uploadsThisFrame = 0;
     
     public void Update(PlayerCharacter playerCharacter)
     {
@@ -74,13 +73,23 @@ public class TerrainGeneration
             (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
 
+        // Load starting from the saved player position
+        if (WorldSave.Exists)
+        {
+            currentChunk = new Vector3Int(
+                (int)Math.Floor(WorldSave.Data.PlayerPosition.X / ChunkSize),
+                (int)Math.Floor(WorldSave.Data.PlayerPosition.Y / ChunkSize),
+                (int)Math.Floor(WorldSave.Data.PlayerPosition.Z / ChunkSize)
+            );
+        }
+        
         // Only update if the camera has moved to a new chunk
-        //if (!initialLoad)
+        // TODO: Doesn't start at saved position 
         if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
-            UnloadDistantChunks(currentChunk);
+            chunksLoaded = 0;
             
             initialLoad = true;
         }
@@ -88,7 +97,7 @@ public class TerrainGeneration
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
         // Initial remesh/lighting
-        /*if (chunksLoaded >= expectedChunkCount && !DoneLoading)
+        if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
@@ -97,9 +106,11 @@ public class TerrainGeneration
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
-        }*/
+        }
         
         // Try to upload any queued meshes (must be done on main thread)
+        int uploadsThisFrame = 0;
+        
         while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
@@ -111,8 +122,10 @@ public class TerrainGeneration
             
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
+
+            chunksLoaded++;
             
-            progress = chunkLoadProgress();
+            UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
         }
@@ -338,7 +351,6 @@ public class TerrainGeneration
         {
             Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
             Chunks.Remove(coord);
-            OnChunkUnloaded(coord);
         }
     }
     
@@ -355,44 +367,6 @@ public class TerrainGeneration
         }
 
         // You could also apply gradual transitions based on Time.WorldTime.
-    }
-    
-    private void OnChunkUnloaded(Vector3Int chunkPos)
-    {
-        int[] offsets = { -ChunkSize, ChunkSize };
-        
-        foreach (var axis in new[] { 0, 1, 2 })
-        {
-            Vector3Int neighborPos = chunkPos;
-            
-            foreach (int offset in offsets)
-            {
-                if (axis == 0) neighborPos.X = chunkPos.X + offset;
-                if (axis == 1) neighborPos.Y = chunkPos.Y + offset;
-                if (axis == 2) neighborPos.Z = chunkPos.Z + offset;
-    
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                {
-                    GameScene.Lighting.Generate(neighborChunk);
-                    GameScene.TMesh.RemeshNeighbors(neighborChunk);
-                }
-            }
-            
-            neighborPos = chunkPos;
-        }
-    }
-    
-    float chunksLoaded = 0f;
-    private float chunkLoadProgress()
-    {
-        chunksLoaded++;
-        
-        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
-        float m_progress = (chunksLoaded / expectedChunkCount) * 100f;
-        
-        Console.WriteLine($"{m_progress}% Chunk Upload Complete");
-        
-        return m_progress;
     }
     
     public void Draw()
