@@ -295,6 +295,8 @@ public class TerrainGeneration
                 }
             }
         }
+        
+        chunk.Info.Generated = true;
     }
     
     private void UnloadDistantChunks(Vector3Int centerChunk)
@@ -373,17 +375,26 @@ public class TerrainGeneration
     private bool areAllChunksLoaded(Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
-        
+
         for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
         for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
         for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            
-            if (!Chunks.ContainsKey(chunkPos))
+
+            // Check if the chunk exists in Chunks
+            if (!Chunks.TryGetValue(chunkPos, out var chunk))
+            {
+                // If not present, check if it's in the saved ModifiedChunks
+                if (!WorldSave.Data.ModifiedChunks.TryGetValue(chunkPos, out chunk))
+                    return false;
+            }
+
+            // Optionally, check if the chunk has actually finished generating/loading
+            if (chunk == null || (!chunk.Info.Generated && !chunk.Info.Modified))
                 return false;
         }
-        
+
         return true;
     }
     
