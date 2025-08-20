@@ -82,14 +82,17 @@ public class TerrainGeneration
             initialLoad = true;
         }
         
+        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
+        
         // Initial remesh/lighting
-        if ((int)MathF.Ceiling(progress) == 100 && !DoneLoading)
+        if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
+            // TODO: Breaks spawning (puts player at -400-ish
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
             
-            //playerCharacter.FreeCamEnabled = false;
             playerCharacter.Spawn();
+            playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }

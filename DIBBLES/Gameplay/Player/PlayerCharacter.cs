@@ -83,13 +83,13 @@ public class PlayerCharacter
         
         Raylib.DisableCursor();
     }
-
+    
     public void Update()
     {
         if (!ShouldUpdate)
             return;
 
-        /*if (Raylib.IsKeyPressed(KeyboardKey.Tab))
+        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
@@ -101,7 +101,7 @@ public class PlayerCharacter
         {
             freecam.Update(this);
             return;
-        }*/
+        }
 
         hotbar.Update();
         
@@ -377,11 +377,10 @@ public class PlayerCharacter
     
     public void Spawn()
     {
-        Console.WriteLine($"Spawning {WorldSave.Data.PlayerPosition}");
+        Console.WriteLine($"Spawning at {WorldSave.Data.PlayerPosition}");
         
         if (WorldSave.Exists)
         {
-            
             Position = WorldSave.Data.PlayerPosition;
             SetCameraDirection(WorldSave.Data.CameraDirection);
         }
