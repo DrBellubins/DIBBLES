@@ -49,10 +49,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Exists)
-        //    Seed = WorldSave.Data.Seed;
-        //else
-        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        if (WorldSave.Exists)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -84,7 +84,6 @@ public class TerrainGeneration
         }
         
         // Only update if the camera has moved to a new chunk
-        // TODO: Doesn't start at saved position 
         if (currentChunk != lastCameraChunk)
         {
             lastCameraChunk = currentChunk;
@@ -273,8 +272,9 @@ public class TerrainGeneration
                     // Loop downward
                     if (islandNoise > 0.6f) // Islands
                     {
+                        // TODO: Biomes other than Plains are really rare
                         // Biome noise
-                        noise.SetFrequency(0.005f);
+                        noise.SetFrequency(0.001f);
                         
                         var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
                         
