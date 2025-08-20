@@ -81,17 +81,19 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        spawn();
-        
         Raylib.DisableCursor();
     }
 
     public void Update()
     {
         if (!ShouldUpdate)
+        {
+            Console.WriteLine("SJKFHbkjadsnvjkvd");
+            spawn();
             return;
+        }
 
-        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
+        /*if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
@@ -103,7 +105,7 @@ public class PlayerCharacter
         {
             freecam.Update(this);
             return;
-        }
+        }*/
 
         hotbar.Update();
         

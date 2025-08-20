@@ -88,7 +88,7 @@ public class TerrainGeneration
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
             
-            playerCharacter.FreeCamEnabled = false;
+            //playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
