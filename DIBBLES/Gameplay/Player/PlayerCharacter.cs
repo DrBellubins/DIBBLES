@@ -151,6 +151,11 @@ public class PlayerCharacter
         justJumped = false;
         justLanded = false;
         
+        // Collision detection
+        CheckCollisions();
+        
+        CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
+        
         if (wasGrounded && !isGrounded) // Airborne
         {
             Console.WriteLine("Starting fall");
@@ -163,11 +168,6 @@ public class PlayerCharacter
             justLanded = true;
             fallTimer.Stop();
         }
-        
-        // Collision detection
-        CheckCollisions();
-        
-        CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
         // --- Fall damage ---
         if (justLanded)
