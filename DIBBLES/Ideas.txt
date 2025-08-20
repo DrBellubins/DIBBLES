@@ -1,6 +1,14 @@
 A 3D voxel game with cubed chunks.
 The world is dark with no sun except snake-like wisps hovering throughout the casms.
 
+Creative vision:
+DIBBLES mixes fantasy and technological elements. Adventure is primarily fantasy (getting things to make technology).
+Technology is primarily progression.
+
+Adventure elements are to further fantasy & whimsy.
+Fantasy elements are to further technological elements.
+Technological elements are to further adventure.
+
 Mechanics:
 Has technology similar to IndustrialCraft from Minecraft.
 Incorporates skill leveling and progression similar to factorio

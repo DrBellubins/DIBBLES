@@ -49,10 +49,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        if (WorldSave.Exists)
-            Seed = WorldSave.Data.Seed;
-        else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        //if (WorldSave.Exists)
+        //    Seed = WorldSave.Data.Seed;
+        //else
+        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -60,7 +60,8 @@ public class TerrainGeneration
     }
     
     private bool initialLoad = false;
-    float progress = 0f;
+    
+    private float progress = 0f;
     
     public void Update(PlayerCharacter playerCharacter)
     {
@@ -82,6 +83,17 @@ public class TerrainGeneration
             initialLoad = true;
         }
         
+        // Initial remesh/lighting
+        if ((int)MathF.Ceiling(progress) == 100 && !DoneLoading)
+        {
+            foreach (var chunk in Chunks.Values)
+                GameScene.TMesh.RemeshNeighbors(chunk);
+
+            //playerCharacter.FreeCamEnabled = false;
+            playerCharacter.ShouldUpdate = true;
+            DoneLoading = true;
+        }
+        
         // Try to upload any queued meshes (must be done on main thread)
         while (meshUploadQueue.TryDequeue(out var entry))
         {
@@ -94,24 +106,9 @@ public class TerrainGeneration
             
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
             Chunks[chunk.Position] = chunk;
-           
-            float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
-            progress++;
-            progress = (progress / expectedChunkCount) * 100f;
             
-            Console.WriteLine($"{progress}% Chunk Upload Complete");
-        };
-        
-        // Initial remesh/lighting
-        /*if (progress == 100 && !DoneLoading)
-        {
-            foreach (var chunk in Chunks.Values)
-                GameScene.TMesh.RemeshNeighbors(chunk);
-
-            playerCharacter.FreeCamEnabled = false;
-            playerCharacter.ShouldUpdate = true;
-            DoneLoading = true;
-        }*/
+            progress = chunkLoadProgress();
+        }
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
@@ -163,7 +160,7 @@ public class TerrainGeneration
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
-
+                    
                     generatingChunks.TryRemove(pos, out _);
                 }
                 catch (Exception e)
@@ -378,12 +375,17 @@ public class TerrainGeneration
         }
     }
     
-    private bool areAllChunksLoaded()
+    float chunksLoaded = 0f;
+    private float chunkLoadProgress()
     {
-        // The number of chunks in a cube of (RenderDistance + 1) per axis
-        int expectedChunkCount = (RenderDistance + 1) * (RenderDistance + 1) * (RenderDistance + 1);
+        chunksLoaded++;
         
-        return Chunks.Count == expectedChunkCount;
+        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
+        float m_progress = (chunksLoaded / expectedChunkCount) * 100f;
+        
+        Console.WriteLine($"{m_progress}% Chunk Upload Complete");
+        
+        return m_progress;
     }
     
     public void Draw()
