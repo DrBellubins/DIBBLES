@@ -65,6 +65,8 @@ public class PlayerCharacter
     private bool isGrounded = false;
     private bool isCrouching = false;
 
+    private bool wasGrounded = false;
+    
     private bool justJumped = false;
     private bool justLanded = false;
     
@@ -135,13 +137,12 @@ public class PlayerCharacter
         
         isJumping = Input.Jump(isCrouching);
 
-        // TODO: Add justJumped and justLanded
+        // TODO: Add justLanded
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
-
+        
         // --- Ground Collision ---
-        var wasGrounded = isGrounded; // Track previous grounded state for jump timing
 
         // Reset one-frame flags at the start of each frame
         justJumped = false;
@@ -151,7 +152,10 @@ public class PlayerCharacter
         CheckCollisions();
         
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
-
+        
+        // --- Fall damage ---
+        
+        
         // --- Mouse input for camera rotation ---
         var lookDelta = Input.LookDelta();
         var lookDeltaX = lookDelta.X * mouseSensitivity;
@@ -290,6 +294,7 @@ public class PlayerCharacter
             }
         }
 
+        // Needs to happen a frame late
         if (NeedsToSpawn)
         {
             spawn();
