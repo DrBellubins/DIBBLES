@@ -91,6 +91,9 @@ public class WorldSave
                                 writer.Write(currentBlock.Position.X);
                                 writer.Write(currentBlock.Position.Y);
                                 writer.Write(currentBlock.Position.Z);
+                                
+                                writer.Write((int)currentBlock.Info.Biome);
+                                writer.Write(currentBlock.InsideIsland);
                             }
                         }
                     }
@@ -148,6 +151,9 @@ public class WorldSave
                                         Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
                                         Info = info
                                     };
+                                    
+                                    currentBlock.Info.Biome = (TerrainBiome)reader.ReadInt32();
+                                    currentBlock.InsideIsland = reader.ReadBoolean();
 
                                     currentChunk.Blocks[x, y, z] = currentBlock;
                                 }

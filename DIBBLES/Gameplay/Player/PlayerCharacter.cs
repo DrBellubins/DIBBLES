@@ -36,7 +36,7 @@ public class PlayerCharacter
     
     public Camera3D Camera;
 
-    public BoundingBox CollisionBox = new BoundingBox();
+    public BoundingBox CollisionBox = new();
 
     public Quaternion CameraRotation = Quaternion.Identity;
     
@@ -57,6 +57,8 @@ public class PlayerCharacter
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
     private float mouseSensitivity = 0.1f;
+
+    private float placeBreakTimer = 0f;
     
     private bool isJumping = false;
     private bool isGrounded = false;
@@ -86,15 +88,13 @@ public class PlayerCharacter
 
     public void Update()
     {
-        if (!ShouldUpdate)
-            return;
+        //if (!ShouldUpdate)
+        //    return;
 
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
-            {
                 Velocity = Vector3.Zero;
-            }
             
             FreeCamEnabled = !FreeCamEnabled;
         }
@@ -259,11 +259,37 @@ public class PlayerCharacter
         jumpLandPlayer.Update();
         
         // --- Block breaking and placing ---
-        if (Input.Break())
+        placeBreakTimer += Time.DeltaTime;
+
+        if (Input.StartedBreaking) // Break immediately
+        {
             GameScene.Gameplay.BreakBlock();
+            placeBreakTimer = 0f;
+        }
         
-        if (Input.PlaceInteract() && hotbar.SelectedItem != null)
+        if (Input.Break() && !Input.StartedBreaking) // Hold break
+        {
+            if (placeBreakTimer >= 0.3f)
+            {
+                GameScene.Gameplay.BreakBlock();
+                placeBreakTimer = 0f;
+            }
+        }
+
+        if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
+        {
             GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+            placeBreakTimer = 0f;
+        }
+        
+        if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
+        {
+            if (placeBreakTimer >= 0.3f)
+            {
+                GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                placeBreakTimer = 0f;
+            }
+        }
 
         WorldSave.Data.PlayerPosition = Position;
         WorldSave.Data.CameraDirection = CameraForward;

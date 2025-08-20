@@ -49,10 +49,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Exists)
-        //    Seed = WorldSave.Data.Seed;
-        //else
-        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        if (WorldSave.Exists)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -87,6 +87,7 @@ public class TerrainGeneration
             foreach (var chunk in Chunks.Values)
                 GameScene.TMesh.RemeshNeighbors(chunk);
 
+            Console.WriteLine("FUH");
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
@@ -346,9 +347,11 @@ public class TerrainGeneration
     private void OnChunkUnloaded(Vector3Int chunkPos)
     {
         int[] offsets = { -ChunkSize, ChunkSize };
+        
         foreach (var axis in new[] { 0, 1, 2 })
         {
             Vector3Int neighborPos = chunkPos;
+            
             foreach (int offset in offsets)
             {
                 if (axis == 0) neighborPos.X = chunkPos.X + offset;
@@ -361,6 +364,7 @@ public class TerrainGeneration
                     GameScene.TMesh.RemeshNeighbors(neighborChunk);
                 }
             }
+            
             neighborPos = chunkPos;
         }
     }

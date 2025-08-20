@@ -6,23 +6,29 @@ public class SnowlandsBiome
 {
     public void Generate(ref BlockReturnData bRetData)
     {
-        if (!bRetData.FoundSurface)
+        var returnData = bRetData;
+        
+        if (!returnData.FoundSurface)
         {
             // This is the surface
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Snow]);
-            bRetData.FoundSurface = true;
-            bRetData.IslandDepth = 0;
-            bRetData.SurfaceY = bRetData.WorldPos.Y;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Snow]);
+            returnData.FoundSurface = true;
+            returnData.IslandDepth = 0;
+            returnData.SurfaceY = returnData.WorldPos.Y;
         }
-        else if (bRetData.IslandDepth < 3) // snow thickness = 4
+        else if (returnData.IslandDepth < 3) // snow thickness = 4
         {
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Snow]); // TODO: Should be ice
-            bRetData.IslandDepth++;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Snow]); // TODO: Should be ice
+            returnData.IslandDepth++;
         }
         else
         {
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Stone]);
-            bRetData.IslandDepth++;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Stone]);
+            returnData.IslandDepth++;
         }
+
+        returnData.CurrentBlock.Info.Biome = TerrainBiome.Snowlands;
+        
+        bRetData = returnData;
     }
 }

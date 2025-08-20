@@ -6,23 +6,29 @@ public class DesertBiome
 {
     public void Generate(ref BlockReturnData bRetData)
     {
-        if (!bRetData.FoundSurface)
+        var returnData = bRetData;
+        
+        if (!returnData.FoundSurface)
         {
             // This is the surface
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Sand]);
-            bRetData.FoundSurface = true;
-            bRetData.IslandDepth = 0;
-            bRetData.SurfaceY = bRetData.WorldPos.Y;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Sand]);
+            returnData.FoundSurface = true;
+            returnData.IslandDepth = 0;
+            returnData.SurfaceY = returnData.WorldPos.Y;
         }
-        else if (bRetData.IslandDepth < 3) // sand thickness = 4
+        else if (returnData.IslandDepth < 3) // sand thickness = 4
         {
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Sand]);
-            bRetData.IslandDepth++;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Sand]);
+            returnData.IslandDepth++;
         }
         else
         {
-            bRetData.CurrentBlock = new Block(bRetData.WorldPos, Block.Prefabs[BlockType.Stone]);
-            bRetData.IslandDepth++;
+            returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Stone]);
+            returnData.IslandDepth++;
         }
+
+        returnData.CurrentBlock.Info.Biome = TerrainBiome.Desert;
+        
+        bRetData = returnData;
     }
 }

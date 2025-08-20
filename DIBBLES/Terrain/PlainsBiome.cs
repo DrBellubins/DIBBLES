@@ -28,6 +28,8 @@ public class PlainsBiome
             returnData.IslandDepth++;
         }
         
+        returnData.CurrentBlock.Info.Biome = TerrainBiome.Plains;
+        
         bRetData = returnData;
     }
 }

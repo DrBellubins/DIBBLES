@@ -45,13 +45,17 @@ public static class Input
         return isCrouching ? Raylib.IsKeyPressed(KeyboardKey.Space) : Raylib.IsKeyDown(KeyboardKey.Space);
     }
 
+    public static bool StartedBreaking => Raylib.IsMouseButtonPressed(MouseButton.Left);
+    
     public static bool Break()
     {
-        return Raylib.IsMouseButtonPressed(MouseButton.Left);
+        return Raylib.IsMouseButtonDown(MouseButton.Left);
     }
     
-    public static bool PlaceInteract()
+    public static bool StartedInteracting => Raylib.IsMouseButtonPressed(MouseButton.Right);
+    
+    public static bool Interact()
     {
-        return Raylib.IsMouseButtonPressed(MouseButton.Right);
+        return Raylib.IsMouseButtonDown(MouseButton.Right);
     }
 }
