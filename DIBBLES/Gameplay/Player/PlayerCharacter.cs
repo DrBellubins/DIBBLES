@@ -51,10 +51,12 @@ public class PlayerCharacter
 
     public bool NeedsToSpawn = false;
     public bool ShouldUpdate = false;
+    public bool IsDead = false;
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
-    
+
+    private Sound fallSound;
     private HandModel handModel = new HandModel();
     
     private float currentSpeed = WalkSpeed;
@@ -62,6 +64,8 @@ public class PlayerCharacter
     private float mouseSensitivity = 0.1f;
 
     private float placeBreakTimer = 0f;
+    
+    private bool canMove = true;
     
     private bool isJumping = false;
     private bool isFalling = false;
@@ -73,12 +77,12 @@ public class PlayerCharacter
     private bool justJumped = false;
     private bool justLanded = false;
     
-    private AudioPlayer jumpLandPlayer = new AudioPlayer();
-    
     private float fallTimer = 0f;
     
     public void Start()
     {
+        fallSound = Resource.LoadSoundSpecial("pain.ogg");
+        
         Camera = new Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
@@ -111,7 +115,7 @@ public class PlayerCharacter
             return;
         }
 
-        hotbar.Update();
+        hotbar.Update(IsDead);
         
         isGrounded = false; // Reset ground state 
         
@@ -162,19 +166,22 @@ public class PlayerCharacter
         // Grounded/Landing checks
         if (isGrounded && !wasGrounded) // Just landed
         {
-            Console.WriteLine("Just landed");
             justLanded = true;
         }
         else if (!isGrounded && wasGrounded && Velocity.Y < 0f) // Started falling
         {
-            Console.WriteLine("Started falling");
+            
         }
         
         if (isFalling)
             fallTimer += Time.DeltaTime;
         
         // --- Mouse input for camera rotation ---
-        var lookDelta = Input.LookDelta();
+        Vector2 lookDelta = Vector2.Zero;
+        
+        if (canMove)
+            lookDelta = Input.LookDelta();
+        
         var lookDeltaX = lookDelta.X * mouseSensitivity;
         var lookDeltaY = lookDelta.Y * mouseSensitivity;
 
@@ -222,7 +229,11 @@ public class PlayerCharacter
         float accel = isGrounded ? GroundAcceleration : AirAcceleration;
         float friction = isGrounded ? GroundFriction : AirFriction;
 
-        Vector3 wishVel = wishDir * currentSpeed;
+        Vector3 wishVel = Vector3.Zero;
+        
+        if (canMove)
+            wishVel = wishDir * currentSpeed;
+        
         Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
         
         float wishSpeed = wishVel.Length();
@@ -276,14 +287,17 @@ public class PlayerCharacter
             justJumped = true;
         }
         
-        jumpLandPlayer.Update();
-        
         // --- Fall damage ---
         if (justLanded)
         {
-            Console.WriteLine($"Fall time: {fallTimer} seconds");
+            if (fallTimer > 1f) // Falling for more than a second
+                Damage(10);
+            
             fallTimer = 0f;
         }
+        
+        if (Health <= 0)
+            Kill();
         
         // --- Block breaking and placing ---
         placeBreakTimer += Time.DeltaTime;
@@ -328,6 +342,20 @@ public class PlayerCharacter
         wasGrounded = isGrounded;
     }
 
+    public void Damage(int damage)
+    {
+        if (Health > 0)
+            Health -= damage;
+        
+        Raylib.PlaySound(fallSound);
+    }
+
+    public void Kill()
+    {
+        IsDead = true;
+        canMove = false;
+    }
+    
     public void Draw()
     {
         handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
@@ -335,12 +363,19 @@ public class PlayerCharacter
 
     public void DrawUI()
     {
-        hotbar.Draw();
+        hotbar.Draw(Health);
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Color.White);
         //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
+        
+        // TODO: Temporary death screen
+        if (IsDead)
+        {
+            var deathScreen = new Rectangle(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
+            Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+        }
     }
     
     public void CheckCollisions()

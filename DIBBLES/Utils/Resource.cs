@@ -40,8 +40,6 @@ public static class Resource
     {
         if (!Directory.Exists(assetsPath))
             throw new DirectoryNotFoundException(assetsPath);
-
-        
         
         // Search recursively for the file
         string path;
@@ -110,6 +108,12 @@ public static class Resource
             default:
                 throw new ArgumentException($"Unsupported type: {typeof(T).Name}");
         }
+    }
+
+    public static Sound LoadSoundSpecial(string fileName)
+    {
+        var path = Path.Combine(assetsPath, "Sounds", fileName);
+        return Raylib.LoadSound(path);
     }
     
     public static Shader LoadShader(string? vsName, string fsName)

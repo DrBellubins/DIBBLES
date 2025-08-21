@@ -26,6 +26,9 @@ public class Hotbar
     private Rectangle hotbarRect = new Rectangle(0f, 0f, 900f, 100f);
     private Rectangle hotbarSelectionRect;
 
+    private const float healthBarWidth = 400f;
+    private Rectangle healthBarRect = new Rectangle(0f, 0f, healthBarWidth, 10f);
+    
     private int hotBarSelectionIndex;
     private float hotBarSelectionPosX;
 
@@ -46,59 +49,62 @@ public class Hotbar
         SelectedItem = hotbarSlots[0];
     }
 
-    public void Update()
+    public void Update(bool isPlayerDead)
     {
-        var mouseWheelNormalized = MathF.Ceiling(-Raylib.GetMouseWheelMove());
-
-        if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
+        if (!isPlayerDead)
         {
-            hotBarSelectionIndex += (int)mouseWheelNormalized;
-            hotBarSelectionIndex = GMath.Repeat(hotBarSelectionIndex, 0, 8);
+            var mouseWheelNormalized = MathF.Ceiling(-Raylib.GetMouseWheelMove());
+
+            if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
+            {
+                hotBarSelectionIndex += (int)mouseWheelNormalized;
+                hotBarSelectionIndex = GMath.Repeat(hotBarSelectionIndex, 0, 8);
+            }
+
+            var numKeys = (KeyboardKey)Raylib.GetKeyPressed();
+
+            switch (numKeys)
+            {
+                case KeyboardKey.One:
+                    hotBarSelectionIndex = 0;
+                    break;
+                case KeyboardKey.Two:
+                    hotBarSelectionIndex = 1;
+                    break;
+                case KeyboardKey.Three:
+                    hotBarSelectionIndex = 2;
+                    break;
+                case KeyboardKey.Four:
+                    hotBarSelectionIndex = 3;
+                    break;
+                case KeyboardKey.Five:
+                    hotBarSelectionIndex = 4;
+                    break;
+                case KeyboardKey.Six:
+                    hotBarSelectionIndex = 5;
+                    break;
+                case KeyboardKey.Seven:
+                    hotBarSelectionIndex = 6;
+                    break;
+                case KeyboardKey.Eight:
+                    hotBarSelectionIndex = 7;
+                    break;
+                case KeyboardKey.Nine:
+                    hotBarSelectionIndex = 8;
+                    break;
+            }
+
+            hotBarSelectionPosX = hotBarSelectionIndex * hotbarRect.Height;
+            SelectedItem = hotbarSlots[hotBarSelectionIndex];
+
+            hotbarSelectionRect.X = hotbarRect.X + hotBarSelectionPosX;
+            hotbarSelectionRect.Y = hotbarRect.Y;
         }
-
-        var numKeys = (KeyboardKey)Raylib.GetKeyPressed();
-
-        switch (numKeys)
-        {
-            case KeyboardKey.One:
-                hotBarSelectionIndex = 0;
-                break;
-            case KeyboardKey.Two:
-                hotBarSelectionIndex = 1;
-                break;
-            case KeyboardKey.Three:
-                hotBarSelectionIndex = 2;
-                break;
-            case KeyboardKey.Four:
-                hotBarSelectionIndex = 3;
-                break;
-            case KeyboardKey.Five:
-                hotBarSelectionIndex = 4;
-                break;
-            case KeyboardKey.Six:
-                hotBarSelectionIndex = 5;
-                break;
-            case KeyboardKey.Seven:
-                hotBarSelectionIndex = 6;
-                break;
-            case KeyboardKey.Eight:
-                hotBarSelectionIndex = 7;
-                break;
-            case KeyboardKey.Nine:
-                hotBarSelectionIndex = 8;
-                break;
-        }
-
-        hotBarSelectionPosX = hotBarSelectionIndex * hotbarRect.Height;
-        SelectedItem = hotbarSlots[hotBarSelectionIndex];
-
-        hotbarSelectionRect.X = hotbarRect.X + hotBarSelectionPosX;
-        hotbarSelectionRect.Y = hotbarRect.Y;
         
         WorldSave.Data.HotbarPosition = hotBarSelectionIndex;
     }
 
-    public void Draw()
+    public void Draw(int health)
     {
         Raylib.DrawRectangleRec(hotbarRect, UI.MainColor);
 
@@ -129,6 +135,12 @@ public class Hotbar
                 Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }
+        
+        var healthPercent = ((float)health * 0.01f) * healthBarWidth;
+        healthBarRect.Width = healthPercent;
+        
+        Raylib.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        Raylib.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
     public void Resize()
@@ -141,5 +153,10 @@ public class Hotbar
         hotbarRect.Y = hotbarPos.Y;
 
         hotbarSelectionRect = new Rectangle(hotbarRect.X, hotbarRect.Y, hotbarRect.Height, hotbarRect.Height);
+
+        var healthBarPos = hotbarPos;
+        healthBarPos.Y -= 20f;
+        
+        healthBarRect = new Rectangle(healthBarPos.X, healthBarPos.Y, healthBarRect.Width, healthBarRect.Height);
     }
 }
