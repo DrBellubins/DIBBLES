@@ -1,6 +1,6 @@
 using System;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Utils;
 
 public class MeshData
 {

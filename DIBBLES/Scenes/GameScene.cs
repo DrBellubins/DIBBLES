@@ -1,10 +1,9 @@
 using Raylib_cs;
 using DIBBLES.Systems;
-using System.Numerics;
-using System.Collections.Generic;
 using DIBBLES.Effects;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Scenes;

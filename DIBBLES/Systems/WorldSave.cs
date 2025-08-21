@@ -2,9 +2,12 @@ using System.Numerics;
 using System.Text;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
-using static DIBBLES.Systems.TerrainGeneration;
+using DIBBLES.Terrain;
+
+using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Systems;
+
 
 public struct SaveData
 {

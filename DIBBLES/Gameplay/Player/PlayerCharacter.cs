@@ -1,11 +1,11 @@
-using System.Diagnostics;
 using Raylib_cs;
 using System.Numerics;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-using static DIBBLES.Systems.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGeneration;
 using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Gameplay.Player;
@@ -347,7 +347,7 @@ public class PlayerCharacter
         if (Health > 0)
             Health -= damage;
         
-        Raylib.PlaySound(fallSound);
+        //Raylib.PlaySound(fallSound);
     }
 
     public void Kill()

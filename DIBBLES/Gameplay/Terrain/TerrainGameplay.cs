@@ -2,10 +2,11 @@ using System.Numerics;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Raylib_cs;
 
-using static DIBBLES.Systems.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Gameplay.Terrain;
 

@@ -1,10 +1,7 @@
-using System.Numerics;
-using System.Collections.Generic;
 using DIBBLES.Utils;
-using Raylib_cs;
-using static DIBBLES.Systems.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGeneration;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Terrain;
 
 public class TerrainLighting
 {

@@ -2,9 +2,9 @@ using System.Numerics;
 using DIBBLES.Utils;
 using Raylib_cs;
 
-using static DIBBLES.Systems.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGeneration;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Terrain;
 
 public enum BlockType
 {
@@ -74,6 +74,7 @@ public class Block
     public BlockInfo Info;
     public byte LightLevel; // Block light level (0-15)
     public bool InsideIsland = false;
+    public BlockDirection Direction;
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();
     public static Dictionary<BlockType, Texture2D> Textures = new Dictionary<BlockType, Texture2D>();

@@ -1,19 +1,15 @@
 using Raylib_cs;
 using DIBBLES.Systems;
 using System.Numerics;
-using System.Collections.Generic;
 using DIBBLES.Utils;
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
-using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
-using DIBBLES.Terrain;
 using Debug = DIBBLES.Utils.Debug;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Terrain;
 
 public class TerrainGeneration
 {
@@ -49,10 +45,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Exists)
-        //    Seed = WorldSave.Data.Seed;
-        //else
-        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        if (WorldSave.Exists)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
