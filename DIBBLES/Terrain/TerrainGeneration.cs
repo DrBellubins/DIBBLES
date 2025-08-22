@@ -351,51 +351,35 @@ public class TerrainGeneration
         }
     }
     
-    private void updateChunkDayNight(Chunk chunk)
-    {
-        // Example: Update block light levels, spawn mobs, etc.
-        if (DayNightCycle.IsDay)
-        {
-            // Set sunlight, despawn night mobs, etc.
-        }
-        else
-        {
-            // Set moonlight, spawn night mobs, etc.
-        }
-
-        // You could also apply gradual transitions based on Time.WorldTime.
-    }
-    
     public void Draw()
     {
+        // Draw opaque
         foreach (var chunk in Chunks.Values)
-        {
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
+        
+        // Draw transparent
+        foreach (var chunk in Chunks.Values)
             Raylib.DrawModel(chunk.tModel, chunk.Position.ToVector3(), 1.0f, Color.White);
-
-            if (DrawDebug)
+        
+        if (DrawDebug)
+        {
+            // Draw chunk coordinates in 2D after 3D rendering
+            foreach (var chunk in Chunks)
             {
+                var chunkCenter = chunk.Key + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
+                Debug.Draw3DText($"Chunk ({chunk.Key.X}, {chunk.Key.Z})", chunkCenter.ToVector3(), Color.White);
+                
                 Color debugColor;
             
-                if (chunk.Info.Modified)
+                if (chunk.Value.Info.Modified)
                     debugColor = Color.Red;
                 else
                     debugColor = Color.Blue;
 
                 var padding = 0.01f;
                 
-                Raylib.DrawCubeWires(chunk.Position.ToVector3() + new Vector3(ChunkSize / 2f + padding, ChunkSize / 2f + padding, ChunkSize / 2f + padding),
+                Raylib.DrawCubeWires(chunk.Value.Position.ToVector3() + new Vector3(ChunkSize / 2f + padding, ChunkSize / 2f + padding, ChunkSize / 2f + padding),
                     ChunkSize - padding, ChunkSize - padding, ChunkSize - padding, debugColor);
-            }
-        }
-        
-        if (DrawDebug)
-        {
-            // Draw chunk coordinates in 2D after 3D rendering
-            foreach (var pos in Chunks.Keys)
-            {
-                var chunkCenter = pos + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
-                Debug.Draw3DText($"Chunk ({pos.X}, {pos.Z})", chunkCenter.ToVector3(), Color.White);
             }
 
             if (SelectedBlock != null)
