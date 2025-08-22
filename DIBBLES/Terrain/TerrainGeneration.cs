@@ -191,7 +191,10 @@ public class TerrainGeneration
                     else
                     {
                         chunk = new Chunk(pos);
+                        
                         generateChunkData(chunk);
+                        generateChunkDecorations(chunk);
+                        
                         GameScene.Lighting.Generate(chunk);
                     }
 
@@ -279,8 +282,7 @@ public class TerrainGeneration
                         {
                             snowlandsBiome.Generate(ref blockReturnData);
                         }
-                            
-
+                        
                         blockReturnData.CurrentBlock.InsideIsland = true;
                     }
                     else // Not islands
@@ -314,6 +316,35 @@ public class TerrainGeneration
         }
         
         chunk.Info.Generated = true;
+    }
+
+    private void generateChunkDecorations(Chunk chunk)
+    {
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
+        var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
+        
+        var decorations = new TerrainDecorations();
+        
+        for (int x = 0; x < ChunkSize; x++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            for (int y = ChunkSize - 1; y >= 0; y--)
+            {
+                var currentBlock =  chunk.Blocks[x, y, z];
+
+                if (currentBlock.Info.Type == BlockType.Grass)
+                {
+                    if (rng.NextChance(20f))
+                        decorations.GenerateTrees(currentBlock.Position);
+                }
+            }
+        }
     }
     
     private void UnloadDistantChunks(Vector3Int centerChunk)

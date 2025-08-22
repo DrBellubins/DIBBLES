@@ -5,8 +5,6 @@ namespace DIBBLES.Terrain;
 
 public class PlainsBiome
 {
-    private TerrainDecorations decorations = new();
-    
     public void Generate(ref BlockReturnData bRetData)
     {
         var returnData = bRetData;
@@ -17,9 +15,6 @@ public class PlainsBiome
             returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Grass]);
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
-
-            if (returnData.RNG.NextChance(20f))
-                decorations.GenerateTrees(returnData.WorldPos);
         }
         else if (returnData.IslandDepth < 3) // dirt thickness = 3
         {
