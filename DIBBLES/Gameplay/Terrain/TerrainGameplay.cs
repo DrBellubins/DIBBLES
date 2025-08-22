@@ -190,16 +190,16 @@ public class TerrainGameplay
             
             // Regenerate mesh
             Raylib.UnloadModel(chunk.Model); // Unload old model
-            //Raylib.UnloadModel(chunk.tModel); // Unload old tModel
+            Raylib.UnloadModel(chunk.tModel); // Unload old tModel
         
             var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-            //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+            var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
             
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
-            //chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+            chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
             
             GameScene.TMesh.RemeshNeighbors(chunk, false);
-            //GameScene.TMesh.RemeshNeighbors(chunk, true);
+            GameScene.TMesh.RemeshNeighbors(chunk, true);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -266,16 +266,16 @@ public class TerrainGameplay
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
-        //Raylib.UnloadModel(chunk.tModel); // Unload old tModel
+        Raylib.UnloadModel(chunk.tModel); // Unload old tModel
         
         var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-        //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+        var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
             
         chunk.Model = GameScene.TMesh.UploadMesh(meshData);
-        //chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+        chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
             
         GameScene.TMesh.RemeshNeighbors(chunk, false);
-        //GameScene.TMesh.RemeshNeighbors(chunk, true);
+        GameScene.TMesh.RemeshNeighbors(chunk, true);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

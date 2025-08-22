@@ -33,7 +33,7 @@ public class TerrainGeneration
 
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
-    //private ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
+    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
     private HashSet<Vector3Int> pendingNeighbors = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
@@ -131,7 +131,7 @@ public class TerrainGeneration
         }
         
         // Transparent pass
-        /*while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && tMeshUploadQueue.TryDequeue(out var entry))
+        while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && tMeshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
@@ -148,7 +148,7 @@ public class TerrainGeneration
             UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
-        }*/
+        }
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
@@ -196,11 +196,11 @@ public class TerrainGeneration
                     }
 
                     var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                    //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                    var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
-                    //tMeshUploadQueue.Enqueue((chunk, tMeshData));
+                    tMeshUploadQueue.Enqueue((chunk, tMeshData));
                     
                     generatingChunks.TryRemove(pos, out _);
                 }
@@ -333,8 +333,12 @@ public class TerrainGeneration
 
         foreach (var coord in chunksToRemove)
         {
-            Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
-            Raylib.UnloadModel(Chunks[coord].tModel); // Unload the tModel to free memory
+            if (Chunks[coord].Model.MeshCount > 0)
+                Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
+            
+            if (Chunks[coord].tModel.MeshCount > 0)
+                Raylib.UnloadModel(Chunks[coord].tModel); // Unload the tModel to free memory
+            
             Chunks.Remove(coord);
         }
     }
@@ -359,7 +363,7 @@ public class TerrainGeneration
         foreach (var chunk in Chunks.Values)
         {
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
-            //Raylib.DrawModel(chunk.tModel, chunk.Position.ToVector3(), 1.0f, Color.White);
+            Raylib.DrawModel(chunk.tModel, chunk.Position.ToVector3(), 1.0f, Color.White);
 
             if (DrawDebug)
             {

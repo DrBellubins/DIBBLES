@@ -29,7 +29,16 @@ public class TerrainMesh
         for (int z = 0; z < ChunkSize; z++)
         {
             var pos = new Vector3(x, y, z);
-            var blockType = chunk.Blocks[x, y, z].Info.Type;
+            var block = chunk.Blocks[x, y, z];
+            var blockType = block.Info.Type;
+            var isTransparent = block.Info.IsTransparent;
+
+            // Opaque mesh pass: skip transparent and air blocks
+            if (!isTransparencyPass && (isTransparent || blockType == BlockType.Air)) continue;
+
+            // Transparent mesh pass: skip opaque and air blocks
+            if (isTransparencyPass && (!isTransparent || blockType == BlockType.Air)) continue;
+            
             int vertexOffset = vertices.Count;
 
             // Define cube vertices (8 corners)
@@ -425,7 +434,10 @@ public class TerrainMesh
         if (info == null)
             return false;
         
-        return info.Type != BlockType.Air;
+        if (!isTransparentPass) // Opaque pass: treat transparent blocks as non-solid
+            return info.Type != BlockType.Air && !info.IsTransparent;
+        else // Transparent pass: treat only transparent blocks as solid
+            return info.Type != BlockType.Air && info.IsTransparent;
     }
 
     public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)
