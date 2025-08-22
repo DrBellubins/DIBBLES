@@ -97,6 +97,18 @@ public class TerrainGeneration
         {
             foreach (var chunk in Chunks.Values)
             {
+                // TODO: Trees don't spawn outside of initial render distance.
+                // TODO: Sometimes tree branches/leaves are invisible until modifying chunk.
+                generateChunkDecorations(chunk);
+                
+                GameScene.Lighting.Generate(chunk);
+                
+                var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+                var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                
+                meshUploadQueue.Enqueue((chunk, meshData));
+                tMeshUploadQueue.Enqueue((chunk, tMeshData));
+                
                 GameScene.TMesh.RemeshNeighbors(chunk, false);
                 GameScene.TMesh.RemeshNeighbors(chunk, true);
             }
@@ -193,7 +205,6 @@ public class TerrainGeneration
                         chunk = new Chunk(pos);
                         
                         generateChunkData(chunk);
-                        generateChunkDecorations(chunk);
                         
                         GameScene.Lighting.Generate(chunk);
                     }
@@ -340,7 +351,7 @@ public class TerrainGeneration
 
                 if (currentBlock.Info.Type == BlockType.Grass)
                 {
-                    if (rng.NextChance(20f))
+                    if (rng.NextChance(2f))
                         decorations.GenerateTrees(currentBlock.Position);
                 }
             }
