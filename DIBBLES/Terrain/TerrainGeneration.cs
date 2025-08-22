@@ -34,7 +34,6 @@ public class TerrainGeneration
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
-    private HashSet<Vector3Int> pendingNeighbors = new();
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
     private Stopwatch stopwatch = new();
@@ -98,7 +97,8 @@ public class TerrainGeneration
             foreach (var chunk in Chunks.Values)
             {
                 // TODO: Trees don't spawn outside of initial render distance.
-                // TODO: Sometimes tree branches/leaves are invisible until modifying chunk.
+                // TODO: Sometimes tree branches/leaves are invisible until modifying chunk. (maybe at chunk borders?)
+                // TODO: Isn't multi-threaded
                 generateChunkDecorations(chunk);
                 
                 GameScene.Lighting.Generate(chunk);
