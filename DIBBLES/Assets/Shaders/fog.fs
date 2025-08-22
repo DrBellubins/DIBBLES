@@ -18,6 +18,14 @@ out vec4 finalColor;
 void main()
 {
     float depth = texture(depthTex, fragTexCoord).r;
+
+    // If background/sky, don't apply fog
+    if (depth >= 1)
+    {
+        finalColor = texture(sceneTex, fragTexCoord);
+        return;
+    }
+
     float ndcDepth = depth * 2.0 - 1.0;
     float linearDepth = (2.0 * zNear * zFar) / (zFar + zNear - ndcDepth * (zFar - zNear));
 
