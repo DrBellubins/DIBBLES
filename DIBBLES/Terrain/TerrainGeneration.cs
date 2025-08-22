@@ -333,11 +333,19 @@ public class TerrainGeneration
 
         foreach (var coord in chunksToRemove)
         {
-            if (Chunks[coord].Model.MeshCount > 0)
-                Raylib.UnloadModel(Chunks[coord].Model); // Unload the model to free memory
+            var chunk = Chunks[coord];
             
-            if (Chunks[coord].tModel.MeshCount > 0)
-                Raylib.UnloadModel(Chunks[coord].tModel); // Unload the tModel to free memory
+            if (chunk.Model.MeshCount > 0)
+            {
+                Raylib.UnloadModel(chunk.Model);
+                chunk.Model = default; // Prevent double-unload
+            }
+            
+            if (chunk.tModel.MeshCount > 0)
+            {
+                Raylib.UnloadModel(chunk.tModel);
+                chunk.tModel = default;
+            }
             
             Chunks.Remove(coord);
         }
