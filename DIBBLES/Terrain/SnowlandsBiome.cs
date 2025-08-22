@@ -14,7 +14,6 @@ public class SnowlandsBiome
             returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Snow]);
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
-            returnData.SurfaceY = returnData.WorldPos.Y;
         }
         else if (returnData.IslandDepth < 3) // snow thickness = 4
         {

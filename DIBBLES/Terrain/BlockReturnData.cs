@@ -9,5 +9,6 @@ public struct BlockReturnData()
     public bool FoundSurface;   // Default false
     public Vector3Int WorldPos;
     public int IslandDepth;     // Default 0
-    public int SurfaceY;
+    public SeededRandom RNG;
+    public FastNoiseLite Noise;
 }

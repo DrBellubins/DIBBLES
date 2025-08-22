@@ -14,7 +14,6 @@ public class DesertBiome
             returnData.CurrentBlock = new Block(returnData.WorldPos, Block.Prefabs[BlockType.Sand]);
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
-            returnData.SurfaceY = returnData.WorldPos.Y;
         }
         else if (returnData.IslandDepth < 3) // sand thickness = 4
         {

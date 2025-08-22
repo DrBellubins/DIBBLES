@@ -229,7 +229,8 @@ public class TerrainGeneration
             for (int z = 0; z < ChunkSize; z++)
             {
                 var blockReturnData = new BlockReturnData();
-                blockReturnData.SurfaceY = -1;
+                blockReturnData.RNG = rng;
+                blockReturnData.Noise = noise;
                 
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
@@ -261,15 +262,24 @@ public class TerrainGeneration
                         noise.SetFrequency(0.001f);
                         
                         var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-                        
+
                         if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
+                        {
                             desertBiome.Generate(ref blockReturnData);
+                        }
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
+                        {
                             plainsBiome.Generate(ref blockReturnData);
+                        }
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
+                        {
                             plainsBiome.Generate(ref blockReturnData);
+                        }
                         else // Fallback
+                        {
                             snowlandsBiome.Generate(ref blockReturnData);
+                        }
+                            
 
                         blockReturnData.CurrentBlock.InsideIsland = true;
                     }
