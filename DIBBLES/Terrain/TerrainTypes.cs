@@ -16,7 +16,9 @@ public enum BlockType
     Snow,
     Wood,
     Water,
-    Wisp
+    Wisp,
+    WoodLog,
+    Leaves
 }
 
 public enum TerrainBiome
@@ -37,7 +39,8 @@ public class Chunk
     public Vector3Int Position;
     public Block[,,] Blocks;
     public ChunkInfo Info;
-    public Model Model;
+    public Model Model; // Opaque
+    public Model tModel; // Transparent
 
     public Chunk(Vector3Int pos)
     {
@@ -106,6 +109,8 @@ public class Block
         Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Wood, new BlockInfo(BlockType.Wood, 3, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.WoodLog, new BlockInfo(BlockType.WoodLog, 3, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Leaves, new BlockInfo(BlockType.Leaves, 1, 0.0f, 64, true, 0));
         
         // Special blocks
         Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0));
@@ -133,7 +138,7 @@ public class Block
             var texture = loadBlockTexture(blockType);
 
             if (texture.Id == 0) // Check if texture failed to load
-                texture = Resource.Load<Texture2D>("error.png");
+                texture = Resource.Load<Texture2D>("Error.png");
 
             tempTextures.Add(texture);
             Textures.Add(blockType, texture); // Also store in Textures for reference
@@ -225,13 +230,13 @@ public class Block
     
     private static Texture2D loadBlockTexture(BlockType blockType)
     {
-        return Resource.Load<Texture2D>($"{blockType.ToString().ToLower()}.png");
+        return Resource.Load<Texture2D>($"{blockType.ToString()}.png");
     }
     
     private static Sound loadBlockSounds(BlockType blockType, int index)
     {
         var i = index + 1; // Sounds start at 1
-        var blockName = blockType.ToString().ToLower();
+        var blockName = blockType.ToString();
         return Resource.Load<Sound>(Path.Combine(blockName, $"{blockName}{i}.ogg"));
     }
 }

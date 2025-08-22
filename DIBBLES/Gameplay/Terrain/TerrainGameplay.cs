@@ -190,11 +190,16 @@ public class TerrainGameplay
             
             // Regenerate mesh
             Raylib.UnloadModel(chunk.Model); // Unload old model
+            //Raylib.UnloadModel(chunk.tModel); // Unload old tModel
         
-            var meshData = GameScene.TMesh.GenerateMeshData(chunk);
-            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
+            var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+            //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
             
-            GameScene.TMesh.RemeshNeighbors(chunk);
+            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
+            //chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+            
+            GameScene.TMesh.RemeshNeighbors(chunk, false);
+            //GameScene.TMesh.RemeshNeighbors(chunk, true);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -261,11 +266,16 @@ public class TerrainGameplay
         
         // Regenerate mesh
         Raylib.UnloadModel(chunk.Model); // Unload old model
+        //Raylib.UnloadModel(chunk.tModel); // Unload old tModel
         
-        var meshData = GameScene.TMesh.GenerateMeshData(chunk);
+        var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+        //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+            
         chunk.Model = GameScene.TMesh.UploadMesh(meshData);
-        
-        GameScene.TMesh.RemeshNeighbors(chunk);
+        //chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+            
+        GameScene.TMesh.RemeshNeighbors(chunk, false);
+        //GameScene.TMesh.RemeshNeighbors(chunk, true);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

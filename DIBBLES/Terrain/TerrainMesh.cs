@@ -16,7 +16,7 @@ public class TerrainMesh
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
-    public MeshData GenerateMeshData(Chunk chunk)
+    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
     {
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -28,8 +28,6 @@ public class TerrainMesh
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            if (chunk.Blocks[x, y, z].Info.IsTransparent) continue;
-
             var pos = new Vector3(x, y, z);
             var blockType = chunk.Blocks[x, y, z].Info.Type;
             int vertexOffset = vertices.Count;
@@ -70,7 +68,7 @@ public class TerrainMesh
             };
 
             // Front face (-Z)
-            if (!isVoxelSolid(chunk, x, y, z - 1))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x, y, z - 1))
             {
                 // Vertices: 0,3,2,1
                 float l0 = getVertexLight(chunk, x,   y,   z  );
@@ -99,7 +97,7 @@ public class TerrainMesh
             }
             
             // Back face (+Z)
-            if (!isVoxelSolid(chunk, x, y, z + 1))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x, y, z + 1))
             {
                 // Vertices: 5,6,7,4
                 float l0 = getVertexLight(chunk, x+1, y,   z+1 );
@@ -128,7 +126,7 @@ public class TerrainMesh
             }
             
             // Left face (-X)
-            if (!isVoxelSolid(chunk, x - 1, y, z))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x - 1, y, z))
             {
                 // Vertices: 4,7,3,0
                 float l0 = getVertexLight(chunk, x,   y,   z+1 );
@@ -157,7 +155,7 @@ public class TerrainMesh
             }
             
             // Right face (+X)
-            if (!isVoxelSolid(chunk, x + 1, y, z))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x + 1, y, z))
             {
                 // Vertices: 1,2,6,5
                 float l0 = getVertexLight(chunk, x+1, y,   z   );
@@ -186,7 +184,7 @@ public class TerrainMesh
             }
             
             // Bottom face (-Y)
-            if (!isVoxelSolid(chunk, x, y - 1, z))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x, y - 1, z))
             {
                 // Vertices: 4,0,1,5
                 float l0 = getVertexLight(chunk, x,   y,   z+1 );
@@ -215,7 +213,7 @@ public class TerrainMesh
             }
             
             // Top face (+Y)
-            if (!isVoxelSolid(chunk, x, y + 1, z))
+            if (!isVoxelSolid(chunk, isTransparencyPass, x, y + 1, z))
             {
                 // Vertices: 3,7,6,2
                 float l0 = getVertexLightTopFace(chunk, x,   y, z   );  
@@ -246,7 +244,7 @@ public class TerrainMesh
         int vcount = vertices.Count;
         int icount = indices.Count / 3;
         var meshData = new MeshData(vcount, icount);
-
+        
         for (int i = 0; i < vertices.Count; i++)
         {
             meshData.Vertices[i * 3 + 0] = vertices[i].X;
@@ -381,7 +379,7 @@ public class TerrainMesh
         return total / (count * 15f); // Normalize to [0,1]
     }
     
-    private bool isVoxelSolid(Chunk chunk, int x, int y, int z)
+    private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
     {
         BlockInfo info = null;
 
@@ -423,14 +421,14 @@ public class TerrainMesh
             info = chunk.Blocks[x, y, z]?.Info;
         }
 
-        // Air or transparent blocks are NOT solid
+        // Air blocks are NOT solid
         if (info == null)
             return false;
         
-        return info.Type != BlockType.Air && !info.IsTransparent;
+        return info.Type != BlockType.Air;
     }
 
-    public void RemeshNeighbors(Chunk chunk)
+    public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)
     {
         int[] offsets = { -ChunkSize, ChunkSize };
         
@@ -445,12 +443,12 @@ public class TerrainMesh
                 if (axis == 2) neighborPos.Z += offset;
 
                 if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
-                    RemeshNeighborPos(neighborChunk.Position);
+                    RemeshNeighborPos(neighborChunk.Position, isTransparentPass);
             }
         }
     }
     
-    public void RemeshNeighborPos(Vector3Int neighborPos)
+    public void RemeshNeighborPos(Vector3Int neighborPos, bool isTransparentPass)
     {
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame
@@ -458,9 +456,17 @@ public class TerrainMesh
         if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
         {
             Raylib.UnloadModel(neighborChunk.Model);
-            
-            var meshData = GameScene.TMesh.GenerateMeshData(neighborChunk);
-            neighborChunk.Model = GameScene.TMesh.UploadMesh(meshData);
+
+            if (!isTransparentPass)
+            {
+                var meshData = GameScene.TMesh.GenerateMeshData(neighborChunk, false);
+                neighborChunk.Model = GameScene.TMesh.UploadMesh(meshData);
+            }
+            else
+            {
+                var tMeshData = GameScene.TMesh.GenerateMeshData(neighborChunk, true);
+                neighborChunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+            }
             
             RecentlyRemeshedNeighbors.Add(neighborPos);
         }
