@@ -39,8 +39,6 @@ public class TerrainGeneration
     
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
-    private Stopwatch stopwatch = new();
-    
     public void Start()
     {
         Block.InitializeBlockPrefabs();
@@ -139,7 +137,7 @@ public class TerrainGeneration
 
             chunksLoaded++;
             
-            //UnloadDistantChunks(currentChunk);
+            UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
         }
@@ -159,7 +157,7 @@ public class TerrainGeneration
 
             chunksLoaded++;
             
-            //UnloadDistantChunks(currentChunk);
+            UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
         }
@@ -211,12 +209,12 @@ public class TerrainGeneration
                         GameScene.Lighting.Generate(chunk);
                     }
 
-                    var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                    var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                    //var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+                    //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
 
                     // Enqueue for main thread mesh upload
-                    meshUploadQueue.Enqueue((chunk, meshData));
-                    tMeshUploadQueue.Enqueue((chunk, tMeshData));
+                    //meshUploadQueue.Enqueue((chunk, meshData));
+                    //tMeshUploadQueue.Enqueue((chunk, tMeshData));
                     
                     generatingChunks.TryRemove(pos, out _);
                 }
@@ -362,7 +360,8 @@ public class TerrainGeneration
             // Run staging in a background task
             Task.Run(() =>
             {
-                if (!Chunks.TryGetValue(chunkPos, out var chunk)) {
+                if (!Chunks.TryGetValue(chunkPos, out var chunk))
+                {
                     stagingInProgress.TryRemove(chunkPos, out _);
                     return;
                 }
