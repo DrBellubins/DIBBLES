@@ -168,6 +168,8 @@ public class TerrainGeneration
             Console.WriteLine($"Seed: {Seed}");
     }
     
+    SemaphoreSlim semaphore = new SemaphoreSlim(4); // Max 4 concurrent tasks
+    
     private void generateTerrainAsync(Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
@@ -186,12 +188,14 @@ public class TerrainGeneration
         foreach (var pos in chunksToGenerate)
         {
             // Spawn a background task for chunk generation
-            Task.Run(() =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
+                semaphore.Wait(); // Blocks if 4 threads are already running
+
                 try
                 {
                     generatingChunks.TryAdd(pos, true);
-                    
+
                     Chunk chunk;
 
                     // Check if chunk is in WorldSave.ModifiedChunks
@@ -203,25 +207,29 @@ public class TerrainGeneration
                     else
                     {
                         chunk = new Chunk(pos);
-                        
+
                         generateChunkData(chunk);
-                        
+
                         GameScene.Lighting.Generate(chunk);
                     }
 
-                    //var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                    //var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                    var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+                    var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
 
                     // Enqueue for main thread mesh upload
-                    //meshUploadQueue.Enqueue((chunk, meshData));
-                    //tMeshUploadQueue.Enqueue((chunk, tMeshData));
-                    
+                    meshUploadQueue.Enqueue((chunk, meshData));
+                    tMeshUploadQueue.Enqueue((chunk, tMeshData));
+
                     generatingChunks.TryRemove(pos, out _);
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                     throw;
+                }
+                finally
+                {
+                    semaphore.Release();
                 }
             });
         }
@@ -358,7 +366,7 @@ public class TerrainGeneration
             stagingInProgress.TryAdd(chunkPos, true);
 
             // Run staging in a background task
-            Task.Run(() =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 if (!Chunks.TryGetValue(chunkPos, out var chunk))
                 {

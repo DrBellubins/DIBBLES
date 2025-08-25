@@ -124,6 +124,28 @@ public static class GMath
         return input > min && input < max;
     }
     
+    public static float Clamp(float value, float min, float max)
+    {
+        if (value < min)
+            return min;
+        
+        if (value > max)
+            return max;
+        
+        return value;
+    }
+    
+    public static int Clamp(int value, int min, int max)
+    {
+        if (value < min)
+            return min;
+        
+        if (value > max)
+            return max;
+        
+        return value;
+    }
+    
     public static void MatrixToAxisAngle(Matrix4x4 m, out Vector3 axis, out float angleDeg)
     {
         float angleRad = MathF.Acos((m.M11 + m.M22 + m.M33 - 1f) / 2f);
