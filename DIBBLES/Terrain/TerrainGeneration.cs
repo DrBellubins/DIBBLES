@@ -110,7 +110,7 @@ public class TerrainGeneration
                 tMeshUploadQueue.Enqueue((chunk, tMeshData));
                 
                 GameScene.TMesh.RemeshNeighbors(chunk, false);
-                GameScene.TMesh.RemeshNeighbors(chunk, true);
+                //GameScene.TMesh.RemeshNeighbors(chunk, true);
             }
 
             playerCharacter.NeedsToSpawn = true;
