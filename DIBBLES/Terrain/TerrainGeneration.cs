@@ -34,6 +34,9 @@ public class TerrainGeneration
     // Thread-safe queues for chunk and mesh work
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
     private ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
+    private ConcurrentQueue<Vector3Int> chunkStagingQueue = new();
+    private ConcurrentDictionary<Vector3Int, bool> stagingInProgress = new();
+    
     private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
     private Stopwatch stopwatch = new();
@@ -89,30 +92,29 @@ public class TerrainGeneration
             initialLoad = true;
         }
         
+        foreach (var chunk in Chunks.Values)
+            tryQueueChunkForStaging(chunk.Position, currentChunk);
+        
+        processChunkStagingAsync();
+        
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
+        
+        /*foreach (var chunk in Chunks.Values)
+        {
+            if (chunk.GenerationState == ChunkGenerationState.DecorationsAndRemeshDone
+                && chunk.GenerationState != ChunkGenerationState.RemeshNeighbors)
+            {
+                GameScene.TMesh.RemeshNeighbors(chunk, false);
+                //GameScene.TMesh.RemeshNeighbors(chunk, true);
+                
+                // Optionally set another flag if you want to avoid duplicate remesh
+                chunk.GenerationState = ChunkGenerationState.RemeshNeighbors;
+            }
+        }*/
         
         // Initial remesh/lighting
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
-            foreach (var chunk in Chunks.Values)
-            {
-                // TODO: Trees don't spawn outside of initial render distance.
-                // TODO: Sometimes tree branches/leaves are invisible until modifying chunk. (maybe at chunk borders?)
-                // TODO: Isn't multi-threaded
-                generateChunkDecorations(chunk);
-                
-                GameScene.Lighting.Generate(chunk);
-                
-                var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
-                
-                meshUploadQueue.Enqueue((chunk, meshData));
-                tMeshUploadQueue.Enqueue((chunk, tMeshData));
-                
-                GameScene.TMesh.RemeshNeighbors(chunk, false);
-                //GameScene.TMesh.RemeshNeighbors(chunk, true);
-            }
-
             playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
@@ -137,7 +139,7 @@ public class TerrainGeneration
 
             chunksLoaded++;
             
-            UnloadDistantChunks(currentChunk);
+            //UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
         }
@@ -157,7 +159,7 @@ public class TerrainGeneration
 
             chunksLoaded++;
             
-            UnloadDistantChunks(currentChunk);
+            //UnloadDistantChunks(currentChunk);
             
             uploadsThisFrame++;
         }
@@ -326,9 +328,71 @@ public class TerrainGeneration
             }
         }
         
+        chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
     }
 
+    private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        var chunk = Chunks[chunkPos];
+
+        if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated &&
+            Math.Abs(chunkPos.X/ChunkSize - centerChunk.X) <= halfRenderDistance &&
+            Math.Abs(chunkPos.Y/ChunkSize - centerChunk.Y) <= halfRenderDistance &&
+            Math.Abs(chunkPos.Z/ChunkSize - centerChunk.Z) <= halfRenderDistance)
+        {
+            chunk.GenerationState = ChunkGenerationState.StagingQueued;
+            chunkStagingQueue.Enqueue(chunkPos);
+        }
+    }
+    
+    private const int MAX_STAGING_PER_FRAME = 2;
+    private void processChunkStagingAsync()
+    {
+        int processed = 0;
+
+        while (processed < MAX_STAGING_PER_FRAME && chunkStagingQueue.TryDequeue(out var chunkPos))
+        {
+            if (stagingInProgress.ContainsKey(chunkPos))
+                continue; // Already processing
+
+            stagingInProgress.TryAdd(chunkPos, true);
+
+            // Run staging in a background task
+            Task.Run(() =>
+            {
+                if (!Chunks.TryGetValue(chunkPos, out var chunk)) {
+                    stagingInProgress.TryRemove(chunkPos, out _);
+                    return;
+                }
+
+                // Decorations (must sync with main thread if modifying Raylib objects)
+                generateChunkDecorations(chunk);
+
+                // Lighting (can be async if no Raylib calls)
+                GameScene.Lighting.Generate(chunk);
+
+                // Mesh generation (thread safe)
+                var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
+                var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+
+                // Enqueue mesh upload for main thread
+                meshUploadQueue.Enqueue((chunk, meshData));
+                tMeshUploadQueue.Enqueue((chunk, tMeshData));
+
+                // Remesh neighbors (must be main thread, defer by queue or flag)
+                // Here, just queue/remesh on main thread in Update
+
+                // Mark as staged
+                chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
+                stagingInProgress.TryRemove(chunkPos, out _);
+            });
+
+            processed++;
+        }
+    }
+    
     private void generateChunkDecorations(Chunk chunk)
     {
         long chunkSeed = Seed 

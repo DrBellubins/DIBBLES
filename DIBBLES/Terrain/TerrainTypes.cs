@@ -28,6 +28,15 @@ public enum TerrainBiome
     Snowlands
 }
 
+public enum ChunkGenerationState
+{
+    Uninitialized,
+    TerrainGenerated,
+    StagingQueued,
+    DecorationsAndRemeshDone,
+    RemeshNeighbors
+}
+
 public class ChunkInfo
 {
     public bool Generated; // Runtime quality-of-life check
@@ -42,6 +51,8 @@ public class Chunk
     public Model Model; // Opaque
     public Model tModel; // Transparent
 
+    public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
+    
     public Chunk(Vector3Int pos)
     {
         Position = pos;

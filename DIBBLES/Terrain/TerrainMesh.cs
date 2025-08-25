@@ -484,30 +484,6 @@ public class TerrainMesh
         }
     }
     
-    public byte averageNeighborLightLevel(Chunk chunk, int x, int y, int z)
-    {
-        int[] dx = { -1, 1, 0, 0, 0, 0 };
-        int[] dy = { 0, 0, -1, 1, 0, 0 };
-        int[] dz = { 0, 0, 0, 0, -1, 1 };
-
-        int totalLight = 0;
-        int count = 0;
-
-        for (int i = 0; i < 6; i++)
-        {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
-            int nz = z + dz[i];
-            byte light = neighborLightLevel(chunk, nx, ny, nz);
-            totalLight += light;
-            count++;
-        }
-
-        // Clamp and cast to byte
-        int averaged = count > 0 ? (totalLight / count) : 0;
-        return (byte)Math.Clamp(averaged, 0, 15);
-    }
-    
     private byte neighborLightLevel(Chunk chunk, int nx, int ny, int nz)
     {
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
@@ -557,6 +533,7 @@ public class TerrainMesh
             
             if (block != null)
                 return block.LightLevel;
+            
             return 0;
         }
     }
