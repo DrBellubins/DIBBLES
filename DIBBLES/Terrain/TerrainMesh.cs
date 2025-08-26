@@ -518,10 +518,18 @@ public class TerrainMesh
                 // Defensive: check indices and block existence
                 if (tx >= 0 && tx < ChunkSize && ty >= 0 && ty < ChunkSize && tz >= 0 && tz < ChunkSize)
                 {
-                    var neighborBlock = neighborChunk.Blocks[tx, ty, tz];
+                    try
+                    {
+                        // TODO: Can sometimes cause a crash???
+                        var neighborBlock = neighborChunk.Blocks[tx, ty, tz];
                     
-                    if (neighborBlock != null)
-                        return neighborBlock.LightLevel;
+                        if (neighborBlock != null)
+                            return neighborBlock.LightLevel;
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
 

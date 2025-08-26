@@ -66,7 +66,8 @@ public class PlayerCharacter
     private float placeBreakTimer = 0f;
     
     private bool canMove = true;
-    
+
+    private bool isRunning = false;
     private bool isJumping = false;
     private bool isFalling = false;
     private bool isGrounded = false;
@@ -95,6 +96,9 @@ public class PlayerCharacter
         
         Raylib.DisableCursor();
     }
+    
+    bool waitingForSecondPress = false;
+    double lastPressTime = 0.0;
     
     public void Update()
     {
@@ -138,10 +142,45 @@ public class PlayerCharacter
         if (Input.MoveLeft()) inputDir.X -= 1.0f;
         if (Input.MoveRight()) inputDir.X += 1.0f;
 
-        if (Input.Run() && !isCrouching)
-            currentSpeed = RunSpeed;
-        else
-            currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
+        // Run
+        currentSpeed = WalkSpeed;
+        isRunning = false;
+        
+        if (Raylib.IsKeyPressed(KeyboardKey.W))
+        {
+            float currentTime = Time.time;
+
+            if (!waitingForSecondPress)
+            {
+                // First press detected
+                waitingForSecondPress = true;
+                lastPressTime = currentTime;
+            }
+            else
+            {
+                // Second press detected, check if within threshold
+                if (currentTime - lastPressTime <= 0.5f)
+                {
+                    Run();
+                    Console.WriteLine("Double press detected!");
+                    waitingForSecondPress = false; // Reset after double press
+                }
+                else
+                {
+                    // Too slow, treat as new first press
+                    lastPressTime = currentTime;
+                }
+            }
+        }
+
+        // Reset if the time window expires
+        if (waitingForSecondPress && Raylib.GetTime() - lastPressTime > 0.3f)
+        {
+            waitingForSecondPress = false;
+        }
+
+        if (Input.Run())
+            Run();
         
         var crouchKey = Input.Crouch();
         isCrouching = crouchKey;
@@ -342,6 +381,17 @@ public class PlayerCharacter
         wasGrounded = isGrounded;
     }
 
+    public void Run()
+    {
+        if (!isCrouching)
+        {
+            currentSpeed = RunSpeed;
+            isRunning = true;
+        }
+        else
+            currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
+    }
+    
     public void Damage(int damage)
     {
         if (Health > 0)

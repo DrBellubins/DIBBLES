@@ -59,8 +59,6 @@ public class TerrainGeneration
     private bool initialLoad = false;
     private int chunksLoaded = 0;
     
-    const int MAX_MESH_UPLOADS_PER_FRAME = 2;
-    
     public void Update(PlayerCharacter playerCharacter)
     {
         // Calculate current chunk coordinates based on camera position
@@ -120,10 +118,8 @@ public class TerrainGeneration
         }
         
         // Try to upload any queued meshes (must be done on main thread)
-        int uploadsThisFrame = 0;
-        
         // Opaque pass
-        while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && meshUploadQueue.TryDequeue(out var entry))
+        while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
@@ -133,17 +129,14 @@ public class TerrainGeneration
                 Raylib.UnloadModel(chunk.Model);
             
             chunk.Model = GameScene.TMesh.UploadMesh(meshData);
+            
             Chunks[chunk.Position] = chunk;
-
-            chunksLoaded++;
             
             UnloadDistantChunks(currentChunk);
-            
-            uploadsThisFrame++;
         }
         
         // Transparent pass
-        while (uploadsThisFrame < MAX_MESH_UPLOADS_PER_FRAME && tMeshUploadQueue.TryDequeue(out var entry))
+        while (tMeshUploadQueue.TryDequeue(out var entry))
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
@@ -158,8 +151,6 @@ public class TerrainGeneration
             chunksLoaded++;
             
             UnloadDistantChunks(currentChunk);
-            
-            uploadsThisFrame++;
         }
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
@@ -387,9 +378,6 @@ public class TerrainGeneration
                 // Enqueue mesh upload for main thread
                 meshUploadQueue.Enqueue((chunk, meshData));
                 tMeshUploadQueue.Enqueue((chunk, tMeshData));
-
-                // Remesh neighbors (must be main thread, defer by queue or flag)
-                // Here, just queue/remesh on main thread in Update
 
                 // Mark as staged
                 chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
