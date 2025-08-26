@@ -32,12 +32,12 @@ public static class Input
 
     public static bool Run()
     {
-        return Raylib.IsKeyDown(KeyboardKey.LeftShift);
+        return Raylib.IsMouseButtonDown(MouseButton.Extra);
     }
 
     public static bool Crouch()
     {
-        return Raylib.IsKeyDown(KeyboardKey.C);
+        return Raylib.IsKeyDown(KeyboardKey.LeftShift);
     }
 
     public static bool Jump(bool isCrouching)

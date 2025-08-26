@@ -16,6 +16,7 @@ public class PlayerCharacter
     // HL2 movement values, converted to meters and m/s.
     public const float WalkSpeed = 3.619f;        // 361.9 Hu
     public const float RunSpeed = 6.096f;         // 609.6 Hu
+    public const float CrouchSpeed = 2.54f * 0.5f;      // HL2 crouch speed ≈ 100 units/s
     public const float AirAcceleration = 10.0f;  // HL2 style air accel
     public const float GroundAcceleration = 10.0f; // HL2 style ground accel
     public const float GroundFriction = 8.0f;    // HL2 style ground friction
@@ -24,7 +25,6 @@ public class PlayerCharacter
     public const float JumpImpulse = 3.048f * 2.3f;       // HL2 jump velocity ≈ 5 m/s
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
-    public const float CrouchSpeed = 2.54f;      // HL2 crouch speed ≈ 100 units/s
     
     // Gameplay
     public int Health = 100;
@@ -100,6 +100,7 @@ public class PlayerCharacter
     bool isDoublePressRunning = false;
     bool waitingForSecondPress = false;
     double lastPressTime = 0.0;
+    float lastHeight = PlayerHeight;
     
     public void Update()
     {
@@ -144,7 +145,7 @@ public class PlayerCharacter
         if (Input.MoveRight()) inputDir.X += 1.0f;
 
         // Run
-        currentSpeed = WalkSpeed;
+        currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
         isRunning = false;
         
         if (Raylib.IsKeyPressed(KeyboardKey.W))
@@ -158,7 +159,7 @@ public class PlayerCharacter
             }
             else
             {
-                if (currentTime - lastPressTime <= 1.5f)
+                if (currentTime - lastPressTime <= 2f)
                 {
                     isDoublePressRunning =  true;
                     waitingForSecondPress = false;
@@ -316,6 +317,10 @@ public class PlayerCharacter
         
         currentHeight = GMath.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
         
+        float heightDelta = currentHeight - lastHeight;
+        Position.Y += heightDelta * 0.5f; // Move up/down by half the change, since bounding box is centered
+        lastHeight = currentHeight;
+        
         // --- Jumping ---
         if (isGrounded && isJumping)
         {
@@ -386,8 +391,6 @@ public class PlayerCharacter
             currentSpeed = RunSpeed;
             isRunning = true;
         }
-        else
-            currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
     }
     
     public void Damage(int damage)
