@@ -97,6 +97,7 @@ public class PlayerCharacter
         Raylib.DisableCursor();
     }
     
+    bool isDoublePressRunning = false;
     bool waitingForSecondPress = false;
     double lastPressTime = 0.0;
     
@@ -152,34 +153,31 @@ public class PlayerCharacter
 
             if (!waitingForSecondPress)
             {
-                // First press detected
                 waitingForSecondPress = true;
                 lastPressTime = currentTime;
             }
             else
             {
-                // Second press detected, check if within threshold
-                if (currentTime - lastPressTime <= 0.5f)
+                if (currentTime - lastPressTime <= 1.5f)
                 {
-                    Run();
-                    Console.WriteLine("Double press detected!");
-                    waitingForSecondPress = false; // Reset after double press
+                    isDoublePressRunning =  true;
+                    waitingForSecondPress = false;
                 }
                 else
-                {
-                    // Too slow, treat as new first press
                     lastPressTime = currentTime;
-                }
             }
         }
 
         // Reset if the time window expires
         if (waitingForSecondPress && Raylib.GetTime() - lastPressTime > 0.3f)
-        {
             waitingForSecondPress = false;
-        }
 
-        if (Input.Run())
+        if (!Raylib.IsKeyDown(KeyboardKey.W))
+            isDoublePressRunning = false;
+        
+        if (isDoublePressRunning && Raylib.IsKeyDown(KeyboardKey.W))
+            Run();
+        else if (Input.Run())
             Run();
         
         var crouchKey = Input.Crouch();
