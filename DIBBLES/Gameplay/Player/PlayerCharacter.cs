@@ -177,9 +177,9 @@ public class PlayerCharacter
             isDoublePressRunning = false;
         
         if (isDoublePressRunning && Raylib.IsKeyDown(KeyboardKey.W))
-            Run();
+            run();
         else if (Input.Run())
-            Run();
+            run();
         
         var crouchKey = Input.Crouch();
         isCrouching = crouchKey;
@@ -194,7 +194,7 @@ public class PlayerCharacter
         justLanded = false;
         
         // Collision detection
-        CheckCollisions();
+        checkCollisions();
         
         CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         
@@ -387,15 +387,6 @@ public class PlayerCharacter
         wasGrounded = isGrounded;
     }
 
-    public void Run()
-    {
-        if (!isCrouching)
-        {
-            currentSpeed = RunSpeed;
-            isRunning = true;
-        }
-    }
-    
     public void Damage(int damage)
     {
         if (Health > 0)
@@ -408,6 +399,20 @@ public class PlayerCharacter
     {
         IsDead = true;
         canMove = false;
+    }
+    
+    public void SetCameraDirection(Vector3 direction)
+    {
+        direction = Vector3.Normalize(direction);
+
+        CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
+        CameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
+
+        // Now construct CameraRotation as usual
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
+
+        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
     }
     
     public void Draw()
@@ -432,7 +437,16 @@ public class PlayerCharacter
         }
     }
     
-    public void CheckCollisions()
+    private void run()
+    {
+        if (!isCrouching)
+        {
+            currentSpeed = RunSpeed;
+            isRunning = true;
+        }
+    }
+    
+    private void checkCollisions()
     {
         var moveDelta = Velocity * Time.DeltaTime;
         var newPosition = Position;
@@ -487,56 +501,25 @@ public class PlayerCharacter
         
         Position = newPosition;
     }
-    
-    public void SetCameraDirection(Vector3 direction)
-    {
-        direction = Vector3.Normalize(direction);
-
-        CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
-        CameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
-
-        // Now construct CameraRotation as usual
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
-
-        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-    }
 
     private void checkCrouching(ref Vector3 wishDir)
     {
         if (isCrouching && wishDir.Length() > 0)
         {
-            // Compute the next intended position
             Vector3 intendedMove = wishDir * currentSpeed * Time.DeltaTime;
             Vector3 nextPosition = Position + intendedMove;
 
             // Check the block below the next position
             Vector3 belowPos = new Vector3(nextPosition.X, nextPosition.Y - 0.5f, nextPosition.Z);
 
-            // Find the chunk for the belowPos
-            int chunkX = (int)Math.Floor(belowPos.X / ChunkSize) * ChunkSize;
-            int chunkY = (int)Math.Floor(belowPos.Y / ChunkSize) * ChunkSize;
-            int chunkZ = (int)Math.Floor(belowPos.Z / ChunkSize) * ChunkSize;
-            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+            // Check the block below the current position
+            Vector3 belowCurrentPos = new Vector3(Position.X, Position.Y - 0.5f, Position.Z);
 
-            if (TerrainGeneration.Chunks.TryGetValue(chunkCoord, out var chunk))
+            // Only block movement if there is air below the next position AND not air below the current position
+            // (i.e., only block if you're moving off the edge, not if moving away from it)
+            if (isAirBelow(belowPos) && !isAirBelow(belowCurrentPos))
             {
-                int localX = (int)Math.Floor(belowPos.X) - chunkX;
-                int localY = (int)Math.Floor(belowPos.Y) - chunkY;
-                int localZ = (int)Math.Floor(belowPos.Z) - chunkZ;
-
-                // Make sure indices are in bounds
-                if (localX >= 0 && localX < ChunkSize &&
-                    localY >= 0 && localY < ChunkSize &&
-                    localZ >= 0 && localZ < ChunkSize)
-                {
-                    var blockBelow = chunk.Blocks[localX, localY, localZ];
-                    if (blockBelow.Info.Type == BlockType.Air)
-                    {
-                        // Block movement: set wishDir to zero so velocity doesn't update
-                        wishDir = Vector3.Zero;
-                    }
-                }
+                wishDir = Vector3.Zero;
             }
         }
     }
@@ -632,5 +615,29 @@ public class PlayerCharacter
         );
         
         return new BoundingBox(min, max);
+    }
+    
+    private bool isAirBelow(Vector3 pos)
+    {
+        int chunkX = (int)Math.Floor(pos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor(pos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor(pos.Z / ChunkSize) * ChunkSize;
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (Chunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            int localX = (int)Math.Floor(pos.X) - chunkX;
+            int localY = (int)Math.Floor(pos.Y) - chunkY;
+            int localZ = (int)Math.Floor(pos.Z) - chunkZ;
+
+            if (localX >= 0 && localX < ChunkSize &&
+                localY >= 0 && localY < ChunkSize &&
+                localZ >= 0 && localZ < ChunkSize)
+            {
+                var blockBelow = chunk.Blocks[localX, localY, localZ];
+                return blockBelow.Info.Type == BlockType.Air;
+            }
+        }
+        return false;
     }
 }
