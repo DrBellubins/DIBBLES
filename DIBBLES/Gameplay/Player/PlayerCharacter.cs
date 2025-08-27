@@ -317,6 +317,7 @@ public class PlayerCharacter
         
         currentHeight = GMath.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
         
+        // TODO: Crouching can sometimes get stuck in the ground??
         float heightDelta = currentHeight - lastHeight;
         Position.Y += heightDelta * 0.5f; // Move up/down by half the change, since bounding box is centered
         lastHeight = currentHeight;

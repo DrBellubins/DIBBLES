@@ -22,7 +22,7 @@ public class TerrainGeneration
     
     public static Shader terrainShader;
     
-    public int Seed = 1337;
+    public int Seed = 1234567;
     
     public static Block? SelectedBlock;
     public static Vector3Int SelectedNormal;
