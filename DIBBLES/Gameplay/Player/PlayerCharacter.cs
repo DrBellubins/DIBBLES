@@ -259,8 +259,6 @@ public class PlayerCharacter
         );
         
         Vector3 wishDir = (forwardXZ * inputDir.Z) + (-rightXZ * inputDir.X);
-
-        checkCrouching(ref wishDir);
         
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
@@ -323,8 +321,6 @@ public class PlayerCharacter
         float heightDelta = currentHeight - lastHeight;
         Position.Y += heightDelta * 0.5f; // Move up/down by half the change, since bounding box is centered
         lastHeight = currentHeight;
-        
-        Debug.DrawBox(Position, Vector3.One);
         
         // --- Jumping ---
         if (isGrounded && isJumping)
@@ -502,29 +498,6 @@ public class PlayerCharacter
         }
         
         Position = newPosition;
-    }
-
-    private void checkCrouching(ref Vector3 wishDir)
-    {
-        if (isCrouching && wishDir.Length() > 0)
-        {
-            Vector3 intendedMove = wishDir * currentSpeed * Time.DeltaTime;
-            Vector3 nextPosition = Position + intendedMove;
-
-            // Check the block below the next position
-            Vector3 belowPos = new Vector3(nextPosition.X, nextPosition.Y - 0.5f, nextPosition.Z);
-
-            // Check the block below the current position
-            Vector3 belowCurrentPos = new Vector3(Position.X, Position.Y - 0.5f, Position.Z);
-            
-            // Only block movement if there is air below the next position AND not air below the current position
-            // (i.e., only block if you're moving off the edge, not if moving away from it)
-            if (isAirBelow(belowPos) && !isAirBelow(belowCurrentPos))
-            {
-                wishDir = Vector3.Zero;
-                Velocity.Y = 0f;
-            }
-        }
     }
     
     private void spawn()
