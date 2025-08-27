@@ -260,6 +260,8 @@ public class PlayerCharacter
         
         Vector3 wishDir = (forwardXZ * inputDir.Z) + (-rightXZ * inputDir.X);
 
+        checkCrouching(ref wishDir);
+        
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
 
@@ -498,6 +500,45 @@ public class PlayerCharacter
         Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+    }
+
+    private void checkCrouching(ref Vector3 wishDir)
+    {
+        if (isCrouching && wishDir.Length() > 0)
+        {
+            // Compute the next intended position
+            Vector3 intendedMove = wishDir * currentSpeed * Time.DeltaTime;
+            Vector3 nextPosition = Position + intendedMove;
+
+            // Check the block below the next position
+            Vector3 belowPos = new Vector3(nextPosition.X, nextPosition.Y - 0.5f, nextPosition.Z);
+
+            // Find the chunk for the belowPos
+            int chunkX = (int)Math.Floor(belowPos.X / ChunkSize) * ChunkSize;
+            int chunkY = (int)Math.Floor(belowPos.Y / ChunkSize) * ChunkSize;
+            int chunkZ = (int)Math.Floor(belowPos.Z / ChunkSize) * ChunkSize;
+            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+            if (TerrainGeneration.Chunks.TryGetValue(chunkCoord, out var chunk))
+            {
+                int localX = (int)Math.Floor(belowPos.X) - chunkX;
+                int localY = (int)Math.Floor(belowPos.Y) - chunkY;
+                int localZ = (int)Math.Floor(belowPos.Z) - chunkZ;
+
+                // Make sure indices are in bounds
+                if (localX >= 0 && localX < ChunkSize &&
+                    localY >= 0 && localY < ChunkSize &&
+                    localZ >= 0 && localZ < ChunkSize)
+                {
+                    var blockBelow = chunk.Blocks[localX, localY, localZ];
+                    if (blockBelow.Info.Type == BlockType.Air)
+                    {
+                        // Block movement: set wishDir to zero so velocity doesn't update
+                        wishDir = Vector3.Zero;
+                    }
+                }
+            }
+        }
     }
     
     private void spawn()
