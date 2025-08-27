@@ -9,7 +9,9 @@ public class Debug
 {
     private static Camera3D debugCamera;
 
-    private static Dictionary<string, Color> textBuffer2d = new ();
+    private static Dictionary<string, Color> textBuffer2d = new();
+    
+    private static Dictionary<Vector3, BoundingBox> debugBoxes = new();
     
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new Dictionary<(string, Vector3), Texture2D>();
@@ -29,6 +31,25 @@ public class Debug
             Raylib.DrawTextEx(Engine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
             index += 24;
         }
+    }
+
+    public static void Draw3D()
+    {
+        foreach (var box in debugBoxes)
+            Raylib.DrawBoundingBox(box.Value, new Color(1f, 0f, 0f, 0.5f));
+        
+        debugBoxes.Clear();
+    }
+
+    public static void DrawBox(Vector3 position, Vector3 size)
+    {
+        var boundingBox = new BoundingBox(position - (position * new Vector3(0.5f)),
+            position + (position * new Vector3(0.5f)));
+
+        boundingBox.Min /= size;
+        boundingBox.Max *= size;
+        
+        debugBoxes.TryAdd(position, boundingBox);
     }
     
     public static void Draw2DText(string text, Color color)

@@ -63,6 +63,8 @@ public class GameScene : Scene
         
         PlayerCharacter.Draw();
         
+        Debug.Draw3D();
+        
         Raylib.EndMode3D();
         
         fogEffect.DrawEnd();
