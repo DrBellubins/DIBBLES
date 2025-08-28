@@ -23,6 +23,7 @@ void main()
     finalColor = mix(albedo, fogColor, fogFactor);
     finalColor.a = albedo.a;
 
-    if (finalColor.a < 0.01)
-        discard;
+    finalColor = vec4(1,0,0,1);
+    //if (finalColor.a < 0.01)
+    //    discard;
 }
