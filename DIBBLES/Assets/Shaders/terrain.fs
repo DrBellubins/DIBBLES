@@ -1,9 +1,9 @@
 #version 330
 
 in vec3 fragWorldPos;
-in vec3 fragNormal;
 in vec2 fragTexCoord;
 in vec4 fragColor;
+in vec3 fragNormal;
 
 uniform sampler2D texture0;
 uniform vec3 cameraPos;
@@ -23,7 +23,9 @@ void main()
     finalColor = mix(albedo, fogColor, fogFactor);
     finalColor.a = albedo.a;
 
-    finalColor = vec4(1,0,0,1);
     //if (finalColor.a < 0.01)
     //    discard;
+
+    // Uncomment for debug
+    finalColor = vec4(1,0,0,1);
 }
