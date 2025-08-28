@@ -13,26 +13,37 @@ uniform float fogFar;
 
 uniform vec4 fogColor;
 
+uniform mat4 invProj;
+uniform mat4 invView;
+uniform vec3 cameraPos;
+
 out vec4 finalColor;
 
 void main()
 {
     float depth = texture(depthTex, fragTexCoord).r;
 
-    // If background/sky, don't apply fog
     if (depth >= 1)
     {
         finalColor = texture(sceneTex, fragTexCoord);
         return;
     }
 
-    float ndcDepth = depth * 2.0 - 1.0;
-    float linearDepth = (2.0 * zNear * zFar) / (zFar + zNear - ndcDepth * (zFar - zNear));
+    // Reconstruct NDC
+    vec4 ndcPos = vec4(fragTexCoord * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
 
-    float fogFactor = smoothstep(fogNear, fogFar, linearDepth);
+    // Get view-space position
+    vec4 viewPos = invProj * ndcPos;
+    viewPos /= viewPos.w;
+
+    // Get world-space position
+    vec4 worldPos = invView * viewPos;
+
+    // Calculate world distance
+    float dist = length(worldPos.xyz - cameraPos);
+
+    float fogFactor = smoothstep(fogNear, fogFar, dist);
 
     vec4 scene = texture(sceneTex, fragTexCoord);
-
-    //finalColor = vec4(linearDepth, linearDepth, linearDepth, 1.0);
     finalColor = mix(scene, fogColor, fogFactor);
 }

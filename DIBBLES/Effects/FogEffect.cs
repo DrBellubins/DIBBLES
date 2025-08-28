@@ -1,4 +1,6 @@
 using System.Numerics;
+using DIBBLES.Gameplay.Player;
+using DIBBLES.Scenes;
 using Raylib_cs;
 
 namespace DIBBLES.Effects;
@@ -10,9 +12,10 @@ public class FogEffect
     private int sceneTexLoc;
     private int depthTexLoc;
     private int zNearLoc, zFarLoc, fogNearLoc, fogFarLoc, fogColorLoc;
+    private int invProjLoc, invViewLoc, cameraPosLoc;
     
     private float fogNear = 25.0f;
-    private float fogFar = 200.0f;
+    private float fogFar = 100.0f;
     private Vector4 fogColor = new Vector4(0.4f, 0.7f, 1.0f, 1.0f);
     //private Vector4 fogColor = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -31,6 +34,10 @@ public class FogEffect
         fogNearLoc = Raylib.GetShaderLocation(fogShader, "fogNear");
         fogFarLoc = Raylib.GetShaderLocation(fogShader, "fogFar");
         fogColorLoc = Raylib.GetShaderLocation(fogShader, "fogColor");
+        
+        invProjLoc = Raylib.GetShaderLocation(fogShader, "invProj");
+        invViewLoc = Raylib.GetShaderLocation(fogShader, "invView");
+        cameraPosLoc = Raylib.GetShaderLocation(fogShader, "cameraPos");
         
         Console.WriteLine($"Cull plane: {(float)Rlgl.GetCullDistanceNear()}, {(float)Rlgl.GetCullDistanceFar()}");
         
@@ -60,6 +67,18 @@ public class FogEffect
 
         // Attach the depth texture
         Raylib.SetShaderValueTexture(fogShader, depthTexLoc, target.Depth);
+        
+        // Pass matrices and camera position
+        var aspect = (float)Engine.ScreenWidth / (float)Engine.ScreenHeight;
+        var proj = Raylib.GetCameraProjectionMatrix(ref GameScene.PlayerCharacter.Camera, aspect);
+        var view = Raylib.GetCameraViewMatrix(ref GameScene.PlayerCharacter.Camera);
+        var invProj = Matrix4x4.Invert(proj, out var iproj) ? iproj : Matrix4x4.Identity;
+        var invView = Matrix4x4.Invert(view, out var iview) ? iview : Matrix4x4.Identity;
+        var camPos = GameScene.PlayerCharacter.Camera.Position;
+
+        Raylib.SetShaderValueMatrix(fogShader, invProjLoc, invProj);
+        Raylib.SetShaderValueMatrix(fogShader, invViewLoc, invView);
+        Raylib.SetShaderValue(fogShader, cameraPosLoc, camPos, ShaderUniformDataType.Vec3);
 
         // Draw fullscreen quad with shader
         Raylib.DrawTextureRec(target.Texture, new Rectangle(0, 0, Engine.ScreenWidth, -Engine.ScreenHeight), Vector2.Zero, Color.White);

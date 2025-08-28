@@ -56,11 +56,9 @@ public class GameScene : Scene
         
         fogEffect.DrawStart();
         Raylib.ClearBackground(Color.SkyBlue);
-        
         Raylib.BeginMode3D(PlayerCharacter.Camera);
         
         TerrainGen.Draw();
-        
         PlayerCharacter.Draw();
         
         Debug.Draw3D();
