@@ -4,6 +4,7 @@ using System.Numerics;
 using DIBBLES.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using DIBBLES.Effects;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
@@ -20,7 +21,7 @@ public class TerrainGeneration
     
     public static Dictionary<Vector3Int, Chunk> Chunks = new();
     
-    public static Shader terrainShader;
+    public static Shader TerrainShader;
     
     public int Seed = 1234567;
     
@@ -53,7 +54,7 @@ public class TerrainGeneration
         
         WorldSave.Data.Seed = Seed;
         
-        terrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
+        TerrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
     
     private bool initialLoad = false;
@@ -464,6 +465,13 @@ public class TerrainGeneration
     
     public void Draw()
     {
+        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "cameraPos"),
+            GameScene.PlayerCharacter.Camera.Position,ShaderUniformDataType.Vec3);
+        
+        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogNear"), FogEffect.FogNear, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);
+        
         // Draw opaque
         foreach (var chunk in Chunks.Values)
             Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);

@@ -14,9 +14,10 @@ public class FogEffect
     private int zNearLoc, zFarLoc, fogNearLoc, fogFarLoc, fogColorLoc;
     private int invProjLoc, invViewLoc, cameraPosLoc;
     
-    private float fogNear = 25.0f;
-    private float fogFar = 100.0f;
-    private Vector4 fogColor = new Vector4(0.4f, 0.7f, 1.0f, 1.0f);
+    public const float FogNear = 25.0f;
+    public const float FogFar = 100.0f;
+    public static Vector4 FogColor = new Vector4(0.4f, 0.7f, 1.0f, 1.0f);
+    
     //private Vector4 fogColor = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
 
     public void Start()
@@ -44,9 +45,9 @@ public class FogEffect
         Raylib.SetShaderValue(fogShader, zNearLoc, (float)Rlgl.GetCullDistanceNear(), ShaderUniformDataType.Float);
         Raylib.SetShaderValue(fogShader, zFarLoc, (float)Rlgl.GetCullDistanceFar(), ShaderUniformDataType.Float);
         
-        Raylib.SetShaderValue(fogShader, fogNearLoc, fogNear, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(fogShader, fogFarLoc, fogFar, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(fogShader, fogColorLoc, fogColor, ShaderUniformDataType.Vec4);
+        Raylib.SetShaderValue(fogShader, fogNearLoc, FogNear, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(fogShader, fogFarLoc, FogFar, ShaderUniformDataType.Float);
+        Raylib.SetShaderValue(fogShader, fogColorLoc, FogColor, ShaderUniformDataType.Vec4);
     }
 
     public void DrawStart()

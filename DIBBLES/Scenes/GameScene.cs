@@ -54,7 +54,7 @@ public class GameScene : Scene
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
-        fogEffect.DrawStart();
+        //fogEffect.DrawStart();
         Raylib.ClearBackground(Color.SkyBlue);
         Raylib.BeginMode3D(PlayerCharacter.Camera);
         
@@ -65,7 +65,7 @@ public class GameScene : Scene
         
         Raylib.EndMode3D();
         
-        fogEffect.DrawEnd();
+        //fogEffect.DrawEnd();
         
         PlayerCharacter.DrawUI();
         

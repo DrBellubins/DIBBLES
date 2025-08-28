@@ -327,7 +327,8 @@ public class TerrainMesh
             // Assign texture atlas
             if (Block.TextureAtlas.Id != 0)
             {
-                model.Materials[0].Shader = Raylib.LoadMaterialDefault().Shader;
+                //model.Materials[0].Shader = Raylib.LoadMaterialDefault().Shader;
+                model.Materials[0].Shader = TerrainShader;
                 model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = Block.TextureAtlas;
             }
 
