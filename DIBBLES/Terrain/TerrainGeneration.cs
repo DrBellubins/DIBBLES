@@ -47,10 +47,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Exists)
-        //    Seed = WorldSave.Data.Seed;
-        //else
-        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        if (WorldSave.Exists)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -294,7 +294,7 @@ public class TerrainGeneration
                             snowlandsBiome.Generate(ref blockReturnData);
                         }
                         
-                        blockReturnData.CurrentBlock.InsideIsland = true;
+                        blockReturnData.CurrentBlock.GeneratedInsideIsland = true;
                     }
                     else // Not islands
                     {
@@ -511,7 +511,16 @@ public class TerrainGeneration
         // Face selection overlay
         if (SelectedBlock != null)
         {
-            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+            if (SelectedBlock.GeneratedInsideIsland)
+            {
+                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Green);
+            }
+            else
+            {
+                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
+            }
+            
+            //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
                 
             // Center of the block
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);

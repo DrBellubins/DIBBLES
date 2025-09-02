@@ -87,7 +87,7 @@ public class Block
     public Vector3Int Position;
     public BlockInfo Info;
     public byte LightLevel; // Block light level (0-15)
-    public bool InsideIsland = false;
+    public bool GeneratedInsideIsland = false;
     public BlockDirection Direction;
     
     public static Dictionary<BlockType, BlockInfo> Prefabs = new Dictionary<BlockType, BlockInfo>();

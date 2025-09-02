@@ -182,7 +182,11 @@ public class TerrainGameplay
 
         if (oldBlock.Info.Hardness != 10)
         {
+            // Maintain GeneratedInsideIsland for lighting checks.
+            var generatedInsideBlock = chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland;
+            
             chunk.Blocks[localX, localY, localZ] = new Block(blockPos, Block.Prefabs[BlockType.Air]);
+            chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland = generatedInsideBlock;
             chunk.Info.Modified = true;
 
             // Update lighting if the broken block was opaque or emissive
@@ -257,9 +261,12 @@ public class TerrainGameplay
             return;
         
         // Place the new block
-        var oldBlock = chunk.Blocks[localX, localY, localZ];
+        var generatedInsideBlock = chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland;
+        
         chunk.Blocks[localX, localY, localZ] = new Block(newBlockPos, Block.Prefabs[blockType]);
+        chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland = generatedInsideBlock;
         chunk.Info.Modified = true;
+        
         
         // Update lighting for the placed block
         GameScene.Lighting.Generate(chunk);

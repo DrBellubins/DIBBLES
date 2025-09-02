@@ -97,7 +97,7 @@ public class WorldSave
                                 writer.Write(currentBlock.Position.Z);
                                 
                                 writer.Write((int)currentBlock.Info.Biome);
-                                writer.Write(currentBlock.InsideIsland);
+                                writer.Write(currentBlock.GeneratedInsideIsland);
                             }
                         }
                     }
@@ -157,7 +157,7 @@ public class WorldSave
                                     };
                                     
                                     currentBlock.Info.Biome = (TerrainBiome)reader.ReadInt32();
-                                    currentBlock.InsideIsland = reader.ReadBoolean();
+                                    currentBlock.GeneratedInsideIsland = reader.ReadBoolean();
 
                                     currentChunk.Blocks[x, y, z] = currentBlock;
                                 }
