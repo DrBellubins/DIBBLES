@@ -80,6 +80,8 @@ public class TerrainLighting
                     if (newLight > neighborBlock.LightLevel)
                     {
                         neighborBlock.LightLevel = newLight;
+                        chunk.SetBlock(newPos.X, newPos.Y, newPos.Z, neighborBlock);
+                        
                         queue.Enqueue((curChunk, newPos)); // Add to queue for further propagation
                     }
                 }
