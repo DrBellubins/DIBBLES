@@ -10,13 +10,19 @@ public struct BlockData
     public TerrainBiome Biome;
     public BlockInfo Info;
     public byte LightLevel;
-    public byte LightEmission;
     public bool GeneratedInsideIsland;
 
-    public BlockData(Vector3Int position, BlockInfo info)
+    public BlockData(Vector3Int position, BlockType type)
     {
+        var info = Block.Prefabs[type];
+        
+        Type = type;
         Position = position;
+        Biome = TerrainBiome.Plains;
         Info = info;
+        LightLevel = info.LightEmission;
+        
+        GeneratedInsideIsland = false;
     }
 }
 

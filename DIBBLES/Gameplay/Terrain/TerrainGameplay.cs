@@ -182,7 +182,7 @@ public class TerrainGameplay
             // Maintain GeneratedInsideIsland for lighting checks.
             var generatedInsideIsland = oldBlock.GeneratedInsideIsland;
 
-            var newBlock = new BlockData(blockPos, Block.Prefabs[BlockType.Air]);
+            var newBlock = new BlockData(blockPos, BlockType.Air);
             newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
@@ -263,7 +263,7 @@ public class TerrainGameplay
         // Place the new block
         var generatedInsideIsland = chunk.GetBlock(localX, localY, localZ).GeneratedInsideIsland;
 
-        var newBlock = new BlockData(newBlockPos, Block.Prefabs[blockType]);
+        var newBlock = new BlockData(newBlockPos, blockType);
         newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
         chunk.SetBlock(localX, localY, localZ, newBlock);

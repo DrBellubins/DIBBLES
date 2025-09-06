@@ -282,7 +282,7 @@ public class TerrainGeneration
                         blockReturnData.CurrentBlock.GeneratedInsideIsland = false;
                     }
                     else // Not islands
-                        blockReturnData.CurrentBlock = new BlockData(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        blockReturnData.CurrentBlock = new BlockData(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
                     
                     chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
 

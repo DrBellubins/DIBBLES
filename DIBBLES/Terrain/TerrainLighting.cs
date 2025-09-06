@@ -19,10 +19,10 @@ public class TerrainLighting
                 if (block.Type == BlockType.Air)
                     block.LightLevel = 15; // TEMP
                 else
-                    block.LightLevel = block.LightEmission;
+                    block.LightLevel = block.Info.LightEmission;
             }
             else
-                block.LightLevel = block.LightEmission;
+                block.LightLevel = block.Info.LightEmission;
             
             chunk.SetBlock(x, y, z, block);
         }
