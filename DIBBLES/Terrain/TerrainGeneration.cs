@@ -303,10 +303,10 @@ public class TerrainGeneration
                     }
                     else // Not islands
                     {
-                        blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
+                        blockReturnData.CurrentBlock = new BlockData(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
                     }
                     
-                    chunk.Blocks[x, y, z] = blockReturnData.CurrentBlock;
+                    chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
 
                     // Loop upward
                     /*if (foundSurface)
@@ -368,7 +368,7 @@ public class TerrainGeneration
             // Run staging in a background task
             ThreadPool.QueueUserWorkItem(x =>
             {
-                if (!Chunks.TryGetValue(chunkPos, out var chunk))
+                if (!ECSChunks.TryGetValue(chunkPos, out var chunk))
                 {
                     stagingInProgress.TryRemove(chunkPos, out _);
                     return;

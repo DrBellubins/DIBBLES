@@ -5,7 +5,7 @@ namespace DIBBLES.Terrain;
 
 public struct BlockReturnData()
 {
-    public Block CurrentBlock = new(Vector3Int.Zero, Block.Prefabs[BlockType.Air]);
+    public BlockData CurrentBlock;
     public bool FoundSurface;   // Default false
     public Vector3Int WorldPos;
     public int IslandDepth;     // Default 0

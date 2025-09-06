@@ -12,6 +12,12 @@ public struct BlockData
     public byte LightLevel;
     public byte LightEmission;
     public bool GeneratedInsideIsland;
+
+    public BlockData(Vector3Int position, BlockInfo info)
+    {
+        Position = position;
+        Info = info;
+    }
 }
 
 public class ChunkComponent
