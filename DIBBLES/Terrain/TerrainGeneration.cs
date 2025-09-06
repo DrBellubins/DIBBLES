@@ -96,19 +96,6 @@ public class TerrainGeneration
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
-        /*foreach (var chunk in Chunks.Values)
-        {
-            if (chunk.GenerationState == ChunkGenerationState.DecorationsAndRemeshDone
-                && chunk.GenerationState != ChunkGenerationState.RemeshNeighbors)
-            {
-                GameScene.TMesh.RemeshNeighbors(chunk, false);
-                //GameScene.TMesh.RemeshNeighbors(chunk, true);
-                
-                // Optionally set another flag if you want to avoid duplicate remesh
-                chunk.GenerationState = ChunkGenerationState.RemeshNeighbors;
-            }
-        }*/
-        
         // Initial remesh/lighting
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
@@ -151,6 +138,7 @@ public class TerrainGeneration
                 Raylib.UnloadModel(currentModel);
             
             GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
+            
             ECSChunks[chunk.Position] = chunk;
 
             chunksLoaded++;
@@ -344,7 +332,9 @@ public class TerrainGeneration
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
-        var chunk = ECSChunks[chunkPos];
+        
+        if (!ECSChunks.TryGetValue(chunkPos, out var chunk))
+            return;
 
         if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated &&
             Math.Abs(chunkPos.X/ChunkSize - centerChunk.X) <= halfRenderDistance &&
