@@ -35,7 +35,7 @@ public class TerrainDecorations
             int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGeneration.Chunks.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
             int localX = pos.X - chunkX;
@@ -47,7 +47,7 @@ public class TerrainDecorations
                 localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 continue;
 
-            chunk.Blocks[localX, localY, localZ] = new Block(pos, Block.Prefabs[BlockType.WoodLog]);
+            chunk.SetBlock(localX, localY, localZ, new BlockData(pos, Block.Prefabs[BlockType.WoodLog]));
         }
 
         // Place leaves as a 3x3x3 cube centered at trunk top
@@ -62,7 +62,7 @@ public class TerrainDecorations
             int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGeneration.Chunks.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
             int localX = pos.X - chunkX;
@@ -75,8 +75,8 @@ public class TerrainDecorations
                 continue;
 
             // Only place leaves if position is Air (don't overwrite trunk)
-            if (chunk.Blocks[localX, localY, localZ].Info.Type == BlockType.Air)
-                chunk.Blocks[localX, localY, localZ] = new Block(pos, Block.Prefabs[BlockType.Leaves]);
+            if (chunk.GetBlock(localX, localY, localZ).Info.Type == BlockType.Air)
+                chunk.SetBlock(localX, localY, localZ, new BlockData(pos, Block.Prefabs[BlockType.Leaves]));
         }
     }
 
@@ -100,7 +100,7 @@ public class TerrainDecorations
 
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGeneration.Chunks.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
                 return false; // Out of loaded world bounds or chunk missing
 
             int localX = checkPos.X - chunkX;
@@ -113,7 +113,7 @@ public class TerrainDecorations
                 localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 return false; // Out of chunk bounds
 
-            var block = chunk.Blocks[localX, localY, localZ];
+            var block = chunk.GetBlock(localX, localY, localZ);
             
             if (block.Info.Type != BlockType.Air)
                 return false; // Space is not empty

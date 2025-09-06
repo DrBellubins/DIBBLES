@@ -19,7 +19,6 @@ public class TerrainGeneration
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
     
-    public static readonly Dictionary<Vector3Int, Chunk> Chunks = new();
     public static readonly Dictionary<Vector3Int, ChunkComponent> ECSChunks = new();
     
     public static Shader TerrainShader;
@@ -90,7 +89,7 @@ public class TerrainGeneration
             initialLoad = true;
         }
         
-        foreach (var chunk in Chunks.Values)
+        foreach (var chunk in ECSChunks.Values)
             tryQueueChunkForStaging(chunk.Position, currentChunk);
         
         processChunkStagingAsync();
@@ -178,7 +177,7 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            if (!Chunks.ContainsKey(chunkPos) && !generatingChunks.ContainsKey(chunkPos))
+            if (!ECSChunks.ContainsKey(chunkPos) && !generatingChunks.ContainsKey(chunkPos))
                 chunksToGenerate.Add(chunkPos);
         }
 
@@ -345,7 +344,7 @@ public class TerrainGeneration
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
-        var chunk = Chunks[chunkPos];
+        var chunk = ECSChunks[chunkPos];
 
         if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated &&
             Math.Abs(chunkPos.X/ChunkSize - centerChunk.X) <= halfRenderDistance &&
@@ -434,7 +433,7 @@ public class TerrainGeneration
     {
         List<Vector3Int> chunksToRemove = new List<Vector3Int>();
 
-        foreach (var chunk in Chunks)
+        foreach (var chunk in ECSChunks)
         {
             // Convert world-space key to chunk coordinates
             int chunkX = chunk.Key.X / ChunkSize;
@@ -457,21 +456,22 @@ public class TerrainGeneration
 
         foreach (var coord in chunksToRemove)
         {
-            var chunk = Chunks[coord];
+            var oModel = GameScene.TMesh.OpaqueModels[coord];
+            var tModel = GameScene.TMesh.TransparentModels[coord];
             
-            if (chunk.Model.MeshCount > 0)
+            if (oModel.MeshCount > 0)
             {
-                Raylib.UnloadModel(chunk.Model);
-                chunk.Model = default; // Prevent double-unload
+                Raylib.UnloadModel(oModel);
+                GameScene.TMesh.OpaqueModels[coord] = default; // Prevent double-unload
             }
             
-            if (chunk.tModel.MeshCount > 0)
+            if (tModel.MeshCount > 0)
             {
-                Raylib.UnloadModel(chunk.tModel);
-                chunk.tModel = default;
+                Raylib.UnloadModel(tModel);
+                GameScene.TMesh.TransparentModels[coord] = default;
             }
             
-            Chunks.Remove(coord);
+            ECSChunks.Remove(coord);
         }
     }
     
@@ -485,17 +485,17 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);
         
         // Draw opaque
-        foreach (var chunk in Chunks.Values)
-            Raylib.DrawModel(chunk.Model, chunk.Position.ToVector3(), 1.0f, Color.White);
+        foreach (var oModel in GameScene.TMesh.OpaqueModels)
+            Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Color.White);
         
         // Draw transparent
-        foreach (var chunk in Chunks.Values)
-            Raylib.DrawModel(chunk.tModel, chunk.Position.ToVector3(), 1.0f, Color.White);
+        foreach (var tModel in GameScene.TMesh.TransparentModels)
+            Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);
         
         if (DrawDebug)
         {
             // Draw chunk coordinates in 2D after 3D rendering
-            foreach (var chunk in Chunks)
+            foreach (var chunk in ECSChunks)
             {
                 var chunkCenter = chunk.Key + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
                 Debug.Draw3DText($"Chunk ({chunk.Key.X}, {chunk.Key.Z})", chunkCenter.ToVector3(), Color.White);

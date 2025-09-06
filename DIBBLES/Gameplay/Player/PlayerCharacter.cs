@@ -549,7 +549,7 @@ public class PlayerCharacter
             int chunkZ = (int)Math.Floor((float)z / ChunkSize) * ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!Chunks.TryGetValue(chunkCoord, out var chunk))
+            if (!ECSChunks.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
             int localX = x - chunkX;
@@ -562,13 +562,14 @@ public class PlayerCharacter
                 localZ < 0 || localZ >= ChunkSize)
                 continue;
 
-            var block = chunk.Blocks[localX, localY, localZ];
+            var block = chunk.GetBlock(localX, localY, localZ);
             
             // Only add solid blocks
-            if (block != null && block.Info.Type != BlockType.Air)
+            if (block.Info.Type != BlockType.Air)
             {
                 var blockMin = new Vector3(x, y, z);
                 var blockMax = blockMin + Vector3.One;
+                
                 result.Add(new BoundingBox(blockMin, blockMax));
             }
         }
@@ -591,30 +592,5 @@ public class PlayerCharacter
         );
         
         return new BoundingBox(min, max);
-    }
-    
-    private bool isAirBelow(Vector3 pos)
-    {
-        int chunkX = (int)Math.Floor(pos.X / ChunkSize) * ChunkSize;
-        int chunkY = (int)Math.Floor(pos.Y / ChunkSize) * ChunkSize;
-        int chunkZ = (int)Math.Floor(pos.Z / ChunkSize) * ChunkSize;
-        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-        if (Chunks.TryGetValue(chunkCoord, out var chunk))
-        {
-            int localX = (int)Math.Floor(pos.X) - chunkX;
-            int localY = (int)Math.Floor(pos.Y) - chunkY;
-            int localZ = (int)Math.Floor(pos.Z) - chunkZ;
-
-            if (localX >= 0 && localX < ChunkSize &&
-                localY >= 0 && localY < ChunkSize &&
-                localZ >= 0 && localZ < ChunkSize)
-            {
-                var blockBelow = chunk.Blocks[localX, localY, localZ];
-                return blockBelow.Info.Type == BlockType.Air;
-            }
-        }
-        
-        return false;
     }
 }

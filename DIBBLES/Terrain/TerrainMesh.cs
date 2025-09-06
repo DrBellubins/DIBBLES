@@ -424,9 +424,9 @@ public class TerrainMesh
             );
 
             // Look up the neighboring chunk
-            if (Chunks.TryGetValue(neighborChunkPos, out var neighborChunk))
+            if (ECSChunks.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
-                info = neighborChunk.Blocks[nx, ny, nz].Info;
+                info = neighborChunk.GetBlock(nx, ny, nz).Info;
             }
         }
         else
