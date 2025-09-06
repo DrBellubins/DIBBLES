@@ -48,8 +48,3 @@ public class ChunkComponent
         Blocks[index] = data;
     }
 }
-
-public class TerrainTypesECS
-{
-    
-}

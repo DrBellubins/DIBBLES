@@ -112,7 +112,7 @@ public class TerrainGeneration
             var chunk = entry.chunk;
             var meshData = entry.meshData;
 
-            var currentModel = GameScene.TMesh.OpaqueModels[chunk.Position];
+            GameScene.TMesh.OpaqueModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
             if (currentModel.MeshCount > 0)
@@ -131,7 +131,8 @@ public class TerrainGeneration
             var chunk = entry.chunk;
             var meshData = entry.meshData;
             
-            var currentModel = GameScene.TMesh.TransparentModels[chunk.Position];
+            GameScene.TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
+            //var currentModel = GameScene.TMesh.TransparentModels[chunk.Position];
             
             // Upload mesh on main thread
             if (currentModel.MeshCount > 0)
@@ -219,12 +220,8 @@ public class TerrainGeneration
         }
     }
     
-    private Stopwatch timer = new Stopwatch();
-    
     private void generateChunkData(ChunkComponent chunk)
     {
-        timer.Restart();
-        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -324,9 +321,6 @@ public class TerrainGeneration
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
-        
-        timer.Stop();
-        Console.WriteLine($"Chunk Elapsed: {timer.ElapsedMilliseconds}ms");
     }
 
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
