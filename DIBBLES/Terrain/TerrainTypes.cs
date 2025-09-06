@@ -37,7 +37,7 @@ public enum ChunkGenerationState
     RemeshNeighbors
 }
 
-public class ChunkInfo
+public struct ChunkInfo
 {
     public bool Generated; // Runtime quality-of-life check
     public bool Modified;
@@ -63,8 +63,9 @@ public class Chunk
 
 public struct BlockInfo
 {
-    public BlockType Type;
-    public TerrainBiome Biome;
+    public BlockType Type; // TODO: Moved to BlockData
+    public TerrainBiome Biome; // TODO: Moved to BlockData
+    
     public int Hardness; // 0 to 10 (10 being unbreakable)
     public float Thickness; // 0 to 1 (Used for slowling player down)
     public int MaxStack;

@@ -5,35 +5,35 @@ namespace DIBBLES.Terrain;
 
 public class TerrainLighting
 {
-    public void Generate(Chunk chunk)
+    public void Generate(ChunkComponent chunk)
     {
         // Step 1: Initialize block light from emissive blocks
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var block = chunk.Blocks[x, y, z];
+            var block = chunk.GetBlock(x, y, z);
 
             if (!block.GeneratedInsideIsland)
             {
-                if (block.Info.Type == BlockType.Air)
+                if (block.Type == BlockType.Air)
                     block.LightLevel = 15; // TEMP
                 else
-                    block.LightLevel = block.Info.LightEmission;
+                    block.LightLevel = block.LightEmission;
             }
             else
-                block.LightLevel = block.Info.LightEmission;
+                block.LightLevel = block.LightEmission;
         }
 
         // Step 2: Propagate block light using BFS
-        Queue<(Chunk chunk, Vector3Int pos)> queue = new();
+        Queue<(ChunkComponent chunk, Vector3Int pos)> queue = new();
 
         // Enqueue all blocks in this chunk with block light > 0
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var block = chunk.Blocks[x, y, z];
+            var block = chunk.GetBlock(x, y, z);
             
             if (block.LightLevel > 0 && !block.GeneratedInsideIsland)
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
@@ -42,7 +42,7 @@ public class TerrainLighting
         while (queue.Count > 0)
         {
             var (curChunk, pos) = queue.Dequeue();
-            var block = curChunk.Blocks[pos.X, pos.Y, pos.Z];
+            var block = curChunk.GetBlock(pos.X, pos.Y, pos.Z);
             var lightLevel = block.LightLevel;
     
             // Skip if no light to propagate
@@ -69,10 +69,10 @@ public class TerrainLighting
                     newPos.Z < 0 || newPos.Z >= ChunkSize)
                     continue;
         
-                var neighborBlock = curChunk.Blocks[newPos.X, newPos.Y, newPos.Z];
+                var neighborBlock = curChunk.GetBlock(newPos.X, newPos.Y, newPos.Z);
         
                 // Only propagate to transparent or air blocks
-                if (neighborBlock.Info.Type == BlockType.Air || neighborBlock.Info.IsTransparent)
+                if (neighborBlock.Type == BlockType.Air || neighborBlock.Info.IsTransparent)
                 {
                     byte newLight = (byte)(lightLevel - 1);
             

@@ -19,7 +19,8 @@ public class TerrainGeneration
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
     
-    public static Dictionary<Vector3Int, Chunk> Chunks = new();
+    public static readonly Dictionary<Vector3Int, Chunk> Chunks = new();
+    public static readonly Dictionary<Vector3Int, ChunkComponent> ECSChunks = new();
     
     public static Shader TerrainShader;
     
@@ -33,12 +34,12 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
-    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
-    private ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
-    private ConcurrentQueue<Vector3Int> chunkStagingQueue = new();
-    private ConcurrentDictionary<Vector3Int, bool> stagingInProgress = new();
+    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
+    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
+    private readonly ConcurrentQueue<Vector3Int> chunkStagingQueue = new();
+    private readonly ConcurrentDictionary<Vector3Int, bool> stagingInProgress = new();
     
-    private ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
+    private readonly ConcurrentDictionary<Vector3Int, bool> generatingChunks = new();
     
     public void Start()
     {
@@ -188,7 +189,7 @@ public class TerrainGeneration
                 {
                     generatingChunks.TryAdd(pos, true);
 
-                    Chunk chunk;
+                    ChunkComponent chunk;
 
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
@@ -198,7 +199,7 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        chunk = new Chunk(pos);
+                        chunk = new ChunkComponent(pos);
 
                         generateChunkData(chunk);
 
@@ -227,8 +228,12 @@ public class TerrainGeneration
         }
     }
     
-    private void generateChunkData(Chunk chunk)
+    private Stopwatch timer = new Stopwatch();
+    
+    private void generateChunkData(ChunkComponent chunk)
     {
+        timer.Restart();
+        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -328,6 +333,9 @@ public class TerrainGeneration
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
+        
+        timer.Stop();
+        Console.WriteLine($"Chunk Elapsed: {timer.ElapsedMilliseconds}ms");
     }
 
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)

@@ -5,20 +5,27 @@ namespace DIBBLES.Terrain;
 public struct BlockData
 {
     // Only run-time modified data (NO BlockInfo stuff, that is for block prefabs!)
+    public BlockType Type;
     public Vector3Int Position;
     public TerrainBiome Biome;
+    public BlockInfo Info;
     public byte LightLevel;
+    public byte LightEmission;
     public bool GeneratedInsideIsland;
 }
 
 public class ChunkComponent
 {
     public Vector3Int Position;
+    public ChunkInfo Info;
     public BlockData[] Blocks; // Flat array for locality.
 
+    public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
+    
     public ChunkComponent(Vector3Int pos)
     {
         Position = pos;
+        Info = new ChunkInfo();
         Blocks = new BlockData[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
     }
 
