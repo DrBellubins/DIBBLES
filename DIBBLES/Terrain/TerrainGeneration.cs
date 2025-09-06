@@ -47,10 +47,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        if (WorldSave.Exists)
-            Seed = WorldSave.Data.Seed;
-        else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        //if (WorldSave.Exists)
+        //    Seed = WorldSave.Data.Seed;
+        //else
+        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -508,16 +508,19 @@ public class TerrainGeneration
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
             }*/
-            
-        //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
-                
-        // Center of the block
-        Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-
-        // Offset by half a block in the direction of the normal
-        Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
         
-        // Face selection overlay
-        RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
+        if (SelectedBlock.IsValid)
+        {
+            Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+            
+            // Offset by half a block in the direction of the normal
+            Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
+            
+            // Face selection overlay
+            RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
+            
+            // Draw block selection overlay
+            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+        }
     }
 }
