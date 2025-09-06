@@ -34,8 +34,8 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
-    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
-    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
+    private readonly ConcurrentQueue<(ChunkComponent chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
+    private readonly ConcurrentQueue<(ChunkComponent chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
     private readonly ConcurrentQueue<Vector3Int> chunkStagingQueue = new();
     private readonly ConcurrentDictionary<Vector3Int, bool> stagingInProgress = new();
     
@@ -125,14 +125,16 @@ public class TerrainGeneration
         {
             var chunk = entry.chunk;
             var meshData = entry.meshData;
+
+            var currentModel = GameScene.TMesh.OpaqueModels[chunk.Position];
             
             // Upload mesh on main thread
-            if (chunk.Model.MeshCount > 0)
-                Raylib.UnloadModel(chunk.Model);
+            if (currentModel.MeshCount > 0)
+                Raylib.UnloadModel(currentModel);
             
-            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
+            GameScene.TMesh.OpaqueModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
-            Chunks[chunk.Position] = chunk;
+            ECSChunks[chunk.Position] = chunk;
             
             UnloadDistantChunks(currentChunk);
         }
@@ -143,12 +145,14 @@ public class TerrainGeneration
             var chunk = entry.chunk;
             var meshData = entry.meshData;
             
-            // Upload mesh on main thread
-            if (chunk.tModel.MeshCount > 0)
-                Raylib.UnloadModel(chunk.tModel);
+            var currentModel = GameScene.TMesh.TransparentModels[chunk.Position];
             
-            chunk.tModel = GameScene.TMesh.UploadMesh(meshData);
-            Chunks[chunk.Position] = chunk;
+            // Upload mesh on main thread
+            if (currentModel.MeshCount > 0)
+                Raylib.UnloadModel(currentModel);
+            
+            GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
+            ECSChunks[chunk.Position] = chunk;
 
             chunksLoaded++;
             

@@ -14,9 +14,12 @@ public class TerrainMesh
     public const bool SmoothLighting = false;
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
+
+    public Dictionary<Vector3Int, Model> OpaqueModels = new();
+    public Dictionary<Vector3Int, Model> TransparentModels = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
-    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
+    public MeshData GenerateMeshData(ChunkComponent chunk, bool isTransparencyPass)
     {
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -29,7 +32,7 @@ public class TerrainMesh
         for (int z = 0; z < ChunkSize; z++)
         {
             var pos = new Vector3(x, y, z);
-            var block = chunk.Blocks[x, y, z];
+            var block = chunk.GetBlock(x, y, z);
             var blockType = block.Info.Type;
             var isTransparent = block.Info.IsTransparent;
 
@@ -346,7 +349,7 @@ public class TerrainMesh
     }
 
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    private float getVertexLight(Chunk chunk, int vx, int vy, int vz)
+    private float getVertexLight(ChunkComponent chunk, int vx, int vy, int vz)
     {
         float total = 0f;
         int count = 0;
@@ -368,7 +371,7 @@ public class TerrainMesh
     }
 
     // TODO: Bottom blocks do not run this check
-    private float getVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
+    private float getVertexLightTopFace(ChunkComponent chunk, int vx, int vy, int vz)
     {
         // For each vertex, sample only the 4 blocks directly above it
         // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
@@ -385,10 +388,11 @@ public class TerrainMesh
             total += neighborLightLevel(chunk, nx, ny, nz);
             count++;
         }
+        
         return total / (count * 15f); // Normalize to [0,1]
     }
     
-    private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
+    private bool isVoxelSolid(ChunkComponent chunk, bool isTransparentPass, int x, int y, int z)
     {
         BlockInfo info = new BlockInfo();
 
@@ -427,7 +431,7 @@ public class TerrainMesh
         }
         else
         {
-            info = chunk.Blocks[x, y, z].Info;
+            info = chunk.GetBlock(x, y, z).Info;
         }
 
         // Air blocks are NOT solid
@@ -465,7 +469,7 @@ public class TerrainMesh
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame
         
-        if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+        if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
         {
             Raylib.UnloadModel(neighborChunk.Model);
 
@@ -484,7 +488,7 @@ public class TerrainMesh
         }
     }
     
-    private byte neighborLightLevel(Chunk chunk, int nx, int ny, int nz)
+    private byte neighborLightLevel(ChunkComponent chunk, int nx, int ny, int nz)
     {
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
         {
@@ -509,7 +513,7 @@ public class TerrainMesh
             else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
 
             // Look up the neighboring chunk
-            if (Chunks.TryGetValue(new Vector3Int(
+            if (ECSChunks.TryGetValue(new Vector3Int(
                     neighborCoord.X * ChunkSize,
                     neighborCoord.Y * ChunkSize,
                     neighborCoord.Z * ChunkSize
@@ -521,10 +525,9 @@ public class TerrainMesh
                     try
                     {
                         // TODO: Can sometimes cause a crash???
-                        var neighborBlock = neighborChunk.Blocks[tx, ty, tz];
-                    
-                        if (neighborBlock != null)
-                            return neighborBlock.LightLevel;
+                        var neighborBlock = neighborChunk.GetBlock(tx, ty, tz);
+                        
+                        return neighborBlock.LightLevel;
                     }
                     catch (Exception e)
                     {
@@ -537,12 +540,9 @@ public class TerrainMesh
         }
         else
         {
-            var block = chunk.Blocks[nx, ny, nz];
+            var block = chunk.GetBlock(nx, ny, nz);
             
-            if (block != null)
-                return block.LightLevel;
-            
-            return 0;
+            return block.LightLevel;
         }
     }
 }
