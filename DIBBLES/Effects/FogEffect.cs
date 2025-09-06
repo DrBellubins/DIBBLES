@@ -14,8 +14,8 @@ public class FogEffect
     private int zNearLoc, zFarLoc, fogNearLoc, fogFarLoc, fogColorLoc;
     private int invProjLoc, invViewLoc, cameraPosLoc;
     
-    public const float FogNear = 25.0f;
-    public const float FogFar = 100.0f;
+    public const float FogNear = 50.0f;
+    public const float FogFar = 150.0f;
     public static Vector4 FogColor = new Vector4(0.4f, 0.7f, 1.0f, 1.0f);
     
     //private Vector4 fogColor = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
