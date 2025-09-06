@@ -440,21 +440,30 @@ public class TerrainGeneration
 
         foreach (var coord in chunksToRemove)
         {
-            var oModel = GameScene.TMesh.OpaqueModels[coord];
-            var tModel = GameScene.TMesh.TransparentModels[coord];
-            
-            if (oModel.MeshCount > 0)
+            // Opaque model
+            if (GameScene.TMesh.OpaqueModels.TryGetValue(coord, out var oModel))
             {
-                Raylib.UnloadModel(oModel);
-                GameScene.TMesh.OpaqueModels[coord] = default; // Prevent double-unload
+                if (oModel.MeshCount > 0)
+                {
+                    Raylib.UnloadModel(oModel);
+                    GameScene.TMesh.OpaqueModels[coord] = default; // Prevent double-unload
+                }
+                
+                GameScene.TMesh.OpaqueModels.Remove(coord);
             }
-            
-            if (tModel.MeshCount > 0)
+
+            // Transparent model
+            if (GameScene.TMesh.TransparentModels.TryGetValue(coord, out var tModel))
             {
-                Raylib.UnloadModel(tModel);
-                GameScene.TMesh.TransparentModels[coord] = default;
+                if (tModel.MeshCount > 0)
+                {
+                    Raylib.UnloadModel(tModel);
+                    GameScene.TMesh.TransparentModels[coord] = default;
+                }
+                
+                GameScene.TMesh.TransparentModels.Remove(coord);
             }
-            
+
             ECSChunks.Remove(coord);
         }
     }
