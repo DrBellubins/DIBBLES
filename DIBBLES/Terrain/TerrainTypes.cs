@@ -61,7 +61,7 @@ public class Chunk
     }
 }
 
-public class BlockInfo
+public struct BlockInfo
 {
     public BlockType Type;
     public TerrainBiome Biome;

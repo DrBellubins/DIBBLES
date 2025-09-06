@@ -390,7 +390,7 @@ public class TerrainMesh
     
     private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
     {
-        BlockInfo info = null;
+        BlockInfo info = new BlockInfo();
 
         if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
         {
@@ -422,17 +422,17 @@ public class TerrainMesh
             // Look up the neighboring chunk
             if (Chunks.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
-                info = neighborChunk.Blocks[nx, ny, nz]?.Info;
+                info = neighborChunk.Blocks[nx, ny, nz].Info;
             }
         }
         else
         {
-            info = chunk.Blocks[x, y, z]?.Info;
+            info = chunk.Blocks[x, y, z].Info;
         }
 
         // Air blocks are NOT solid
-        if (info == null)
-            return false;
+        //if (info == null)
+        //    return false;
         
         if (!isTransparentPass) // Opaque pass: treat transparent blocks as non-solid
             return info.Type != BlockType.Air && !info.IsTransparent;

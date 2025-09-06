@@ -511,14 +511,14 @@ public class TerrainGeneration
         // Face selection overlay
         if (SelectedBlock != null)
         {
-            if (SelectedBlock.GeneratedInsideIsland)
+            /*if (SelectedBlock.GeneratedInsideIsland)
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Green);
             }
             else
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
-            }
+            }*/
             
             //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
                 
