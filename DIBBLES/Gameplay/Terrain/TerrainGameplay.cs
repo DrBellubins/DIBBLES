@@ -18,7 +18,7 @@ public class TerrainGameplay
         SelectedBlock = block;
     }
     
-    private (Block?, Vector3Int) selectBlock(Camera3D camera)
+    private (BlockData, Vector3Int) selectBlock(Camera3D camera)
     {
         var rayPosition = camera.Position;
         var rayDirection = Vector3.Normalize(camera.Target - camera.Position);
@@ -57,7 +57,7 @@ public class TerrainGameplay
         if (sideDist.Y < nudge) sideDist.Y += nudge;
         if (sideDist.Z < nudge) sideDist.Z += nudge;
     
-        Block? hitBlock = null;
+        BlockData hitBlock = new BlockData();
         Vector3Int hitNormal = Vector3Int.Zero;
     
         // Check starting voxel first
@@ -67,7 +67,7 @@ public class TerrainGameplay
             (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
         );
         
-        if (Chunks.TryGetValue(startChunkPos, out var startChunk))
+        if (ECSChunks.TryGetValue(startChunkPos, out var startChunk))
         {
             var localX = (mapPos.X - startChunkPos.X);
             var localY = (mapPos.Y - startChunkPos.X);
@@ -75,7 +75,7 @@ public class TerrainGameplay
             
             if (localX >= 0 && localX < ChunkSize && localY >= 0 && localY < ChunkSize && localZ >= 0 && localZ < ChunkSize)
             {
-                var block = startChunk.Blocks[localX, localY, localZ];
+                var block = startChunk.GetBlock(localX, localY, localZ);
                 
                 if (block.Info.Type != BlockType.Air)
                 {
@@ -129,7 +129,7 @@ public class TerrainGameplay
                 (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
             );
     
-            if (!Chunks.TryGetValue(currentChunkPos, out var chunk)) continue;
+            if (!ECSChunks.TryGetValue(currentChunkPos, out var chunk)) continue;
     
             var localX = (mapPos.X - currentChunkPos.X);
             var localY = (mapPos.Y - currentChunkPos.Y);
@@ -137,7 +137,7 @@ public class TerrainGameplay
     
             if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkSize || localZ < 0 || localZ >= ChunkSize) continue;
     
-            var block = chunk.Blocks[localX, localY, localZ];
+            var block = chunk.GetBlock(localX, localY, localZ);
     
             if (block.Info.Type != BlockType.Air)
             {
@@ -151,9 +151,6 @@ public class TerrainGameplay
     
     public void BreakBlock()
     {
-        if (SelectedBlock == null)
-            return;
-
         // Get the chunk containing the selected block
         var blockPos = SelectedBlock.Position;
         
@@ -163,7 +160,7 @@ public class TerrainGameplay
         
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!Chunks.TryGetValue(chunkCoord, out var chunk))
+        if (!ECSChunks.TryGetValue(chunkCoord, out var chunk))
             return;
 
         // Calculate local block coordinates within the chunk
@@ -178,29 +175,32 @@ public class TerrainGameplay
             return;
 
         // Set block to Air If block is breakable
-        var oldBlock = chunk.Blocks[localX, localY, localZ];
+        var oldBlock = chunk.GetBlock(localX, localY, localZ);
 
         if (oldBlock.Info.Hardness != 10)
         {
             // Maintain GeneratedInsideIsland for lighting checks.
-            var generatedInsideBlock = chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland;
+            var generatedInsideIsland = oldBlock.GeneratedInsideIsland;
+
+            var newBlock = new BlockData(blockPos, Block.Prefabs[BlockType.Air]);
+            newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
-            chunk.Blocks[localX, localY, localZ] = new Block(blockPos, Block.Prefabs[BlockType.Air]);
-            chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland = generatedInsideBlock;
+            chunk.SetBlock(localX, localY, localZ, newBlock);
+            
             chunk.Info.Modified = true;
 
             // Update lighting if the broken block was opaque or emissive
             GameScene.Lighting.Generate(chunk);
             
             // Regenerate mesh
-            Raylib.UnloadModel(chunk.Model); // Unload old model
-            Raylib.UnloadModel(chunk.tModel); // Unload old tModel
+            Raylib.UnloadModel(GameScene.TMesh.OpaqueModels[chunkCoord]); // Unload old model
+            Raylib.UnloadModel(GameScene.TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
             var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
             var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
             
-            chunk.Model = GameScene.TMesh.UploadMesh(meshData);
-            chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+            GameScene.TMesh.OpaqueModels[chunkCoord] = GameScene.TMesh.UploadMesh(meshData);
+            GameScene.TMesh.TransparentModels[chunkCoord] = GameScene.TMesh.UploadMesh(tMeshData);
             
             GameScene.TMesh.RemeshNeighbors(chunk, false);
             GameScene.TMesh.RemeshNeighbors(chunk, true);
@@ -219,7 +219,7 @@ public class TerrainGameplay
     
     public void PlaceBlock(PlayerCharacter player, BlockType blockType)
     {
-        if (SelectedBlock == null || blockType == BlockType.Air)
+        if (blockType == BlockType.Air)
             return;
 
         // Quantize the normal to the nearest axis-aligned direction
@@ -235,7 +235,7 @@ public class TerrainGameplay
         
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
         
-        Chunks.TryGetValue(chunkCoord, out var chunk);
+        ECSChunks.TryGetValue(chunkCoord, out var chunk);
         
         // There is no chunk to build in
         if (chunk == null)
@@ -251,7 +251,7 @@ public class TerrainGameplay
         if (localX < 0 || localX >= ChunkSize ||
             localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize ||
-            chunk.Blocks[localX, localY, localZ]?.Info.Type != BlockType.Air)
+            chunk.GetBlock(localX, localY, localZ).Info.Type != BlockType.Air)
             return;
 
         var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());
@@ -261,10 +261,13 @@ public class TerrainGameplay
             return;
         
         // Place the new block
-        var generatedInsideBlock = chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland;
+        var generatedInsideIsland = chunk.GetBlock(localX, localY, localZ).GeneratedInsideIsland;
+
+        var newBlock = new BlockData(newBlockPos, Block.Prefabs[blockType]);
+        newBlock.GeneratedInsideIsland = generatedInsideIsland;
+            
+        chunk.SetBlock(localX, localY, localZ, newBlock);
         
-        chunk.Blocks[localX, localY, localZ] = new Block(newBlockPos, Block.Prefabs[blockType]);
-        chunk.Blocks[localX, localY, localZ].GeneratedInsideIsland = generatedInsideBlock;
         chunk.Info.Modified = true;
         
         
@@ -272,14 +275,14 @@ public class TerrainGameplay
         GameScene.Lighting.Generate(chunk);
         
         // Regenerate mesh
-        Raylib.UnloadModel(chunk.Model); // Unload old model
-        Raylib.UnloadModel(chunk.tModel); // Unload old tModel
+        Raylib.UnloadModel(GameScene.TMesh.OpaqueModels[chunkCoord]); // Unload old model
+        Raylib.UnloadModel(GameScene.TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
         var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
         var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
             
-        chunk.Model = GameScene.TMesh.UploadMesh(meshData);
-        chunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
+        GameScene.TMesh.OpaqueModels[chunkCoord] = GameScene.TMesh.UploadMesh(meshData);
+        GameScene.TMesh.TransparentModels[chunkCoord] = GameScene.TMesh.UploadMesh(tMeshData);
             
         GameScene.TMesh.RemeshNeighbors(chunk, false);
         GameScene.TMesh.RemeshNeighbors(chunk, true);

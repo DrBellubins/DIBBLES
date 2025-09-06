@@ -26,7 +26,7 @@ public class TerrainGeneration
     
     public int Seed = 1234567;
     
-    public static Block? SelectedBlock;
+    public static BlockData SelectedBlock;
     public static Vector3Int SelectedNormal;
     
     public static bool DoneLoading = false;
@@ -513,17 +513,11 @@ public class TerrainGeneration
                     ChunkSize - padding, ChunkSize - padding, ChunkSize - padding, debugColor);
             }
 
-            if (SelectedBlock != null)
-            {
-                var pos = new Vector3(SelectedBlock.Position.X + 0.5f, SelectedBlock.Position.Y + 1.5f, SelectedBlock.Position.Z + 0.5f);
-                Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Color.White, 0.25f);
-            }
+            var pos = new Vector3(SelectedBlock.Position.X + 0.5f, SelectedBlock.Position.Y + 1.5f, SelectedBlock.Position.Z + 0.5f);
+            Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Color.White, 0.25f);
         }
         
-        // Face selection overlay
-        if (SelectedBlock != null)
-        {
-            /*if (SelectedBlock.GeneratedInsideIsland)
+        /*if (SelectedBlock.GeneratedInsideIsland)
             {
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Green);
             }
@@ -532,15 +526,15 @@ public class TerrainGeneration
                 RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
             }*/
             
-            //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+        //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
                 
-            // Center of the block
-            Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+        // Center of the block
+        Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
 
-            // Offset by half a block in the direction of the normal
-            Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
-                
-            RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
-        }
+        // Offset by half a block in the direction of the normal
+        Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
+        
+        // Face selection overlay
+        RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
     }
 }

@@ -444,7 +444,7 @@ public class TerrainMesh
             return info.Type != BlockType.Air && info.IsTransparent;
     }
 
-    public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)
+    public void RemeshNeighbors(ChunkComponent chunk, bool isTransparentPass)
     {
         int[] offsets = { -ChunkSize, ChunkSize };
         
@@ -458,7 +458,7 @@ public class TerrainMesh
                 if (axis == 1) neighborPos.Y += offset;
                 if (axis == 2) neighborPos.Z += offset;
 
-                if (Chunks.TryGetValue(neighborPos, out var neighborChunk))
+                if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
                     RemeshNeighborPos(neighborChunk.Position, isTransparentPass);
             }
         }
