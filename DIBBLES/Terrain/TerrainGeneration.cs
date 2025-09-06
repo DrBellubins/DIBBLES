@@ -401,7 +401,7 @@ public class TerrainGeneration
         }
     }
     
-    private void generateChunkDecorations(Chunk chunk)
+    private void generateChunkDecorations(ChunkComponent chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
@@ -419,7 +419,7 @@ public class TerrainGeneration
         {
             for (int y = ChunkSize - 1; y >= 0; y--)
             {
-                var currentBlock =  chunk.Blocks[x, y, z];
+                var currentBlock =  chunk.GetBlock(x, y, z);
 
                 if (currentBlock.Info.Type == BlockType.Grass)
                 {

@@ -468,22 +468,23 @@ public class TerrainMesh
     {
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame
-        
+
         if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
         {
-            Raylib.UnloadModel(neighborChunk.Model);
+            // Opaque or transparent model dictionary
+            var modelDict = isTransparentPass ? TransparentModels : OpaqueModels;
 
-            if (!isTransparentPass)
-            {
-                var meshData = GameScene.TMesh.GenerateMeshData(neighborChunk, false);
-                neighborChunk.Model = GameScene.TMesh.UploadMesh(meshData);
-            }
-            else
-            {
-                var tMeshData = GameScene.TMesh.GenerateMeshData(neighborChunk, true);
-                neighborChunk.tModel = GameScene.TMesh.UploadMesh(tMeshData);
-            }
-            
+            // Unload existing model if present
+            if (modelDict.TryGetValue(neighborPos, out var oldModel) && oldModel.MeshCount > 0)
+                Raylib.UnloadModel(oldModel);
+
+            // Generate new mesh
+            var meshData = GenerateMeshData(neighborChunk, isTransparentPass);
+            var newModel = UploadMesh(meshData);
+
+            // Store new model
+            modelDict[neighborPos] = newModel;
+
             RecentlyRemeshedNeighbors.Add(neighborPos);
         }
     }
