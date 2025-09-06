@@ -23,6 +23,8 @@ public class TerrainLighting
             }
             else
                 block.LightLevel = block.LightEmission;
+            
+            chunk.SetBlock(x, y, z, block);
         }
 
         // Step 2: Propagate block light using BFS
