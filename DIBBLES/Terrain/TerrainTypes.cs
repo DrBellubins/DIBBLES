@@ -63,18 +63,14 @@ public class Chunk
 
 public struct BlockInfo
 {
-    public BlockType Type; // TODO: Moved to BlockData
-    public TerrainBiome Biome; // TODO: Moved to BlockData
-    
     public int Hardness; // 0 to 10 (10 being unbreakable)
     public float Thickness; // 0 to 1 (Used for slowling player down)
     public int MaxStack;
     public bool IsTransparent; // True if light can pass through
     public byte LightEmission; // Light level emitted by this block (0-15)
 
-    public BlockInfo(BlockType type, int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
+    public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
-        Type = type;
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
@@ -101,7 +97,7 @@ public class Block
     public Block()
     {
         Position = Vector3Int.Zero;
-        Info = new BlockInfo(BlockType.Dirt, 2, 0.0f, 64);
+        Info = new BlockInfo(2, 0.0f, 64);
         LightLevel = 0;
     }
 
@@ -115,19 +111,19 @@ public class Block
     public static void InitializeBlockPrefabs()
     {
         // Initialize block prefabs with transparency and light emission
-        Prefabs.Add(BlockType.Dirt, new BlockInfo(BlockType.Dirt, 2, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Grass, new BlockInfo(BlockType.Grass, 2, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Stone, new BlockInfo(BlockType.Stone, 4, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Sand, new BlockInfo(BlockType.Sand, 1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(BlockType.Snow, 1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Wood, new BlockInfo(BlockType.Wood, 3, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.WoodLog, new BlockInfo(BlockType.WoodLog, 3, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Leaves, new BlockInfo(BlockType.Leaves, 1, 0.0f, 64, true, 0));
+        Prefabs.Add(BlockType.Dirt, new BlockInfo(2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Grass, new BlockInfo(2, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Stone, new BlockInfo(4, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Sand, new BlockInfo(1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Snow, new BlockInfo(1, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Wood, new BlockInfo(3, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.WoodLog, new BlockInfo(3, 0.0f, 64, false, 0));
+        Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 0));
         
         // Special blocks
-        Prefabs.Add(BlockType.Air, new BlockInfo(BlockType.Air, 0, 0.0f, 0, true, 0));
-        Prefabs.Add(BlockType.Water, new BlockInfo(BlockType.Water, 10, 0.5f, 64, true, 0));
-        Prefabs.Add(BlockType.Wisp, new BlockInfo(BlockType.Wisp, 10, 0.5f, 64, true, 15));
+        Prefabs.Add(BlockType.Air, new BlockInfo(0, 0.0f, 0, true, 0));
+        Prefabs.Add(BlockType.Water, new BlockInfo(10, 0.5f, 64, true, 0));
+        Prefabs.Add(BlockType.Wisp, new BlockInfo(10, 0.5f, 64, true, 15));
 
         // Define block types in the exact order for the atlas
         var atlasBlockTypes = new List<BlockType>();

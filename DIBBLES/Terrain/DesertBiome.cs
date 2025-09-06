@@ -26,7 +26,7 @@ public class DesertBiome
             returnData.IslandDepth++;
         }
 
-        returnData.CurrentBlock.Info.Biome = TerrainBiome.Desert;
+        returnData.CurrentBlock.Biome = TerrainBiome.Desert;
         
         bRetData = returnData;
     }

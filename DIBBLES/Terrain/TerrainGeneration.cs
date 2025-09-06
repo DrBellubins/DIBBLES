@@ -271,28 +271,18 @@ public class TerrainGeneration
                         var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
                         if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
-                        {
                             desertBiome.Generate(ref blockReturnData);
-                        }
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
-                        {
                             plainsBiome.Generate(ref blockReturnData);
-                        }
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
-                        {
                             plainsBiome.Generate(ref blockReturnData);
-                        }
                         else // Fallback
-                        {
                             snowlandsBiome.Generate(ref blockReturnData);
-                        }
                         
-                        blockReturnData.CurrentBlock.GeneratedInsideIsland = true;
+                        blockReturnData.CurrentBlock.GeneratedInsideIsland = false;
                     }
                     else // Not islands
-                    {
                         blockReturnData.CurrentBlock = new BlockData(new Vector3Int(worldX, worldY, worldZ), Block.Prefabs[BlockType.Air]);
-                    }
                     
                     chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
 
@@ -404,7 +394,7 @@ public class TerrainGeneration
             {
                 var currentBlock =  chunk.GetBlock(x, y, z);
 
-                if (currentBlock.Info.Type == BlockType.Grass)
+                if (currentBlock.Type == BlockType.Grass)
                 {
                     if (rng.NextChance(2f))
                         decorations.GenerateTrees(currentBlock.Position);

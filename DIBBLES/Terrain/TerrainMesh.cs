@@ -33,7 +33,7 @@ public class TerrainMesh
         {
             var pos = new Vector3(x, y, z);
             var block = chunk.GetBlock(x, y, z);
-            var blockType = block.Info.Type;
+            var blockType = block.Type;
             var isTransparent = block.Info.IsTransparent;
 
             // Opaque mesh pass: skip transparent and air blocks
@@ -439,9 +439,9 @@ public class TerrainMesh
         //    return false;
         
         if (!isTransparentPass) // Opaque pass: treat transparent blocks as non-solid
-            return info.Type != BlockType.Air && !info.IsTransparent;
+            return chunk.GetBlock(x, y, z).Type != BlockType.Air && !info.IsTransparent;
         else // Transparent pass: treat only transparent blocks as solid
-            return info.Type != BlockType.Air && info.IsTransparent;
+            return chunk.GetBlock(x, y, z).Type != BlockType.Air && info.IsTransparent;
     }
 
     public void RemeshNeighbors(ChunkComponent chunk, bool isTransparentPass)

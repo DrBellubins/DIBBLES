@@ -77,7 +77,7 @@ public class TerrainGameplay
             {
                 var block = startChunk.GetBlock(localX, localY, localZ);
                 
-                if (block.Info.Type != BlockType.Air)
+                if (block.Type != BlockType.Air)
                 {
                     hitBlock = block;
                     return (hitBlock, hitNormal); // Normal arbitrary for starting block hit; could compute based on direction or set to zero
@@ -139,7 +139,7 @@ public class TerrainGameplay
     
             var block = chunk.GetBlock(localX, localY, localZ);
     
-            if (block.Info.Type != BlockType.Air)
+            if (block.Type != BlockType.Air)
             {
                 hitBlock = block;
                 break;
@@ -210,7 +210,7 @@ public class TerrainGameplay
                 WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
 
             // Play break sound
-            var sound = Block.Sounds[SelectedBlock.Info.Type].RND;
+            var sound = Block.Sounds[SelectedBlock.Type].RND;
         
             if (sound.FrameCount != 0)
                 Raylib.PlaySound(sound);
@@ -251,7 +251,7 @@ public class TerrainGameplay
         if (localX < 0 || localX >= ChunkSize ||
             localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize ||
-            chunk.GetBlock(localX, localY, localZ).Info.Type != BlockType.Air)
+            chunk.GetBlock(localX, localY, localZ).Type != BlockType.Air)
             return;
 
         var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());

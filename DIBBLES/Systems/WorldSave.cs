@@ -81,7 +81,7 @@ public class WorldSave
                             for (int z = 0; z < ChunkSize; z++)
                             {
                                 var currentBlock = chunk.Value.GetBlock(x, y, z);
-                                var typeInt = (int)currentBlock.Info.Type;
+                                var typeInt = (int)currentBlock.Type;
                                 
                                 if (!Enum.IsDefined(typeof(BlockType), typeInt))
                                 {
@@ -96,7 +96,7 @@ public class WorldSave
                                 writer.Write(currentBlock.Position.Y);
                                 writer.Write(currentBlock.Position.Z);
                                 
-                                writer.Write((int)currentBlock.Info.Biome);
+                                writer.Write((int)currentBlock.Biome);
                                 writer.Write(currentBlock.GeneratedInsideIsland);
                             }
                         }
@@ -156,7 +156,7 @@ public class WorldSave
                                         Info = info
                                     };
                                     
-                                    currentBlock.Info.Biome = (TerrainBiome)reader.ReadInt32();
+                                    currentBlock.Biome = (TerrainBiome)reader.ReadInt32();
                                     currentBlock.GeneratedInsideIsland = reader.ReadBoolean();
 
                                     currentChunk.SetBlock(x, y, z, currentBlock);

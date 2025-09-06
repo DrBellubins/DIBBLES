@@ -565,7 +565,7 @@ public class PlayerCharacter
             var block = chunk.GetBlock(localX, localY, localZ);
             
             // Only add solid blocks
-            if (block.Info.Type != BlockType.Air)
+            if (block.Type != BlockType.Air)
             {
                 var blockMin = new Vector3(x, y, z);
                 var blockMax = blockMin + Vector3.One;

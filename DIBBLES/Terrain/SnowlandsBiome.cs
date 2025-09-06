@@ -26,7 +26,7 @@ public class SnowlandsBiome
             returnData.IslandDepth++;
         }
 
-        returnData.CurrentBlock.Info.Biome = TerrainBiome.Snowlands;
+        returnData.CurrentBlock.Biome = TerrainBiome.Snowlands;
         
         bRetData = returnData;
     }

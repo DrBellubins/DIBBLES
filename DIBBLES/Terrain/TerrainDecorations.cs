@@ -75,7 +75,7 @@ public class TerrainDecorations
                 continue;
 
             // Only place leaves if position is Air (don't overwrite trunk)
-            if (chunk.GetBlock(localX, localY, localZ).Info.Type == BlockType.Air)
+            if (chunk.GetBlock(localX, localY, localZ).Type == BlockType.Air)
                 chunk.SetBlock(localX, localY, localZ, new BlockData(pos, Block.Prefabs[BlockType.Leaves]));
         }
     }
@@ -115,7 +115,7 @@ public class TerrainDecorations
 
             var block = chunk.GetBlock(localX, localY, localZ);
             
-            if (block.Info.Type != BlockType.Air)
+            if (block.Type != BlockType.Air)
                 return false; // Space is not empty
         }
         
