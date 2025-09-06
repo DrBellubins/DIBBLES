@@ -5,7 +5,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainLighting
 {
-    public void Generate(ChunkComponent chunk)
+    public void Generate(Chunk chunk)
     {
         // Step 1: Initialize block light from emissive blocks
         for (int x = 0; x < ChunkSize; x++)
@@ -28,7 +28,7 @@ public class TerrainLighting
         }
 
         // Step 2: Propagate block light using BFS
-        Queue<(ChunkComponent chunk, Vector3Int pos)> queue = new();
+        Queue<(Chunk chunk, Vector3Int pos)> queue = new();
 
         // Enqueue all blocks in this chunk with block light > 0
         for (int x = 0; x < ChunkSize; x++)

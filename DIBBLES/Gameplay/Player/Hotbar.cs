@@ -128,7 +128,7 @@ public class Hotbar
             if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
             {
                 var xPos = hotbarRect.X + i * hotbarRect.Height;
-                var itemTexture = Block.Textures[hotbarSlots[i].Type];
+                var itemTexture = BlockData.Textures[hotbarSlots[i].Type];
 
                 var itemOrigRect = new Rectangle(0.0f, 0.0f, itemTexture.Width, itemTexture.Height);
                 var itemDestRect = new Rectangle(xPos + 0.1f * hotbarRect.Height,

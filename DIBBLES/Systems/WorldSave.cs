@@ -17,7 +17,7 @@ public struct SaveData
     public Vector3 CameraDirection;
     public int HotbarPosition;
 
-    public Dictionary<Vector3Int, ChunkComponent> ModifiedChunks = new ();
+    public Dictionary<Vector3Int, Chunk> ModifiedChunks = new ();
 
     public SaveData()
     {
@@ -138,7 +138,7 @@ public class WorldSave
                         currentChunkInfo.Generated = reader.ReadBoolean();
                         currentChunkInfo.Modified = reader.ReadBoolean();
 
-                        var currentChunk = new ChunkComponent(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
+                        var currentChunk = new Chunk(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
                         currentChunk.Info = currentChunkInfo;
 
                         for (int x = 0; x < ChunkSize; x++)
@@ -148,9 +148,9 @@ public class WorldSave
                                 for (int z = 0; z < ChunkSize; z++)
                                 {
                                     var type = (BlockType)reader.ReadInt32();
-                                    var info = Block.Prefabs[type];
+                                    var info = BlockData.Prefabs[type];
                                         
-                                    var currentBlock = new BlockData()
+                                    var currentBlock = new Block()
                                     {
                                         Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
                                         Info = info

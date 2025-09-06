@@ -18,7 +18,7 @@ public class TerrainGameplay
         SelectedBlock = block;
     }
     
-    private (BlockData, Vector3Int) selectBlock(Camera3D camera)
+    private (Block, Vector3Int) selectBlock(Camera3D camera)
     {
         var rayPosition = camera.Position;
         var rayDirection = Vector3.Normalize(camera.Target - camera.Position);
@@ -57,7 +57,7 @@ public class TerrainGameplay
         if (sideDist.Y < nudge) sideDist.Y += nudge;
         if (sideDist.Z < nudge) sideDist.Z += nudge;
     
-        BlockData hitBlock = new BlockData();
+        Block hitBlock = new Block();
         Vector3Int hitNormal = Vector3Int.Zero;
     
         // Check starting voxel first
@@ -182,7 +182,7 @@ public class TerrainGameplay
             // Maintain GeneratedInsideIsland for lighting checks.
             var generatedInsideIsland = oldBlock.GeneratedInsideIsland;
 
-            var newBlock = new BlockData(blockPos, BlockType.Air);
+            var newBlock = new Block(blockPos, BlockType.Air);
             newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
@@ -210,7 +210,7 @@ public class TerrainGameplay
                 WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
 
             // Play break sound
-            var sound = Block.Sounds[SelectedBlock.Type].RND;
+            var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
             if (sound.FrameCount != 0)
                 Raylib.PlaySound(sound);
@@ -263,7 +263,7 @@ public class TerrainGameplay
         // Place the new block
         var generatedInsideIsland = chunk.GetBlock(localX, localY, localZ).GeneratedInsideIsland;
 
-        var newBlock = new BlockData(newBlockPos, blockType);
+        var newBlock = new Block(newBlockPos, blockType);
         newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
         chunk.SetBlock(localX, localY, localZ, newBlock);
@@ -292,7 +292,7 @@ public class TerrainGameplay
             WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
         
         // Play place sound
-        var sound = Block.Sounds[blockType].RND;
+        var sound = BlockData.Sounds[blockType].RND;
         
         if (sound.FrameCount != 0)
             Raylib.PlaySound(sound);

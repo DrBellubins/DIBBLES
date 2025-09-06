@@ -19,13 +19,13 @@ public class TerrainGeneration
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
     
-    public static readonly Dictionary<Vector3Int, ChunkComponent> ECSChunks = new();
+    public static readonly Dictionary<Vector3Int, Chunk> ECSChunks = new();
     
     public static Shader TerrainShader;
     
     public int Seed = 1234567;
     
-    public static BlockData SelectedBlock;
+    public static Block SelectedBlock;
     public static Vector3Int SelectedNormal;
     
     public static bool DoneLoading = false;
@@ -33,8 +33,8 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
     // Thread-safe queues for chunk and mesh work
-    private readonly ConcurrentQueue<(ChunkComponent chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
-    private readonly ConcurrentQueue<(ChunkComponent chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
+    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> meshUploadQueue = new(); // Opaque
+    private readonly ConcurrentQueue<(Chunk chunk, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
     private readonly ConcurrentQueue<Vector3Int> chunkStagingQueue = new();
     private readonly ConcurrentDictionary<Vector3Int, bool> stagingInProgress = new();
     
@@ -42,7 +42,7 @@ public class TerrainGeneration
     
     public void Start()
     {
-        Block.InitializeBlockPrefabs();
+        BlockData.InitializeBlockPrefabs();
         
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
@@ -181,7 +181,7 @@ public class TerrainGeneration
                 {
                     generatingChunks.TryAdd(pos, true);
 
-                    ChunkComponent chunk;
+                    Chunk chunk;
 
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
@@ -191,7 +191,7 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        chunk = new ChunkComponent(pos);
+                        chunk = new Chunk(pos);
 
                         generateChunkData(chunk);
 
@@ -220,7 +220,7 @@ public class TerrainGeneration
         }
     }
     
-    private void generateChunkData(ChunkComponent chunk)
+    private void generateChunkData(Chunk chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
@@ -282,7 +282,7 @@ public class TerrainGeneration
                         blockReturnData.CurrentBlock.GeneratedInsideIsland = false;
                     }
                     else // Not islands
-                        blockReturnData.CurrentBlock = new BlockData(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
+                        blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
                     
                     chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
 
@@ -374,7 +374,7 @@ public class TerrainGeneration
         }
     }
     
-    private void generateChunkDecorations(ChunkComponent chunk)
+    private void generateChunkDecorations(Chunk chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)

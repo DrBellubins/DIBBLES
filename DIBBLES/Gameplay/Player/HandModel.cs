@@ -11,14 +11,14 @@ public class HandModel
     
     public void Start()
     {
-        handBlockModel = MeshUtils.GenTexturedCube(Block.Textures[BlockType.Dirt]);
+        handBlockModel = MeshUtils.GenTexturedCube(BlockData.Textures[BlockType.Dirt]);
     }
 
     public void Draw(Camera3D camera, Vector3 cameraForward, Vector3 cameraRight, Vector3 cameraUp, Quaternion cameraRotation, ItemSlot? selectedItem = null)
     {
         if (selectedItem != null)
         {
-            MeshUtils.SetModelTexture(handBlockModel, Block.Textures[selectedItem.Type]);
+            MeshUtils.SetModelTexture(handBlockModel, BlockData.Textures[selectedItem.Type]);
 
             // Adjust these distances for the best effect
             float forwardDistance = 0.5f; // In front of camera

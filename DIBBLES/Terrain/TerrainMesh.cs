@@ -19,7 +19,7 @@ public class TerrainMesh
     public Dictionary<Vector3Int, Model> TransparentModels = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
-    public MeshData GenerateMeshData(ChunkComponent chunk, bool isTransparencyPass)
+    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
     {
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -55,7 +55,7 @@ public class TerrainMesh
 
             // Get UVs from atlas
             Vector2[] uvCoords;
-            if (Block.AtlasUVs.TryGetValue(blockType, out var uvRect))
+            if (BlockData.AtlasUVs.TryGetValue(blockType, out var uvRect))
             {
                 uvCoords = new Vector2[]
                 {
@@ -328,10 +328,10 @@ public class TerrainMesh
             Model model = Raylib.LoadModelFromMesh(mesh);
 
             // Assign texture atlas
-            if (Block.TextureAtlas.Id != 0)
+            if (BlockData.TextureAtlas.Id != 0)
             {
                 model.Materials[0].Shader = TerrainShader;
-                model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = Block.TextureAtlas;
+                model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = BlockData.TextureAtlas;
             }
 
             return model;
@@ -349,7 +349,7 @@ public class TerrainMesh
     }
 
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    private float getVertexLight(ChunkComponent chunk, int vx, int vy, int vz)
+    private float getVertexLight(Chunk chunk, int vx, int vy, int vz)
     {
         float total = 0f;
         int count = 0;
@@ -371,7 +371,7 @@ public class TerrainMesh
     }
 
     // TODO: Bottom blocks do not run this check
-    private float getVertexLightTopFace(ChunkComponent chunk, int vx, int vy, int vz)
+    private float getVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
     {
         // For each vertex, sample only the 4 blocks directly above it
         // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
@@ -392,7 +392,7 @@ public class TerrainMesh
         return total / (count * 15f); // Normalize to [0,1]
     }
     
-    private bool isVoxelSolid(ChunkComponent chunk, bool isTransparentPass, int x, int y, int z)
+    private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
     {
         BlockInfo info = new BlockInfo();
 
@@ -444,7 +444,7 @@ public class TerrainMesh
             return chunk.GetBlock(x, y, z).Type != BlockType.Air && info.IsTransparent;
     }
 
-    public void RemeshNeighbors(ChunkComponent chunk, bool isTransparentPass)
+    public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)
     {
         int[] offsets = { -ChunkSize, ChunkSize };
         
@@ -489,7 +489,7 @@ public class TerrainMesh
         }
     }
     
-    private byte neighborLightLevel(ChunkComponent chunk, int nx, int ny, int nz)
+    private byte neighborLightLevel(Chunk chunk, int nx, int ny, int nz)
     {
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
         {
