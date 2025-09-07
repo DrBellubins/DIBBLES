@@ -120,9 +120,6 @@ public class TerrainGeneration
             
             GameScene.TMesh.OpaqueModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
-            ECSChunks.TryAdd(chunk.Position, chunk);
-            //ECSChunks[chunk.Position] = chunk;
-            
             UnloadDistantChunks(currentChunk);
         }
         
@@ -139,9 +136,6 @@ public class TerrainGeneration
                 Raylib.UnloadModel(currentModel);
             
             GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
-            
-            ECSChunks.TryAdd(chunk.Position, chunk);
-            //ECSChunks[chunk.Position] = chunk;
             
             chunksLoaded++;
             
@@ -372,6 +366,10 @@ public class TerrainGeneration
 
                 // Mark as staged
                 chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
+                
+                // ***** Only add to ECSChunks AFTER decorations & remesh are done! *****
+                ECSChunks.TryAdd(chunk.Position, chunk);
+                
                 stagingInProgress.TryRemove(chunkPos, out _);
             });
 

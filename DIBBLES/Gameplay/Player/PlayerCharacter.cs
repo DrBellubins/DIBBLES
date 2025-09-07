@@ -552,6 +552,10 @@ public class PlayerCharacter
             if (!ECSChunks.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
+            // ***** Only consider chunks that are fully staged! *****
+            if (chunk.GenerationState != ChunkGenerationState.DecorationsAndRemeshDone)
+                continue;
+            
             int localX = x - chunkX;
             int localY = y - chunkY;
             int localZ = z - chunkZ;
