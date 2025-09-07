@@ -12,9 +12,10 @@ public class ChunkManager
         if (!chunks.TryGetValue(chunkPos, out var chunk))
         {
             chunk = new Chunk(chunkPos);
-            terrainGeneration.GenerateChunkData(chunk); // Generate data before adding!
-            chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
+            // Add to ECSChunks *before* generating data so it's visible to all systems
             chunks.TryAdd(chunkPos, chunk);
+            terrainGeneration.GenerateChunkData(chunk); // Now chunk is visible, but .GenerationState controls readiness
+            chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         }
         return chunk;
     }

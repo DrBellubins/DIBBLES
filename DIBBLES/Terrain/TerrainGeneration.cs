@@ -120,6 +120,8 @@ public class TerrainGeneration
             
             GameScene.TMesh.OpaqueModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
+            ECSChunks.TryAdd(chunk.Position, chunk);
+            
             UnloadDistantChunks(currentChunk);
         }
         
@@ -137,16 +139,14 @@ public class TerrainGeneration
             
             GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
+            ECSChunks.TryAdd(chunk.Position, chunk);
+            
             chunksLoaded++;
             
             UnloadDistantChunks(currentChunk);
         }
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
-
-        Console.WriteLine($"Loaded chunks count: {TerrainGeneration.ECSChunks.Count}");
-        foreach (var chunk in TerrainGeneration.ECSChunks.Values)
-            Console.WriteLine($"Chunk {chunk.Position} state: {chunk.GenerationState}");
         
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");
@@ -309,8 +309,8 @@ public class TerrainGeneration
             }
         }
         
-        var caves = new CaveGeneration(Seed);
-        caves.CarveCavesCrossChunk(chunk.Position, chunkManager, this);
+        //var caves = new CaveGeneration(Seed);
+        //caves.CarveCavesCrossChunk(chunk.Position, chunkManager, this);
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
@@ -370,9 +370,6 @@ public class TerrainGeneration
 
                 // Mark as staged
                 chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
-                
-                // ***** Only add to ECSChunks AFTER decorations & remesh are done! *****
-                ECSChunks.TryAdd(chunk.Position, chunk);
                 
                 stagingInProgress.TryRemove(chunkPos, out _);
             });
@@ -461,7 +458,7 @@ public class TerrainGeneration
                 GameScene.TMesh.TransparentModels.Remove(coord);
             }
 
-            ECSChunks.TryRemove(coord, out var outChunk);
+            ECSChunks.TryRemove(coord, out var cchunk);
         }
     }
     
