@@ -14,7 +14,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 12;
+    public const int RenderDistance = 8;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = true;
@@ -144,6 +144,10 @@ public class TerrainGeneration
         
         GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
 
+        Console.WriteLine($"Loaded chunks count: {TerrainGeneration.ECSChunks.Count}");
+        foreach (var chunk in TerrainGeneration.ECSChunks.Values)
+            Console.WriteLine($"Chunk {chunk.Position} state: {chunk.GenerationState}");
+        
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");
     }

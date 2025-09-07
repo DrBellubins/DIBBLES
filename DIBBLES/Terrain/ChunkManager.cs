@@ -12,8 +12,9 @@ public class ChunkManager
         if (!chunks.TryGetValue(chunkPos, out var chunk))
         {
             chunk = new Chunk(chunkPos);
-            // terrainGeneration.GenerateChunkData(chunk); // Only if you want to generate here
-            chunks.TryAdd(chunkPos, chunk); // Use TryAdd instead of dictionary assignment
+            terrainGeneration.GenerateChunkData(chunk); // Generate data before adding!
+            chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
+            chunks.TryAdd(chunkPos, chunk);
         }
         return chunk;
     }
