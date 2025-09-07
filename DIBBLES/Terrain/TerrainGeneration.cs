@@ -225,8 +225,7 @@ public class TerrainGeneration
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
                          ^ (chunk.Position.Z * 192837465L);
-
-        var chunkManager = new ChunkManager();
+        
         var rng = new SeededRandom(chunkSeed);
         var noise = new FastNoiseLite();
         noise.SetSeed(Seed);
@@ -309,9 +308,6 @@ public class TerrainGeneration
             }
         }
         
-        //var caves = new CaveGeneration(Seed);
-        //caves.CarveCavesCrossChunk(chunk.Position, chunkManager, this);
-        
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
     }
@@ -370,6 +366,11 @@ public class TerrainGeneration
 
                 // Mark as staged
                 chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
+                
+                //var chunkManager = new ChunkManager();
+                //
+                //var caves = new CaveGeneration(Seed);
+                //caves.CarveCavesCrossChunk(chunk.Position, chunkManager, this);
                 
                 stagingInProgress.TryRemove(chunkPos, out _);
             });
