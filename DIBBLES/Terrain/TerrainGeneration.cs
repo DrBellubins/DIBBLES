@@ -19,7 +19,7 @@ public class TerrainGeneration
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = true;
     
-    public static readonly Dictionary<Vector3Int, Chunk> ECSChunks = new();
+    public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
     public static Shader TerrainShader;
     
@@ -120,7 +120,8 @@ public class TerrainGeneration
             
             GameScene.TMesh.OpaqueModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
-            ECSChunks[chunk.Position] = chunk;
+            ECSChunks.TryAdd(chunk.Position, chunk);
+            //ECSChunks[chunk.Position] = chunk;
             
             UnloadDistantChunks(currentChunk);
         }
@@ -132,7 +133,6 @@ public class TerrainGeneration
             var meshData = entry.meshData;
             
             GameScene.TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
-            //var currentModel = GameScene.TMesh.TransparentModels[chunk.Position];
             
             // Upload mesh on main thread
             if (currentModel.MeshCount > 0)
@@ -140,8 +140,9 @@ public class TerrainGeneration
             
             GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
             
-            ECSChunks[chunk.Position] = chunk;
-
+            ECSChunks.TryAdd(chunk.Position, chunk);
+            //ECSChunks[chunk.Position] = chunk;
+            
             chunksLoaded++;
             
             UnloadDistantChunks(currentChunk);
@@ -458,7 +459,7 @@ public class TerrainGeneration
                 GameScene.TMesh.TransparentModels.Remove(coord);
             }
 
-            ECSChunks.Remove(coord);
+            ECSChunks.TryRemove(coord, out var outChunk);
         }
     }
     
