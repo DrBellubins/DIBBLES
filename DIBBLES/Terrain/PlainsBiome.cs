@@ -9,7 +9,10 @@ public class PlainsBiome
     {
         var returnData = bRetData;
         
-        if (!returnData.FoundSurface)
+        var aboveCoord = new Vector3Int(returnData.WorldPos.X, returnData.WorldPos.Y + 1, returnData.WorldPos.Z);
+        var aboveBlock = TerrainHelpers.GetBlockAtWorldPos(aboveCoord);
+
+        if (aboveBlock.Type == BlockType.Air && !returnData.FoundSurface)
         {
             // This is the surface
             returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Grass);
