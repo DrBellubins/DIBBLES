@@ -52,10 +52,27 @@ public class SeededRandom
         return r;
     }
 
+    // Generate a random int between min (inclusive) and max (exclusive)
+    public int NextInt(int min, int max)
+    {
+        if (min >= max)
+            throw new ArgumentException("min must be less than max");
+        int range = max - min;
+        return min + NextInt(range);
+    }
+
     // Generate a random float between 0.0 and 1.0
     public float NextFloat()
     {
         return Next(24) / (float)(1 << 24);
+    }
+
+    // Generate a random float between min (inclusive) and max (exclusive)
+    public float NextFloat(float min, float max)
+    {
+        if (min >= max)
+            throw new ArgumentException("min must be less than max");
+        return min + (max - min) * NextFloat();
     }
 
     // Generate a random long

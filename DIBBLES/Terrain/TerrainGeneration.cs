@@ -17,7 +17,7 @@ public class TerrainGeneration
     public const int RenderDistance = 12;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = false;
+    public const bool DrawDebug = true;
     
     public static readonly Dictionary<Vector3Int, Chunk> ECSChunks = new();
     
@@ -308,6 +308,9 @@ public class TerrainGeneration
                 }
             }
         }
+        
+        var caves = new CaveGeneration(Seed);
+        caves.CarveCaves(chunk);
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
