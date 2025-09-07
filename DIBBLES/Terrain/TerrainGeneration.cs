@@ -14,10 +14,10 @@ namespace DIBBLES.Terrain;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 8;
+    public const int RenderDistance = 12;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = true;
+    public const bool DrawDebug = false;
     
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
@@ -506,13 +506,13 @@ public class TerrainGeneration
         }
         
         /*if (SelectedBlock.GeneratedInsideIsland)
-            {
-                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Green);
-            }
-            else
-            {
-                RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
-            }*/
+        {
+            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Green);
+        }
+        else
+        {
+            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
+        }*/
         
         if (SelectedBlock.IsValid)
         {

@@ -61,68 +61,92 @@ public class TerrainGameplay
         Vector3Int hitNormal = Vector3Int.Zero;
     
         // Check starting voxel first
-    var startChunkPos = new Vector3Int(
-        (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
-        (int)Math.Floor((float)mapPos.Y / ChunkSize) * ChunkSize,
-        (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
-    );
-
-    if (ECSChunks.TryGetValue(startChunkPos, out var startChunk)
-        && startChunk.GenerationState == ChunkGenerationState.DecorationsAndRemeshDone)
-    {
-        var localX = (mapPos.X - startChunkPos.X);
-        var localY = (mapPos.Y - startChunkPos.Y);
-        var localZ = (mapPos.Z - startChunkPos.Z);
-
-        if (localX >= 0 && localX < ChunkSize && localY >= 0 && localY < ChunkSize && localZ >= 0 && localZ < ChunkSize)
-        {
-            var block = startChunk.GetBlock(localX, localY, localZ);
-
-            if (block.IsValid)
-            {
-                hitBlock = block;
-                return (hitBlock, hitNormal);
-            }
-        }
-    }
-
-    // DDA loop
-    const int maxSteps = 500;
-    int steps = 0;
-
-    while (steps < maxSteps)
-    {
-        steps++;
-
-        // ... unchanged DDA step ...
-
-        var currentChunkPos = new Vector3Int(
+        var startChunkPos = new Vector3Int(
             (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
             (int)Math.Floor((float)mapPos.Y / ChunkSize) * ChunkSize,
             (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
         );
-
-        if (!ECSChunks.TryGetValue(currentChunkPos, out var chunk)
-            || chunk.GenerationState != ChunkGenerationState.DecorationsAndRemeshDone)
-            continue;
-
-        var localX = (mapPos.X - currentChunkPos.X);
-        var localY = (mapPos.Y - currentChunkPos.Y);
-        var localZ = (mapPos.Z - currentChunkPos.Z);
-
-        if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkSize || localZ < 0 || localZ >= ChunkSize)
-            continue;
-
-        var block = chunk.GetBlock(localX, localY, localZ);
-
-        if (block.IsValid)
+        
+        if (ECSChunks.TryGetValue(startChunkPos, out var startChunk))
         {
-            hitBlock = block;
-            break;
+            var localX = (mapPos.X - startChunkPos.X);
+            var localY = (mapPos.Y - startChunkPos.X);
+            var localZ = (mapPos.Z - startChunkPos.Z);
+            
+            if (localX >= 0 && localX < ChunkSize && localY >= 0 && localY < ChunkSize && localZ >= 0 && localZ < ChunkSize)
+            {
+                var block = startChunk.GetBlock(localX, localY, localZ);
+                
+                if (block.IsValid)
+                {
+                    hitBlock = block;
+                    return (hitBlock, hitNormal); // Normal arbitrary for starting block hit; could compute based on direction or set to zero
+                }
+            }
         }
-    }
-
-    return (hitBlock, hitNormal);
+    
+        // DDA loop
+        const int maxSteps = 500; // Adjust based on ReachDistance
+        int steps = 0;
+        
+        while (steps < maxSteps)
+        {
+            steps++;
+    
+            float nextT;
+    
+            if (sideDist.X <= sideDist.Y && sideDist.X <= sideDist.Z)
+            {
+                nextT = sideDist.X;
+                sideDist.X += deltaDist.X;
+                mapPos.X += step.X;
+                hitNormal = new Vector3Int(-step.X, 0, 0);
+            }
+            else if (sideDist.Y <= sideDist.Z)
+            {
+                nextT = sideDist.Y;
+                sideDist.Y += deltaDist.Y;
+                mapPos.Y += step.Y;
+                hitNormal = new Vector3Int(0, -step.Y, 0);
+            }
+            else
+            {
+                nextT = sideDist.Z;
+                sideDist.Z += deltaDist.Z;
+                mapPos.Z += step.Z;
+                hitNormal = new Vector3Int(0, 0, -step.Z);
+            }
+    
+            if (nextT > ReachDistance) break;
+    
+            // Set normal
+            SelectedNormal = QuantizedNormal(hitNormal);
+            
+            // Check current voxel
+            var currentChunkPos = new Vector3Int(
+                (int)Math.Floor((float)mapPos.X / ChunkSize) * ChunkSize,
+                (int)Math.Floor((float)mapPos.Y / ChunkSize) * ChunkSize,
+                (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
+            );
+    
+            if (!ECSChunks.TryGetValue(currentChunkPos, out var chunk)) continue;
+    
+            var localX = (mapPos.X - currentChunkPos.X);
+            var localY = (mapPos.Y - currentChunkPos.Y);
+            var localZ = (mapPos.Z - currentChunkPos.Z);
+    
+            if (localX < 0 || localX >= ChunkSize || localY < 0 || localY >= ChunkSize || localZ < 0 || localZ >= ChunkSize) continue;
+    
+            var block = chunk.GetBlock(localX, localY, localZ);
+    
+            if (block.IsValid)
+            {
+                hitBlock = block;
+                break;
+            }
+        }
+    
+        return (hitBlock, hitNormal);
     }
     
     public void BreakBlock()
