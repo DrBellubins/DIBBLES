@@ -193,7 +193,7 @@ public class TerrainGeneration
                     {
                         chunk = new Chunk(pos);
 
-                        generateChunkData(chunk);
+                        GenerateChunkData(chunk);
 
                         GameScene.Lighting.Generate(chunk);
                     }
@@ -220,13 +220,14 @@ public class TerrainGeneration
         }
     }
     
-    private void generateChunkData(Chunk chunk)
+    public void GenerateChunkData(Chunk chunk)
     {
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
                          ^ (chunk.Position.Z * 192837465L);
-        
+
+        var chunkManager = new ChunkManager();
         var rng = new SeededRandom(chunkSeed);
         var noise = new FastNoiseLite();
         noise.SetSeed(Seed);
@@ -310,7 +311,7 @@ public class TerrainGeneration
         }
         
         var caves = new CaveGeneration(Seed);
-        caves.CarveCaves(chunk);
+        caves.CarveCavesCrossChunk(chunk.Position, chunkManager, this);
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
         chunk.Info.Generated = true;
