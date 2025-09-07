@@ -22,8 +22,9 @@ public class TerrainGeneration
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
     public static Shader TerrainShader;
-    
-    public int Seed = 1234567;
+
+    public int Seed = -1413840509;
+    //public int Seed = 1234567;
     
     public static Block SelectedBlock;
     public static Vector3Int SelectedNormal;
@@ -169,6 +170,12 @@ public class TerrainGeneration
                 chunksToGenerate.Add(chunkPos);
         }
 
+        // Sort by distance to centerChunk
+        chunksToGenerate.Sort((a, b) => 
+            (a - centerChunk * ChunkSize).ToVector3().LengthSquared()
+            .CompareTo((b - centerChunk * ChunkSize).ToVector3().LengthSquared())
+        );
+        
         foreach (var pos in chunksToGenerate)
         {
             // Spawn a background task for chunk generation
