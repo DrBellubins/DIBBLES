@@ -153,6 +153,8 @@ public class WorldSave
                                     currentBlock.Biome = (TerrainBiome)reader.ReadInt32();
                                     currentBlock.GeneratedInsideIsland = reader.ReadBoolean();
 
+                                    Console.WriteLine($"Save block type: {type}");
+                                    
                                     currentChunk.SetBlock(x, y, z, currentBlock);
                                 }
                             }
