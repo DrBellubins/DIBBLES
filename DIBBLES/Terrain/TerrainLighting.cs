@@ -72,9 +72,10 @@ public class TerrainLighting
                     continue;
         
                 var neighborBlock = curChunk.GetBlock(newPos.X, newPos.Y, newPos.Z);
-        
-                // Only propagate to transparent or air blocks
-                if (neighborBlock.Type == BlockType.Air || neighborBlock.Info.IsTransparent)
+                
+                // Only propagate to transparent (except leaves for thicker look) or air blocks
+                if (neighborBlock.Type == BlockType.Air ||
+                    (neighborBlock.Type != BlockType.Leaves && neighborBlock.Info.IsTransparent))
                 {
                     byte newLight = (byte)(lightLevel - 1);
             

@@ -189,6 +189,7 @@ public class TerrainGeneration
 
                     Chunk chunk;
 
+                    // TODO: Saved chunks are empty when loaded, but not in actual saves
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
@@ -356,7 +357,7 @@ public class TerrainGeneration
                     stagingInProgress.TryRemove(chunkPos, out _);
                     return;
                 }
-
+                
                 // Decorations (must sync with main thread if modifying Raylib objects)
                 generateChunkDecorations(chunk);
 
@@ -484,8 +485,12 @@ public class TerrainGeneration
             Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Color.White);
         
         // Draw transparent
+        Rlgl.DisableBackfaceCulling();
+        
         foreach (var tModel in GameScene.TMesh.TransparentModels)
             Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);
+        
+        Rlgl.EnableBackfaceCulling();
         
         if (DrawDebug)
         {

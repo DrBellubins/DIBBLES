@@ -107,6 +107,41 @@ public class PlayerCharacter
         if (!ShouldUpdate)
             return;
 
+        hotbar.Update(IsDead);
+        
+        // --- Block breaking and placing ---
+        placeBreakTimer += Time.DeltaTime;
+
+        if (Input.StartedBreaking) // Break immediately
+        {
+            GameScene.Gameplay.BreakBlock();
+            placeBreakTimer = 0f;
+        }
+        
+        if (Input.Break() && !Input.StartedBreaking) // Hold break
+        {
+            if (placeBreakTimer >= 0.3f)
+            {
+                GameScene.Gameplay.BreakBlock();
+                placeBreakTimer = 0f;
+            }
+        }
+
+        if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
+        {
+            GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+            placeBreakTimer = 0f;
+        }
+        
+        if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
+        {
+            if (placeBreakTimer >= 0.3f)
+            {
+                GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                placeBreakTimer = 0f;
+            }
+        }
+        
         if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
@@ -120,8 +155,6 @@ public class PlayerCharacter
             freecam.Update(this);
             return;
         }
-
-        hotbar.Update(IsDead);
         
         isGrounded = false; // Reset ground state 
         
@@ -341,39 +374,6 @@ public class PlayerCharacter
         
         if (Health <= 0)
             Kill();
-        
-        // --- Block breaking and placing ---
-        placeBreakTimer += Time.DeltaTime;
-
-        if (Input.StartedBreaking) // Break immediately
-        {
-            GameScene.Gameplay.BreakBlock();
-            placeBreakTimer = 0f;
-        }
-        
-        if (Input.Break() && !Input.StartedBreaking) // Hold break
-        {
-            if (placeBreakTimer >= 0.3f)
-            {
-                GameScene.Gameplay.BreakBlock();
-                placeBreakTimer = 0f;
-            }
-        }
-
-        if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
-        {
-            GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
-            placeBreakTimer = 0f;
-        }
-        
-        if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
-        {
-            if (placeBreakTimer >= 0.3f)
-            {
-                GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
-                placeBreakTimer = 0f;
-            }
-        }
 
         // Needs to happen a frame late
         if (NeedsToSpawn)

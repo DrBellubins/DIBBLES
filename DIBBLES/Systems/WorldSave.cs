@@ -33,7 +33,7 @@ public class WorldSave
 {
     // Public API
     public static string SaveDirectory = Path.Combine(AppContext.BaseDirectory, "Saves");
-    public static SaveData Data = new SaveData();
+    public static SaveData Data = new();
     
     public static bool Exists = false;
 
@@ -82,12 +82,6 @@ public class WorldSave
                             {
                                 var currentBlock = chunk.Value.GetBlock(x, y, z);
                                 var typeInt = (int)currentBlock.Type;
-                                
-                                if (!Enum.IsDefined(typeof(BlockType), typeInt))
-                                {
-                                    Console.WriteLine($"Invalid block type in save: {typeInt} at {currentBlock.Position}");
-                                    typeInt = (int)BlockType.Air; // fallback to Air
-                                }
                                 
                                 // TODO: Shouldn't write air blocks
                                 writer.Write(typeInt);
