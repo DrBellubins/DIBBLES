@@ -8,7 +8,6 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
-
 public struct SaveData
 {
     public int Seed;
