@@ -189,30 +189,9 @@ public class TerrainGeneration
 
                     Chunk chunk;
 
-                    // TODO: Saved chunks are empty when loaded, but not in actual saves
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
-                        int airBlockCount = 0;
-                        
-                        for (int xx = 0; xx < ChunkSize; xx++)
-                        {
-                            for (int yy = 0; yy < ChunkSize; yy++)
-                            {
-                                for (int zz = 0; zz < ChunkSize; zz++)
-                                {
-                                    var block = savedChunk.GetBlock(xx, yy, zz);
-                                    
-                                    if (block.Type != BlockType.Air)
-                                        Console.WriteLine($"Other block: {block.Type}");
-                                    else
-                                        airBlockCount++;
-                                }
-                            }
-                        }
-                        
-                        Console.WriteLine($"Air blocks: {airBlockCount}");
-                        
                         chunk = savedChunk;
                         GameScene.Lighting.Generate(chunk);
                     }

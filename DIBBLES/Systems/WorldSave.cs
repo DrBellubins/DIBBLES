@@ -146,14 +146,13 @@ public class WorldSave
                                         
                                     var currentBlock = new Block()
                                     {
+                                        Type = type,
                                         Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
                                         Info = info
                                     };
                                     
                                     currentBlock.Biome = (TerrainBiome)reader.ReadInt32();
                                     currentBlock.GeneratedInsideIsland = reader.ReadBoolean();
-
-                                    Console.WriteLine($"Save block type: {type}");
                                     
                                     currentChunk.SetBlock(x, y, z, currentBlock);
                                 }
