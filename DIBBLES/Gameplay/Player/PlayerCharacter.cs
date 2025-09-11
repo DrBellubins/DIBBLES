@@ -187,9 +187,10 @@ public class PlayerCharacter
         // Crouching
         isCrouching = Input.Crouch();
 
-        if (isCrouching && !isRunning)
+        // Run vs Crouch checks
+        if (isCrouching)
             currentSpeed = CrouchSpeed;
-        else if (isRunning && !isCrouching)
+        else if (isRunning)
             currentSpeed = RunSpeed;
         else
             currentSpeed = WalkSpeed;
