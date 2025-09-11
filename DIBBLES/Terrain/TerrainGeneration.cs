@@ -58,7 +58,6 @@ public class TerrainGeneration
         TerrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
     
-    private bool initialLoad = false;
     private int chunksLoaded = 0;
     
     public void Update(PlayerCharacter playerCharacter)
@@ -69,16 +68,6 @@ public class TerrainGeneration
             (int)Math.Floor(playerCharacter.Position.Y / ChunkSize),
             (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
-
-        // Load starting from the saved player position
-        if (WorldSave.Exists)
-        {
-            currentChunk = new Vector3Int(
-                (int)Math.Floor(WorldSave.Data.PlayerPosition.X / ChunkSize),
-                (int)Math.Floor(WorldSave.Data.PlayerPosition.Y / ChunkSize),
-                (int)Math.Floor(WorldSave.Data.PlayerPosition.Z / ChunkSize)
-            );
-        }
         
         // Only update if the camera has moved to a new chunk
         if (currentChunk != lastCameraChunk)
@@ -86,8 +75,6 @@ public class TerrainGeneration
             lastCameraChunk = currentChunk;
             generateTerrainAsync(currentChunk);
             chunksLoaded = 0;
-            
-            initialLoad = true;
         }
         
         foreach (var chunk in ECSChunks.Values)
@@ -191,19 +178,15 @@ public class TerrainGeneration
 
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
-                    {
                         chunk = savedChunk;
-                        GameScene.Lighting.Generate(chunk);
-                    }
                     else
                     {
                         chunk = new Chunk(pos);
-
                         GenerateChunkData(chunk);
-
-                        GameScene.Lighting.Generate(chunk);
                     }
-
+                    
+                    GameScene.Lighting.Generate(chunk);
+                    
                     var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
                     var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
 
@@ -327,9 +310,9 @@ public class TerrainGeneration
             return;
 
         if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated &&
-            Math.Abs(chunkPos.X/ChunkSize - centerChunk.X) <= halfRenderDistance &&
-            Math.Abs(chunkPos.Y/ChunkSize - centerChunk.Y) <= halfRenderDistance &&
-            Math.Abs(chunkPos.Z/ChunkSize - centerChunk.Z) <= halfRenderDistance)
+            Math.Abs(chunkPos.X / ChunkSize - centerChunk.X) <= halfRenderDistance &&
+            Math.Abs(chunkPos.Y / ChunkSize - centerChunk.Y) <= halfRenderDistance &&
+            Math.Abs(chunkPos.Z / ChunkSize - centerChunk.Z) <= halfRenderDistance)
         {
             chunk.GenerationState = ChunkGenerationState.StagingQueued;
             chunkStagingQueue.Enqueue(chunkPos);

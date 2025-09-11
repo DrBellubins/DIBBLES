@@ -30,9 +30,11 @@ public static class Input
         return Raylib.IsKeyDown(KeyboardKey.D);
     }
 
+    //public static bool StoppedRunning => Raylib.IsMouseButtonReleased(MouseButton.Extra);
+    
     public static bool Run()
     {
-        return Raylib.IsMouseButtonDown(MouseButton.Extra);
+        return Raylib.IsMouseButtonPressed(MouseButton.Extra);
     }
 
     public static bool Crouch()

@@ -28,7 +28,7 @@ public class PlayerCharacter
     
     // Gameplay
     public int Health = 100;
-    public Hotbar hotbar = new Hotbar();
+    public Hotbar hotbar = new();
     
     private readonly Vector3 spawnPosition = new Vector3(0f, 0f, 0f); // Temporary
     
@@ -47,7 +47,7 @@ public class PlayerCharacter
     public Vector3 CameraRight = Vector3.Zero;
     
     public bool FreeCamEnabled = true;
-    public Freecam freecam = new Freecam();
+    public Freecam freecam = new();
 
     public bool NeedsToSpawn = false;
     public bool ShouldUpdate = false;
@@ -57,7 +57,7 @@ public class PlayerCharacter
     public float CameraYaw = 0f;
 
     private Sound fallSound;
-    private HandModel handModel = new HandModel();
+    private HandModel handModel = new();
     
     private float currentSpeed = WalkSpeed;
     private float currentHeight = PlayerHeight;
@@ -178,44 +178,21 @@ public class PlayerCharacter
         if (Input.MoveRight()) inputDir.X += 1.0f;
 
         // Run
-        currentSpeed = isCrouching ? CrouchSpeed : WalkSpeed;
-        isRunning = false;
-        
-        if (Raylib.IsKeyPressed(KeyboardKey.W))
-        {
-            float currentTime = Time.time;
-
-            if (!waitingForSecondPress)
-            {
-                waitingForSecondPress = true;
-                lastPressTime = currentTime;
-            }
-            else
-            {
-                if (currentTime - lastPressTime <= 2f)
-                {
-                    isDoublePressRunning =  true;
-                    waitingForSecondPress = false;
-                }
-                else
-                    lastPressTime = currentTime;
-            }
-        }
-
-        // Reset if the time window expires
-        if (waitingForSecondPress && Raylib.GetTime() - lastPressTime > 0.3f)
-            waitingForSecondPress = false;
-
-        if (!Raylib.IsKeyDown(KeyboardKey.W))
-            isDoublePressRunning = false;
-        
-        if (isDoublePressRunning && Raylib.IsKeyDown(KeyboardKey.W))
+        if (Input.Run())
             run();
-        else if (Input.Run())
-            run();
+
+        if (isRunning && isCrouching)
+            isRunning = false;
         
-        var crouchKey = Input.Crouch();
-        isCrouching = crouchKey;
+        // Crouching
+        isCrouching = Input.Crouch();
+
+        if (isCrouching && !isRunning)
+            currentSpeed = CrouchSpeed;
+        else if (isRunning && !isCrouching)
+            currentSpeed = RunSpeed;
+        else
+            currentSpeed = WalkSpeed;
         
         isJumping = Input.Jump(isCrouching);
         
@@ -273,7 +250,7 @@ public class PlayerCharacter
         CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
 
         // Camera position
-        Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
+        Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.49f, 0.0f);
         Camera.Target = Camera.Position + CameraForward;
         Camera.Up = CameraUp;
         
@@ -438,10 +415,7 @@ public class PlayerCharacter
     private void run()
     {
         if (!isCrouching)
-        {
-            currentSpeed = RunSpeed;
-            isRunning = true;
-        }
+            isRunning = !isRunning;
     }
     
     private void checkCollisions()

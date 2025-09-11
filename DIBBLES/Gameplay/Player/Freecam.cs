@@ -12,9 +12,9 @@ public class Freecam
         float currentMovespeed;
 
         if (Input.Run())
-            currentMovespeed = 60f;
+            currentMovespeed = 10f;
         else
-            currentMovespeed = 20f;
+            currentMovespeed = 5f;
         
         float moveSpeed = currentMovespeed * Time.DeltaTime;
 

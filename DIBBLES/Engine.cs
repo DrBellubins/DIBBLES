@@ -16,12 +16,12 @@ public class Engine
     public static readonly int VirtualScreenWidth = (int)((float)ScreenWidth / ScreenHeight * VirtualScreenHeight);
     //public const int VirtualScreenWidth = 640;
     public const int VirtualScreenHeight = 480;
-    
+
     public const int FPS = 165;
     public const float FrameTimestep = 1.0f / (float)FPS;
     
     public static bool IsRunning;
-    public static List<Scene> Scenes = new List<Scene>();
+    public static List<Scene> Scenes = new();
     public static Font MainFont;
     
     public static void Initialize()
