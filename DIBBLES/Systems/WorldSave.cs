@@ -42,6 +42,7 @@ public class WorldSave
             Directory.CreateDirectory(SavesDirectory);
     }
     
+    // TODO: Only save world data that has changed
     public static void SaveWorldData(string worldName)
     {
         var currentSaveDir = Path.Combine(SavesDirectory, $"{worldName}");
@@ -82,38 +83,35 @@ public class WorldSave
         }
         
         // Regions
+        
         foreach (var chunk in Data.ModifiedChunks)
         {
+            var nonAirBlocks = new List<Block>();
+            
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var block = chunk.Value.GetBlock(x, y, z);
+                
+                if (block.Type != BlockType.Air)
+                    nonAirBlocks.Add(block);
+            }
+            
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             {
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
                 {
-                    writer.Write(chunk.Value.Info.Generated);
-                    writer.Write(chunk.Value.Info.Modified);
-                    writer.Write(chunk.Value.Position.X);
-                    writer.Write(chunk.Value.Position.Y);
-                    writer.Write(chunk.Value.Position.Z);
-
-                    for (int x = 0; x < ChunkSize; x++)
+                    writer.Write(nonAirBlocks.Count);
+                    
+                    foreach (var block in nonAirBlocks)
                     {
-                        for (int y = 0; y < ChunkSize; y++)
-                        {
-                            for (int z = 0; z < ChunkSize; z++)
-                            {
-                                var currentBlock = chunk.Value.GetBlock(x, y, z);
-                                var typeInt = (int)currentBlock.Type;
-                                
-                                // TODO: Shouldn't write air blocks
-                                writer.Write(typeInt);
-                                
-                                writer.Write(currentBlock.Position.X);
-                                writer.Write(currentBlock.Position.Y);
-                                writer.Write(currentBlock.Position.Z);
-                                
-                                writer.Write((int)currentBlock.Biome);
-                                writer.Write(currentBlock.GeneratedInsideIsland);
-                            }
-                        }
+                        writer.Write(block.Position.X);
+                        writer.Write(block.Position.Y);
+                        writer.Write(block.Position.Z);
+                        writer.Write((int)block.Type);
+                        writer.Write((int)block.Biome);
+                        writer.Write(block.GeneratedInsideIsland);
                     }
                 }
             }

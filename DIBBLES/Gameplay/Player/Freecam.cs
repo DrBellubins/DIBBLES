@@ -7,12 +7,17 @@ namespace DIBBLES.Gameplay.Player;
 
 public class Freecam
 {
+    private bool isRunning = false;
+    
     public void Update(PlayerCharacter playerCharacter)
     {
         float currentMovespeed;
 
         if (Input.Run())
-            currentMovespeed = 10f;
+            isRunning = !isRunning;
+        
+        if (isRunning)
+            currentMovespeed = 20f;
         else
             currentMovespeed = 5f;
         
