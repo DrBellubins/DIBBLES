@@ -60,6 +60,8 @@ public class WorldSave
         using (var stream = File.Open(worldDataDir, FileMode.Create))
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
         {
+            writer.Write("W_DIBBLES");
+            
             writer.Write(GameScene.TerrainGen.Seed);
         }
         
@@ -68,6 +70,8 @@ public class WorldSave
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
+                writer.Write("P_DIBBLES");
+                
                 writer.Write(GameScene.PlayerCharacter.Position.X);
                 writer.Write(GameScene.PlayerCharacter.Position.Y);
                 writer.Write(GameScene.PlayerCharacter.Position.Z);
@@ -81,7 +85,6 @@ public class WorldSave
         }
         
         // Regions
-        
         foreach (var chunk in Data.ModifiedChunks)
         {
             var nonAirBlocks = new List<Block>();
@@ -99,6 +102,8 @@ public class WorldSave
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
+                writer.Write("R_DIBBLES");
+                
                 writer.Write(nonAirBlocks.Count);
                     
                 foreach (var block in nonAirBlocks)
@@ -115,6 +120,132 @@ public class WorldSave
     }
     
     public static void LoadWorldData(string worldName)
+    {
+        var currentSaveDir = Path.Combine(SavesDirectory, $"{worldName}");
+        var regionsDir = Path.Combine(currentSaveDir, "Regions");
+        var worldDataDir = Path.Combine(currentSaveDir, "WorldData.dat");
+        var playerDataDir = Path.Combine(currentSaveDir, "PlayerData.dat");
+    
+        if (!Directory.Exists(currentSaveDir))
+        {
+            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist");
+            return;
+        }
+    
+        if (!Directory.Exists(regionsDir))
+        {
+            Console.WriteLine($"Error: region directory '{regionsDir}' doesn't exist");
+            return;
+        }
+    
+        // World data
+        if (File.Exists(worldDataDir))
+        {
+            Exists = true;
+    
+            using (var stream = File.Open(worldDataDir, FileMode.Open))
+            using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
+            {
+                var header = reader.ReadString();
+
+                if (header != "W_DIBBLES")
+                    Console.WriteLine("World data format is incorrect exist");
+                
+                Data.WorldName = worldName;
+                Data.Seed = reader.ReadInt32();
+            }
+        }
+    
+        // Player data
+        if (File.Exists(playerDataDir))
+        {
+            using (var stream = File.Open(playerDataDir, FileMode.Open))
+            using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
+            {
+                var header = reader.ReadString();
+
+                if (header != "P_DIBBLES")
+                    Console.WriteLine("Player data format is incorrect exist");
+                
+                Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                Data.HotbarPosition = reader.ReadInt32();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Error: Player data file '{playerDataDir}' doesn't exist");
+            return;
+        }
+    
+        // Regions (sparse voxel loading)
+        var regionPaths = Directory.GetFiles(regionsDir, "*.dat");
+    
+        for (int i = 0; i < regionPaths.Length; i++)
+        {
+            using (var stream = File.Open(regionPaths[i], FileMode.Open))
+            using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
+            {
+                // Get chunk position from filename
+                var fileName = Path.GetFileNameWithoutExtension(regionPaths[i]);
+                var coords = fileName.Replace("Region_", "").Split('_');
+                
+                var chunkPos = new Vector3Int(
+                    int.Parse(coords[0]),
+                    int.Parse(coords[1]),
+                    int.Parse(coords[2])
+                );
+    
+                var chunk = new Chunk(chunkPos);
+    
+                // Fill chunk blocks with air
+                for (int x = 0; x < ChunkSize; x++)
+                for (int y = 0; y < ChunkSize; y++)
+                for (int z = 0; z < ChunkSize; z++)
+                {
+                    var airBlock = new Block(new Vector3Int(chunkPos.X + x, chunkPos.Y + y, chunkPos.Z + z), BlockType.Air);
+                    chunk.SetBlock(x, y, z, airBlock);
+                }
+    
+                
+                var header = reader.ReadString();
+                
+                if (header != "R_DIBBLES")
+                    Console.WriteLine("Region data format is incorrect exist");
+                
+                int nonAirCount = reader.ReadInt32();
+    
+                for (int b = 0; b < nonAirCount; b++)
+                {
+                    int x = reader.ReadInt32();
+                    int y = reader.ReadInt32();
+                    int z = reader.ReadInt32();
+                    var type = (BlockType)reader.ReadInt32();
+                    var biome = (TerrainBiome)reader.ReadInt32();
+                    bool generatedInsideIsland = reader.ReadBoolean();
+    
+                    var blockPos = new Vector3Int(x, y, z);
+                    var block = new Block(blockPos, type);
+                    block.Biome = biome;
+                    block.GeneratedInsideIsland = generatedInsideIsland;
+    
+                    // Convert world pos to local pos
+                    int localX = x - chunkPos.X;
+                    int localY = y - chunkPos.Y;
+                    int localZ = z - chunkPos.Z;
+    
+                    chunk.SetBlock(localX, localY, localZ, block);
+                }
+    
+                Data.ModifiedChunks.Add(chunk.Position, chunk);
+            }
+        }
+    
+        Console.WriteLine($"Loaded world '{Data.WorldName}'");
+        Console.WriteLine($"Data: Seed '{Data.Seed}' PlayerPos '{Data.PlayerPosition}' CamDir '{Data.CameraDirection}' Hotbar '{Data.HotbarPosition}' chunkCount '{regionPaths.Length}'");
+    }
+    
+    public static void LoadWorldDataOld(string worldName)
     {
         var currentSaveDir = Path.Combine(SavesDirectory, $"{worldName}");
         var regionsDir = Path.Combine(currentSaveDir, "Regions");
