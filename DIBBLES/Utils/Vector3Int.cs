@@ -25,6 +25,11 @@ public struct Vector3Int
     {
         return $"({X}, {Y}, {Z})";
     }
+
+    public string ToStringUnderscore()
+    {
+        return $"{X}_{Y}_{Z}";
+    }
     
     // Addition
     public static Vector3Int operator +(Vector3Int a, Vector3Int b)

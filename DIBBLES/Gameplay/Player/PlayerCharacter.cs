@@ -97,9 +97,6 @@ public class PlayerCharacter
         Raylib.DisableCursor();
     }
     
-    bool isDoublePressRunning = false;
-    bool waitingForSecondPress = false;
-    double lastPressTime = 0.0;
     float lastHeight = PlayerHeight;
     
     public void Update()
