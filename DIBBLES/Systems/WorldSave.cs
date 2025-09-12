@@ -41,132 +41,6 @@ public class WorldSave
         if (!Directory.Exists(SavesDirectory))
             Directory.CreateDirectory(SavesDirectory);
     }
-
-    /*public static void SaveWorldData(string worldName)
-    {
-        using (var stream = File.Open(Path.Combine(SavesDirectory, $"{worldName}.dat"), FileMode.Create))
-        {
-            using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
-            {
-                // World data
-                writer.Write(GameScene.TerrainGen.Seed);
-                writer.Write(worldName);
-                
-                writer.Write(GameScene.PlayerCharacter.Position.X);
-                writer.Write(GameScene.PlayerCharacter.Position.Y);
-                writer.Write(GameScene.PlayerCharacter.Position.Z);
-                
-                writer.Write(GameScene.PlayerCharacter.CameraForward.X);
-                writer.Write(GameScene.PlayerCharacter.CameraForward.Y);
-                writer.Write(GameScene.PlayerCharacter.CameraForward.Z);
-                
-                writer.Write(Data.HotbarPosition);
-
-                // Chunk data
-                writer.Write(Data.ModifiedChunks.Count);
-
-                foreach (var chunk in Data.ModifiedChunks)
-                {
-                    writer.Write(chunk.Value.Info.Generated);
-                    writer.Write(chunk.Value.Info.Modified);
-                    writer.Write(chunk.Value.Position.X);
-                    writer.Write(chunk.Value.Position.Y);
-                    writer.Write(chunk.Value.Position.Z);
-
-                    for (int x = 0; x < ChunkSize; x++)
-                    {
-                        for (int y = 0; y < ChunkSize; y++)
-                        {
-                            for (int z = 0; z < ChunkSize; z++)
-                            {
-                                var currentBlock = chunk.Value.GetBlock(x, y, z);
-                                var typeInt = (int)currentBlock.Type;
-                                
-                                // TODO: Shouldn't write air blocks
-                                writer.Write(typeInt);
-                                
-                                writer.Write(currentBlock.Position.X);
-                                writer.Write(currentBlock.Position.Y);
-                                writer.Write(currentBlock.Position.Z);
-                                
-                                writer.Write((int)currentBlock.Biome);
-                                writer.Write(currentBlock.GeneratedInsideIsland);
-                            }
-                        }
-                    }
-                }
-
-                Console.WriteLine($"Saved world '{worldName}'");
-            }
-        }
-    }
-    
-    public static void LoadWorldData(string worldName)
-    {
-        var fileName = Path.Combine(SavesDirectory, $"{worldName}.dat");
-
-        if (File.Exists(fileName))
-        {
-            Exists = true;
-            
-            using (var stream = File.Open(fileName, FileMode.Open))
-            {
-                using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
-                {
-                    // World data
-                    Data.Seed = reader.ReadInt32();
-                    Data.WorldName = reader.ReadString();
-                    Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                    Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-                    Data.HotbarPosition = reader.ReadInt32();
-
-                    // Chunk data
-                    Data.ModifiedChunks.Clear(); // THIS PREVENTS CHUNK DUPING!
-
-                    var modifiedChunkCount = reader.ReadInt32();
-
-                    for (int i = 0; i < modifiedChunkCount; i++)
-                    {
-                        var currentChunkInfo = new ChunkInfo();
-                        currentChunkInfo.Generated = reader.ReadBoolean();
-                        currentChunkInfo.Modified = reader.ReadBoolean();
-
-                        var currentChunk = new Chunk(new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()));
-                        currentChunk.Info = currentChunkInfo;
-
-                        for (int x = 0; x < ChunkSize; x++)
-                        {
-                            for (int y = 0; y < ChunkSize; y++)
-                            {
-                                for (int z = 0; z < ChunkSize; z++)
-                                {
-                                    var type = (BlockType)reader.ReadInt32();
-                                    var info = BlockData.Prefabs[type];
-                                        
-                                    var currentBlock = new Block()
-                                    {
-                                        Type = type,
-                                        Position = new Vector3Int(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32()),
-                                        Info = info
-                                    };
-                                    
-                                    currentBlock.Biome = (TerrainBiome)reader.ReadInt32();
-                                    currentBlock.GeneratedInsideIsland = reader.ReadBoolean();
-                                    
-                                    currentChunk.SetBlock(x, y, z, currentBlock);
-                                }
-                            }
-                        }
-
-                        Data.ModifiedChunks.Add(currentChunk.Position, currentChunk);
-                    }
-
-                    Console.WriteLine($"Loaded world '{Data.WorldName}'");
-                    Console.WriteLine($"Data: Seed '{Data.Seed}' PlayerPos '{Data.PlayerPosition}' CamDir '{Data.CameraDirection}' Hotbar '{Data.HotbarPosition}' chunkCount '{modifiedChunkCount}'");
-                }
-            }
-        }
-    }*/
     
     public static void SaveWorldData(string worldName)
     {
@@ -269,6 +143,8 @@ public class WorldSave
         // World data
         if (File.Exists(worldDataDir))
         {
+            Exists = true;
+            
             using (var stream = File.Open(worldDataDir, FileMode.Open))
             {
                 using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
