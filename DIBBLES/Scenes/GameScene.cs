@@ -11,9 +11,6 @@ namespace DIBBLES.Scenes;
 public class GameScene : Scene
 {
     public static TerrainGeneration TerrainGen = new TerrainGeneration();
-    public static TerrainMesh TMesh = new TerrainMesh();
-    public static TerrainLighting Lighting = new TerrainLighting();
-    public static TerrainGameplay Gameplay = new TerrainGameplay();
     
     public static PlayerCharacter PlayerCharacter = new PlayerCharacter();
     
@@ -38,8 +35,8 @@ public class GameScene : Scene
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);
-        Gameplay.Update(PlayerCharacter.Camera);
-
+        TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
+        
         if (Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
         

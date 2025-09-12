@@ -7,6 +7,7 @@ using System.Diagnostics;
 using DIBBLES.Effects;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
+using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using Debug = DIBBLES.Utils.Debug;
 
@@ -16,8 +17,14 @@ public class TerrainGeneration
 {
     public const int RenderDistance = 12;
     public const int ChunkSize = 16;
+    public const float TickRate = 2.0f; // In seconds
     public const float ReachDistance = 5f; // Has to be finite!
     public const bool DrawDebug = false;
+    
+    public static TerrainMesh TMesh = new TerrainMesh();
+    public static TerrainLighting Lighting = new TerrainLighting();
+    public static TerrainGameplay Gameplay = new TerrainGameplay();
+    public static TerrainTick Tick = new TerrainTick();
     
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
@@ -30,6 +37,9 @@ public class TerrainGeneration
     public static Vector3Int SelectedNormal;
     
     public static bool DoneLoading = false;
+    
+    // Ticks
+    private float TickElapsed; // seconds
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
@@ -100,13 +110,13 @@ public class TerrainGeneration
             var chunk = entry.chunk;
             var meshData = entry.meshData;
 
-            GameScene.TMesh.OpaqueModels.TryGetValue(chunk.Position, out var currentModel);
+            TMesh.OpaqueModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
             if (currentModel.MeshCount > 0)
                 Raylib.UnloadModel(currentModel);
             
-            GameScene.TMesh.OpaqueModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
+            TMesh.OpaqueModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
             ECSChunks.TryAdd(chunk.Position, chunk);
             
@@ -119,13 +129,13 @@ public class TerrainGeneration
             var chunk = entry.chunk;
             var meshData = entry.meshData;
             
-            GameScene.TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
+            TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
             if (currentModel.MeshCount > 0)
                 Raylib.UnloadModel(currentModel);
             
-            GameScene.TMesh.TransparentModels[chunk.Position] = GameScene.TMesh.UploadMesh(meshData);
+            TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
             ECSChunks.TryAdd(chunk.Position, chunk);
             
@@ -134,7 +144,16 @@ public class TerrainGeneration
             UnloadDistantChunks(currentChunk);
         }
         
-        GameScene.TMesh.RecentlyRemeshedNeighbors.Clear();
+        TMesh.RecentlyRemeshedNeighbors.Clear();
+        
+        // Terrain ticks
+        TickElapsed += Time.DeltaTime;
+
+        if (TickElapsed >= TickRate)
+        {
+            Tick.Tick(currentChunk);
+            TickElapsed -= TickRate;
+        }
         
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");
@@ -185,10 +204,10 @@ public class TerrainGeneration
                         GenerateChunkData(chunk);
                     }
                     
-                    GameScene.Lighting.Generate(chunk);
+                    Lighting.Generate(chunk);
                     
-                    var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                    var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                    var meshData = TMesh.GenerateMeshData(chunk, false);
+                    var tMeshData = TMesh.GenerateMeshData(chunk, true);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -344,11 +363,11 @@ public class TerrainGeneration
                 generateChunkDecorations(chunk);
 
                 // Lighting (can be async if no Raylib calls)
-                GameScene.Lighting.Generate(chunk);
+                Lighting.Generate(chunk);
 
                 // Mesh generation (thread safe)
-                var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+                var meshData = TMesh.GenerateMeshData(chunk, false);
+                var tMeshData = TMesh.GenerateMeshData(chunk, true);
 
                 // Enqueue mesh upload for main thread
                 meshUploadQueue.Enqueue((chunk, meshData));
@@ -426,27 +445,27 @@ public class TerrainGeneration
         foreach (var coord in chunksToRemove)
         {
             // Opaque model
-            if (GameScene.TMesh.OpaqueModels.TryGetValue(coord, out var oModel))
+            if (TMesh.OpaqueModels.TryGetValue(coord, out var oModel))
             {
                 if (oModel.MeshCount > 0)
                 {
                     Raylib.UnloadModel(oModel);
-                    GameScene.TMesh.OpaqueModels[coord] = default; // Prevent double-unload
+                    TMesh.OpaqueModels[coord] = default; // Prevent double-unload
                 }
                 
-                GameScene.TMesh.OpaqueModels.Remove(coord);
+                TMesh.OpaqueModels.Remove(coord);
             }
 
             // Transparent model
-            if (GameScene.TMesh.TransparentModels.TryGetValue(coord, out var tModel))
+            if (TMesh.TransparentModels.TryGetValue(coord, out var tModel))
             {
                 if (tModel.MeshCount > 0)
                 {
                     Raylib.UnloadModel(tModel);
-                    GameScene.TMesh.TransparentModels[coord] = default;
+                    TMesh.TransparentModels[coord] = default;
                 }
                 
-                GameScene.TMesh.TransparentModels.Remove(coord);
+                TMesh.TransparentModels.Remove(coord);
             }
 
             ECSChunks.TryRemove(coord, out var cchunk);
@@ -463,13 +482,13 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);
         
         // Draw opaque
-        foreach (var oModel in GameScene.TMesh.OpaqueModels)
+        foreach (var oModel in TMesh.OpaqueModels)
             Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Color.White);
         
         // Draw transparent
         Rlgl.DisableBackfaceCulling();
         
-        foreach (var tModel in GameScene.TMesh.TransparentModels)
+        foreach (var tModel in TMesh.TransparentModels)
             Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);
         
         Rlgl.EnableBackfaceCulling();

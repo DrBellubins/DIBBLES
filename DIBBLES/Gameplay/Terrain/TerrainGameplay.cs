@@ -193,20 +193,20 @@ public class TerrainGameplay
             chunk.Info.Modified = true;
 
             // Update lighting if the broken block was opaque or emissive
-            GameScene.Lighting.Generate(chunk);
+            Lighting.Generate(chunk);
             
             // Regenerate mesh
-            Raylib.UnloadModel(GameScene.TMesh.OpaqueModels[chunkCoord]); // Unload old model
-            Raylib.UnloadModel(GameScene.TMesh.TransparentModels[chunkCoord]); // Unload old tModel
+            Raylib.UnloadModel(TMesh.OpaqueModels[chunkCoord]); // Unload old model
+            Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
-            var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-            var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+            var meshData = TMesh.GenerateMeshData(chunk, false);
+            var tMeshData = TMesh.GenerateMeshData(chunk, true);
             
-            GameScene.TMesh.OpaqueModels[chunkCoord] = GameScene.TMesh.UploadMesh(meshData);
-            GameScene.TMesh.TransparentModels[chunkCoord] = GameScene.TMesh.UploadMesh(tMeshData);
+            TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
+            TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);
             
-            GameScene.TMesh.RemeshNeighbors(chunk, false);
-            GameScene.TMesh.RemeshNeighbors(chunk, true);
+            TMesh.RemeshNeighbors(chunk, false);
+            TMesh.RemeshNeighbors(chunk, true);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -275,20 +275,20 @@ public class TerrainGameplay
         
         
         // Update lighting for the placed block
-        GameScene.Lighting.Generate(chunk);
+        Lighting.Generate(chunk);
         
         // Regenerate mesh
-        Raylib.UnloadModel(GameScene.TMesh.OpaqueModels[chunkCoord]); // Unload old model
-        Raylib.UnloadModel(GameScene.TMesh.TransparentModels[chunkCoord]); // Unload old tModel
+        Raylib.UnloadModel(TMesh.OpaqueModels[chunkCoord]); // Unload old model
+        Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
-        var meshData = GameScene.TMesh.GenerateMeshData(chunk, false);
-        var tMeshData = GameScene.TMesh.GenerateMeshData(chunk, true);
+        var meshData = TMesh.GenerateMeshData(chunk, false);
+        var tMeshData = TMesh.GenerateMeshData(chunk, true);
             
-        GameScene.TMesh.OpaqueModels[chunkCoord] = GameScene.TMesh.UploadMesh(meshData);
-        GameScene.TMesh.TransparentModels[chunkCoord] = GameScene.TMesh.UploadMesh(tMeshData);
+        TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
+        TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);
             
-        GameScene.TMesh.RemeshNeighbors(chunk, false);
-        GameScene.TMesh.RemeshNeighbors(chunk, true);
+        TMesh.RemeshNeighbors(chunk, false);
+        TMesh.RemeshNeighbors(chunk, true);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

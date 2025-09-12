@@ -111,7 +111,7 @@ public class PlayerCharacter
 
         if (Input.StartedBreaking) // Break immediately
         {
-            GameScene.Gameplay.BreakBlock();
+            TerrainGeneration.Gameplay.BreakBlock();
             placeBreakTimer = 0f;
         }
         
@@ -119,14 +119,14 @@ public class PlayerCharacter
         {
             if (placeBreakTimer >= 0.3f)
             {
-                GameScene.Gameplay.BreakBlock();
+                TerrainGeneration.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
         }
 
         if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
         {
-            GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+            TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
             placeBreakTimer = 0f;
         }
         
@@ -134,7 +134,7 @@ public class PlayerCharacter
         {
             if (placeBreakTimer >= 0.3f)
             {
-                GameScene.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
             }
         }
