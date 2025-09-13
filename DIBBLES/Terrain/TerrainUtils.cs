@@ -94,7 +94,7 @@ public static class FaceUtils
         return rotatedUvCoords;
     }
     
-    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx, int neighborLightLevel)
+    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx)
     {
         // Lighting calculation for each face (copied from TerrainMesh.cs)
         float l0, l1, l2, l3;
@@ -102,40 +102,40 @@ public static class FaceUtils
         switch (faceIdx)
         {
             case 0: // Front (-Z)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, neighborLightLevel);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, neighborLightLevel);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
                 break;
             case 1: // Back (+Z)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, neighborLightLevel);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, neighborLightLevel);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
                 break;
             case 2: // Left (-X)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, neighborLightLevel);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, neighborLightLevel);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
                 break;
             case 3: // Right (+X)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, neighborLightLevel);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, neighborLightLevel);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
                 break;
             case 4: // Bottom (-Y)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
                 break;
             case 5: // Top (+Y)
-                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
-                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
-                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
-                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z);
+                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1);
+                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1);
+                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z);
                 break;
             default:
                 l0 = l1 = l2 = l3 = 1f;
@@ -156,7 +156,7 @@ public static class FaceUtils
     }
 
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz, int neighborLightLevel)
+    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz)
     {
         float total = 0f;
         int count = 0;
@@ -169,33 +169,33 @@ public static class FaceUtils
             int ny = vy - dy;
             int nz = vz - dz;
             
-            total += neighborLightLevel;
-            
+            byte lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+
+            total += lightLevel;
             count++;
         }
-        
         return total / (count * 15f); // Normalize to [0,1]
     }
     
     // TODO: Bottom blocks do not run this check
-    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz, int neighborLightLevel)
+    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
     {
-        // For each vertex, sample only the 4 blocks directly above it
-        // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
         float total = 0f;
         int count = 0;
-        
+
         for (int dx = 0; dx <= 1; dx++)
         for (int dz = 0; dz <= 1; dz++)
         {
             int nx = vx - dx;
             int ny = vy + 1;
             int nz = vz - dz;
-            
-            total += neighborLightLevel;
+
+            byte lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+
+            total += lightLevel;
             count++;
         }
-        
+
         return total / (count * 15f); // Normalize to [0,1]
     }
 }

@@ -52,10 +52,9 @@ public class TerrainMesh
 
                 if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
                 {
-                    var neighborLightLevel = getNeighborLightLevel(chunk, nx, ny, nz);
                     var faceVerts = FaceUtils.GetFaceVertices(pos, faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
-                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx, neighborLightLevel);
+                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
 
                     vertices.AddRange(faceVerts);
                     normals.AddRange(Enumerable.Repeat(normal, 4));
