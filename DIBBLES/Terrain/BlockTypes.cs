@@ -12,5 +12,6 @@ public enum BlockType
     Water,
     Wisp,
     WoodLog,
-    Leaves
+    Leaves,
+    Glass
 }

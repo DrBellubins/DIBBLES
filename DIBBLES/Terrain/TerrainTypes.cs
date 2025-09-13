@@ -13,8 +13,6 @@ public struct Block
     public bool GeneratedInsideIsland;
 
     public bool IsValid => Type != BlockType.Air;
-
-    public byte UpdateLogicType; // 0 = water, 1 = crafting table, 2 = furnace
     
     public Block(Vector3Int position, BlockType type)
     {

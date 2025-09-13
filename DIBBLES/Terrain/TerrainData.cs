@@ -61,6 +61,7 @@ public class BlockData
         Prefabs.Add(BlockType.Wood, new BlockInfo(3, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.WoodLog, new BlockInfo(3, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 0));
+        Prefabs.Add(BlockType.Glass, new BlockInfo(2, 0.0f, 64, true, 0));
         
         // Special blocks (No logic
         Prefabs.Add(BlockType.Air, new BlockInfo(0, 0.0f, 0, true, 0));
