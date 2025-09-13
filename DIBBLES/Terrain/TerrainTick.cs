@@ -56,6 +56,11 @@ public class TerrainTick
                 {
                     UpdateChunk(entry.Chunk, entry.Position);
                 }
+                catch (Exception ex)
+                {
+                    Console.Write(ex);
+                    throw;
+                }
                 finally
                 {
                     semaphore.Release();

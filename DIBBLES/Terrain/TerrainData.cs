@@ -99,7 +99,7 @@ public class BlockData
         // Load textures and sounds for remaining block types (Air, Water)
         foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
-            if (blockType != BlockType.Air  && blockType != BlockType.Water)
+            if (blockType != BlockType.Air && blockType != BlockType.Water)
             {
                 if (!atlasBlockTypes.Contains(blockType))
                 {

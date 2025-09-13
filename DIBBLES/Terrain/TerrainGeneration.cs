@@ -24,7 +24,7 @@ public class TerrainGeneration
     public static TerrainMesh TMesh = new TerrainMesh();
     public static TerrainLighting Lighting = new TerrainLighting();
     public static TerrainGameplay Gameplay = new TerrainGameplay();
-    public static TerrainTick Tick = new TerrainTick();
+    public static TerrainTick TerrainTick = new TerrainTick();
     
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
@@ -39,7 +39,7 @@ public class TerrainGeneration
     public static bool DoneLoading = false;
     
     // Ticks
-    private float TickElapsed; // seconds
+    private float tickElapsed; // seconds
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
 
@@ -147,12 +147,12 @@ public class TerrainGeneration
         TMesh.RecentlyRemeshedNeighbors.Clear();
         
         // Terrain ticks
-        TickElapsed += Time.DeltaTime;
+        tickElapsed += Time.DeltaTime;
 
-        if (TickElapsed >= TickRate)
+        if (tickElapsed >= TickRate)
         {
-            Tick.Tick(currentChunk);
-            TickElapsed -= TickRate;
+            TerrainTick.Tick(currentChunk);
+            tickElapsed -= TickRate;
         }
         
         if (Raylib.IsKeyPressed(KeyboardKey.U))
