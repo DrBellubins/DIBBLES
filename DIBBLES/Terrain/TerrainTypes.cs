@@ -14,6 +14,8 @@ public struct Block
 
     public bool IsValid => Type != BlockType.Air;
     
+    public Action<Block, Chunk>? UpdateLogic;
+    
     public Block(Vector3Int position, BlockType type)
     {
         var info = BlockData.Prefabs[type];
