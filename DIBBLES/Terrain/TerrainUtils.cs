@@ -169,7 +169,25 @@ public static class FaceUtils
             int ny = vy - dy;
             int nz = vz - dz;
             
-            byte lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+            byte lightLevel;
+            
+            if (nx >= 0 && nx < TerrainGeneration.ChunkSize &&
+                ny >= 0 && ny < TerrainGeneration.ChunkSize &&
+                nz >= 0 && nz < TerrainGeneration.ChunkSize)
+            {
+                lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+            }
+            else
+            {
+                // Sample from neighboring chunk
+                var worldPos = new Vector3Int(
+                    chunk.Position.X + nx,
+                    chunk.Position.Y + ny,
+                    chunk.Position.Z + nz
+                );
+                
+                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+            }
 
             total += lightLevel;
             count++;
@@ -190,12 +208,55 @@ public static class FaceUtils
             int ny = vy + 1;
             int nz = vz - dz;
 
-            byte lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+            byte lightLevel;
+            
+            if (nx >= 0 && nx < TerrainGeneration.ChunkSize &&
+                ny >= 0 && ny < TerrainGeneration.ChunkSize &&
+                nz >= 0 && nz < TerrainGeneration.ChunkSize)
+            {
+                lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+            }
+            else
+            {
+                // Sample from neighboring chunk
+                var worldPos = new Vector3Int(
+                    chunk.Position.X + nx,
+                    chunk.Position.Y + ny,
+                    chunk.Position.Z + nz
+                );
+                
+                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+            }
 
             total += lightLevel;
             count++;
         }
 
         return total / (count * 15f); // Normalize to [0,1]
+    }
+    
+    public static Block GetBlockAtWorldPos(Vector3Int worldPos)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            int localX = worldPos.X - chunkX;
+            int localY = worldPos.Y - chunkY;
+            int localZ = worldPos.Z - chunkZ;
+            
+            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
+                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
+                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
+            {
+                return chunk.GetBlock(localX, localY, localZ);
+            }
+        }
+        
+        return new Block(worldPos, BlockType.Air); // Treat out-of-bounds as air
     }
 }

@@ -143,12 +143,12 @@ public class TerrainMesh
                     var neighbor = chunk.GetBlock(nx, ny, nz);
     
                     bool faceVisible = neighbor.Type == BlockType.Air || !neighbor.Info.IsTransparent;
+                    
                     if (!faceVisible) continue;
     
-                    var neighborLightLevel = getNeighborLightLevel(chunk, nx, ny, nz);
                     var verts = FaceUtils.GetFaceVertices(pos, faceIdx);
                     var uvs = FaceUtils.GetFaceUVs(block.Type, faceIdx);
-                    var colors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx, neighborLightLevel);
+                    var colors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
                     var texture = BlockData.Textures[block.Type];
                     
                     Vector3 center = (verts[0] + verts[1] + verts[2] + verts[3]) / 4f;
@@ -171,6 +171,46 @@ public class TerrainMesh
         }
     
         return buckets;
+    }
+    
+    public void DrawTransparentBuckets(Camera3D camera)
+    {
+        int bucketCount = 4;
+        float maxDist = 64f;
+
+        // Collect all faces from visible chunks
+        var allBuckets = new List<TransparentFace>[bucketCount];
+        
+        for (int i = 0; i < bucketCount; i++) allBuckets[i] = new List<TransparentFace>();
+
+        foreach (var chunk in ECSChunks.Values)
+        {
+            var chunkBuckets = TMesh.CollectTransparentFacesBuckets(camera, bucketCount, maxDist);
+            
+            for (int i = 0; i < bucketCount; i++)
+                allBuckets[i].AddRange(chunkBuckets[i]);
+        }
+
+        Rlgl.DisableBackfaceCulling();
+        
+        // Draw farthest buckets first
+        for (int i = bucketCount - 1; i >= 0; i--)
+        {
+            foreach (var face in allBuckets[i])
+            {
+                DrawQuad(face);
+            }
+        }
+        
+        Rlgl.EnableBackfaceCulling();
+    }
+
+    // Helper to draw a quad
+    private void DrawQuad(TransparentFace face)
+    {
+        // You can use Raylib.DrawTriangle3D for each triangle, or a custom mesh for UVs.
+        Raylib.DrawTriangle3D(face.Vertices[0], face.Vertices[1], face.Vertices[2], face.Colors[0]);
+        Raylib.DrawTriangle3D(face.Vertices[0], face.Vertices[2], face.Vertices[3], face.Colors[1]);
     }
     
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model

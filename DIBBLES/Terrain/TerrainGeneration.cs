@@ -486,12 +486,11 @@ public class TerrainGeneration
             Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Color.White);
         
         // Draw transparent
-        Rlgl.DisableBackfaceCulling();
         
-        foreach (var tModel in TMesh.TransparentModels)
-            Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);
+        /*foreach (var tModel in TMesh.TransparentModels)
+            Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);*/
         
-        Rlgl.EnableBackfaceCulling();
+        TMesh.DrawTransparentBuckets(GameScene.PlayerCharacter.Camera);
         
         if (DrawDebug)
         {

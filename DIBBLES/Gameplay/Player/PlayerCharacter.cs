@@ -94,7 +94,7 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        Raylib.DisableCursor();
+        //Raylib.DisableCursor();
     }
     
     float lastHeight = PlayerHeight;
