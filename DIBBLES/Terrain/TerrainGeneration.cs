@@ -149,13 +149,13 @@ public class TerrainGeneration
         TMesh.RecentlyRemeshedNeighbors.Clear();
         
         // Terrain ticks
-        tickElapsed += Time.DeltaTime;
+        /*tickElapsed += Time.DeltaTime;
 
         if (tickElapsed >= TickRate)
         {
             TerrainTick.Tick(currentChunk);
             tickElapsed -= TickRate;
-        }
+        }*/
         
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");

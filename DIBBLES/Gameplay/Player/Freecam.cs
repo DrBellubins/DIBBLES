@@ -25,17 +25,25 @@ public class Freecam
 
         var direction = new Vector3();
 
+        var forwardXZ = new Vector3(playerCharacter.CameraForward.X, 0f, playerCharacter.CameraForward.Z);
+        
         if (Input.MoveForward())
-            playerCharacter.Position += playerCharacter.CameraForward * moveSpeed;
+            playerCharacter.Position += forwardXZ * moveSpeed;
         
         if (Input.MoveBackward())
-            playerCharacter.Position -= playerCharacter.CameraForward * moveSpeed;
+            playerCharacter.Position -= forwardXZ * moveSpeed;
 
         if (Input.MoveLeft())
             playerCharacter.Position -= playerCharacter.CameraRight * moveSpeed;
         
         if (Input.MoveRight())
             playerCharacter.Position += playerCharacter.CameraRight * moveSpeed;
+        
+        if (Input.Jump(false))
+            playerCharacter.Position += Vector3.UnitY * moveSpeed;
+        
+        if (Input.Crouch())
+            playerCharacter.Position -= Vector3.UnitY * moveSpeed;
         
         var lookDelta = Input.LookDelta();
         var lookDeltaX = lookDelta.X * 0.1f;
