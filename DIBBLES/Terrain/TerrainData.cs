@@ -1,4 +1,5 @@
 using System.Numerics;
+using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
 using Raylib_cs;
 
@@ -29,7 +30,7 @@ public struct BlockInfo
     public int MaxStack;
     public bool IsTransparent; // True if light can pass through
     public byte LightEmission; // Light level emitted by this block (0-15)
-
+    
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
         Hardness = hardness;
@@ -61,11 +62,11 @@ public class BlockData
         Prefabs.Add(BlockType.WoodLog, new BlockInfo(3, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 0));
         
-        // Special blocks
+        // Special blocks (No logic
         Prefabs.Add(BlockType.Air, new BlockInfo(0, 0.0f, 0, true, 0));
         Prefabs.Add(BlockType.Water, new BlockInfo(10, 0.5f, 64, true, 0));
         Prefabs.Add(BlockType.Wisp, new BlockInfo(10, 0.5f, 64, true, 15));
-
+        
         // Define block types in the exact order for the atlas
         var atlasBlockTypes = new List<BlockType>();
 

@@ -4,17 +4,17 @@ using DIBBLES.Effects;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Terrain;
+using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Scenes;
 
 public class GameScene : Scene
 {
-    public static TerrainGeneration TerrainGen = new TerrainGeneration();
-    
-    public static PlayerCharacter PlayerCharacter = new PlayerCharacter();
-    
-    private FogEffect fogEffect = new FogEffect();
+    public static TerrainGeneration TerrainGen = new();
+    public static PlayerCharacter PlayerCharacter = new();
+
+    public static List<BlockLogic> BlockLogicList = new();
 
     public override void Start()
     {
@@ -26,8 +26,6 @@ public class GameScene : Scene
         TerrainGen.Update(PlayerCharacter);
         
         PlayerCharacter.Start(); // Must be started after terrain
-        
-        fogEffect.Start();
     }
 
     public override void Update()
@@ -51,7 +49,6 @@ public class GameScene : Scene
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
-        //fogEffect.DrawStart();
         Raylib.ClearBackground(Color.SkyBlue);
         Raylib.BeginMode3D(PlayerCharacter.Camera);
         
@@ -61,8 +58,6 @@ public class GameScene : Scene
         Debug.Draw3D();
         
         Raylib.EndMode3D();
-        
-        //fogEffect.DrawEnd();
         
         PlayerCharacter.DrawUI();
         
