@@ -282,7 +282,7 @@ public class TerrainGameplay
         Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
         var meshData = TMesh.GenerateMeshData(chunk, false);
-        var tMeshData = TMesh.GenerateMeshData(chunk, true);
+        var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
             
         TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
         TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);

@@ -19,8 +19,9 @@ public class TerrainMesh
     public Dictionary<Vector3Int, Model> TransparentModels = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
-    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
+    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass, Vector3? cameraPosition = null)
     {
+        List<(float dist, FaceData face)> transparentFaces = new();
         List<Vector3> vertices = [];
         List<int> indices = [];
         List<Vector3> normals = [];
@@ -49,27 +50,70 @@ public class TerrainMesh
                 int nx = x + neighborOffset.X;
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
-
+        
                 if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos, faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
                     var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
-
-                    vertices.AddRange(faceVerts);
-                    normals.AddRange(Enumerable.Repeat(normal, 4));
-                    texcoords.AddRange(faceUVs);
-                    colors.AddRange(faceColors);
-
-                    // Indices for two triangles (quad)
-                    indices.AddRange(new int[]
+        
+                    if (isTransparencyPass && cameraPosition.HasValue)
                     {
-                        vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
-                        vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
-                    });
-
-                    vertexOffset += 4;
+                        // For transparent faces, store for sorting
+                        var center = (faceVerts[0] + faceVerts[1] + faceVerts[2] + faceVerts[3]) / 4f;
+                        var dist = Vector3.Distance(cameraPosition.Value, center);
+                        
+                        transparentFaces.Add((dist, new FaceData
+                        {
+                            Verts = faceVerts,
+                            Normal = normal,
+                            UVs = faceUVs,
+                            Colors = faceColors,
+                            VertexOffset = vertexOffset,
+                            CenterDistance =  dist
+                        }));
+                    }
+                    else
+                    {
+                        // Opaque faces: add immediately
+                        vertices.AddRange(faceVerts);
+                        normals.AddRange(Enumerable.Repeat(normal, 4));
+                        texcoords.AddRange(faceUVs);
+                        colors.AddRange(faceColors);
+        
+                        indices.AddRange(new int[]
+                        {
+                            vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
+                            vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
+                        });
+        
+                        vertexOffset += 4;
+                    }
                 }
+            }
+        }
+        
+        // If transparent: sort faces back-to-front and build arrays
+        if (isTransparencyPass && cameraPosition.HasValue)
+        {
+            transparentFaces.Sort((a, b) => b.dist.CompareTo(a.dist));
+            
+            int vertexOffset = 0;
+            
+            foreach (var (_, face) in transparentFaces)
+            {
+                vertices.AddRange(face.Verts);
+                normals.AddRange(Enumerable.Repeat(face.Normal, 4));
+                texcoords.AddRange(face.UVs);
+                colors.AddRange(face.Colors);
+                
+                indices.AddRange(new int[]
+                {
+                    vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
+                    vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
+                });
+                
+                vertexOffset += 4;
             }
         }
 
@@ -112,105 +156,6 @@ public class TerrainMesh
         }
 
         return meshData;
-    }
-    
-    public List<TransparentFace>[] CollectTransparentFacesBuckets(Camera3D camera, int bucketCount = 4, float maxDistance = 64f)
-    {
-        // Create buckets
-        var buckets = new List<TransparentFace>[bucketCount];
-        for (int i = 0; i < bucketCount; i++) buckets[i] = new List<TransparentFace>();
-    
-        Vector3 camPos = camera.Position;
-    
-        foreach (var chunk in ECSChunks.Values)
-        {
-            for (int x = 0; x < ChunkSize; x++)
-            for (int y = 0; y < ChunkSize; y++)
-            for (int z = 0; z < ChunkSize; z++)
-            {
-                var block = chunk.GetBlock(x, y, z);
-                var pos = new Vector3(x, y, z);
-                
-                if (!block.Info.IsTransparent || block.Type == BlockType.Air) continue;
-    
-                // For each face, check if visible (same logic as your mesh generation)
-                foreach (var (faceIdx, normal, neighborOffset) in FaceUtils.VoxelFaceInfos())
-                {
-                    int nx = x + neighborOffset.X;
-                    int ny = y + neighborOffset.Y;
-                    int nz = z + neighborOffset.Z;
-                    
-                    var neighbor = chunk.GetBlock(nx, ny, nz);
-    
-                    bool faceVisible = neighbor.Type == BlockType.Air || !neighbor.Info.IsTransparent;
-                    
-                    if (!faceVisible) continue;
-    
-                    var verts = FaceUtils.GetFaceVertices(pos, faceIdx);
-                    var uvs = FaceUtils.GetFaceUVs(block.Type, faceIdx);
-                    var colors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
-                    var texture = BlockData.Textures[block.Type];
-                    
-                    Vector3 center = (verts[0] + verts[1] + verts[2] + verts[3]) / 4f;
-                    
-                    float dist = Vector3.Distance(camPos, center);
-    
-                    int bucketIdx = Math.Clamp((int)((dist / maxDistance) * bucketCount), 0, bucketCount - 1);
-                    
-                    buckets[bucketIdx].Add(new TransparentFace
-                    {
-                        Vertices = verts,
-                        Normal = normal,
-                        TexCoords = uvs,
-                        Colors = colors,
-                        Texture = texture,
-                        CenterDistance = dist
-                    });
-                }
-            }
-        }
-    
-        return buckets;
-    }
-    
-    public void DrawTransparentBuckets(Camera3D camera)
-    {
-        int bucketCount = 4;
-        float maxDist = 64f;
-
-        // Collect all faces from visible chunks
-        var allBuckets = new List<TransparentFace>[bucketCount];
-        
-        for (int i = 0; i < bucketCount; i++) allBuckets[i] = new List<TransparentFace>();
-
-        foreach (var chunk in ECSChunks.Values)
-        {
-            var chunkBuckets = TMesh.CollectTransparentFacesBuckets(camera, bucketCount, maxDist);
-            
-            for (int i = 0; i < bucketCount; i++)
-                allBuckets[i].AddRange(chunkBuckets[i]);
-        }
-
-        Rlgl.DisableBackfaceCulling();
-        
-        // Draw farthest buckets first
-        for (int i = bucketCount - 1; i >= 0; i--)
-        {
-            foreach (var face in allBuckets[i])
-            {
-                DrawQuad(face);
-            }
-        }
-        
-        Rlgl.EnableBackfaceCulling();
-    }
-
-    // Helper to draw a quad
-    private void DrawQuad(TransparentFace face)
-    {
-        // You can use Raylib.DrawTriangle3D for each triangle, or a custom mesh for UVs.
-        Raylib.DrawTriangle3D(face.Vertices[0], face.Vertices[1], face.Vertices[2], face.Colors[0]);
-        Raylib.DrawTriangle3D(face.Vertices[0], face.Vertices[2], face.Vertices[3], face.Colors[1]);
     }
     
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model

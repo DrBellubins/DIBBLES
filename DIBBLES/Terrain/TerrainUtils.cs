@@ -4,14 +4,15 @@ using Raylib_cs;
 
 namespace DIBBLES.Terrain;
 
-public struct TransparentFace
+public struct FaceData
 {
-    public Vector3[] Vertices;
+    public Vector3[] Verts;
     public Vector3 Normal;
-    public Vector2[] TexCoords;
+    public Vector2[] UVs;
     public Color[] Colors;
-    public Texture2D Texture;
-    public float CenterDistance;
+    public int VertexOffset;
+    public float CenterDistance;   // For sorting
+    //public Texture2D Texture;      // If faces may use different textures
 }
 
 public static class FaceUtils

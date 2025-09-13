@@ -207,7 +207,7 @@ public class TerrainGeneration
                     Lighting.Generate(chunk);
                     
                     var meshData = TMesh.GenerateMeshData(chunk, false);
-                    var tMeshData = TMesh.GenerateMeshData(chunk, true);
+                    var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -367,7 +367,7 @@ public class TerrainGeneration
 
                 // Mesh generation (thread safe)
                 var meshData = TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = TMesh.GenerateMeshData(chunk, true);
+                var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
                 // Enqueue mesh upload for main thread
                 meshUploadQueue.Enqueue((chunk, meshData));
