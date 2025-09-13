@@ -44,175 +44,33 @@ public class TerrainMesh
             
             int vertexOffset = vertices.Count;
 
-            // Define cube vertices (8 corners)
-            Vector3[] cubeVertices =
-            [
-                pos + new Vector3(0, 0, 0), pos + new Vector3(1, 0, 0),
-                pos + new Vector3(1, 1, 0), pos + new Vector3(0, 1, 0),
-                pos + new Vector3(0, 0, 1), pos + new Vector3(1, 0, 1),
-                pos + new Vector3(1, 1, 1), pos + new Vector3(0, 1, 1)
-            ];
-
-            // Get UVs from atlas
-            Vector2[] uvCoords;
-            if (BlockData.AtlasUVs.TryGetValue(blockType, out var uvRect))
+            foreach (var (faceIdx, normal, neighborOffset) in FaceUtils.VoxelFaceInfos())
             {
-                uvCoords = new Vector2[]
+                int nx = x + neighborOffset.X;
+                int ny = y + neighborOffset.Y;
+                int nz = z + neighborOffset.Z;
+
+                if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
                 {
-                    new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
-                    new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height), // Top-right
-                    new Vector2(uvRect.X + uvRect.Width, uvRect.Y), // Bottom-right
-                    new Vector2(uvRect.X, uvRect.Y) // Bottom-left
-                };
-            }
-            else
-            {
-                uvCoords = new Vector2[]
-                {
-                    new Vector2(0, 1), new Vector2(1, 1),
-                    new Vector2(1, 0), new Vector2(0, 0)
-                };
-            }
+                    var neighborLightLevel = getNeighborLightLevel(chunk, nx, ny, nz);
+                    var faceVerts = FaceUtils.GetFaceVertices(pos, faceIdx);
+                    var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
+                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx, neighborLightLevel);
 
-            Vector2[] rotatedUvCoords = new Vector2[]
-            {
-                uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0]
-            };
+                    vertices.AddRange(faceVerts);
+                    normals.AddRange(Enumerable.Repeat(normal, 4));
+                    texcoords.AddRange(faceUVs);
+                    colors.AddRange(faceColors);
 
-            // Front face (-Z)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x, y, z - 1))
-            {
-                // Vertices: 0,3,2,1
-                float l0 = getVertexLight(chunk, x,   y,   z  );
-                float l1 = getVertexLight(chunk, x,   y+1, z  );
-                float l2 = getVertexLight(chunk, x+1, y+1, z  );
-                float l3 = getVertexLight(chunk, x+1, y,   z  );
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[0], cubeVertices[3], cubeVertices[2], cubeVertices[1]]);
-                normals.AddRange([new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1), new Vector3(0, 0, -1)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 2, vertexOffset + 3, vertexOffset, vertexOffset + 1, vertexOffset + 2]);
-                
-                vertexOffset += 4;
-            }
-            
-            // Back face (+Z)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x, y, z + 1))
-            {
-                // Vertices: 5,6,7,4
-                float l0 = getVertexLight(chunk, x+1, y,   z+1 );
-                float l1 = getVertexLight(chunk, x+1, y+1, z+1 );
-                float l2 = getVertexLight(chunk, x,   y+1, z+1 );
-                float l3 = getVertexLight(chunk, x,   y,   z+1 );
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[5], cubeVertices[6], cubeVertices[7], cubeVertices[4]]);
-                normals.AddRange([new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(0, 0, 1)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                
-                vertexOffset += 4;
-            }
-            
-            // Left face (-X)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x - 1, y, z))
-            {
-                // Vertices: 4,7,3,0
-                float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                float l1 = getVertexLight(chunk, x,   y+1, z+1 );
-                float l2 = getVertexLight(chunk, x,   y+1, z   );
-                float l3 = getVertexLight(chunk, x,   y,   z   );
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[4], cubeVertices[7], cubeVertices[3], cubeVertices[0]]);
-                normals.AddRange([new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                
-                vertexOffset += 4;
-            }
-            
-            // Right face (+X)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x + 1, y, z))
-            {
-                // Vertices: 1,2,6,5
-                float l0 = getVertexLight(chunk, x+1, y,   z   );
-                float l1 = getVertexLight(chunk, x+1, y+1, z   );
-                float l2 = getVertexLight(chunk, x+1, y+1, z+1 );
-                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[1], cubeVertices[2], cubeVertices[6], cubeVertices[5]]);
-                normals.AddRange([new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0), new Vector3(1, 0, 0)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                
-                vertexOffset += 4;
-            }
-            
-            // Bottom face (-Y)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x, y - 1, z))
-            {
-                // Vertices: 4,0,1,5
-                float l0 = getVertexLight(chunk, x,   y,   z+1 );
-                float l1 = getVertexLight(chunk, x,   y,   z   );
-                float l2 = getVertexLight(chunk, x+1, y,   z   );
-                float l3 = getVertexLight(chunk, x+1, y,   z+1 );
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[4], cubeVertices[0], cubeVertices[1], cubeVertices[5]]);
-                normals.AddRange([new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
-                
-                vertexOffset += 4;
-            }
-            
-            // Top face (+Y)
-            if (!isVoxelSolid(chunk, isTransparencyPass, x, y + 1, z))
-            {
-                // Vertices: 3,7,6,2
-                float l0 = getVertexLightTopFace(chunk, x,   y, z   );  
-                float l1 = getVertexLightTopFace(chunk, x,   y, z + 1 );
-                float l2 = getVertexLightTopFace(chunk, x+1, y, z + 1 );
-                float l3 = getVertexLightTopFace(chunk, x+1, y, z   );  
-                
-                if (Fullbright) { l0 = 1f; l1 = 1f; l2 = 1f; l3 = 1f; }
-                
-                colors.AddRange([
-                    ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3)
-                ]);
-                
-                vertices.AddRange([cubeVertices[3], cubeVertices[7], cubeVertices[6], cubeVertices[2]]);
-                normals.AddRange([new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 1, 0)]);
-                texcoords.AddRange(rotatedUvCoords);
-                indices.AddRange([vertexOffset, vertexOffset + 1, vertexOffset + 2, vertexOffset, vertexOffset + 2, vertexOffset + 3]);
+                    // Indices for two triangles (quad)
+                    indices.AddRange(new int[]
+                    {
+                        vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
+                        vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
+                    });
+
+                    vertexOffset += 4;
+                }
             }
         }
 
@@ -255,6 +113,65 @@ public class TerrainMesh
         }
 
         return meshData;
+    }
+    
+    public List<TransparentFace>[] CollectTransparentFacesBuckets(Camera3D camera, int bucketCount = 4, float maxDistance = 64f)
+    {
+        // Create buckets
+        var buckets = new List<TransparentFace>[bucketCount];
+        for (int i = 0; i < bucketCount; i++) buckets[i] = new List<TransparentFace>();
+    
+        Vector3 camPos = camera.Position;
+    
+        foreach (var chunk in ECSChunks.Values)
+        {
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var block = chunk.GetBlock(x, y, z);
+                var pos = new Vector3(x, y, z);
+                
+                if (!block.Info.IsTransparent || block.Type == BlockType.Air) continue;
+    
+                // For each face, check if visible (same logic as your mesh generation)
+                foreach (var (faceIdx, normal, neighborOffset) in FaceUtils.VoxelFaceInfos())
+                {
+                    int nx = x + neighborOffset.X;
+                    int ny = y + neighborOffset.Y;
+                    int nz = z + neighborOffset.Z;
+                    
+                    var neighbor = chunk.GetBlock(nx, ny, nz);
+    
+                    bool faceVisible = neighbor.Type == BlockType.Air || !neighbor.Info.IsTransparent;
+                    if (!faceVisible) continue;
+    
+                    var neighborLightLevel = getNeighborLightLevel(chunk, nx, ny, nz);
+                    var verts = FaceUtils.GetFaceVertices(pos, faceIdx);
+                    var uvs = FaceUtils.GetFaceUVs(block.Type, faceIdx);
+                    var colors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx, neighborLightLevel);
+                    var texture = BlockData.Textures[block.Type];
+                    
+                    Vector3 center = (verts[0] + verts[1] + verts[2] + verts[3]) / 4f;
+                    
+                    float dist = Vector3.Distance(camPos, center);
+    
+                    int bucketIdx = Math.Clamp((int)((dist / maxDistance) * bucketCount), 0, bucketCount - 1);
+                    
+                    buckets[bucketIdx].Add(new TransparentFace
+                    {
+                        Vertices = verts,
+                        Normal = normal,
+                        TexCoords = uvs,
+                        Colors = colors,
+                        Texture = texture,
+                        CenterDistance = dist
+                    });
+                }
+            }
+        }
+    
+        return buckets;
     }
     
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
@@ -300,60 +217,6 @@ public class TerrainMesh
 
             return model;
         }
-    }
-    
-    // Helper: map [0,1] to Color
-    private static Color ToColor(float light)
-    {
-        light = MathF.Max(0.1f, light); // Prevent fully dark
-        
-        var color = (byte)(255f * light);
-        
-        return new Color(color, color, color, (byte)255);
-    }
-
-    // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    private float getVertexLight(Chunk chunk, int vx, int vy, int vz)
-    {
-        float total = 0f;
-        int count = 0;
-        
-        for (int dx = 0; dx <= 1; dx++)
-        for (int dy = 0; dy <= 1; dy++)
-        for (int dz = 0; dz <= 1; dz++)
-        {
-            int nx = vx - dx;
-            int ny = vy - dy;
-            int nz = vz - dz;
-            
-            total += neighborLightLevel(chunk, nx, ny, nz);
-            
-            count++;
-        }
-        
-        return total / (count * 15f); // Normalize to [0,1]
-    }
-
-    // TODO: Bottom blocks do not run this check
-    private float getVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
-    {
-        // For each vertex, sample only the 4 blocks directly above it
-        // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
-        float total = 0f;
-        int count = 0;
-        
-        for (int dx = 0; dx <= 1; dx++)
-        for (int dz = 0; dz <= 1; dz++)
-        {
-            int nx = vx - dx;
-            int ny = vy + 1;
-            int nz = vz - dz;
-            
-            total += neighborLightLevel(chunk, nx, ny, nz);
-            count++;
-        }
-        
-        return total / (count * 15f); // Normalize to [0,1]
     }
     
     private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
@@ -456,7 +319,7 @@ public class TerrainMesh
         }
     }
     
-    private byte neighborLightLevel(Chunk chunk, int nx, int ny, int nz)
+    private byte getNeighborLightLevel(Chunk chunk, int nx, int ny, int nz)
     {
         if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
         {

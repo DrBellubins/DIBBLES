@@ -1,0 +1,201 @@
+using System.Numerics;
+using DIBBLES.Utils;
+using Raylib_cs;
+
+namespace DIBBLES.Terrain;
+
+public struct TransparentFace
+{
+    public Vector3[] Vertices;
+    public Vector3 Normal;
+    public Vector2[] TexCoords;
+    public Color[] Colors;
+    public Texture2D Texture;
+    public float CenterDistance;
+}
+
+public static class FaceUtils
+{
+    public static (int faceIdx, Vector3 normal, Vector3Int neighborOffset)[] VoxelFaceInfos()
+    {
+        return new[]
+        {
+            // Front (-Z)
+            (0, new Vector3(0, 0, -1), new Vector3Int(0, 0, -1)),
+            // Back (+Z)
+            (1, new Vector3(0, 0, 1), new Vector3Int(0, 0, 1)),
+            // Left (-X)
+            (2, new Vector3(-1, 0, 0), new Vector3Int(-1, 0, 0)),
+            // Right (+X)
+            (3, new Vector3(1, 0, 0), new Vector3Int(1, 0, 0)),
+            // Bottom (-Y)
+            (4, new Vector3(0, -1, 0), new Vector3Int(0, -1, 0)),
+            // Top (+Y)
+            (5, new Vector3(0, 1, 0), new Vector3Int(0, 1, 0)),
+        };
+    }
+    
+    public static Vector3[] GetFaceVertices(Vector3 pos, int faceIdx)
+    {
+        // 8 cube corners
+        Vector3[] cubeVertices =
+        [
+            pos + new Vector3(0, 0, 0), // 0
+            pos + new Vector3(1, 0, 0), // 1
+            pos + new Vector3(1, 1, 0), // 2
+            pos + new Vector3(0, 1, 0), // 3
+            pos + new Vector3(0, 0, 1), // 4
+            pos + new Vector3(1, 0, 1), // 5
+            pos + new Vector3(1, 1, 1), // 6
+            pos + new Vector3(0, 1, 1), // 7
+        ];
+
+        // Face vertices by face
+        return faceIdx switch
+        {
+            0 => new[] { cubeVertices[0], cubeVertices[3], cubeVertices[2], cubeVertices[1] }, // Front
+            1 => new[] { cubeVertices[5], cubeVertices[6], cubeVertices[7], cubeVertices[4] }, // Back
+            2 => new[] { cubeVertices[4], cubeVertices[7], cubeVertices[3], cubeVertices[0] }, // Left
+            3 => new[] { cubeVertices[1], cubeVertices[2], cubeVertices[6], cubeVertices[5] }, // Right
+            4 => new[] { cubeVertices[4], cubeVertices[0], cubeVertices[1], cubeVertices[5] }, // Bottom
+            5 => new[] { cubeVertices[3], cubeVertices[7], cubeVertices[6], cubeVertices[2] }, // Top
+            _ => new Vector3[4]
+        };
+    }
+    
+    public static Vector2[] GetFaceUVs(BlockType type, int faceIdx)
+    {
+        // Use BlockData.AtlasUVs to get the correct rectangle
+        if (!BlockData.AtlasUVs.TryGetValue(type, out var uvRect))
+        {
+            // Default UVs if missing
+            return new[]
+            {
+                new Vector2(0, 1), new Vector2(1, 1),
+                new Vector2(1, 0), new Vector2(0, 0)
+            };
+        }
+
+        // Map UVs based on face orientation
+        Vector2[] uvCoords =
+        {
+            new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
+            new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height), // Top-right
+            new Vector2(uvRect.X + uvRect.Width, uvRect.Y), // Bottom-right
+            new Vector2(uvRect.X, uvRect.Y) // Bottom-left
+        };
+
+        Vector2[] rotatedUvCoords = new[]
+        {
+            uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0]
+        };
+
+        // You may want to use a different rotation for each face for best results
+        return rotatedUvCoords;
+    }
+    
+    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx, int neighborLightLevel)
+    {
+        // Lighting calculation for each face (copied from TerrainMesh.cs)
+        float l0, l1, l2, l3;
+    
+        switch (faceIdx)
+        {
+            case 0: // Front (-Z)
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, neighborLightLevel);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, neighborLightLevel);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                break;
+            case 1: // Back (+Z)
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, neighborLightLevel);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, neighborLightLevel);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
+                break;
+            case 2: // Left (-X)
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, neighborLightLevel);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, neighborLightLevel);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
+                break;
+            case 3: // Right (+X)
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, neighborLightLevel);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, neighborLightLevel);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                break;
+            case 4: // Bottom (-Y)
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                break;
+            case 5: // Top (+Y)
+                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z, neighborLightLevel);
+                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1, neighborLightLevel);
+                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1, neighborLightLevel);
+                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z, neighborLightLevel);
+                break;
+            default:
+                l0 = l1 = l2 = l3 = 1f;
+                break;
+        }
+        // ToColor is from TerrainMesh.cs
+        return new[] { ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3) };
+    }
+
+    // Helper: map [0,1] to Color
+    public static Color ToColor(float light)
+    {
+        light = MathF.Max(0.1f, light); // Prevent fully dark
+        
+        var color = (byte)(255f * light);
+        
+        return new Color(color, color, color, (byte)255);
+    }
+
+    // This computes the average light at a vertex, by sampling the 8 blocks touching it
+    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz, int neighborLightLevel)
+    {
+        float total = 0f;
+        int count = 0;
+        
+        for (int dx = 0; dx <= 1; dx++)
+        for (int dy = 0; dy <= 1; dy++)
+        for (int dz = 0; dz <= 1; dz++)
+        {
+            int nx = vx - dx;
+            int ny = vy - dy;
+            int nz = vz - dz;
+            
+            total += neighborLightLevel;
+            
+            count++;
+        }
+        
+        return total / (count * 15f); // Normalize to [0,1]
+    }
+    
+    // TODO: Bottom blocks do not run this check
+    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz, int neighborLightLevel)
+    {
+        // For each vertex, sample only the 4 blocks directly above it
+        // The 4 blocks are at (vx, vy+1, vz), (vx-1, vy+1, vz), (vx, vy+1, vz-1), (vx-1, vy+1, vz-1)
+        float total = 0f;
+        int count = 0;
+        
+        for (int dx = 0; dx <= 1; dx++)
+        for (int dz = 0; dz <= 1; dz++)
+        {
+            int nx = vx - dx;
+            int ny = vy + 1;
+            int nz = vz - dz;
+            
+            total += neighborLightLevel;
+            count++;
+        }
+        
+        return total / (count * 15f); // Normalize to [0,1]
+    }
+}

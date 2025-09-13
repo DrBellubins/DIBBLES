@@ -31,6 +31,11 @@ public struct Vector3Int
         return $"{X}_{Y}_{Z}";
     }
     
+    public static Vector3Int FromVector3(Vector3 input)
+    {
+        return new Vector3Int((int)input.X, (int)input.Y, (int)input.Z);
+    }
+    
     // Addition
     public static Vector3Int operator +(Vector3Int a, Vector3Int b)
         => new Vector3Int(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
