@@ -101,6 +101,8 @@ public class TerrainGeneration
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
+
+            TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
         
         // Try to upload any queued meshes (must be done on main thread)

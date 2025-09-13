@@ -158,6 +158,18 @@ public class TerrainMesh
         return meshData;
     }
     
+    public void RemeshAllTransparentChunks(Vector3 cameraPos)
+    {
+        foreach (var chunk in ECSChunks.Values)
+        {
+            if (TMesh.TransparentModels.TryGetValue(chunk.Position, out var oldModel))
+                Raylib.UnloadModel(oldModel);
+
+            var tMeshData = TMesh.GenerateMeshData(chunk, true, cameraPos);
+            TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(tMeshData);
+        }
+    }
+    
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
     public Model UploadMesh(MeshData data)
     {
@@ -300,64 +312,6 @@ public class TerrainMesh
             modelDict[neighborPos] = newModel;
 
             RecentlyRemeshedNeighbors.Add(neighborPos);
-        }
-    }
-    
-    private byte getNeighborLightLevel(Chunk chunk, int nx, int ny, int nz)
-    {
-        if (nx < 0 || nx >= ChunkSize || ny < 0 || ny >= ChunkSize || nz < 0 || nz >= ChunkSize)
-        {
-            // Calculate the current chunk's coordinates from its Position
-            Vector3Int chunkCoord = new Vector3Int(
-                chunk.Position.X / ChunkSize,
-                chunk.Position.Y / ChunkSize,
-                chunk.Position.Z / ChunkSize
-            );
-
-            // Adjust chunk coordinates based on out-of-bounds voxel
-            Vector3Int neighborCoord = chunkCoord;
-            int tx = nx, ty = ny, tz = nz;
-
-            if (nx < 0) { tx = ChunkSize - 1; neighborCoord.X -= 1; }
-            else if (nx >= ChunkSize) { tx = 0; neighborCoord.X += 1; }
-
-            if (ny < 0) { ty = ChunkSize - 1; neighborCoord.Y -= 1; }
-            else if (ny >= ChunkSize) { ty = 0; neighborCoord.Y += 1; }
-
-            if (nz < 0) { tz = ChunkSize - 1; neighborCoord.Z -= 1; }
-            else if (nz >= ChunkSize) { tz = 0; neighborCoord.Z += 1; }
-
-            // Look up the neighboring chunk
-            if (ECSChunks.TryGetValue(new Vector3Int(
-                    neighborCoord.X * ChunkSize,
-                    neighborCoord.Y * ChunkSize,
-                    neighborCoord.Z * ChunkSize
-                ), out var neighborChunk))
-            {
-                // Defensive: check indices and block existence
-                if (tx >= 0 && tx < ChunkSize && ty >= 0 && ty < ChunkSize && tz >= 0 && tz < ChunkSize)
-                {
-                    try
-                    {
-                        // TODO: Can sometimes cause a crash???
-                        var neighborBlock = neighborChunk.GetBlock(tx, ty, tz);
-                        
-                        return neighborBlock.LightLevel;
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                    }
-                }
-            }
-
-            return 0;
-        }
-        else
-        {
-            var block = chunk.GetBlock(nx, ny, nz);
-            
-            return block.LightLevel;
         }
     }
 }
