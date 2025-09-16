@@ -190,7 +190,7 @@ public class TerrainGameplay
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
             
-            chunk.Info.Modified = true;
+            chunk.GenerationState = ChunkGenerationState.Modified;
 
             // Update lighting if the broken block was opaque or emissive
             Lighting.Generate(chunk);
@@ -271,8 +271,7 @@ public class TerrainGameplay
             
         chunk.SetBlock(localX, localY, localZ, newBlock);
         
-        chunk.Info.Modified = true;
-        
+        chunk.GenerationState = ChunkGenerationState.Modified;
         
         // Update lighting for the placed block
         Lighting.Generate(chunk);

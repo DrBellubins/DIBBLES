@@ -31,7 +31,6 @@ public struct Block
 public class Chunk
 {
     public Vector3Int Position;
-    public ChunkInfo Info;
     public Block[] Blocks; // Flat array for locality.
 
     public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
@@ -39,7 +38,6 @@ public class Chunk
     public Chunk(Vector3Int pos)
     {
         Position = pos;
-        Info = new ChunkInfo();
         Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
     }
 

@@ -58,10 +58,10 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        //if (WorldSave.Exists)
-        //    Seed = WorldSave.Data.Seed;
-        //else
-        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        if (WorldSave.Exists)
+            Seed = WorldSave.Data.Seed;
+        else
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         WorldSave.Data.Seed = Seed;
         
@@ -149,19 +149,19 @@ public class TerrainGeneration
         TMesh.RecentlyRemeshedNeighbors.Clear();
         
         // Terrain ticks
-        /*tickElapsed += Time.DeltaTime;
+        tickElapsed += Time.DeltaTime;
 
         if (tickElapsed >= TickRate)
         {
             TerrainTick.Tick(currentChunk);
             tickElapsed -= TickRate;
-        }*/
+        }
         
         if (Raylib.IsKeyPressed(KeyboardKey.U))
             Console.WriteLine($"Seed: {Seed}");
     }
     
-    SemaphoreSlim semaphore = new SemaphoreSlim(4); // Max 4 concurrent tasks
+    SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
     private void generateTerrainAsync(Vector3Int centerChunk)
     {
@@ -208,8 +208,12 @@ public class TerrainGeneration
                     
                     Lighting.Generate(chunk);
                     
-                    var meshData = TMesh.GenerateMeshData(chunk, false);
-                    var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+                    /*var meshData = TMesh.GenerateMeshData(chunk, false);
+                    var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);*/
+
+                    // Gets remeshed anyways, no need for generating twice
+                    var meshData = new MeshData(0, 0);
+                    var tMeshData = new MeshData(0, 0);
 
                     // Enqueue for main thread mesh upload
                     meshUploadQueue.Enqueue((chunk, meshData));
@@ -295,32 +299,11 @@ public class TerrainGeneration
                         blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
                     
                     chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
-
-                    // Loop upward
-                    /*if (foundSurface)
-                    {
-                        int wispOffset = 4;
-                        int wispY = surfaceY + wispOffset;
-                        int maxWorldY = chunk.Position.Y + ChunkSize - 1;
-
-                        if (wispY >= chunk.Position.Y && wispY <= maxWorldY)
-                        {
-                            int localWispY = wispY - chunk.Position.Y;
-
-                            // Only place wisp if air
-                            if (chunk.Blocks[x, localWispY, z].Info.Type == BlockType.Air)
-                            {
-                                if (rng.NextChance(0.2f))
-                                    chunk.Blocks[x, localWispY, z] = new Block(new Vector3Int(worldX, wispY, worldZ), Block.Prefabs[BlockType.Wisp]);
-                            }
-                        }
-                    }*/
                 }
             }
         }
         
         chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
-        chunk.Info.Generated = true;
     }
 
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
@@ -330,7 +313,8 @@ public class TerrainGeneration
         if (!ECSChunks.TryGetValue(chunkPos, out var chunk))
             return;
 
-        if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated &&
+        if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated ||
+            chunk.GenerationState == ChunkGenerationState.Modified &&
             Math.Abs(chunkPos.X / ChunkSize - centerChunk.X) <= halfRenderDistance &&
             Math.Abs(chunkPos.Y / ChunkSize - centerChunk.Y) <= halfRenderDistance &&
             Math.Abs(chunkPos.Z / ChunkSize - centerChunk.Z) <= halfRenderDistance)
@@ -376,7 +360,7 @@ public class TerrainGeneration
                 tMeshUploadQueue.Enqueue((chunk, tMeshData));
 
                 // Mark as staged
-                chunk.GenerationState = ChunkGenerationState.DecorationsAndRemeshDone;
+                chunk.GenerationState = ChunkGenerationState.Decorations;
                 
                 //var chunkManager = new ChunkManager();
                 //
@@ -507,7 +491,7 @@ public class TerrainGeneration
                 
                 Color debugColor;
             
-                if (chunk.Value.Info.Modified)
+                if (chunk.Value.GenerationState == ChunkGenerationState.Modified)
                     debugColor = Color.Red;
                 else
                     debugColor = Color.Blue;

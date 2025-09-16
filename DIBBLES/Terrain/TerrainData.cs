@@ -10,16 +10,11 @@ namespace DIBBLES.Terrain;
 public enum ChunkGenerationState
 {
     Uninitialized,
+    Modified,
     TerrainGenerated,
     StagingQueued,
-    DecorationsAndRemeshDone,
-    RemeshNeighbors
-}
-
-public struct ChunkInfo
-{
-    public bool Generated; // Runtime quality-of-life check
-    public bool Modified;
+    Decorations,
+    LightingAndRemesh
 }
 
 // Only set for block prefabs once at start!
