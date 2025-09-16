@@ -103,7 +103,7 @@ public class TerrainGeneration
             DoneLoading = true;
 
             Lighting.FloodFillSkyLight();
-            
+
             foreach (var chunk in ECSChunks.Values)
                 Lighting.Generate(chunk);
             

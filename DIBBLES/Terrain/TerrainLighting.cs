@@ -94,9 +94,26 @@ public class TerrainLighting
     
     public void FloodFillSkyLight()
     {
+        // Step 0: Reset all air blocks to not sky-exposed
+        foreach (var chunk in ECSChunks.Values)
+        {
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var block = chunk.GetBlock(x, y, z);
+                
+                if (block.Type == BlockType.Air)
+                {
+                    block.SkyExposed = false;
+                    chunk.SetBlock(x, y, z, block);
+                }
+            }
+        }
+        
         Queue<Vector3Int> queue = new();
         HashSet<Vector3Int> visited = new();
-
+        
         // For each chunk face, enqueue all air blocks on the face that are at the edge of loaded world
         foreach (var chunk in ECSChunks.Values)
         {
