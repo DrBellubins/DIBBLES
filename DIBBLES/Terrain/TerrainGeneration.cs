@@ -107,6 +107,8 @@ public class TerrainGeneration
             foreach (var chunk in ECSChunks.Values)
                 Lighting.Generate(chunk);
             
+            
+            
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
         

@@ -88,73 +88,79 @@ public class TerrainLighting
     }
     
     public void FloodFillSkyLight()
+{
+    // Step 0: Reset all air blocks to not sky-exposed
+    foreach (var chunk in ECSChunks.Values)
     {
-        // Step 0: Reset all air blocks to not sky-exposed
-        foreach (var chunk in ECSChunks.Values)
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkSize; y++)
+        for (int z = 0; z < ChunkSize; z++)
         {
-            for (int x = 0; x < ChunkSize; x++)
-            for (int y = 0; y < ChunkSize; y++)
-            for (int z = 0; z < ChunkSize; z++)
+            var block = chunk.GetBlock(x, y, z);
+            if (block.Type == BlockType.Air)
             {
-                var block = chunk.GetBlock(x, y, z);
-                
-                if (block.Type == BlockType.Air)
-                {
-                    block.SkyExposed = false;
-                    chunk.SetBlock(x, y, z, block);
-                }
-            }
-        }
-        
-        Queue<Vector3Int> queue = new();
-        HashSet<Vector3Int> visited = new();
-        
-        // For each chunk face, enqueue all air blocks on the face that are at the edge of loaded world
-        foreach (var chunk in ECSChunks.Values)
-        {
-            foreach (var (facePos, faceDir) in ChunkFaceAirBlocks(chunk))
-            {
-                var worldPos = chunk.Position + facePos;
-                
-                // Use the correct face direction here!
-                if (!HasNeighbor(chunk.Position, faceDir))
-                {
-                    queue.Enqueue(worldPos);
-                    visited.Add(worldPos);
-                }
-            }
-        }
-
-        // BFS
-        while (queue.Count > 0)
-        {
-            var pos = queue.Dequeue();
-            var block = TerrainUtils.GetBlockAtWorldPos(pos);
-            
-            if (!block.IsValid || block.Type != BlockType.Air)
-                continue;
-
-            block.SkyExposed = true;
-            TerrainUtils.SetBlockAtWorldPos(pos, block);
-
-            // Flood to 6 neighbors
-            foreach (var dir in FaceUtils.VoxelFaceInfos())
-            {
-                var npos = pos + dir.neighborOffset;
-                
-                if (visited.Contains(npos))
-                    continue;
-                
-                var nblock = TerrainUtils.GetBlockAtWorldPos(npos);
-                
-                if (nblock.Type == BlockType.Air && !nblock.SkyExposed)
-                {
-                    queue.Enqueue(npos);
-                    visited.Add(npos);
-                }
+                block.SkyExposed = false;
+                chunk.SetBlock(x, y, z, block);
             }
         }
     }
+
+    Queue<Vector3Int> queue = new();
+    HashSet<Vector3Int> visited = new();
+
+    int seeds = 0;
+    // Enqueue only air blocks on chunk faces with no neighbor (the void)
+    foreach (var chunk in ECSChunks.Values)
+    {
+        foreach (var (facePos, faceDir) in ChunkFaceAirBlocks(chunk))
+        {
+            var worldPos = chunk.Position + facePos;
+            if (!HasNeighbor(chunk.Position, faceDir))
+            {
+                queue.Enqueue(worldPos);
+                visited.Add(worldPos);
+                seeds++;
+            }
+        }
+    }
+
+    Console.WriteLine($"[SkyFlood] Seed air blocks for BFS: {seeds}");
+
+    // BFS flood fill
+    int exposed = 0;
+    while (queue.Count > 0)
+    {
+        var pos = queue.Dequeue();
+        var block = TerrainUtils.GetBlockAtWorldPos(pos);
+
+        if (!block.IsValid || block.Type != BlockType.Air)
+            continue;
+
+        if (block.SkyExposed)
+            continue;
+
+        block.SkyExposed = true;
+        TerrainUtils.SetBlockAtWorldPos(pos, block);
+        exposed++;
+
+        // Flood to 6 neighbors
+        foreach (var dir in FaceUtils.VoxelFaceInfos())
+        {
+            var npos = pos + dir.neighborOffset;
+            if (visited.Contains(npos))
+                continue;
+
+            var nblock = TerrainUtils.GetBlockAtWorldPos(npos);
+            if (nblock.Type == BlockType.Air && !nblock.SkyExposed)
+            {
+                queue.Enqueue(npos);
+                visited.Add(npos);
+            }
+        }
+    }
+
+    Console.WriteLine($"[SkyFlood] Air blocks marked as sky-exposed: {exposed}");
+}
     
     // Helper to yield all air block positions on the 6 faces of a chunk
     private IEnumerable<(Vector3Int localPos, Vector3Int faceDir)> ChunkFaceAirBlocks(Chunk chunk)
