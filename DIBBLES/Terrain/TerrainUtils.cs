@@ -15,6 +15,57 @@ public struct FaceData
     //public Texture2D Texture;      // If faces may use different textures
 }
 
+public static class TerrainUtils
+{
+    // World-space helper functions
+    public static Block GetBlockAtWorldPos(Vector3Int worldPos)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            int localX = worldPos.X - chunkX;
+            int localY = worldPos.Y - chunkY;
+            int localZ = worldPos.Z - chunkZ;
+            
+            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
+                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
+                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
+            {
+                return chunk.GetBlock(localX, localY, localZ);
+            }
+        }
+        
+        return new Block(worldPos, BlockType.Air); // Treat out-of-bounds as air
+    }
+    
+    public static void SetBlockAtWorldPos(Vector3Int worldPos, Block block)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
+        {
+            int localX = worldPos.X - chunkX;
+            int localY = worldPos.Y - chunkY;
+            int localZ = worldPos.Z - chunkZ;
+
+            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
+                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
+                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
+            {
+                chunk.SetBlock(localX, localY, localZ, block);
+            }
+        }
+    }
+}
+
 public static class FaceUtils
 {
     public static (int faceIdx, Vector3 normal, Vector3Int neighborOffset)[] VoxelFaceInfos()
@@ -187,7 +238,7 @@ public static class FaceUtils
                     chunk.Position.Z + nz
                 );
                 
-                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+                lightLevel = TerrainUtils.GetBlockAtWorldPos(worldPos).LightLevel;
             }
 
             total += lightLevel;
@@ -226,7 +277,7 @@ public static class FaceUtils
                     chunk.Position.Z + nz
                 );
                 
-                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+                lightLevel = TerrainUtils.GetBlockAtWorldPos(worldPos).LightLevel;
             }
 
             total += lightLevel;
@@ -234,30 +285,5 @@ public static class FaceUtils
         }
 
         return total / (count * 15f); // Normalize to [0,1]
-    }
-    
-    public static Block GetBlockAtWorldPos(Vector3Int worldPos)
-    {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        
-        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-        if (TerrainGeneration.ECSChunks.TryGetValue(chunkCoord, out var chunk))
-        {
-            int localX = worldPos.X - chunkX;
-            int localY = worldPos.Y - chunkY;
-            int localZ = worldPos.Z - chunkZ;
-            
-            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
-                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
-                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
-            {
-                return chunk.GetBlock(localX, localY, localZ);
-            }
-        }
-        
-        return new Block(worldPos, BlockType.Air); // Treat out-of-bounds as air
     }
 }

@@ -12,6 +12,8 @@ public struct Block
     public byte LightLevel;
     public bool GeneratedInsideIsland;
 
+    public bool SkyExposed = false;
+    
     public bool IsValid => Type != BlockType.Air;
     
     public Block(Vector3Int position, BlockType type)

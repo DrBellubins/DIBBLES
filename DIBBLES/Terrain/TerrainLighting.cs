@@ -92,29 +92,96 @@ public class TerrainLighting
         }
     }
     
-    public void GenerateWithNeighbors(Chunk chunk)
+    public void FloodFillSkyLight(Vector3Int startPos)
     {
-        // Generate lighting for the chunk itself
-        Generate(chunk);
+        Queue<Vector3Int> queue = new();
+        HashSet<Vector3Int> visited = new();
 
-        int[] offsets = { -ChunkSize, ChunkSize };
-        var pos = chunk.Position;
-
-        // For each axis (X, Y, Z), check both directions
-        foreach (var axis in new[] { 0, 1, 2 })
+        // For each chunk face, enqueue all air blocks on the face that are at the edge of loaded world
+        foreach (var chunk in ECSChunks.Values)
         {
-            foreach (int offset in offsets)
+            foreach (var facePos in ChunkFaceAirBlocks(chunk))
             {
-                Vector3Int neighborPos = new Vector3Int(pos.X, pos.Y, pos.Z);
-                if (axis == 0) neighborPos.X += offset;
-                if (axis == 1) neighborPos.Y += offset;
-                if (axis == 2) neighborPos.Z += offset;
-
-                if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
+                var worldPos = chunk.Position + facePos;
+                // If neighbor chunk missing in this direction, this is a world boundary
+                if (!HasNeighbor(chunk.Position, facePos))
                 {
-                    Generate(neighborChunk);
+                    queue.Enqueue(worldPos);
+                    visited.Add(worldPos);
                 }
             }
         }
+
+        // BFS
+        while (queue.Count > 0)
+        {
+            var pos = queue.Dequeue();
+            var block = TerrainUtils.GetBlockAtWorldPos(pos);
+            
+            if (!block.IsValid || block.Type != BlockType.Air)
+                continue;
+
+            block.SkyExposed = true;
+            TerrainUtils.SetBlockAtWorldPos(pos, block);
+
+            // Flood to 6 neighbors
+            foreach (var dir in FaceUtils.VoxelFaceInfos())
+            {
+                var npos = pos + dir.neighborOffset;
+                
+                if (visited.Contains(npos))
+                    continue;
+                
+                var nblock = TerrainUtils.GetBlockAtWorldPos(npos);
+                
+                if (nblock.Type == BlockType.Air && !nblock.SkyExposed)
+                {
+                    queue.Enqueue(npos);
+                    visited.Add(npos);
+                }
+            }
+        }
+    }
+    
+    // Helper to yield all air block positions on the 6 faces of a chunk
+    private IEnumerable<Vector3Int> ChunkFaceAirBlocks(Chunk chunk)
+    {
+        int size = ChunkSize;
+        
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+        for (int z = 0; z < size; z++)
+        {
+            // On any face?
+            if (x == 0 || x == size-1 || y == 0 || y == size-1 || z == 0 || z == size-1)
+            {
+                var block = chunk.GetBlock(x, y, z);
+                
+                if (block.Type == BlockType.Air)
+                    yield return new Vector3Int(x, y, z);
+            }
+        }
+    }
+    
+    // Returns true if there is a neighbor chunk adjacent to chunkPos in the direction of faceRelPos
+    private static bool HasNeighbor(Vector3Int chunkPos, Vector3Int faceRelPos)
+    {
+        // Only allow ±1 in any axis for faceRelPos
+        if (faceRelPos == Vector3Int.Zero)
+            return false;
+
+        // Only one axis can be nonzero (should be a face direction)
+        int countNonZero = 0;
+        
+        if (faceRelPos.X != 0) countNonZero++;
+        if (faceRelPos.Y != 0) countNonZero++;
+        if (faceRelPos.Z != 0) countNonZero++;
+        
+        if (countNonZero != 1)
+            throw new ArgumentException("faceRelPos must be a face direction (one axis ±1)");
+
+        var neighborChunkPos = chunkPos + (faceRelPos * ChunkSize);
+
+        return ECSChunks.ContainsKey(neighborChunkPos);
     }
 }
