@@ -133,7 +133,7 @@ public class TerrainLighting
         var pos = queue.Dequeue();
         var block = TerrainUtils.GetBlockAtWorldPos(pos);
 
-        if (block.Type != BlockType.Air)
+        if (TerrainUtils.IsBlockValidAtWorldPos(pos) || block.Type != BlockType.Air)
             continue;
 
         if (block.SkyExposed)
