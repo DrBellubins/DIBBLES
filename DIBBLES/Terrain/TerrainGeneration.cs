@@ -102,7 +102,7 @@ public class TerrainGeneration
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
 
-            Lighting.MarkSkyExposedColumnsAllDirections();
+            //Lighting.MarkSkyExposedColumnsAllDirections();
 
             foreach (var chunk in ECSChunks.Values)
                 Lighting.Generate(chunk);
@@ -296,7 +296,7 @@ public class TerrainGeneration
                         else // Fallback
                             snowlandsBiome.Generate(ref blockReturnData);
                         
-                        blockReturnData.CurrentBlock.GeneratedInsideIsland = false;
+                        blockReturnData.CurrentBlock.GeneratedInsideIsland = true;
                     }
                     else // Not islands
                         blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);

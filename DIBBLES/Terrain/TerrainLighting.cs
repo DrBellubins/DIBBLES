@@ -14,8 +14,13 @@ public class TerrainLighting
         {
             var block = chunk.GetBlock(x, y, z);
 
-            if (block.Type == BlockType.Air)
-                block.LightLevel = block.SkyExposed ? (byte)15 : (byte)0;
+            if (!block.GeneratedInsideIsland)
+            {
+                if (block.Type == BlockType.Air)
+                    block.LightLevel = 15; // TEMP
+                else
+                    block.LightLevel = block.Info.LightEmission;
+            }
             else
                 block.LightLevel = block.Info.LightEmission;
             
@@ -32,7 +37,7 @@ public class TerrainLighting
         {
             var block = chunk.GetBlock(x, y, z);
             
-            if (block.LightLevel > 0)
+            if (block.LightLevel > 0 && !block.GeneratedInsideIsland)
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
         }
 
