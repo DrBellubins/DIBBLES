@@ -14,13 +14,8 @@ public class TerrainLighting
         {
             var block = chunk.GetBlock(x, y, z);
 
-            if (!block.GeneratedInsideIsland)
-            {
-                if (block.Type == BlockType.Air)
-                    block.LightLevel = 15; // TEMP
-                else
-                    block.LightLevel = block.Info.LightEmission;
-            }
+            if (block.Type == BlockType.Air)
+                block.LightLevel = block.SkyExposed ? (byte)15 : (byte)0;
             else
                 block.LightLevel = block.Info.LightEmission;
             
