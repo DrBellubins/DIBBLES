@@ -102,10 +102,10 @@ public class TerrainGeneration
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
 
-            /*Lighting.FloodFillSkyLight();
+            Lighting.FloodFillSkyLight();
 
             foreach (var chunk in ECSChunks.Values)
-                Lighting.Generate(chunk);*/
+                Lighting.Generate(chunk);
             
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
@@ -213,8 +213,6 @@ public class TerrainGeneration
                         chunk = new Chunk(pos);
                         GenerateChunkData(chunk);
                     }
-                    
-                    Lighting.Generate(chunk);
                     
                     // Gets remeshed anyways, no need for generating twice
                     var meshData = new MeshData(0, 0);
@@ -352,9 +350,6 @@ public class TerrainGeneration
                 
                 // Decorations (must sync with main thread if modifying Raylib objects)
                 generateChunkDecorations(chunk);
-
-                // Lighting (can be async if no Raylib calls)
-                Lighting.Generate(chunk);
 
                 // Mesh generation (thread safe)
                 var meshData = TMesh.GenerateMeshData(chunk, false);
