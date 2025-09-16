@@ -107,8 +107,6 @@ public class TerrainGeneration
             foreach (var chunk in ECSChunks.Values)
                 Lighting.Generate(chunk);
             
-            
-            
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
         
@@ -522,7 +520,7 @@ public class TerrainGeneration
             RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Red);
         }*/
         
-        if (SelectedBlock.IsValid)
+        if (!SelectedBlock.IsAir)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             

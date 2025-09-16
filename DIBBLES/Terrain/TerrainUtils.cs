@@ -286,4 +286,16 @@ public static class FaceUtils
 
         return total / (count * 15f); // Normalize to [0,1]
     }
+
+    public static bool IsBlockValid(Chunk chunk, int x, int y, int z)
+    {
+        bool valid = false;
+
+        foreach (var fChunk in TerrainGeneration.ECSChunks)
+        {
+            var block = fChunk.Value.GetBlock(x, y, z);
+            
+            if ()
+        }
+    }
 }

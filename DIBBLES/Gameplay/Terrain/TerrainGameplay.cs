@@ -77,7 +77,7 @@ public class TerrainGameplay
             {
                 var block = startChunk.GetBlock(localX, localY, localZ);
                 
-                if (block.IsValid)
+                if (!block.IsAir)
                 {
                     hitBlock = block;
                     return (hitBlock, hitNormal); // Normal arbitrary for starting block hit; could compute based on direction or set to zero
@@ -139,7 +139,7 @@ public class TerrainGameplay
     
             var block = chunk.GetBlock(localX, localY, localZ);
     
-            if (block.IsValid)
+            if (!block.IsAir)
             {
                 hitBlock = block;
                 break;
@@ -151,7 +151,7 @@ public class TerrainGameplay
     
     public void BreakBlock()
     {
-        if (!SelectedBlock.IsValid)
+        if (SelectedBlock.IsAir)
             return;
         
         // Get the chunk containing the selected block
@@ -222,7 +222,7 @@ public class TerrainGameplay
     
     public void PlaceBlock(PlayerCharacter player, BlockType blockType)
     {
-        if (!SelectedBlock.IsValid)
+        if (SelectedBlock.IsAir)
             return;
 
         // Quantize the normal to the nearest axis-aligned direction

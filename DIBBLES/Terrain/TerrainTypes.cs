@@ -14,7 +14,7 @@ public struct Block
 
     public bool SkyExposed = false;
     
-    public bool IsValid => Type != BlockType.Air;
+    public bool IsAir => Type == BlockType.Air;
     
     public Block(Vector3Int position, BlockType type)
     {
