@@ -23,7 +23,6 @@ public class TerrainLighting
                 else
                     block.LightLevel = block.Info.LightEmission;
             }
-                
             
             chunk.SetBlock(x, y, z, block);
         }
@@ -38,7 +37,7 @@ public class TerrainLighting
         {
             var block = chunk.GetBlock(x, y, z);
             
-            if (block.LightLevel > 0 && block.GeneratedInsideIsland)
+            if (block.LightLevel > 0)
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
         }
 
