@@ -100,11 +100,12 @@ public class TerrainLighting
         // For each chunk face, enqueue all air blocks on the face that are at the edge of loaded world
         foreach (var chunk in ECSChunks.Values)
         {
-            foreach (var facePos in ChunkFaceAirBlocks(chunk))
+            foreach (var (facePos, faceDir) in ChunkFaceAirBlocks(chunk))
             {
                 var worldPos = chunk.Position + facePos;
-                // If neighbor chunk missing in this direction, this is a world boundary
-                if (!HasNeighbor(chunk.Position, facePos))
+                
+                // Use the correct face direction here!
+                if (!HasNeighbor(chunk.Position, faceDir))
                 {
                     queue.Enqueue(worldPos);
                     visited.Add(worldPos);
@@ -144,23 +145,39 @@ public class TerrainLighting
     }
     
     // Helper to yield all air block positions on the 6 faces of a chunk
-    private IEnumerable<Vector3Int> ChunkFaceAirBlocks(Chunk chunk)
+    private IEnumerable<(Vector3Int localPos, Vector3Int faceDir)> ChunkFaceAirBlocks(Chunk chunk)
     {
         int size = ChunkSize;
-        
-        for (int x = 0; x < size; x++)
+        // -X face
         for (int y = 0; y < size; y++)
         for (int z = 0; z < size; z++)
-        {
-            // On any face?
-            if (x == 0 || x == size-1 || y == 0 || y == size-1 || z == 0 || z == size-1)
-            {
-                var block = chunk.GetBlock(x, y, z);
-                
-                if (block.Type == BlockType.Air)
-                    yield return new Vector3Int(x, y, z);
-            }
-        }
+            if (chunk.GetBlock(0, y, z).Type == BlockType.Air)
+                yield return (new Vector3Int(0, y, z), new Vector3Int(-1, 0, 0));
+        // +X face
+        for (int y = 0; y < size; y++)
+        for (int z = 0; z < size; z++)
+            if (chunk.GetBlock(size - 1, y, z).Type == BlockType.Air)
+                yield return (new Vector3Int(size - 1, y, z), new Vector3Int(1, 0, 0));
+        // -Y face
+        for (int x = 0; x < size; x++)
+        for (int z = 0; z < size; z++)
+            if (chunk.GetBlock(x, 0, z).Type == BlockType.Air)
+                yield return (new Vector3Int(x, 0, z), new Vector3Int(0, -1, 0));
+        // +Y face
+        for (int x = 0; x < size; x++)
+        for (int z = 0; z < size; z++)
+            if (chunk.GetBlock(x, size - 1, z).Type == BlockType.Air)
+                yield return (new Vector3Int(x, size - 1, z), new Vector3Int(0, 1, 0));
+        // -Z face
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+            if (chunk.GetBlock(x, y, 0).Type == BlockType.Air)
+                yield return (new Vector3Int(x, y, 0), new Vector3Int(0, 0, -1));
+        // +Z face
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+            if (chunk.GetBlock(x, y, size - 1).Type == BlockType.Air)
+                yield return (new Vector3Int(x, y, size - 1), new Vector3Int(0, 0, 1));
     }
     
     // Returns true if there is a neighbor chunk adjacent to chunkPos in the direction of faceRelPos
