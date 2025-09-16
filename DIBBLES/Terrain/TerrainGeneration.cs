@@ -209,6 +209,8 @@ public class TerrainGeneration
                         GenerateChunkData(chunk);
                     }
                     
+                    ECSChunks.TryAdd(chunk.Position, chunk);
+                    
                     Lighting.FloodFillSkyLight();
                     Lighting.Generate(chunk);
 
