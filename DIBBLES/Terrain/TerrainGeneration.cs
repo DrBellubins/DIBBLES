@@ -199,7 +199,10 @@ public class TerrainGeneration
 
                     // Check if chunk is in WorldSave.ModifiedChunks
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                    {
                         chunk = savedChunk;
+                        chunk.GenerationState = ChunkGenerationState.Modified;
+                    }
                     else
                     {
                         chunk = new Chunk(pos);
@@ -207,9 +210,6 @@ public class TerrainGeneration
                     }
                     
                     Lighting.Generate(chunk);
-                    
-                    /*var meshData = TMesh.GenerateMeshData(chunk, false);
-                    var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);*/
 
                     // Gets remeshed anyways, no need for generating twice
                     var meshData = new MeshData(0, 0);
