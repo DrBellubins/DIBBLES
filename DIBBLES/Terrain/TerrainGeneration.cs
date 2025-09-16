@@ -119,6 +119,7 @@ public class TerrainGeneration
                 Raylib.UnloadModel(currentModel);
             
             TMesh.OpaqueModels[chunk.Position] = TMesh.UploadMesh(meshData);
+            Console.WriteLine($"[DEBUG] Uploading opaque mesh for chunk at {chunk.Position}");
             
             ECSChunks.TryAdd(chunk.Position, chunk);
             
@@ -140,6 +141,7 @@ public class TerrainGeneration
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
             ECSChunks.TryAdd(chunk.Position, chunk);
+            Console.WriteLine($"[DEBUG] Uploading transparent mesh for chunk at {chunk.Position}");
             
             chunksLoaded++;
             
@@ -209,10 +211,13 @@ public class TerrainGeneration
                         GenerateChunkData(chunk);
                     }
                     
+                    Console.WriteLine($"[DEBUG] Generated chunk at {chunk.Position}");
                     ECSChunks.TryAdd(chunk.Position, chunk);
-                    
+                    Console.WriteLine($"[DEBUG] Added chunk to ECSChunks: {chunk.Position}");
                     Lighting.FloodFillSkyLight();
+                    Console.WriteLine($"[DEBUG] Ran FloodFillSkyLight");
                     Lighting.Generate(chunk);
+                    Console.WriteLine($"[DEBUG] Ran Lighting.Generate");
 
                     // Gets remeshed anyways, no need for generating twice
                     var meshData = new MeshData(0, 0);
