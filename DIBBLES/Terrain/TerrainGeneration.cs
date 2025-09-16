@@ -102,10 +102,10 @@ public class TerrainGeneration
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
 
-            Lighting.FloodFillSkyLight();
+            /*Lighting.FloodFillSkyLight();
 
             foreach (var chunk in ECSChunks.Values)
-                Lighting.Generate(chunk);
+                Lighting.Generate(chunk);*/
             
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
