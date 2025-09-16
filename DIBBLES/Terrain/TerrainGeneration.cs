@@ -101,11 +101,6 @@ public class TerrainGeneration
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
-
-            //Lighting.MarkSkyExposedColumnsAllDirections();
-
-            foreach (var chunk in ECSChunks.Values)
-                Lighting.Generate(chunk);
             
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
@@ -213,6 +208,8 @@ public class TerrainGeneration
                         chunk = new Chunk(pos);
                         GenerateChunkData(chunk);
                     }
+                    
+                    Lighting.Generate(chunk);
                     
                     // Gets remeshed anyways, no need for generating twice
                     var meshData = new MeshData(0, 0);
@@ -350,6 +347,8 @@ public class TerrainGeneration
                 
                 // Decorations (must sync with main thread if modifying Raylib objects)
                 generateChunkDecorations(chunk);
+                
+                Lighting.Generate(chunk);
 
                 // Mesh generation (thread safe)
                 var meshData = TMesh.GenerateMeshData(chunk, false);

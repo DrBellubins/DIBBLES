@@ -12,7 +12,7 @@ public struct Block
     public byte LightLevel;
     public bool GeneratedInsideIsland;
 
-    public bool IsAir => Type != BlockType.Air;
+    public bool IsAir => Type == BlockType.Air;
     
     public Block(Vector3Int position, BlockType type)
     {
