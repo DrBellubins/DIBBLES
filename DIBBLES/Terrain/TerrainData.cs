@@ -7,16 +7,6 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
 
-public enum ChunkGenerationState
-{
-    Uninitialized,
-    Modified,
-    TerrainGenerated,
-    StagingQueued,
-    Decorations,
-    LightingAndRemesh
-}
-
 // Only set for block prefabs once at start!
 public struct BlockInfo
 {

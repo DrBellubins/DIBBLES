@@ -30,6 +30,16 @@ public struct Block
     }
 }
 
+public enum ChunkGenerationState
+{
+    Uninitialized,
+    Modified,
+    TerrainGenerated,
+    StagingQueued,
+    Decorations,
+    LightingAndRemesh
+}
+
 public class Chunk
 {
     public Vector3Int Position;
