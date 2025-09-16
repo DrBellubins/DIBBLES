@@ -193,6 +193,7 @@ public class TerrainGameplay
             chunk.GenerationState = ChunkGenerationState.Modified;
 
             // Update lighting if the broken block was opaque or emissive
+            Lighting.FloodFillSkyLight();
             Lighting.Generate(chunk);
             
             // Regenerate mesh
@@ -274,6 +275,7 @@ public class TerrainGameplay
         chunk.GenerationState = ChunkGenerationState.Modified;
         
         // Update lighting for the placed block
+        Lighting.FloodFillSkyLight();
         Lighting.Generate(chunk);
         
         // Regenerate mesh

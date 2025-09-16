@@ -92,7 +92,7 @@ public class TerrainLighting
         }
     }
     
-    public void FloodFillSkyLight(Vector3Int startPos)
+    public void FloodFillSkyLight()
     {
         Queue<Vector3Int> queue = new();
         HashSet<Vector3Int> visited = new();

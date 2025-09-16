@@ -209,6 +209,7 @@ public class TerrainGeneration
                         GenerateChunkData(chunk);
                     }
                     
+                    Lighting.FloodFillSkyLight();
                     Lighting.Generate(chunk);
 
                     // Gets remeshed anyways, no need for generating twice
@@ -349,6 +350,7 @@ public class TerrainGeneration
                 generateChunkDecorations(chunk);
 
                 // Lighting (can be async if no Raylib calls)
+                Lighting.FloodFillSkyLight();
                 Lighting.Generate(chunk);
 
                 // Mesh generation (thread safe)
