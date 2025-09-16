@@ -87,7 +87,7 @@ public class TerrainLighting
         }
     }
     
-    public void FloodFillSkyLight()
+    public void MarkSkyExposedColumnsAllDirections()
     {
         // Step 0: Reset all air blocks to not sky-exposed
         foreach (var chunk in ECSChunks.Values)
@@ -97,7 +97,7 @@ public class TerrainLighting
             for (int z = 0; z < ChunkSize; z++)
             {
                 var block = chunk.GetBlock(x, y, z);
-                
+                    
                 if (block.Type == BlockType.Air)
                 {
                     block.SkyExposed = false;
@@ -105,85 +105,127 @@ public class TerrainLighting
                 }
             }
         }
-    
-        Queue<Vector3Int> queue = new();
-        HashSet<Vector3Int> visited = new();
-    
-        int seeds = 0;
         
-        // Enqueue only air blocks on chunk faces with no neighbor (the void)
         foreach (var chunk in ECSChunks.Values)
         {
-            foreach (var (facePos, faceDir) in ChunkFaceAirBlocks(chunk))
+            int size = ChunkSize;
+    
+            // -X face (left)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(-1, 0, 0)))
             {
-                var worldPos = chunk.Position + facePos;
-                
-                if (!HasNeighbor(chunk.Position, faceDir))
+                for (int y = 0; y < size; y++)
+                for (int z = 0; z < size; z++)
                 {
-                    queue.Enqueue(worldPos);
-                    visited.Add(worldPos);
-                    seeds++;
+                    int x = 0;
+                    // March inward along +X
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x + i, y, z);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x + i, y, z, block);
+                        }
+                        else break;
+                    }
+                }
+            }
+            // +X face (right)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(1, 0, 0)))
+            {
+                for (int y = 0; y < size; y++)
+                for (int z = 0; z < size; z++)
+                {
+                    int x = size - 1;
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x - i, y, z);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x - i, y, z, block);
+                        }
+                        else break;
+                    }
+                }
+            }
+            // -Y face (bottom)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(0, -1, 0)))
+            {
+                for (int x = 0; x < size; x++)
+                for (int z = 0; z < size; z++)
+                {
+                    int y = 0;
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x, y + i, z);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x, y + i, z, block);
+                        }
+                        else break;
+                    }
+                }
+            }
+            // +Y face (top)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(0, 1, 0)))
+            {
+                for (int x = 0; x < size; x++)
+                for (int z = 0; z < size; z++)
+                {
+                    int y = size - 1;
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x, y - i, z);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x, y - i, z, block);
+                        }
+                        else break;
+                    }
+                }
+            }
+            // -Z face (back)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(0, 0, -1)))
+            {
+                for (int x = 0; x < size; x++)
+                for (int y = 0; y < size; y++)
+                {
+                    int z = 0;
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x, y, z + i);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x, y, z + i, block);
+                        }
+                        else break;
+                    }
+                }
+            }
+            // +Z face (front)
+            if (!HasNeighbor(chunk.Position, new Vector3Int(0, 0, 1)))
+            {
+                for (int x = 0; x < size; x++)
+                for (int y = 0; y < size; y++)
+                {
+                    int z = size - 1;
+                    for (int i = 0; i < size; i++)
+                    {
+                        var block = chunk.GetBlock(x, y, z - i);
+                        if (block.Type == BlockType.Air)
+                        {
+                            block.SkyExposed = true;
+                            chunk.SetBlock(x, y, z - i, block);
+                        }
+                        else break;
+                    }
                 }
             }
         }
-    
-        Console.WriteLine($"[SkyFlood] Seed air blocks for BFS: {seeds}");
-    
-        // BFS flood fill
-        int exposed = 0;
-        
-        while (queue.Count > 0)
-        {
-            var pos = queue.Dequeue();
-    
-            // Only process if we're inside a loaded chunk
-            if (!TerrainUtils.IsBlockValidAtWorldPos(pos) && !ECSChunks.ContainsKey(new Vector3Int(
-                    (int)Math.Floor((float)pos.X / ChunkSize) * ChunkSize,
-                    (int)Math.Floor((float)pos.Y / ChunkSize) * ChunkSize,
-                    (int)Math.Floor((float)pos.Z / ChunkSize) * ChunkSize)))
-                continue;
-    
-            var block = TerrainUtils.GetBlockAtWorldPos(pos);
-    
-            if (block.Type != BlockType.Air)
-                continue;
-    
-            if (block.SkyExposed)
-                continue;
-    
-            block.SkyExposed = true;
-            TerrainUtils.SetBlockAtWorldPos(pos, block);
-    
-            exposed++;
-    
-            foreach (var dir in FaceUtils.VoxelFaceInfos())
-            {
-                var npos = pos + dir.neighborOffset;
-                
-                if (visited.Contains(npos))
-                    continue;
-    
-                // Only enqueue if neighbor is within a loaded chunk!
-                int chunkX = (int)Math.Floor((float)npos.X / ChunkSize) * ChunkSize;
-                int chunkY = (int)Math.Floor((float)npos.Y / ChunkSize) * ChunkSize;
-                int chunkZ = (int)Math.Floor((float)npos.Z / ChunkSize) * ChunkSize;
-                
-                var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-    
-                if (!ECSChunks.ContainsKey(chunkCoord))
-                    continue;
-    
-                var nblock = TerrainUtils.GetBlockAtWorldPos(npos);
-    
-                if (nblock.Type == BlockType.Air && !nblock.SkyExposed)
-                {
-                    queue.Enqueue(npos);
-                    visited.Add(npos);
-                }
-            }
-        }
-    
-        Console.WriteLine($"[SkyFlood] Air blocks marked as sky-exposed: {exposed}");
     }
     
     // Helper to yield all air block positions on the 6 faces of a chunk

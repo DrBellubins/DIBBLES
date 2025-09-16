@@ -102,7 +102,7 @@ public class TerrainGeneration
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
 
-            Lighting.FloodFillSkyLight();
+            Lighting.MarkSkyExposedColumnsAllDirections();
 
             foreach (var chunk in ECSChunks.Values)
                 Lighting.Generate(chunk);
