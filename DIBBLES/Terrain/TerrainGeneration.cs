@@ -102,6 +102,11 @@ public class TerrainGeneration
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
 
+            Lighting.FloodFillSkyLight();
+            
+            foreach (var chunk in ECSChunks.Values)
+                Lighting.Generate(chunk);
+            
             TMesh.RemeshAllTransparentChunks(playerCharacter.Camera.Position);
         }
         
@@ -119,7 +124,6 @@ public class TerrainGeneration
                 Raylib.UnloadModel(currentModel);
             
             TMesh.OpaqueModels[chunk.Position] = TMesh.UploadMesh(meshData);
-            Console.WriteLine($"[DEBUG] Uploading opaque mesh for chunk at {chunk.Position}");
             
             ECSChunks.TryAdd(chunk.Position, chunk);
             
@@ -141,7 +145,6 @@ public class TerrainGeneration
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
             ECSChunks.TryAdd(chunk.Position, chunk);
-            Console.WriteLine($"[DEBUG] Uploading transparent mesh for chunk at {chunk.Position}");
             
             chunksLoaded++;
             
@@ -211,14 +214,8 @@ public class TerrainGeneration
                         GenerateChunkData(chunk);
                     }
                     
-                    Console.WriteLine($"[DEBUG] Generated chunk at {chunk.Position}");
-                    ECSChunks.TryAdd(chunk.Position, chunk);
-                    Console.WriteLine($"[DEBUG] Added chunk to ECSChunks: {chunk.Position}");
-                    Lighting.FloodFillSkyLight();
-                    Console.WriteLine($"[DEBUG] Ran FloodFillSkyLight");
                     Lighting.Generate(chunk);
-                    Console.WriteLine($"[DEBUG] Ran Lighting.Generate");
-
+                    
                     // Gets remeshed anyways, no need for generating twice
                     var meshData = new MeshData(0, 0);
                     var tMeshData = new MeshData(0, 0);
@@ -357,7 +354,6 @@ public class TerrainGeneration
                 generateChunkDecorations(chunk);
 
                 // Lighting (can be async if no Raylib calls)
-                Lighting.FloodFillSkyLight();
                 Lighting.Generate(chunk);
 
                 // Mesh generation (thread safe)
