@@ -8,27 +8,42 @@ using Raylib_cs;
 
 namespace DIBBLES.Gameplay;
 
+public enum ChatMessageType
+{
+    Message,
+    Warning,
+    Error
+}
+
+public struct ChatMessage(ChatMessageType type, string message)
+{
+    public ChatMessageType Type = type;
+    public string Message = message;
+}
+
 public class Chat
 {
     public const int Width = 800;
     public const int Height = 400;
+    public const float FontSize = 24f;
+    
+    public static List<ChatMessage> ChatMessages = new();
     
     private Rectangle chatBox = new Rectangle(0f, 0f, Width, Height);
     private bool isChatOpen = false;
     
     private TextBox textBox = new TextBox(new Rectangle(0f, 0f, Width, 40f));
-    
-    private RenderTexture2D chatTexture = new();
+
+    private RenderTexture2D chatTexture;
+
+    private float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
     public void Start()
     {
         chatTexture = Raylib.LoadRenderTexture(Width, Height);
         
-        chatBox.X = UI.BottomLeftPivot.X;
-        chatBox.Y = UI.BottomLeftPivot.Y - (chatBox.Height + 200f);
-        
-        textBox.Bounds.X = chatBox.X;
-        textBox.Bounds.Y = chatBox.Y + 300f;
+        textBox.Bounds.X = UI.LeftCenterPivot.X;
+        textBox.Bounds.Y = UI.LeftCenterPivot.Y + (Height / 2f);
     }
 
     public void Update()
@@ -51,12 +66,17 @@ public class Chat
         if (isChatOpen)
             textBox.Update();
         
-        if (Input.SendChat() && textBox.Text[0] == '/')
+        if (Input.SendChat() && textBox.Text != string.Empty)
         {
-            if (Commands.Registry.TryGetValue(textBox.Text, out var command))
-                command();
+            if (textBox.Text[0] == '/')
+            {
+                if (Commands.Registry.TryGetValue(textBox.Text, out var command))
+                    command();
+                else
+                    Write(ChatMessageType.Error, $"Command '{textBox.Text}' not found.");
+            }
             else
-                Console.WriteLine($"Command '{textBox.Text}' not found."); // TODO: Write to chat
+                Write(ChatMessageType.Message, textBox.Text);
             
             textBox.Text = string.Empty;
         }
@@ -72,11 +92,47 @@ public class Chat
             Raylib.BeginTextureMode(chatTexture);
             
             Raylib.DrawRectangleRec(chatBox, UI.MainColor);
-            textBox.Draw();
+
+            int index = 0;
+            
+            foreach (var msg in ChatMessages)
+            {
+                Color msgColor = Color.Black;
+                
+                switch (msg.Type)
+                {
+                    case ChatMessageType.Message:
+                        msgColor = Color.White;
+                        break;
+                    case ChatMessageType.Warning:
+                        msgColor = Color.Yellow;
+                        break;
+                    case ChatMessageType.Error:
+                        msgColor = Color.Red;
+                        break;
+                }
+                
+                Raylib.DrawTextEx(Engine.MainFont, msg.Message, new Vector2(0f, index * FontSize), FontSize, 1f, msgColor);
+
+                index++;
+            }
             
             Raylib.EndTextureMode();
             
-            Raylib.DrawTextureV(chatTexture.Texture, new Vector2(chatBox.X, chatBox.Y), Color.White);
+            Raylib.DrawTextureRec(
+                chatTexture.Texture,
+                new Rectangle(0, 0, chatTexture.Texture.Width, -chatTexture.Texture.Height),
+                new Vector2(0f, heightPos),
+                Color.White
+            );
+            
+            textBox.Draw();
         }
+    }
+
+    public static void Write(ChatMessageType type, string message)
+    {
+        var msg = new ChatMessage(type, message);
+        ChatMessages.Add(msg);
     }
 }
