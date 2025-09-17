@@ -27,14 +27,18 @@ public class Chat
         if (Input.OpenChat())
         {
             isChatOpen = !isChatOpen;
+            
+            if (isChatOpen)
+                CursorManager.ReleaseCursor();
+            else
+                CursorManager.LockCursor();
         }
 
         if (TerrainGeneration.DoneLoading)
-            GameScene.PlayerCharacter.IsFrozen = !isChatOpen;
+            GameScene.PlayerCharacter.IsFrozen = isChatOpen;
 
         if (isChatOpen)
         {
-            Raylib.EnableCursor();
             textBox.Update();
         }
     }

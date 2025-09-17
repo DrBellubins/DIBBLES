@@ -26,10 +26,7 @@ public class TextBox
 
         // Click to focus
         if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-        {
-            Console.WriteLine($"Mouse clicked at {mousePos}, inBox={mouseInBox}, Bounds={Bounds}");
             IsFocused = mouseInBox;
-        }
 
         if (IsFocused)
         {
@@ -51,7 +48,7 @@ public class TextBox
     public void Draw()
     {
         // Draw box (different color if focused)
-        Color boxColor = IsFocused ? Color.Red : UI.MainColor;
+        Color boxColor = IsFocused ? UI.AccentColor : UI.MainColor;
 
         Raylib.DrawRectangleRec(Bounds, boxColor);
 
@@ -70,6 +67,7 @@ public class TextBox
             {
                 // Get text width
                 var textWidth = Raylib.MeasureTextEx(Engine.MainFont, Text, 24, 0).X;
+                
                 float caretX = textPos.X + textWidth + 2f;
                 float caretY = textPos.Y;
                 float caretH = 24f;
@@ -77,8 +75,5 @@ public class TextBox
                 Raylib.DrawRectangle((int)caretX, (int)caretY, 2, (int)caretH, Color.White);
             }
         }
-        
-        Vector2 mousePos = Raylib.GetMousePosition();
-        Raylib.DrawText($"Mouse: {mousePos}", 10, 10, 20, Color.White);
     }
 }

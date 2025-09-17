@@ -35,6 +35,7 @@ public class GameScene : Scene
 
     public override void Update()
     {
+        
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);
@@ -47,6 +48,8 @@ public class GameScene : Scene
         
         if (Raylib.IsKeyPressed(KeyboardKey.F2))
             Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
+        
+        CursorManager.Update(); // Must happen after everything for MouseDelta to work.
         
         Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }

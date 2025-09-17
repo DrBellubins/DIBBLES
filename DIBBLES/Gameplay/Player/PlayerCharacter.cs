@@ -93,7 +93,7 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        //Raylib.DisableCursor();
+        //CursorManager.LockCursor();
     }
     
     float lastHeight = PlayerHeight;
@@ -161,17 +161,15 @@ public class PlayerCharacter
         Vector3 inputDir = Vector3.Zero;
 
         // Allow tabbing out and back into game
-        //if (Raylib.IsKeyPressed(KeyboardKey.Escape)) Raylib.EnableCursor();
+        //if (Raylib.IsKeyPressed(KeyboardKey.Escape)) CursorManager.ReleaseCursor();
         
         var mousePosition = Raylib.GetMousePosition();
-        
-        Console.WriteLine($"mousePosition: {mousePosition}");
         
         var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
                                 mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
         
-        //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && IsFrozen)
-        //    Raylib.DisableCursor();
+        //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsFrozen)
+        //    CursorManager.LockCursor();
         
         if (Input.MoveForward()) inputDir.Z += 1.0f;
         if (Input.MoveBackward()) inputDir.Z -= 1.0f;
@@ -196,7 +194,7 @@ public class PlayerCharacter
         else
             currentSpeed = WalkSpeed;
         
-        if (IsFrozen)
+        if (!IsFrozen)
             isJumping = Input.Jump(isCrouching);
         
         // --- Gravity  ---
@@ -230,7 +228,7 @@ public class PlayerCharacter
         // --- Mouse input for camera rotation ---
         Vector2 lookDelta = Vector2.Zero;
         
-        if (IsFrozen)
+        if (!IsFrozen)
             lookDelta = Input.LookDelta();
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
@@ -282,7 +280,7 @@ public class PlayerCharacter
 
         Vector3 wishVel = Vector3.Zero;
         
-        if (IsFrozen)
+        if (!IsFrozen)
             wishVel = wishDir * currentSpeed;
         
         Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
@@ -376,7 +374,7 @@ public class PlayerCharacter
     public void Kill()
     {
         IsDead = true;
-        IsFrozen = false;
+        IsFrozen = true;
     }
     
     public void SetCameraDirection(Vector3 direction)
