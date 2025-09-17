@@ -149,7 +149,7 @@ public class Chat
         if (TerrainGeneration.DoneLoading)
             GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
-
+    
     public void Draw()
     {
         if (IsClosedButShown)
@@ -163,7 +163,7 @@ public class Chat
         
         if (IsOpen || IsClosedButShown)
         {
-            Raylib.BeginTextureMode(chatTexture);
+            //Raylib.BeginTextureMode(chatTexture);
             
             Raylib.DrawRectangleRec(chatBox, UI.MainColor);
 
@@ -199,14 +199,14 @@ public class Chat
                 index++;
             }
             
-            Raylib.EndTextureMode();
+            //Raylib.EndTextureMode();
             
-            Raylib.DrawTextureRec(
-                chatTexture.Texture,
-                new Rectangle(0, 0, chatTexture.Texture.Width, -chatTexture.Texture.Height),
-                new Vector2(0f, heightPos),
-                Color.White
-            );
+            //Raylib.DrawTextureRec(
+            //    chatTexture.Texture,
+            //    new Rectangle(0, 0, chatTexture.Texture.Width, -chatTexture.Texture.Height),
+            //    new Vector2(0f, heightPos),
+            //    Color.White
+            //);
             
             if (!IsClosedButShown)
                 textBox.Draw();

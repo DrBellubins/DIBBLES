@@ -90,6 +90,7 @@ public class GameScene : Scene
         Raylib.EndTextureMode();
         
         Raylib.BeginTextureMode(UIBuffer);
+        Raylib.ClearBackground(new Color(0, 0, 0, 0));
         
         PlayerCharacter.DrawUI();
         gameChat.Draw();
@@ -110,11 +111,11 @@ public class GameScene : Scene
             new Rectangle(0f, 0f, backBuffer.Texture.Width, -backBuffer.Texture.Height),
             Vector2.Zero, Color.White);
         
+        Raylib.DrawTexture(uiBlur.BlurMaskBuffer.Texture, 0, 0, Color.White);
+        
         Raylib.DrawTextureRec(UIBuffer.Texture,
             new Rectangle(0f, 0f, UIBuffer.Texture.Width, -UIBuffer.Texture.Height),
             Vector2.Zero, Color.White);
-        
-        //Raylib.DrawTexture(uiBlur.BlurMaskBuffer.Texture, 0, 0, Color.White);
         
         Raylib.EndDrawing();
     }
