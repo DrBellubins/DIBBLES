@@ -201,6 +201,7 @@ public class TerrainGeneration
                     if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                     {
                         chunk = savedChunk;
+                        chunk.IsModified = true;
                         chunk.GenerationState = ChunkGenerationState.Modified;
                     }
                     else
@@ -346,7 +347,8 @@ public class TerrainGeneration
                 }
                 
                 // Decorations (must sync with main thread if modifying Raylib objects)
-                generateChunkDecorations(chunk);
+                if (!chunk.IsModified)
+                    generateChunkDecorations(chunk);
                 
                 Lighting.Generate(chunk);
 

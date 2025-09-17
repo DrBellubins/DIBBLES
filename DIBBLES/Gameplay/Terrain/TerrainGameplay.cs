@@ -189,8 +189,9 @@ public class TerrainGameplay
             newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
-            
+
             chunk.GenerationState = ChunkGenerationState.Modified;
+            chunk.IsModified = true;
 
             // Update lighting if the broken block was opaque or emissive
             Lighting.Generate(chunk);
@@ -270,8 +271,9 @@ public class TerrainGameplay
         newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
         chunk.SetBlock(localX, localY, localZ, newBlock);
-        
+
         chunk.GenerationState = ChunkGenerationState.Modified;
+        chunk.IsModified = true;
         
         // Update lighting for the placed block
         Lighting.Generate(chunk);

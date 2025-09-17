@@ -43,6 +43,8 @@ public class Chunk
     public Vector3Int Position;
     public Block[] Blocks; // Flat array for locality.
 
+    public bool IsModified = false;
+    
     public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
     
     public Chunk(Vector3Int pos)
