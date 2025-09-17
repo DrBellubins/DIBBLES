@@ -11,7 +11,7 @@ public static class CursorManager
     
     public static void LockCursor()
     {
-        previousMousePosition = Raylib.GetMousePosition();
+        previousMousePosition = Input.CursorPosition();
 
         Raylib.HideCursor();
         IsLocked = true;;

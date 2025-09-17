@@ -9,6 +9,11 @@ public static class Input
     {
         return Raylib.GetMouseDelta();
     }
+
+    public static Vector2 CursorPosition()
+    {
+        return Raylib.GetMousePosition();
+    }
     
     public static bool MoveForward()
     {
@@ -64,5 +69,10 @@ public static class Input
     public static bool OpenChat()
     {
         return Raylib.IsKeyPressed(KeyboardKey.Slash);
+    }
+
+    public static bool Pause()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Escape);
     }
 }

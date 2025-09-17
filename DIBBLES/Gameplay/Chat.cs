@@ -1,3 +1,4 @@
+using System.Net.Mime;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
@@ -24,23 +25,25 @@ public class Chat
 
     public void Update()
     {
+        if (Input.Pause())
+        {
+            CursorManager.LockCursor();
+            textBox.IsFocused = false;
+            isChatOpen = false;
+        }
+        
         if (Input.OpenChat())
         {
-            isChatOpen = !isChatOpen;
-            
-            if (isChatOpen)
-                CursorManager.ReleaseCursor();
-            else
-                CursorManager.LockCursor();
+            CursorManager.ReleaseCursor();
+            textBox.IsFocused = true;
+            isChatOpen = true;
         }
-
+        
+        if (isChatOpen)
+            textBox.Update();
+        
         if (TerrainGeneration.DoneLoading)
             GameScene.PlayerCharacter.IsFrozen = isChatOpen;
-
-        if (isChatOpen)
-        {
-            textBox.Update();
-        }
     }
 
     public void Draw()

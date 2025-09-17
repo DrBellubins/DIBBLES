@@ -8,7 +8,7 @@ namespace DIBBLES.Utils;
 public class TextBox
 {
     public string Text { get; set; } = "";
-    public bool IsFocused { get; private set; } = false;
+    public bool IsFocused { get; set; } = false;
     public int MaxLength { get; set; } = 32;
 
     public Rectangle Bounds;
@@ -21,27 +21,29 @@ public class TextBox
 
     public void Update()
     {
-        Vector2 mousePos = Raylib.GetMousePosition();
+        Vector2 mousePos = Input.CursorPosition();
         bool mouseInBox = Raylib.CheckCollisionPointRec(mousePos, Bounds);
 
         // Click to focus
-        if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+        if (Input.StartedBreaking)
             IsFocused = mouseInBox;
 
         if (IsFocused)
         {
-            int key = Raylib.GetKeyPressed();
+            int c = Raylib.GetCharPressed();
             
-            while (key > 0)
+            while (c > 0)
             {
                 // Accept printable characters (ASCII 32..126), ignore others except backspace
-                if (key >= 32 && key <= 126 && Text.Length < MaxLength)
-                    Text += (char)key;
-                else if (key == (int)KeyboardKey.Backspace && Text.Length > 0)
-                    Text = Text[..^1];
-                
-                key = Raylib.GetKeyPressed();
+                if (c >= 32 && c <= 126 && Text.Length < MaxLength)
+                    Text += (char)c;
+
+                c = Raylib.GetCharPressed();
             }
+            
+            // Handle backspace
+            if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && Text.Length > 0)
+                Text = Text[..^1];
         }
     }
 

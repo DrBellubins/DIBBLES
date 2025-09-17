@@ -161,9 +161,9 @@ public class PlayerCharacter
         Vector3 inputDir = Vector3.Zero;
 
         // Allow tabbing out and back into game
-        //if (Raylib.IsKeyPressed(KeyboardKey.Escape)) CursorManager.ReleaseCursor();
+        //if (Input.Pause()) CursorManager.ReleaseCursor();
         
-        var mousePosition = Raylib.GetMousePosition();
+        var mousePosition = Input.CursorPosition();
         
         var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
                                 mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
@@ -184,7 +184,7 @@ public class PlayerCharacter
             isRunning = false;
         
         // Crouching
-        isCrouching = Input.Crouch();
+        isCrouching = !IsFrozen && Input.Crouch();
 
         // Run vs Crouch checks
         if (isCrouching)
