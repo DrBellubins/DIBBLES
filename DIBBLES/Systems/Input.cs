@@ -60,4 +60,9 @@ public static class Input
     {
         return Raylib.IsMouseButtonDown(MouseButton.Right);
     }
+
+    public static bool OpenChat()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Slash);
+    }
 }

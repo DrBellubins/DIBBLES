@@ -17,12 +17,12 @@ public class UI
     {
         get { return new Vector2((float)Engine.ScreenWidth / 2f, 0f); }
     }
-
+    
     public static Vector2 BottomCenterPivot
     {
         get { return new Vector2((float)Engine.ScreenWidth / 2f, (float)Engine.ScreenHeight); }
     }
-
+    
     public static Vector2 LeftCenterPivot
     {
         get { return new Vector2(0f, (float)Engine.ScreenHeight / 2f); }
@@ -31,6 +31,26 @@ public class UI
     public static Vector2 RightCenterPivot
     {
         get { return new Vector2((float)Engine.ScreenWidth, (float)Engine.ScreenHeight / 2f); }
+    }
+    
+    public static Vector2 TopLeftPivot
+    {
+        get { return new Vector2(0f, 0f); }
+    }
+    
+    public static Vector2 TopRightPivot
+    {
+        get { return new Vector2((float)Engine.ScreenWidth, 0f); }
+    }
+    
+    public static Vector2 BottomRightPivot
+    {
+        get { return new Vector2((float)Engine.ScreenWidth, (float)Engine.ScreenHeight); }
+    }
+    
+    public static Vector2 BottomLeftPivot
+    {
+        get { return new Vector2(0f, (float)Engine.ScreenHeight); }
     }
 
     public static void DrawText(string text, Vector2 position)

@@ -196,9 +196,8 @@ public class TerrainGeneration
                     generatingChunks.TryAdd(pos, true);
 
                     Chunk chunk;
-
-                    // Check if chunk is in WorldSave.ModifiedChunks
-                    if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                    
+                    if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk)) // Get chunk from save
                     {
                         chunk = savedChunk;
                         chunk.IsModified = true;
@@ -455,6 +454,7 @@ public class TerrainGeneration
                 TMesh.TransparentModels.Remove(coord);
             }
 
+            // TODO: This should be preserved as a buffer
             ECSChunks.TryRemove(coord, out var cchunk);
         }
     }

@@ -21,6 +21,8 @@ public class Engine
     public const float FrameTimestep = 1.0f / (float)FPS;
     
     public static bool IsRunning;
+    public static bool IsPaused;
+    
     public static List<Scene> Scenes = new();
     public static Font MainFont;
     
@@ -81,8 +83,14 @@ public class Engine
             long afterWait = timer.ElapsedTicks;
             
             // Calculate DeltaTime after spin-wait to include wait time
-            Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
-            Time.time += Time.DeltaTime;
+
+            if (!IsPaused)
+            {
+                Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
+                Time.time += Time.DeltaTime;
+            }
+            else
+                Time.DeltaTime = 0f;
 
             previousTicks = afterWait; // Update to the end of the frame
         }

@@ -1,6 +1,7 @@
 using Raylib_cs;
 using DIBBLES.Systems;
 using DIBBLES.Effects;
+using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Terrain;
@@ -16,6 +17,8 @@ public class GameScene : Scene
 
     public static List<BlockLogic> BlockLogicList = new();
 
+    private Chat gameChat = new();
+    
     public override void Start()
     {
         // Must be set for proper depth buffers
@@ -26,6 +29,8 @@ public class GameScene : Scene
         TerrainGen.Update(PlayerCharacter);
         
         PlayerCharacter.Start(); // Must be started after terrain
+        
+        gameChat.Start();
     }
 
     public override void Update()
@@ -34,6 +39,8 @@ public class GameScene : Scene
         
         TerrainGen.Update(PlayerCharacter);
         TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
+        
+        gameChat.Update();
         
         if (Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
@@ -60,6 +67,8 @@ public class GameScene : Scene
         Raylib.EndMode3D();
         
         PlayerCharacter.DrawUI();
+        
+        gameChat.Draw();
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
