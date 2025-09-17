@@ -95,6 +95,42 @@ public static class FaceUtils
         return rotatedUvCoords;
     }
     
+    public static Vector2[] RotateUVs(Vector2[] uvs, int rotation)
+    {
+        // 0 = 0deg, 1 = 90deg, 2 = 180deg, 3 = 270deg
+        Vector2[] result = new Vector2[4];
+        
+        for (int i = 0; i < 4; i++)
+            result[i] = uvs[(i + rotation) % 4];
+        
+        return result;
+    }
+    
+    public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int flip)
+    {
+        // flip: 0 = none, 1 = horizontal, 2 = vertical, 3 = both
+        Vector2[] result = new Vector2[4];
+
+        // Copy original
+        for (int i = 0; i < 4; i++) result[i] = uvs[i];
+
+        if ((flip & 1) != 0)
+        {
+            // Horizontal flip: swap left/right
+            // 0<->1, 3<->2
+            (result[0], result[1]) = (result[1], result[0]);
+            (result[3], result[2]) = (result[2], result[3]);
+        }
+        if ((flip & 2) != 0)
+        {
+            // Vertical flip: swap top/bottom
+            // 0<->3, 1<->2
+            (result[0], result[3]) = (result[3], result[0]);
+            (result[1], result[2]) = (result[2], result[1]);
+        }
+        return result;
+    }
+    
     public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx)
     {
         // Lighting calculation for each face (copied from TerrainMesh.cs)

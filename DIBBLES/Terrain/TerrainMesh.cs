@@ -27,7 +27,7 @@ public class TerrainMesh
         List<Vector3> normals = [];
         List<Vector2> texcoords = [];
         List<Color> colors = [];
-
+        
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
@@ -36,7 +36,7 @@ public class TerrainMesh
             var block = chunk.GetBlock(x, y, z);
             var blockType = block.Type;
             var isTransparent = block.Info.IsTransparent;
-
+            
             // Opaque mesh pass: skip transparent and air blocks
             if (!isTransparencyPass && (isTransparent || blockType == BlockType.Air)) continue;
 
@@ -51,12 +51,29 @@ public class TerrainMesh
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
         
+                long chunkSeed = GameScene.TerrainGen.Seed 
+                                 ^ (block.Position.X * 73428767L)
+                                 ^ (block.Position.Y * 9127841L)
+                                 ^ (block.Position.Z * 192837465L);
+        
+                var rng = new SeededRandom(chunkSeed);
+                
                 if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos, faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
                     var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
-        
+
+                    var rndOffset = (int)(rng.NextFloat() * ChunkSize);
+                    var worldBlockPos = new Vector3Int(block.Position.X + rndOffset, block.Position.Y + rndOffset, block.Position.Z + rndOffset);
+                    
+                    // Deterministic random rotation for this block face
+                    //int rotation = ((worldBlockPos.X) ^ (worldBlockPos.Y) ^ (worldBlockPos.Z) ^ faceIdx) & 3;
+                    //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
+                    
+                    int flip = ((worldBlockPos.X) ^ (worldBlockPos.Y) ^ (worldBlockPos.Z) ^ faceIdx) & 3;
+                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, flip);
+                    
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {
                         // For transparent faces, store for sorting
