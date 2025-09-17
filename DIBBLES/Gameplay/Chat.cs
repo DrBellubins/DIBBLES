@@ -35,12 +35,26 @@ public class Chat
         if (Input.OpenChat())
         {
             CursorManager.ReleaseCursor();
+            textBox.Text = string.Empty;
             textBox.IsFocused = true;
             isChatOpen = true;
         }
         
         if (isChatOpen)
             textBox.Update();
+        
+        if (Input.SendChat() && textBox.Text[0] == '/')
+        {
+            foreach (var command in Commands.Registry)
+            {
+                if (textBox.Text == command.Key)
+                    command.Value();
+                else
+                    Console.WriteLine($"Command '{textBox.Text}' not found."); // TODO: Write to chat
+            }
+            
+            textBox.Text = string.Empty;
+        }
         
         if (TerrainGeneration.DoneLoading)
             GameScene.PlayerCharacter.IsFrozen = isChatOpen;

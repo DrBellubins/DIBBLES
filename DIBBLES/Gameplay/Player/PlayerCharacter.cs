@@ -30,7 +30,7 @@ public class PlayerCharacter
     public int Health = 100;
     public Hotbar hotbar = new();
     
-    private readonly Vector3 spawnPosition = new Vector3(0f, 0f, 0f); // Temporary
+    private Vector3 spawnPosition = new Vector3(0f, 0f, 0f);
     
     // Systems
     public Vector3 Position = Vector3.Zero;
@@ -92,6 +92,9 @@ public class PlayerCharacter
 
         hotbar.Start();
         handModel.Start();
+        
+        Commands.RegisterCommand("kill", Kill);
+        Commands.RegisterCommand("spawn", Respawn);
         
         //CursorManager.LockCursor();
     }
@@ -356,7 +359,7 @@ public class PlayerCharacter
         // Needs to happen a frame late
         if (NeedsToSpawn)
         {
-            spawn();
+            Spawn();
             NeedsToSpawn = false;
         }
         
@@ -375,6 +378,33 @@ public class PlayerCharacter
     {
         IsDead = true;
         IsFrozen = true;
+    }
+    
+    public void Spawn()
+    {
+        Console.WriteLine($"Spawning at {WorldSave.Data.PlayerPosition}");
+        
+        if (WorldSave.Exists)
+        {
+            Position = WorldSave.Data.PlayerPosition;
+            SetCameraDirection(WorldSave.Data.CameraDirection);
+
+            spawnPosition = Position;
+        }
+        else
+            Position = spawnPosition;
+        
+        Velocity = Vector3.Zero;
+    }
+    
+    public void Respawn()
+    {
+        Position = spawnPosition;
+        SetCameraDirection(WorldSave.Data.CameraDirection);
+        
+        Velocity = Vector3.Zero;
+        IsDead = false;
+        IsFrozen = false;
     }
     
     public void SetCameraDirection(Vector3 direction)
@@ -473,27 +503,6 @@ public class PlayerCharacter
         }
         
         Position = newPosition;
-    }
-    
-    private void spawn()
-    {
-        Console.WriteLine($"Spawning at {WorldSave.Data.PlayerPosition}");
-        
-        if (WorldSave.Exists)
-        {
-            Position = WorldSave.Data.PlayerPosition;
-            SetCameraDirection(WorldSave.Data.CameraDirection);
-        }
-        else
-            Position = spawnPosition;
-        
-        Velocity = Vector3.Zero;
-    }
-    
-    private void respawn()
-    {
-        Position = spawnPosition;
-        Velocity = Vector3.Zero;
     }
     
     private static List<BoundingBox> getBlockBoxes(Vector3 center, float radius)

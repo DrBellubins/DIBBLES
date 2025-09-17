@@ -14,6 +14,11 @@ public static class Input
     {
         return Raylib.GetMousePosition();
     }
+
+    public static bool SendChat()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Enter);
+    }
     
     public static bool MoveForward()
     {
