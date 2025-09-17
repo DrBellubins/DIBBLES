@@ -49,7 +49,7 @@ public class PlayerCharacter
     public bool FreeCamEnabled = true;
     public Freecam freecam = new();
 
-    public bool CanMove = true;
+    public bool IsFrozen = true;
     public bool NeedsToSpawn = false;
     public bool ShouldUpdate = false;
     public bool IsDead = false;
@@ -93,7 +93,7 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        Raylib.DisableCursor();
+        //Raylib.DisableCursor();
     }
     
     float lastHeight = PlayerHeight;
@@ -106,35 +106,38 @@ public class PlayerCharacter
         hotbar.Update(IsDead);
         
         // --- Block breaking and placing ---
-        placeBreakTimer += Time.DeltaTime;
-
-        if (Input.StartedBreaking) // Break immediately
+        if (!IsFrozen)
         {
-            TerrainGeneration.Gameplay.BreakBlock();
-            placeBreakTimer = 0f;
-        }
-        
-        if (Input.Break() && !Input.StartedBreaking) // Hold break
-        {
-            if (placeBreakTimer >= 0.3f)
+            placeBreakTimer += Time.DeltaTime;
+            
+            if (Input.StartedBreaking) // Break immediately
             {
                 TerrainGeneration.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
-        }
-
-        if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
-        {
-            TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
-            placeBreakTimer = 0f;
-        }
         
-        if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
-        {
-            if (placeBreakTimer >= 0.3f)
+            if (Input.Break() && !Input.StartedBreaking) // Hold break
+            {
+                if (placeBreakTimer >= 0.3f)
+                {
+                    TerrainGeneration.Gameplay.BreakBlock();
+                    placeBreakTimer = 0f;
+                }
+            }
+
+            if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
             {
                 TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
+            }
+        
+            if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
+            {
+                if (placeBreakTimer >= 0.3f)
+                {
+                    TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                    placeBreakTimer = 0f;
+                }
             }
         }
         
@@ -158,15 +161,17 @@ public class PlayerCharacter
         Vector3 inputDir = Vector3.Zero;
 
         // Allow tabbing out and back into game
-        if (Raylib.IsKeyPressed(KeyboardKey.Escape)) Raylib.EnableCursor();
+        //if (Raylib.IsKeyPressed(KeyboardKey.Escape)) Raylib.EnableCursor();
         
         var mousePosition = Raylib.GetMousePosition();
+        
+        Console.WriteLine($"mousePosition: {mousePosition}");
         
         var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
                                 mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
         
-        if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left))
-            Raylib.DisableCursor();
+        //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && IsFrozen)
+        //    Raylib.DisableCursor();
         
         if (Input.MoveForward()) inputDir.Z += 1.0f;
         if (Input.MoveBackward()) inputDir.Z -= 1.0f;
@@ -191,7 +196,7 @@ public class PlayerCharacter
         else
             currentSpeed = WalkSpeed;
         
-        if (CanMove)
+        if (IsFrozen)
             isJumping = Input.Jump(isCrouching);
         
         // --- Gravity  ---
@@ -225,7 +230,7 @@ public class PlayerCharacter
         // --- Mouse input for camera rotation ---
         Vector2 lookDelta = Vector2.Zero;
         
-        if (CanMove)
+        if (IsFrozen)
             lookDelta = Input.LookDelta();
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
@@ -277,7 +282,7 @@ public class PlayerCharacter
 
         Vector3 wishVel = Vector3.Zero;
         
-        if (CanMove)
+        if (IsFrozen)
             wishVel = wishDir * currentSpeed;
         
         Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
@@ -371,7 +376,7 @@ public class PlayerCharacter
     public void Kill()
     {
         IsDead = true;
-        CanMove = false;
+        IsFrozen = false;
     }
     
     public void SetCameraDirection(Vector3 direction)
