@@ -29,17 +29,26 @@ public class Chat
     public const int Height = 400;
     public const float FontSize = 24f;
     
+    public static bool IsOpen {get; private set;}
+    public static bool IsClosedButShown {get; private set;}
+    
     public static List<ChatMessage> ChatMessages = new();
     
-    private Rectangle chatBox = new Rectangle(0f, 0f, Width, Height);
-    private bool isChatOpen = false;
+    private static List<string> prevChatMessages = new();
     
+    private Rectangle chatBox = new Rectangle(0f, 0f, Width, Height);
     private TextBox textBox = new TextBox(new Rectangle(0f, 0f, Width, 40f));
-
     private RenderTexture2D chatTexture;
-
     private float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
+    // Chat disappear timer
+    private float elapsed = 0f;
+    private const float disappearTime = 5f;
+    
+    // Previous message traversal
+    private int prevMsgTraversalIndex = 0;
+    
+    // Chat text/scrolling checks
     private float scrollOffset = 0;
     private bool isUserScrolling = false;
     
@@ -56,13 +65,7 @@ public class Chat
 
     public void Update()
     {
-        if (Input.OpenChat())
-            OpenChat();
-        
-        if (Input.Pause())
-            CloseChat();
-
-        if (isChatOpen)
+        if (IsOpen)
         {
             textBox.Update();
             
@@ -79,6 +82,7 @@ public class Chat
             }
         }
         
+        // Send msg/cmd to chat
         if (Input.SendChat() && textBox.Text != string.Empty)
         {
             if (textBox.Text[0] == '/')
@@ -90,10 +94,14 @@ public class Chat
                 {
                     cmdEntry.Value();
                     Write(ChatMessageType.Command, $"Executed '{textBox.Text}' command.");
+                    
+                    Console.WriteLine($"Player executed command '{textBox.Text}'.");
                 }
                 else
                 {
                     Write(ChatMessageType.Error, $"Command '{textBox.Text}' not found.");
+                    
+                    Console.WriteLine($"Player attempted to execute nonexistent command '{textBox.Text}'.");
                     
                     if (!isUserScrolling)
                         scrollOffset = 0;
@@ -102,22 +110,58 @@ public class Chat
             else
             {
                 Write(ChatMessageType.Message, textBox.Text);
+                Console.WriteLine($"Player typed: '{textBox.Text}'");
                 
                 if (!isUserScrolling)
                     scrollOffset = 0;
             }
             
-            textBox.Text = string.Empty;
-            textBox.IsFocused = false;
+            prevChatMessages.Add(textBox.Text);
+            prevMsgTraversalIndex = prevChatMessages.Count;
+            
+            CloseChat();
+            
+            IsClosedButShown = true;
+            elapsed = 0f;
         }
         
+        if (Input.OpenChat())
+            OpenChat();
+        
+        if (Input.OpenChatCmd())
+            OpenChatCmd();
+        
+        if (Input.Pause())
+            CloseChat();
+        
+        /*if (Input.PreviousMessage() && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)
+        {
+            textBox.Text = prevChatMessages[prevMsgTraversalIndex];
+            prevMsgTraversalIndex--;
+        }
+        
+        if (Input.NewerMessage() && prevMsgTraversalIndex < prevChatMessages.Count)
+        {
+            textBox.Text = prevChatMessages[prevMsgTraversalIndex];
+            prevMsgTraversalIndex++;
+        }*/
+        
         if (TerrainGeneration.DoneLoading)
-            GameScene.PlayerCharacter.IsFrozen = isChatOpen;
+            GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
 
     public void Draw()
     {
-        if (isChatOpen)
+        if (IsClosedButShown)
+            elapsed += Time.DeltaTime;
+
+        if (elapsed >= disappearTime)
+        {
+            IsClosedButShown = false;
+            elapsed -= disappearTime;
+        }
+        
+        if (IsOpen || IsClosedButShown)
         {
             Raylib.BeginTextureMode(chatTexture);
             
@@ -164,15 +208,31 @@ public class Chat
                 Color.White
             );
             
-            textBox.Draw();
+            if (!IsClosedButShown)
+                textBox.Draw();
         }
     }
 
     public void OpenChat()
     {
-        CursorManager.ReleaseCursor();
-        textBox.IsFocused = true;
-        isChatOpen = true;
+        if (!IsOpen)
+        {
+            CursorManager.ReleaseCursor();
+            textBox.Text = string.Empty;
+            textBox.IsFocused = true;
+            IsOpen = true;
+        }
+    }
+    
+    public void OpenChatCmd()
+    {
+        if (!IsOpen)
+        {
+            CursorManager.ReleaseCursor();
+            textBox.Text = "/";
+            textBox.IsFocused = true;
+            IsOpen = true;
+        }
     }
 
     public void CloseChat()
@@ -180,7 +240,7 @@ public class Chat
         CursorManager.LockCursor();
         textBox.Text = string.Empty;
         textBox.IsFocused = false;
-        isChatOpen = false;
+        IsOpen = false;
     }
     
     public static void Write(ChatMessageType type, string message)

@@ -19,7 +19,7 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const float TickRate = 2.0f; // In seconds
     public const float ReachDistance = 5f; // Has to be finite!
-    public const bool DrawDebug = false;
+    //public const bool DrawDebug = false;
     
     public static TerrainMesh TMesh = new TerrainMesh();
     public static TerrainLighting Lighting = new TerrainLighting();
@@ -157,7 +157,7 @@ public class TerrainGeneration
             tickElapsed -= TickRate;
         }
         
-        if (Raylib.IsKeyPressed(KeyboardKey.U))
+        if (Raylib.IsKeyPressed(KeyboardKey.U) && !Chat.IsOpen)
             Console.WriteLine($"Seed: {Seed}");
     }
     
@@ -481,8 +481,8 @@ public class TerrainGeneration
         //TMesh.DrawTransparentBuckets(GameScene.PlayerCharacter.Camera);
         
         Rlgl.EnableBackfaceCulling();
-        
-        if (DrawDebug)
+
+        if (Debug.ShowDebugExtended)
         {
             // Draw chunk coordinates in 2D after 3D rendering
             foreach (var chunk in ECSChunks)

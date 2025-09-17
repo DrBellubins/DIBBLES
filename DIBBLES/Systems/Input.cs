@@ -19,11 +19,6 @@ public static class Input
     {
         return Raylib.GetMouseWheelMove();
     }
-
-    public static bool SendChat()
-    {
-        return Raylib.IsKeyPressed(KeyboardKey.Enter);
-    }
     
     public static bool MoveForward()
     {
@@ -44,8 +39,6 @@ public static class Input
     {
         return Raylib.IsKeyDown(KeyboardKey.D);
     }
-
-    //public static bool StoppedRunning => Raylib.IsMouseButtonReleased(MouseButton.Extra);
     
     public static bool Run()
     {
@@ -76,13 +69,33 @@ public static class Input
         return Raylib.IsMouseButtonDown(MouseButton.Right);
     }
 
-    public static bool OpenChat()
-    {
-        return Raylib.IsKeyPressed(KeyboardKey.Slash);
-    }
-
     public static bool Pause()
     {
         return Raylib.IsKeyPressed(KeyboardKey.Escape);
+    }
+    
+    public static bool OpenChat()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.T);
+    }
+    
+    public static bool OpenChatCmd()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Slash);
+    }
+    
+    public static bool SendChat()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Enter);
+    }
+
+    public static bool PreviousMessage()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Up);
+    }
+    
+    public static bool NewerMessage()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Down);
     }
 }
