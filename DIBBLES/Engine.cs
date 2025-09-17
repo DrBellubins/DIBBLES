@@ -83,14 +83,8 @@ public class Engine
             long afterWait = timer.ElapsedTicks;
             
             // Calculate DeltaTime after spin-wait to include wait time
-
-            if (!IsPaused)
-            {
-                Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
-                Time.time += Time.DeltaTime;
-            }
-            else
-                Time.DeltaTime = 0f;
+            Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
+            Time.time += Time.DeltaTime;
 
             previousTicks = afterWait; // Update to the end of the frame
         }

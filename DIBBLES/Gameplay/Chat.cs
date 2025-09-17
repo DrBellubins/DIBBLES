@@ -1,4 +1,6 @@
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Raylib_cs;
 
@@ -20,7 +22,8 @@ public class Chat
         if (Input.OpenChat())
             isChatOpen = !isChatOpen;
 
-        Engine.IsPaused = isChatOpen;
+        if (TerrainGeneration.DoneLoading)
+            GameScene.PlayerCharacter.CanMove = !isChatOpen;
     }
 
     public void Draw()

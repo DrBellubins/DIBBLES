@@ -49,6 +49,7 @@ public class PlayerCharacter
     public bool FreeCamEnabled = true;
     public Freecam freecam = new();
 
+    public bool CanMove = true;
     public bool NeedsToSpawn = false;
     public bool ShouldUpdate = false;
     public bool IsDead = false;
@@ -64,8 +65,6 @@ public class PlayerCharacter
     private float mouseSensitivity = 0.1f;
 
     private float placeBreakTimer = 0f;
-    
-    private bool canMove = true;
 
     private bool isRunning = false;
     private bool isJumping = false;
@@ -192,7 +191,8 @@ public class PlayerCharacter
         else
             currentSpeed = WalkSpeed;
         
-        isJumping = Input.Jump(isCrouching);
+        if (CanMove)
+            isJumping = Input.Jump(isCrouching);
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
@@ -225,7 +225,7 @@ public class PlayerCharacter
         // --- Mouse input for camera rotation ---
         Vector2 lookDelta = Vector2.Zero;
         
-        if (canMove)
+        if (CanMove)
             lookDelta = Input.LookDelta();
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
@@ -277,7 +277,7 @@ public class PlayerCharacter
 
         Vector3 wishVel = Vector3.Zero;
         
-        if (canMove)
+        if (CanMove)
             wishVel = wishDir * currentSpeed;
         
         Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
@@ -371,7 +371,7 @@ public class PlayerCharacter
     public void Kill()
     {
         IsDead = true;
-        canMove = false;
+        CanMove = false;
     }
     
     public void SetCameraDirection(Vector3 direction)
