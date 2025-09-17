@@ -95,6 +95,13 @@ public class GameScene : Scene
         PlayerCharacter.DrawUI();
         gameChat.Draw();
         
+        Raylib.DrawTextureRec(
+            gameChat.ChatTexture.Texture,
+            new Rectangle(0, 0, gameChat.ChatTexture.Texture.Width, -gameChat.ChatTexture.Texture.Height),
+            new Vector2(0f, gameChat.heightPos), // or the y position you want
+            Color.White
+        );
+        
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);

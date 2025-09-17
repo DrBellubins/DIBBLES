@@ -36,10 +36,12 @@ public class Chat
     
     private static List<string> prevChatMessages = new();
     
+    public RenderTexture2D ChatTexture;
+    
     private Rectangle chatBox = new Rectangle(0f, 0f, Width, Height);
     private TextBox textBox = new TextBox(new Rectangle(0f, 0f, Width, 40f));
-    private RenderTexture2D chatTexture;
-    private float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
+    
+    public float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
     // Chat disappear timer
     private float elapsed = 0f;
@@ -57,7 +59,7 @@ public class Chat
     
     public void Start()
     {
-        chatTexture = Raylib.LoadRenderTexture(Width, Height);
+        ChatTexture = Raylib.LoadRenderTexture(Width, Height);
         
         textBox.Bounds.X = UI.LeftCenterPivot.X;
         textBox.Bounds.Y = UI.LeftCenterPivot.Y + (Height / 2f);
@@ -163,7 +165,8 @@ public class Chat
         
         if (IsOpen || IsClosedButShown)
         {
-            Raylib.BeginTextureMode(chatTexture);
+            Raylib.BeginTextureMode(ChatTexture);
+            Raylib.ClearBackground(new Color(0, 0, 0, 0));
             
             Raylib.DrawRectangleRec(chatBox, UI.MainColor);
 
@@ -201,12 +204,12 @@ public class Chat
             
             Raylib.EndTextureMode();
             
-            Raylib.DrawTextureRec(
+            /*Raylib.DrawTextureRec(
                 chatTexture.Texture,
                 new Rectangle(0, 0, chatTexture.Texture.Width, -chatTexture.Texture.Height),
                 new Vector2(0f, heightPos),
                 Color.White
-            );
+            );*/
             
             if (!IsClosedButShown)
                 textBox.Draw();
