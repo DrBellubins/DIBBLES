@@ -204,13 +204,6 @@ public class Chat
             
             Raylib.EndTextureMode();
             
-            /*Raylib.DrawTextureRec(
-                chatTexture.Texture,
-                new Rectangle(0, 0, chatTexture.Texture.Width, -chatTexture.Texture.Height),
-                new Vector2(0f, heightPos),
-                Color.White
-            );*/
-            
             if (!IsClosedButShown)
                 textBox.Draw();
         }
