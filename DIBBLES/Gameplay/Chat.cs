@@ -38,6 +38,12 @@ public class Chat
 
     private float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
+    private float scrollOffset = 0;
+    private bool isUserScrolling = false;
+    
+    private static int maxLines = (int)(Height / FontSize);
+    private static int maxScroll = Math.Max(0, ChatMessages.Count - maxLines);
+    
     public void Start()
     {
         chatTexture = Raylib.LoadRenderTexture(Width, Height);
@@ -48,23 +54,28 @@ public class Chat
 
     public void Update()
     {
-        if (Input.Pause())
-        {
-            CursorManager.LockCursor();
-            textBox.IsFocused = false;
-            isChatOpen = false;
-        }
-        
         if (Input.OpenChat())
-        {
-            CursorManager.ReleaseCursor();
-            textBox.Text = string.Empty;
-            textBox.IsFocused = true;
-            isChatOpen = true;
-        }
+            OpenChat();
         
+        if (Input.Pause())
+            CloseChat();
+
         if (isChatOpen)
+        {
             textBox.Update();
+            
+            float wheel = Input.ScrollDelta();
+            
+            if (wheel != 0)
+            {
+                scrollOffset += wheel;
+                
+                maxScroll = Math.Max(0, ChatMessages.Count - maxLines);
+                
+                scrollOffset = Math.Clamp(scrollOffset, 0, maxScroll);
+                isUserScrolling = scrollOffset > 0;
+            }
+        }
         
         if (Input.SendChat() && textBox.Text != string.Empty)
         {
@@ -73,12 +84,23 @@ public class Chat
                 if (Commands.Registry.TryGetValue(textBox.Text, out var command))
                     command();
                 else
+                {
                     Write(ChatMessageType.Error, $"Command '{textBox.Text}' not found.");
+                    
+                    if (!isUserScrolling)
+                        scrollOffset = 0;
+                }
             }
             else
+            {
                 Write(ChatMessageType.Message, textBox.Text);
+                
+                if (!isUserScrolling)
+                    scrollOffset = 0;
+            }
             
             textBox.Text = string.Empty;
+            textBox.IsFocused = false;
         }
         
         if (TerrainGeneration.DoneLoading)
@@ -93,9 +115,14 @@ public class Chat
             
             Raylib.DrawRectangleRec(chatBox, UI.MainColor);
 
+            if (!isUserScrolling) scrollOffset = 0; // Auto-scroll if not user scrolling
+            
+            int start = Math.Max(0, ChatMessages.Count - maxLines - (int)scrollOffset);
+            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+            
             int index = 0;
             
-            foreach (var msg in ChatMessages)
+            foreach (var msg in toDisplay)
             {
                 Color msgColor = Color.Black;
                 
@@ -130,6 +157,21 @@ public class Chat
         }
     }
 
+    public void OpenChat()
+    {
+        CursorManager.ReleaseCursor();
+        textBox.IsFocused = true;
+        isChatOpen = true;
+    }
+
+    public void CloseChat()
+    {
+        CursorManager.LockCursor();
+        textBox.Text = string.Empty;
+        textBox.IsFocused = false;
+        isChatOpen = false;
+    }
+    
     public static void Write(ChatMessageType type, string message)
     {
         var msg = new ChatMessage(type, message);

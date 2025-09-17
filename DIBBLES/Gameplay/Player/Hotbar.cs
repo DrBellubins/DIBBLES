@@ -1,4 +1,5 @@
 using System.Numerics;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
@@ -53,11 +54,11 @@ public class Hotbar
         SelectedItem = hotbarSlots[0];
     }
 
-    public void Update(bool isPlayerDead)
+    public void Update(bool isPlayerDead, bool isFrozen)
     {
-        if (!isPlayerDead)
+        if (!isPlayerDead && !isFrozen)
         {
-            var mouseWheelNormalized = MathF.Ceiling(-Raylib.GetMouseWheelMove());
+            var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
             {

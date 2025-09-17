@@ -50,7 +50,7 @@ public class TextBox
     public void Draw()
     {
         // Draw box (different color if focused)
-        Color boxColor = IsFocused ? UI.AccentColor : UI.MainColor;
+        Color boxColor = IsFocused ? UI.FocusColor : UI.SecondaryAccentColor;
 
         Raylib.DrawRectangleRec(Bounds, boxColor);
 

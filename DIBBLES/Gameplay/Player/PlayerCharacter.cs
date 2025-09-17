@@ -106,7 +106,7 @@ public class PlayerCharacter
         if (!ShouldUpdate)
             return;
 
-        hotbar.Update(IsDead);
+        hotbar.Update(IsDead, IsFrozen);
         
         // --- Block breaking and placing ---
         if (!IsFrozen)

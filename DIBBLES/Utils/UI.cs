@@ -7,6 +7,8 @@ public class UI
 {
     public static Color MainColor = new Color(0, 0, 0, 128);
     public static Color AccentColor = new Color(255, 255, 255, 128);
+    public static Color SecondaryAccentColor = new Color(64, 64, 64, 128);
+    public static Color FocusColor = new Color(128, 128, 128, 128);
     
     public static Vector2 CenterPivot
     {
