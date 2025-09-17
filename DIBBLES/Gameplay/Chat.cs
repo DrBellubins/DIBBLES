@@ -22,6 +22,7 @@ public struct ChatMessage(ChatMessageType type, string message)
     public string Message = message;
 }
 
+// TODO: Implement text wrapping.
 public class Chat
 {
     public const int Width = 800;
@@ -82,9 +83,12 @@ public class Chat
         {
             if (textBox.Text[0] == '/')
             {
-                if (Commands.Registry.TryGetValue(textBox.Text, out var command))
+                var cmdEntry = Commands.Registry
+                    .FirstOrDefault(pair => pair.Key.Name == textBox.Text);
+                
+                if (!cmdEntry.Equals(default(KeyValuePair<Command, Action>)))
                 {
-                    command();
+                    cmdEntry.Value();
                     Write(ChatMessageType.Command, $"Executed '{textBox.Text}' command.");
                 }
                 else
@@ -183,5 +187,11 @@ public class Chat
     {
         var msg = new ChatMessage(type, message);
         ChatMessages.Add(msg);
+    }
+
+    public static void WriteHelp()
+    {
+        foreach (var cmd in Commands.Registry)
+            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"{cmd.Key.Name}: {cmd.Key.Description}"));
     }
 }

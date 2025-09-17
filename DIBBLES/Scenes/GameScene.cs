@@ -31,11 +31,12 @@ public class GameScene : Scene
         PlayerCharacter.Start(); // Must be started after terrain
         
         gameChat.Start();
+        
+        Commands.RegisterCommand("help", "Lists all available commands.", Chat.WriteHelp);
     }
 
     public override void Update()
     {
-        
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);

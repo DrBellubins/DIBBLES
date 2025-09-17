@@ -94,7 +94,7 @@ public class PlayerCharacter
         handModel.Start();
         
         Commands.RegisterCommand("kill", "Kills the player", Kill);
-        Commands.RegisterCommand("spawn", "Respawns at spawn point.", Respawn);
+        Commands.RegisterCommand("spawn", "Respawns player at spawn point.", Respawn);
         
         CursorManager.LockCursor();
     }
