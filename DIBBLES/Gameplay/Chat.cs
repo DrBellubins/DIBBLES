@@ -11,6 +11,7 @@ namespace DIBBLES.Gameplay;
 public enum ChatMessageType
 {
     Message,
+    Command,
     Warning,
     Error
 }
@@ -82,7 +83,10 @@ public class Chat
             if (textBox.Text[0] == '/')
             {
                 if (Commands.Registry.TryGetValue(textBox.Text, out var command))
+                {
                     command();
+                    Write(ChatMessageType.Command, $"Executed '{textBox.Text}' command.");
+                }
                 else
                 {
                     Write(ChatMessageType.Error, $"Command '{textBox.Text}' not found.");
@@ -130,6 +134,9 @@ public class Chat
                 {
                     case ChatMessageType.Message:
                         msgColor = Color.White;
+                        break;
+                    case ChatMessageType.Command:
+                        msgColor = Color.SkyBlue;
                         break;
                     case ChatMessageType.Warning:
                         msgColor = Color.Yellow;

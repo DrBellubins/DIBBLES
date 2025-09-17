@@ -93,10 +93,10 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        Commands.RegisterCommand("kill", Kill);
-        Commands.RegisterCommand("spawn", Respawn);
+        Commands.RegisterCommand("kill", "Kills the player", Kill);
+        Commands.RegisterCommand("spawn", "Respawns at spawn point.", Respawn);
         
-        //CursorManager.LockCursor();
+        CursorManager.LockCursor();
     }
     
     float lastHeight = PlayerHeight;
