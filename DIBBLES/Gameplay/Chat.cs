@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using System.Numerics;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
@@ -9,13 +10,20 @@ namespace DIBBLES.Gameplay;
 
 public class Chat
 {
-    private Rectangle chatBox = new Rectangle(0f, 0f, 800f, 400f);
+    public const int Width = 800;
+    public const int Height = 400;
+    
+    private Rectangle chatBox = new Rectangle(0f, 0f, Width, Height);
     private bool isChatOpen = false;
     
-    private TextBox textBox = new TextBox(new Rectangle(0f, 0f, 800f, 40f));
+    private TextBox textBox = new TextBox(new Rectangle(0f, 0f, Width, 40f));
+    
+    private RenderTexture2D chatTexture = new();
     
     public void Start()
     {
+        chatTexture = Raylib.LoadRenderTexture(Width, Height);
+        
         chatBox.X = UI.BottomLeftPivot.X;
         chatBox.Y = UI.BottomLeftPivot.Y - (chatBox.Height + 200f);
         
@@ -61,8 +69,14 @@ public class Chat
     {
         if (isChatOpen)
         {
+            Raylib.BeginTextureMode(chatTexture);
+            
             Raylib.DrawRectangleRec(chatBox, UI.MainColor);
             textBox.Draw();
+            
+            Raylib.EndTextureMode();
+            
+            Raylib.DrawTextureV(chatTexture.Texture, new Vector2(chatBox.X, chatBox.Y), Color.White);
         }
     }
 }
