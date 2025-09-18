@@ -130,9 +130,6 @@ public class Hotbar
     public void Draw(int health)
     {
         Raylib.DrawRectangleRec(hotbarRect, UI.MainColor);
-
-        /*if (blockIcons.Values.FirstOrDefault() is Texture2D tex)
-            Raylib.DrawTexture(tex, 0, 0, Color.White);*/
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
