@@ -105,7 +105,9 @@ public class BlockData
         }
 
         // Create texture atlas in a 5x1 layout
-        if (tempTextures.Count > 0)
+        
+        
+        /*if (tempTextures.Count > 0)
         {
             int textureCount = tempTextures.Count; // Should be 5 (Dirt, Grass, Stone, Sand, Snow)
             int atlasWidth = maxWidth * textureCount; // 5 textures in a single row
@@ -162,7 +164,7 @@ public class BlockData
                 //if (texture.Id != 0)
                 //    Raylib.UnloadTexture(texture);
             }
-        }
+        }*/
     }
     
     private static Texture2D loadBlockTexture(BlockType blockType)
