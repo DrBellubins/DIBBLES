@@ -172,38 +172,35 @@ public class Hotbar
     private void drawBlockCube2D(Texture2D tex, Vector2 pos, float size)
     {
         // Parameters
-        float face = size;
-        float skew = size * 0.5f;
-        float thickness = size * 0.25f;
-    
-        // Source rect: whole block texture
-        Rectangle src = new Rectangle(0, 0, tex.Width, tex.Height);
-    
-        // 1. Draw top face (skewed upwards)
+        float s = size;
+        float skew = s * 0.2f;
+        float thickness = s * 0.2f;
+
+        // Top face
         Vector2[] top = new Vector2[]
         {
-            pos + new Vector2(0, -thickness),                         // TL
-            pos + new Vector2(face, -thickness),                      // TR
-            pos + new Vector2(face - skew, 0),                        // BR
-            pos + new Vector2(skew, 0)                                // BL
+            pos + new Vector2(skew, 0),            // TL
+            pos + new Vector2(s - skew, 0),        // TR
+            pos + new Vector2(s, thickness),       // BR
+            pos + new Vector2(0, thickness)        // BL
         };
-    
-        // 2. Draw side face (skewed right)
+        
+        // Side face
         Vector2[] side = new Vector2[]
         {
-            pos + new Vector2(face, -thickness),                      // TL
-            pos + new Vector2(face, face - thickness),                // TR
-            pos + new Vector2(face - skew, face),                     // BR
-            pos + new Vector2(face - skew, 0)                         // BL
+            pos + new Vector2(s, thickness),       // TL
+            pos + new Vector2(s, s - thickness),   // TR
+            pos + new Vector2(s - skew, s),        // BR
+            pos + new Vector2(s - skew, 0)         // BL
         };
-    
-        // 3. Draw front face (straight)
+        
+        // Front face
         Vector2[] front = new Vector2[]
         {
-            pos + new Vector2(skew, 0),                               // TL
-            pos + new Vector2(face - skew, 0),                        // TR
-            pos + new Vector2(face - skew, face),                     // BR
-            pos + new Vector2(skew, face)                             // BL
+            pos + new Vector2(0, thickness),       // TL
+            pos + new Vector2(s, thickness),       // TR
+            pos + new Vector2(s - skew, s),        // BR
+            pos + new Vector2(skew, s)             // BL
         };
     
         // Helper for drawing a quad with a texture
