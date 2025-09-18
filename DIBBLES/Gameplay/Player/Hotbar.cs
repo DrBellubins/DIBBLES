@@ -41,6 +41,8 @@ public class Hotbar
 
         Resize();
         
+        hotbarSlots[0] = new ItemSlot(WorldSave.Data.HotbarPosition, BlockType.Grass);
+        
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", args =>
         {
             if (args.Length != 1)
@@ -229,11 +231,21 @@ public class Hotbar
             Rlgl.End();
             Rlgl.SetTexture(0);
         }
+        
+        void DrawQuadSolid(Vector2[] verts, Color color)
+        {
+            Rlgl.Begin(DrawMode.Quads);
+            
+            foreach (var v in verts)
+                Rlgl.Vertex2f(v.X, v.Y);
+            
+            Rlgl.End();
+        }
     
         // Draw order: side, top, front (front last covers seams)
         DrawQuad(tex, side);
         DrawQuad(tex, top);
-        DrawQuad(tex, front);
+        DrawQuadSolid(front, Color.Blue);
     }
     
     public void Resize()
