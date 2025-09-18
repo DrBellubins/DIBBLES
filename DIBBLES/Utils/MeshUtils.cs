@@ -21,6 +21,56 @@ public static class MeshUtils
         
         return cubeModel;
     }
+    
+    public static Model GenTexturedCubeIcon(Texture2D texture)
+    {
+        Mesh cubeMesh = Raylib.GenMeshCube(1f, 1f, 1f);
+        
+        // Add per-face vertex color data
+        Color[] faceColors = new Color[]
+        {
+            new Color(100,100,100,255), // Front (-Z)
+            new Color(140,140,140,255), // Back (+Z)
+            new Color(180,180,180,255), // Left (-X)
+            new Color(140,140,140,255), // Right (+X)
+            new Color(120,120,120,255), // Bottom (-Y)
+            new Color(255,255,255,255), // Top (+Y)
+        };
+
+        // Each cube face is 4 vertices, 6 faces = 24 vertices (if no vertex sharing)
+        // If the mesh only has 8 shared vertices, you'll need to "explode" it first.
+        // Raylib's GenMeshCube uses 24 vertices, so it's safe!
+
+        unsafe
+        {
+            byte* colors = (byte*)Raylib.MemAlloc(sizeof(byte) * 24 * 4);
+            
+            for (int face = 0; face < 6; face++)
+            {
+                Color c = faceColors[face];
+                
+                for (int i = 0; i < 4; i++)
+                {
+                    int idx = face * 4 + i;
+                    colors[idx * 4 + 0] = c.R;
+                    colors[idx * 4 + 1] = c.G;
+                    colors[idx * 4 + 2] = c.B;
+                    colors[idx * 4 + 3] = c.A;
+                }
+            }
+            
+            cubeMesh.Colors = colors;
+        }
+
+        Model cubeModel = Raylib.LoadModelFromMesh(cubeMesh);
+
+        Material material = Raylib.LoadMaterialDefault();
+        Raylib.SetMaterialTexture(ref material, MaterialMapIndex.Albedo, texture);
+        
+        unsafe { cubeModel.Materials[0] = material; }
+
+        return cubeModel;
+    }
 
     public static void SetModelTexture(Model model, Texture2D texture)
     {

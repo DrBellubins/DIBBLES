@@ -194,7 +194,7 @@ public class Hotbar
             cam.Projection = CameraProjection.Orthographic;
 
             // Create the cube model with correct texture
-            Model cubeModel = MeshUtils.GenTexturedCube(BlockData.Textures[blockType]);
+            Model cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
             Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
