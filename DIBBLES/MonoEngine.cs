@@ -18,8 +18,10 @@ public class MonoEngine : Game
     public static bool IsPaused;
 
     public static GraphicsDeviceManager Graphics =  new GraphicsDeviceManager(null);
-    private SpriteBatch _spriteBatch;
-
+    public static SpriteBatch Sprites;
+    
+    public static SpriteFont MainFont;
+    
     // Custom deltaTime logic
     private Stopwatch timer = new();
     private long previousTicks = 0;
@@ -29,6 +31,8 @@ public class MonoEngine : Game
     public MonoEngine()
     {
         Graphics = new GraphicsDeviceManager(this);
+        
+        MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
@@ -57,9 +61,7 @@ public class MonoEngine : Game
 
     protected override void LoadContent()
     {
-        _spriteBatch = new SpriteBatch(GraphicsDevice);
-
-        // TODO: Port resource loading
+        Sprites = new SpriteBatch(GraphicsDevice);
     }
 
     protected override void Update(GameTime gameTime)

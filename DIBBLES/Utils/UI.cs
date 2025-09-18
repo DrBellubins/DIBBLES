@@ -1,5 +1,4 @@
-using System.Numerics;
-using Raylib_cs;
+using Microsoft.Xna.Framework;
 
 namespace DIBBLES.Utils;
 
@@ -57,51 +56,32 @@ public class UI
 
     public static void DrawText(string text, Vector2 position)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, position, 28, 0.0f, Color.White);
+        MonoEngine.Sprites.DrawString(MonoEngine.MainFont, text, position, Color.White);
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, position, 28, 0.0f, Color.White);
     }
 
     public static void DrawText(string text, float size, Vector2 position)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, position, size, 0.0f, Color.White);
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, position, size, 0.0f, Color.White);
     }
 
     public static void DrawText(string text, Vector2 position, Color color)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, position, 28, 0.0f, color);
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, position, 28, 0.0f, color);
     }
 
     public static void DrawText(string text, float size, Vector2 position, Color color)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, position, size, 0.0f, color);
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, position, size, 0.0f, color);
     }
 
     public static void DrawText(string text, float x, float y)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, new Vector2(x, y), 28, 0.0f, Color.White);
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, new Vector2(x, y), 28, 0.0f, Color.White);
     }
 
     public static void DrawText(string text, float size, float x, float y)
     {
-        Raylib.DrawTextEx(MonoEngine.MainFont, text, new Vector2(x, y), size, 0.0f, Color.White);
-    }
-
-    public static Rectangle CenterRect(Rectangle rect)
-    {
-        var outRect = new Rectangle(0.0f, 0.0f, rect.Width, rect.Height);
-
-        outRect.X = CenterPivot.X - (rect.Width / 2f);
-        outRect.Y = CenterPivot.Y - (rect.Height / 2f);
-
-        return outRect;
-    }
-
-    public static Rectangle AlignRect(Rectangle rect, Vector2 alignment)
-    {
-        var outRect = new Rectangle(0.0f, 0.0f, rect.Width, rect.Height);
-
-        outRect.X = alignment.X - (rect.Width / 2f);
-        outRect.Y = alignment.Y - (rect.Height / 2f);
-
-        return outRect;
+        //Raylib.DrawTextEx(MonoEngine.MainFont, text, new Vector2(x, y), size, 0.0f, Color.White);
     }
 }
