@@ -17,7 +17,7 @@ public class MonoEngine : Game
     public static bool IsRunning;
     public static bool IsPaused;
 
-    private GraphicsDeviceManager _graphics;
+    public static GraphicsDeviceManager Graphics;
     private SpriteBatch _spriteBatch;
 
     // Custom deltaTime logic
@@ -31,16 +31,18 @@ public class MonoEngine : Game
     public MonoEngine()
     {
         _instance = this;
-        _graphics = new GraphicsDeviceManager(this);
+        Graphics = new GraphicsDeviceManager(this);
+        
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
 
-        _graphics.PreferredBackBufferWidth = ScreenWidth;
-        _graphics.PreferredBackBufferHeight = ScreenHeight;
-        _graphics.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
+        Graphics.PreferredBackBufferWidth = ScreenWidth;
+        Graphics.PreferredBackBufferHeight = ScreenHeight;
+        Graphics.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
+        
         IsFixedTimeStep = false;
         
-        var voxelScene = new GameScene();
+        var voxelScene = new GameSceneMono();
         
         foreach (var scene in Scenes)
             scene.Start();
