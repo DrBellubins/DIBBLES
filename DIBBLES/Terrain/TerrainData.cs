@@ -124,65 +124,6 @@ public class BlockData
         // 3. Assign in BlockData
         TextureAtlas = result.AtlasTexture;
         AtlasUVs = result.BlockUVs;
-        
-        /*if (tempTextures.Count > 0)
-        {
-            int textureCount = tempTextures.Count; // Should be 5 (Dirt, Grass, Stone, Sand, Snow)
-            int atlasWidth = maxWidth * textureCount; // 5 textures in a single row
-            int atlasHeight = maxHeight;
-
-            RenderTexture2D atlasRenderTexture = Raylib.LoadRenderTexture(atlasWidth, atlasHeight);
-            Raylib.BeginTextureMode(atlasRenderTexture);
-            Raylib.ClearBackground(new Color(0, 0, 0, 0)); // Transparent background
-
-            for (int index = 0; index < textureCount; index++)
-            {
-                BlockType blockType = atlasBlockTypes[index];
-                
-                int x = index * maxWidth; // Place textures side by side
-                int y = 0;
-
-                // Define source rectangle to flip the texture vertically
-                var sourceRect = new Rectangle(0, 0, tempTextures[index].Width, -tempTextures[index].Height);
-                var destRect = new Rectangle(x, y, tempTextures[index].Width, tempTextures[index].Height);
-                
-                // Draw texture at the correct position
-                Raylib.DrawTexturePro(tempTextures[index], sourceRect, destRect, new Vector2(0, 0), 0.0f, Color.White);
-
-                // Calculate UV coordinates for a 5x1 atlas
-                float uMin = (float)(index * maxWidth) / atlasWidth;
-                float uMax = (float)((index + 1) * maxWidth) / atlasWidth;
-                float vMin = 0.0f;
-                float vMax = 1.0f;
-
-                // Store UV coordinates
-                AtlasUVs[blockType] = new Rectangle(uMin, vMin, uMax - uMin, vMax - vMin);
-            }
-
-            Raylib.EndTextureMode();
-
-            // Generate atlas mipmaps
-            var atlasImage = Raylib.LoadImageFromTexture(atlasRenderTexture.Texture);
-            var atlasTexture = Raylib.LoadTextureFromImage(atlasImage);
-            
-            // Export atlas for debugging
-            //Raylib.ExportImage(atlasImage, "atlas_debug.png");
-            
-            //Raylib.GenTextureMipmaps(ref atlasTexture); // Texture sampling bleeds to neighboring textures
-            Raylib.SetTextureFilter(atlasTexture, TextureFilter.Point);
-            
-            Raylib.UnloadImage(atlasImage);
-            Raylib.UnloadRenderTexture(atlasRenderTexture);
-            
-            TextureAtlas = atlasTexture;
-
-            // Unload temporary textures
-            foreach (var texture in tempTextures)
-            {
-                //if (texture.Id != 0)
-                //    Raylib.UnloadTexture(texture);
-            }
-        }*/
     }
     
     private static Texture2D loadBlockTexture(BlockType blockType)

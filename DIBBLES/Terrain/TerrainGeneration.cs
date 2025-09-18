@@ -116,8 +116,8 @@ public class TerrainGeneration
             TMesh.OpaqueModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
-            //if (currentModel.MeshCount > 0)
-            //    Raylib.UnloadModel(currentModel);
+            if (currentModel != null)
+                currentModel.Dispose();
             
             TMesh.OpaqueModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
@@ -135,8 +135,8 @@ public class TerrainGeneration
             TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
-            //if (currentModel.MeshCount > 0)
-            //    Raylib.UnloadModel(currentModel);
+            if (currentModel != null)
+                currentModel.Dispose();
             
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
@@ -354,7 +354,7 @@ public class TerrainGeneration
 
                 // Mesh generation (thread safe)
                 var meshData = TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+                var tMeshData = TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);
 
                 // Enqueue mesh upload for main thread
                 meshUploadQueue.Enqueue((chunk, meshData));
@@ -434,24 +434,14 @@ public class TerrainGeneration
             // Opaque model
             if (TMesh.OpaqueModels.TryGetValue(coord, out var oModel))
             {
-                if (oModel.MeshCount > 0)
-                {
-                    //Raylib.UnloadModel(oModel);
-                    TMesh.OpaqueModels[coord] = default; // Prevent double-unload
-                }
-                
+                oModel.Dispose();
                 TMesh.OpaqueModels.Remove(coord);
             }
 
             // Transparent model
             if (TMesh.TransparentModels.TryGetValue(coord, out var tModel))
             {
-                if (tModel.MeshCount > 0)
-                {
-                    //Raylib.UnloadModel(tModel);
-                    TMesh.TransparentModels[coord] = default;
-                }
-                
+                tModel.Dispose();
                 TMesh.TransparentModels.Remove(coord);
             }
 

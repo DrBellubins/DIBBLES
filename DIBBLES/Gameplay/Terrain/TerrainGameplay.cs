@@ -197,8 +197,8 @@ public class TerrainGameplay
             Lighting.Generate(chunk);
             
             // Regenerate mesh
-            Raylib.UnloadModel(TMesh.OpaqueModels[chunkCoord]); // Unload old model
-            Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
+            TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
+            TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
         
             var meshData = TMesh.GenerateMeshData(chunk, false);
             var tMeshData = TMesh.GenerateMeshData(chunk, true);
@@ -280,8 +280,8 @@ public class TerrainGameplay
         Lighting.Generate(chunk);
         
         // Regenerate mesh
-        Raylib.UnloadModel(TMesh.OpaqueModels[chunkCoord]); // Unload old model
-        Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
+        TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
+        TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
         
         var meshData = TMesh.GenerateMeshData(chunk, false);
         var tMeshData = TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);

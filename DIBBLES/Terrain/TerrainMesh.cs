@@ -4,6 +4,7 @@ using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
+
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
@@ -180,7 +181,7 @@ public class TerrainMesh
         foreach (var chunk in ECSChunks.Values)
         {
             if (TMesh.TransparentModels.TryGetValue(chunk.Position, out var oldModel))
-                Raylib.UnloadModel(oldModel);
+                oldModel.Dispose();
 
             var tMeshData = TMesh.GenerateMeshData(chunk, true, cameraPos);
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(tMeshData);
@@ -327,8 +328,8 @@ public class TerrainMesh
             var modelDict = isTransparentPass ? TransparentModels : OpaqueModels;
 
             // Unload existing model if present
-            if (modelDict.TryGetValue(neighborPos, out var oldModel) && oldModel.MeshCount > 0)
-                Raylib.UnloadModel(oldModel);
+            if (modelDict.TryGetValue(neighborPos, out var oldModel))
+                oldModel.Dispose();
 
             // Generate new mesh
             var meshData = GenerateMeshData(neighborChunk, isTransparentPass);

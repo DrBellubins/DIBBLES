@@ -1,12 +1,6 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Threading;
-using DIBBLES.Gameplay.Player;
+using Microsoft.Xna.Framework;
 using DIBBLES.Scenes;
-using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Terrain;
@@ -77,13 +71,13 @@ public class TerrainTick
                 var tMeshData = TerrainGeneration.TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);
 
                 // Unload and upload models (main thread only)
-                if (TerrainGeneration.TMesh.OpaqueModels.TryGetValue(chunkPos, out var oldOpaque) && oldOpaque.MeshCount > 0)
-                    Raylib_cs.Raylib.UnloadModel(oldOpaque);
+                if (TerrainGeneration.TMesh.OpaqueModels.TryGetValue(chunkPos, out var oldOpaque))
+                    oldOpaque.Dispose();
                 
                 TerrainGeneration.TMesh.OpaqueModels[chunkPos] = TerrainGeneration.TMesh.UploadMesh(meshData);
 
-                if (TerrainGeneration.TMesh.TransparentModels.TryGetValue(chunkPos, out var oldTrans) && oldTrans.MeshCount > 0)
-                    Raylib_cs.Raylib.UnloadModel(oldTrans);
+                if (TerrainGeneration.TMesh.TransparentModels.TryGetValue(chunkPos, out var oldTrans))
+                    oldTrans.Dispose();
                 
                 TerrainGeneration.TMesh.TransparentModels[chunkPos] = TerrainGeneration.TMesh.UploadMesh(tMeshData);
             }

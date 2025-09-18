@@ -4,13 +4,14 @@ using Microsoft.Xna.Framework.Graphics;
 namespace DIBBLES.Systems;
 
 // Add this class to represent a runtime mesh/model in MonoGame
-public class RuntimeModel
+public class RuntimeModel : IDisposable
 {
     public VertexBuffer VertexBuffer;
     public IndexBuffer IndexBuffer;
     public int TriangleCount;
     public Effect Effect;
     public Texture2D Texture;
+    private bool disposed = false;
 
     public void Draw(GraphicsDevice gd, Matrix world, Matrix view, Matrix projection)
     {
@@ -27,6 +28,7 @@ public class RuntimeModel
             Effect.Parameters["World"]?.SetValue(world);
             Effect.Parameters["View"]?.SetValue(view);
             Effect.Parameters["Projection"]?.SetValue(projection);
+            
             if (Texture != null)
                 Effect.Parameters["Texture"]?.SetValue(Texture);
         }
@@ -42,6 +44,19 @@ public class RuntimeModel
                 0,
                 TriangleCount
             );
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!disposed)
+        {
+            VertexBuffer?.Dispose();
+            IndexBuffer?.Dispose();
+            Texture?.Dispose();
+            Effect?.Dispose(); // Optional, only if it's not shared
+            disposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 }
