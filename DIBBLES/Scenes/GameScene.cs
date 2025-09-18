@@ -61,7 +61,7 @@ public class GameScene : Scene
         
         gameChat.Update();
         
-        if (Raylib.IsKeyPressed(KeyboardKey.L))
+        if (!Chat.IsOpen && Raylib.IsKeyPressed(KeyboardKey.L))
             WorldSave.SaveWorldData("test");
         
         if (Raylib.IsKeyPressed(KeyboardKey.F2))
@@ -77,6 +77,7 @@ public class GameScene : Scene
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
+        // Draw 3d world to back buffer
         Raylib.BeginTextureMode(backBuffer);
         Raylib.ClearBackground(Color.SkyBlue);
         Raylib.BeginMode3D(PlayerCharacter.Camera);
@@ -89,18 +90,14 @@ public class GameScene : Scene
         Raylib.EndMode3D();
         Raylib.EndTextureMode();
         
+        // Draw UI to ui buffer
         Raylib.BeginTextureMode(UIBuffer);
         Raylib.ClearBackground(new Color(0, 0, 0, 0));
         
         PlayerCharacter.DrawUI();
-        gameChat.Draw();
         
-        Raylib.DrawTextureRec(
-            gameChat.ChatTexture.Texture,
-            new Rectangle(0, 0, gameChat.ChatTexture.Texture.Width, -gameChat.ChatTexture.Texture.Height),
-            new Vector2(0f, gameChat.heightPos), // or the y position you want
-            Color.White
-        );
+        if (Chat.IsOpen || Chat.IsClosedButShown)
+            gameChat.DrawBG();
         
         Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
@@ -123,6 +120,8 @@ public class GameScene : Scene
         Raylib.DrawTextureRec(UIBuffer.Texture,
             new Rectangle(0f, 0f, UIBuffer.Texture.Width, -UIBuffer.Texture.Height),
             Vector2.Zero, Color.White);
+        
+        gameChat.Draw();
         
         Raylib.EndDrawing();
     }

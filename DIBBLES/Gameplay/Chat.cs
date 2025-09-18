@@ -151,6 +151,14 @@ public class Chat
         if (TerrainGeneration.DoneLoading)
             GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
+
+    public void DrawBG()
+    {
+        chatBox.X = UI.LeftCenterPivot.X;
+        chatBox.Y = heightPos;
+        
+        Raylib.DrawRectangleRec(chatBox, UI.MainColor);
+    }
     
     public void Draw()
     {
@@ -167,8 +175,6 @@ public class Chat
         {
             Raylib.BeginTextureMode(ChatTexture);
             Raylib.ClearBackground(new Color(0, 0, 0, 0));
-            
-            Raylib.DrawRectangleRec(chatBox, UI.MainColor);
 
             if (!isUserScrolling) scrollOffset = 0; // Auto-scroll if not user scrolling
             
@@ -203,6 +209,13 @@ public class Chat
             }
             
             Raylib.EndTextureMode();
+            
+            Raylib.DrawTextureRec(
+                ChatTexture.Texture,
+                new Rectangle(0, 0, ChatTexture.Texture.Width, -ChatTexture.Texture.Height),
+                new Vector2(0f, heightPos),
+                Color.White
+            );
             
             if (!IsClosedButShown)
                 textBox.Draw();

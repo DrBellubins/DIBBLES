@@ -46,7 +46,7 @@ public class UIBlur
         var blurTexelLoc = Raylib.GetShaderLocation(blurShader, "texelSize");
         var blurRadiuLoc = Raylib.GetShaderLocation(blurShader, "radius");
 
-        blurBuffer = Raylib.LoadRenderTexture(64, 36);
+        blurBuffer = Raylib.LoadRenderTexture(128, 72);
         BlurMaskBuffer = Raylib.LoadRenderTexture(backBuffer.Texture.Width, backBuffer.Texture.Height);
 
         Raylib.SetTextureFilter(blurBuffer.Texture, TextureFilter.Bilinear);
