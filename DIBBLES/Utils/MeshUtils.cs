@@ -25,46 +25,18 @@ public static class MeshUtils
     
     public static Model GenTexturedCubeIcon(Texture2D texture)
     {
-        
-        
         // Add per-face vertex color data
         Color[] faceColors = new Color[]
         {
-            new Color(100,100,100,255), // Front (-Z)
-            new Color(140,140,140,255), // Back (+Z)
-            new Color(180,180,180,255), // Left (-X)
-            new Color(140,140,140,255), // Right (+X)
-            new Color(120,120,120,255), // Bottom (-Y)
-            new Color(255,255,255,255), // Top (+Y)
+            new Color(180,180,180,255), // Right (-Z)
+            new Color(0,0,0,0),         // Unused (+Z)
+            new Color(150,150,150,255), // Left (-X)
+            new Color(0,0,0,0),         // Unused (+X)
+            new Color(255,255,255,255), // Top (-Y)
+            new Color(0,0,0,0),         // Unused (+Y)
         };
         
         Mesh cubeMesh = GenMeshCubeWithColors(1f, 1f, 1f, faceColors);
-
-        // Each cube face is 4 vertices, 6 faces = 24 vertices (if no vertex sharing)
-        // If the mesh only has 8 shared vertices, you'll need to "explode" it first.
-        // Raylib's GenMeshCube uses 24 vertices, so it's safe!
-
-        unsafe
-        {
-            byte* colors = (byte*)Raylib.MemAlloc(sizeof(byte) * 24 * 4);
-            
-            for (int face = 0; face < 6; face++)
-            {
-                Color c = faceColors[face];
-                
-                for (int i = 0; i < 4; i++)
-                {
-                    int idx = face * 4 + i;
-                    colors[idx * 4 + 0] = c.R;
-                    colors[idx * 4 + 1] = c.G;
-                    colors[idx * 4 + 2] = c.B;
-                    colors[idx * 4 + 3] = c.A;
-                }
-            }
-            
-            cubeMesh.Colors = colors;
-        }
-
         Model cubeModel = Raylib.LoadModelFromMesh(cubeMesh);
 
         Material material = Raylib.LoadMaterialDefault();
@@ -137,17 +109,18 @@ public static class MeshUtils
 
         ushort[] indices = new ushort[]
         {
-            // Each face: 0,1,2  0,2,3
-            0,1,2, 0,2,3,
-            4,5,6, 4,6,7,
-            8,9,10, 8,10,11,
-            12,13,14, 12,14,15,
-            16,17,18, 16,18,19,
-            20,21,22, 20,22,23
+            // Each face: 0,2,1  0,3,2
+            0,2,1, 0,3,2,
+            4,6,5, 4,7,6,
+            8,10,9, 8,11,10,
+            12,14,13, 12,15,14,
+            16,18,17, 16,19,18,
+            20,22,21, 20,23,22
         };
     
         // Per-vertex color (4 bytes per vertex, RGBA)
         byte[] colors = new byte[vertexCount * 4];
+        
         for (int face = 0; face < 6; face++)
         {
             Color c = faceColors[face];
