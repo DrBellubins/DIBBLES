@@ -186,27 +186,20 @@ public class Hotbar
             RenderTexture2D renderTexture = Raylib.LoadRenderTexture(iconSize, iconSize);
 
             // Set up the isometric orthographic camera
-            var orthoCamera = new Camera3D();
-            float isoYaw = MathF.PI / 4f; // 45 deg
-            float isoPitch = MathF.Atan(1f / MathF.Sqrt(2f)); // ≈ 35.264 deg
-
-            float radius = 2.5f;
-            float x = radius * MathF.Cos(isoPitch) * MathF.Sin(isoYaw);
-            float y = radius * MathF.Sin(isoPitch);
-            float z = radius * MathF.Cos(isoPitch) * MathF.Cos(isoYaw);
-            
-            orthoCamera.Position = new Vector3(x, y, z);
-            orthoCamera.Target = Vector3.Zero;
-            orthoCamera.Up = Vector3.UnitY;
-            orthoCamera.FovY = 2.0f;
-            orthoCamera.Projection = CameraProjection.Orthographic;
+            var cam = new Camera3D();
+            cam.Position = new Vector3(2, 2, 2);
+            cam.Target = Vector3.Zero;
+            cam.Up = Vector3.UnitY;
+            cam.FovY = 10.0f; // Try 10, 20, 30, etc.
+            cam.Projection = CameraProjection.Orthographic;
 
             // Create the cube model with correct texture
             Model cubeModel = MeshUtils.GenTexturedCube(BlockData.Textures[blockType]);
 
             Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
-            Raylib.BeginMode3D(orthoCamera);
+            //Raylib.ClearBackground(Color.White);
+            Raylib.BeginMode3D(cam);
 
             Raylib.DrawCube(Vector3.Zero, 1f, 1f, 1f, Color.Red);
             //Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
