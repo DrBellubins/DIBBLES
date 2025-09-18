@@ -133,8 +133,8 @@ public class Hotbar
     {
         Raylib.DrawRectangleRec(hotbarRect, UI.MainColor);
 
-        if (blockIcons.Values.FirstOrDefault() is Texture2D tex)
-            Raylib.DrawTexture(tex, 0, 0, Color.White);
+        /*if (blockIcons.Values.FirstOrDefault() is Texture2D tex)
+            Raylib.DrawTexture(tex, 0, 0, Color.White);*/
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -153,19 +153,16 @@ public class Hotbar
             if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
             {
                 var xPos = hotbarRect.X + i * hotbarRect.Height;
-                var itemTexture = BlockData.Textures[hotbarSlots[i].Type];
-
-                var itemOrigRect = new Rectangle(0.0f, 0.0f, itemTexture.Width, itemTexture.Height);
+                
                 var itemDestRect = new Rectangle(xPos + 0.1f * hotbarRect.Height,
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
+                    var itemOrigRect = new Rectangle(0.0f, 0.0f, iconTex.Width, iconTex.Height);
                     Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
                 }
-                
-                //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }
         
@@ -180,7 +177,7 @@ public class Hotbar
     private void renderBlockIcons()
     {
         int iconSize = 96; // icon pixel size
-        float cubeScale = 0.9f; // scale the cube to fit nicely in the icon
+        float cubeScale = 1.25f; // scale the cube to fit nicely in the icon
 
         foreach (BlockType blockType in Enum.GetValues(typeof(BlockType)))
         {
@@ -193,12 +190,12 @@ public class Hotbar
             cam.Position = new Vector3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
-            cam.FovY = 2.0f;
+            cam.FovY = 2f;
             cam.Projection = CameraProjection.Orthographic;
 
             // Create the cube model with correct texture
             Model cubeModel = MeshUtils.GenTexturedCube(BlockData.Textures[blockType]);
-
+            
             Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
             Raylib.BeginMode3D(cam);
