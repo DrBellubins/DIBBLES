@@ -7,6 +7,9 @@ class Program
 {
     static void Main(string[] args)
     {
-        Engine.Initialize();
+        var game = new MonoEngine();
+        game.Run();
+        
+        //Engine.Initialize();
     }
 }
