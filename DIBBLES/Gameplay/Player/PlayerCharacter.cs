@@ -93,8 +93,46 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        Commands.RegisterCommand("kill", "Kills the player", Kill);
-        Commands.RegisterCommand("spawn", "Respawns player at spawn point.", RespawnCmd);
+        Commands.RegisterCommand("kill", "Kills the player", args => Kill());
+        Commands.RegisterCommand("spawn", "Respawns player at spawn point",  args => RespawnCmd());
+        
+        Commands.RegisterCommand("heal", "Heals the player: /heal for full health", args =>
+        {
+            int healAmount = 0;
+
+            if (args.Length != 1)
+            {
+                healAmount = 100;
+                Chat.Write(ChatMessageType.Command, $"Set player health to full health");
+            }
+            else if (int.TryParse(args[0], out var amount))
+            {
+                healAmount = amount;
+                Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
+            }
+            else
+                Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
+            
+            SetHealth(healAmount);
+        });
+        
+        Commands.RegisterCommand("teleport", "Teleport to a position: /teleport x y z", args =>
+        {
+            if (args.Length == 1 && args[0].Contains(','))
+                args = args[0].Split(',');
+
+            if (args.Length != 3 ||
+                !float.TryParse(args[0], out var x) ||
+                !float.TryParse(args[1], out var y) ||
+                !float.TryParse(args[2], out var z))
+            {
+                Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
+                return;
+            }
+
+            Position = new Vector3(x, y, z);
+            Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
+        });
         
         CursorManager.LockCursor();
     }
@@ -366,6 +404,11 @@ public class PlayerCharacter
         wasGrounded = isGrounded;
     }
 
+    public void SetHealth(int amount)
+    {
+        Health = amount;
+    }
+    
     public void Damage(int damage)
     {
         if (Health > 0)
@@ -401,7 +444,8 @@ public class PlayerCharacter
     {
         Position = spawnPosition;
         SetCameraDirection(WorldSave.Data.CameraDirection);
-        
+
+        Health = 100;
         Velocity = Vector3.Zero;
         IsDead = false;
         IsFrozen = false;

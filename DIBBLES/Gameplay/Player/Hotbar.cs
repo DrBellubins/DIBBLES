@@ -40,18 +40,29 @@ public class Hotbar
             hotBarSelectionIndex = WorldSave.Data.HotbarPosition;
 
         Resize();
+        
+        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", args =>
+        {
+            if (args.Length != 1)
+            {
+                Chat.Write(ChatMessageType.Error, "Usage: /give blocktype");
+                return;
+            }
 
-        // Temporary
-        hotbarSlots[0] = new ItemSlot(1, BlockType.Grass);
-        hotbarSlots[1] = new ItemSlot(1, BlockType.Stone);
-        hotbarSlots[2] = new ItemSlot(1, BlockType.Dirt);
-        hotbarSlots[3] = new ItemSlot(1, BlockType.Sand);
-        hotbarSlots[4] = new ItemSlot(1, BlockType.Wood);
-        hotbarSlots[5] = new ItemSlot(1, BlockType.WoodLog);
-        hotbarSlots[6] = new ItemSlot(1, BlockType.Feeb);
-        hotbarSlots[7] = new ItemSlot(1, BlockType.Glass);
-
-        SelectedItem = hotbarSlots[0];
+            var blockName = args[0].ToLower();
+            
+            if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
+            {
+                // Give block logic (e.g., add to hotbar or inventory)
+                hotbarSlots[hotBarSelectionIndex] = new ItemSlot(1, blockType);
+                
+                Chat.Write(ChatMessageType.Command, $"Gave yourself '{blockType}'");
+            }
+            else
+            {
+                Chat.Write(ChatMessageType.Error, $"Unknown block type: '{blockName}'");
+            }
+        });
     }
 
     public void Update(bool isPlayerDead, bool isFrozen)

@@ -47,7 +47,7 @@ public class Chat
     
     // Chat disappear timer
     private float elapsed = 0f;
-    private const float disappearTime = 5f;
+    private const float disappearTime = 2.5f;
     
     // Previous message traversal
     private int prevMsgTraversalIndex = 0;
@@ -89,26 +89,22 @@ public class Chat
         // Send msg/cmd to chat
         if (Input.SendChat() && textBox.Text != string.Empty)
         {
-            if (textBox.Text[0] == '/')
+            if (textBox.Text.StartsWith("/"))
             {
-                var cmdEntry = Commands.Registry
-                    .FirstOrDefault(pair => $"/{pair.Key.Name}" == textBox.Text);
-                
-                if (!cmdEntry.Equals(default(KeyValuePair<Command, Action>)))
+                var input = textBox.Text[1..];
+                var split = input.Split(' ', 2);
+                var cmdName = split[0].ToLower();
+                var args = split.Length > 1 ? split[1].Split(' ') : Array.Empty<string>();
+
+                if (Commands.Registry.TryGetValue(cmdName, out var cmd))
                 {
-                    Write(ChatMessageType.CommandHeader, $"Result from command '{cmdEntry.Key.Name}' :");
-                    cmdEntry.Value();
-                    
+                    cmd.Handler(args);
                     Console.WriteLine($"Player executed command '{textBox.Text}'.");
                 }
                 else
                 {
-                    Write(ChatMessageType.Error, $"Command '{textBox.Text}' not found.");
-                    
+                    Write(ChatMessageType.Error, $"Unknown command: {cmdName}");
                     Console.WriteLine($"Player attempted to execute nonexistent command '{textBox.Text}'.");
-                    
-                    if (!isUserScrolling)
-                        scrollOffset = 0;
                 }
             }
             else
@@ -266,6 +262,6 @@ public class Chat
     public static void WriteHelp()
     {
         foreach (var cmd in Commands.Registry)
-            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"/{cmd.Key.Name}: {cmd.Key.Description}"));
+            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"/{cmd.Value.Name}: {cmd.Value.Description}"));
     }
 }

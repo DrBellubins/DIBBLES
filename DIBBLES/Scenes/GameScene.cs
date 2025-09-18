@@ -47,9 +47,9 @@ public class GameScene : Scene
         
         gameChat.Start();
         
-        Commands.RegisterCommand("help", "Lists all available commands.", Chat.WriteHelp);
-        Commands.RegisterCommand("debug", "Toggle debug information", Debug.ToggleDebug);
-        Commands.RegisterCommand("debugEx", "Toggle extended debug information", Debug.ToggleDebugExtended);
+        Commands.RegisterCommand("help", "Lists all available commands", args => Chat.WriteHelp());
+        Commands.RegisterCommand("debug", "Toggle debug information", args => Debug.ToggleDebug());
+        Commands.RegisterCommand("debugEx", "Toggle extended debug information", args => Debug.ToggleDebugExtended());
     }
 
     public override void Update()
