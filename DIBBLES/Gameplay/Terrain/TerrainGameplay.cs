@@ -216,8 +216,8 @@ public class TerrainGameplay
             // Play break sound
             var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
-            if (sound.FrameCount != 0)
-                Raylib.PlaySound(sound);
+            if (sound != null)
+                sound.Play();
         }
     }
     
@@ -284,7 +284,7 @@ public class TerrainGameplay
         Raylib.UnloadModel(TMesh.TransparentModels[chunkCoord]); // Unload old tModel
         
         var meshData = TMesh.GenerateMeshData(chunk, false);
-        var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+        var tMeshData = TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);
             
         TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
         TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);
@@ -299,8 +299,8 @@ public class TerrainGameplay
         // Play place sound
         var sound = BlockData.Sounds[blockType].RND;
         
-        if (sound.FrameCount != 0)
-            Raylib.PlaySound(sound);
+        if (sound != null)
+            sound.Play();
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

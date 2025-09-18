@@ -147,7 +147,7 @@ public class Chat
         }*/
         
         if (TerrainGeneration.DoneLoading)
-            GameScene.PlayerCharacter.IsFrozen = IsOpen;
+            GameSceneMono.PlayerCharacter.IsFrozen = IsOpen;
     }
 
     public void DrawBG()
@@ -204,7 +204,7 @@ public class Chat
                         break;
                 }
                 
-                Raylib.DrawTextEx(Engine.MainFont, msg.Message, new Vector2(0f, index * FontSize), FontSize, 1f, msgColor);
+                Raylib.DrawTextEx(MonoEngine.MainFont, msg.Message, new Vector2(0f, index * FontSize), FontSize, 1f, msgColor);
 
                 index++;
             }

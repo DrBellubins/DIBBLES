@@ -30,7 +30,7 @@ public static class CursorManager
     {
         if (IsLocked)
         {
-            Raylib.SetMousePosition(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2);
+            Raylib.SetMousePosition(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
         }
     }
 }

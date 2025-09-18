@@ -1,4 +1,4 @@
-using System.Diagnostics;
+/*using System.Diagnostics;
 using Raylib_cs;
 using System.Numerics;
 using DIBBLES.Effects;
@@ -97,4 +97,4 @@ public class Engine
     {
         IsRunning = false;
     }
-}
+}*/

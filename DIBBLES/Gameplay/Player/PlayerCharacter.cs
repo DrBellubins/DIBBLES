@@ -205,8 +205,8 @@ public class PlayerCharacter
         
         var mousePosition = Input.CursorPosition();
         
-        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
-                                mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
+        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= MonoEngine.ScreenWidth &&
+                                mousePosition.Y >= 0 && mousePosition.Y <= MonoEngine.ScreenHeight;
         
         //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsFrozen)
         //    CursorManager.LockCursor();
@@ -483,7 +483,7 @@ public class PlayerCharacter
         // TODO: Temporary death screen
         if (IsDead)
         {
-            var deathScreen = new Rectangle(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
+            var deathScreen = new Rectangle(0, 0, MonoEngine.ScreenWidth, MonoEngine.ScreenHeight);
             
             // TODO: Monogame
             //Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));

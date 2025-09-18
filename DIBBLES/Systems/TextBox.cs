@@ -68,7 +68,7 @@ public class TextBox
             if ((int)(time * 2) % 2 == 0) // Blinks every 0.5s
             {
                 // Get text width
-                var textWidth = Raylib.MeasureTextEx(Engine.MainFont, Text, 24, 0).X;
+                var textWidth = Raylib.MeasureTextEx(MonoEngine.MainFont, Text, 24, 0).X;
                 
                 float caretX = textPos.X + textWidth + 2f;
                 float caretY = textPos.Y;

@@ -51,7 +51,7 @@ public class TerrainMesh
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
         
-                long chunkSeed = GameScene.TerrainGen.Seed 
+                long chunkSeed = GameSceneMono.TerrainGen.Seed 
                                  ^ (block.Position.X * 73428767L)
                                  ^ (block.Position.Y * 9127841L)
                                  ^ (block.Position.Z * 192837465L);
@@ -222,7 +222,7 @@ public class TerrainMesh
             Model model = Raylib.LoadModelFromMesh(mesh);
 
             // Assign texture atlas
-            if (BlockData.TextureAtlas.Id != 0)
+            if (BlockData.TextureAtlas != null)
             {
                 model.Materials[0].Shader = TerrainShader;
                 model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = BlockData.TextureAtlas;

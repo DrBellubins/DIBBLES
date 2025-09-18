@@ -13,7 +13,7 @@ public class Time
         get
         {
             // Clamp deltaTime to prevent teleportation when lagging
-            return !Engine.IsPaused ? GMath.Clamp(deltaTime, 0.001f, 0.1f) : 0f;
+            return !MonoEngine.IsPaused ? GMath.Clamp(deltaTime, 0.001f, 0.1f) : 0f;
         }
         set{ deltaTime = value; }
     }

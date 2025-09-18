@@ -1,8 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
+using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Audio;
+using SixLabors.ImageSharp;
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
@@ -33,7 +35,7 @@ public class BlockData
     public static Dictionary<BlockType, BlockSounds> Sounds = new();
     
     public static Texture2D TextureAtlas; // Store the atlas
-    public static Dictionary<BlockType, Rectangle> AtlasUVs = new(); // Store UV mappings
+    public static Dictionary<BlockType, RectangleF> AtlasUVs = new(); // Store UV mappings
     
     public static void InitializeBlockPrefabs()
     {
@@ -105,7 +107,23 @@ public class BlockData
         }
 
         // Create texture atlas in a 5x1 layout
-        
+        // 1. Get your block types (skip air/water)
+        var blockTypes = Enum.GetValues(typeof(BlockType))
+            .Cast<BlockType>()
+            .Where(t => t != BlockType.Air && t != BlockType.Water)
+            .ToArray();
+
+        // 2. Call the generator
+        var result = AtlasGenerator.GenerateBlockAtlas(
+            MonoEngine.Graphics.GraphicsDevice,
+            Path.Combine(AppContext.BaseDirectory, "Assets/Textures/Blocks"),
+            blockTypes,
+            16 // or your tile size
+        );
+
+        // 3. Assign in BlockData
+        TextureAtlas = result.AtlasTexture;
+        AtlasUVs = result.BlockUVs;
         
         /*if (tempTextures.Count > 0)
         {
