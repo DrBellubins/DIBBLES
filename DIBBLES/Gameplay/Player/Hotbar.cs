@@ -159,7 +159,6 @@ public class Hotbar
 
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
-                    Console.WriteLine("Texture exists");
                     Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
                 }
                 
@@ -209,7 +208,8 @@ public class Hotbar
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
             Raylib.BeginMode3D(orthoCamera);
 
-            Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
+            Raylib.DrawCube(Vector3.Zero, 1f, 1f, 1f, Color.Red);
+            //Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
 
             Raylib.EndMode3D();
             Raylib.EndTextureMode();
