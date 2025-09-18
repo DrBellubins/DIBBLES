@@ -148,7 +148,8 @@ public class Hotbar
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
-                Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
+                drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), 1f);
+                //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }
         
@@ -159,6 +160,82 @@ public class Hotbar
         Raylib.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
+    struct Vertex
+    {
+        public Vector2 Position;
+        public Vector2 TexCoord;
+        public Color Color;
+    }
+    
+    private void drawBlockCube2D(Texture2D tex, Vector2 pos, float size)
+    {
+        // Parameters
+        float face = size;
+        float skew = size * 0.5f;
+        float thickness = size * 0.25f;
+    
+        // Source rect: whole block texture
+        Rectangle src = new Rectangle(0, 0, tex.Width, tex.Height);
+    
+        // 1. Draw top face (skewed upwards)
+        Vector2[] top = new Vector2[]
+        {
+            pos + new Vector2(0, -thickness),                         // TL
+            pos + new Vector2(face, -thickness),                      // TR
+            pos + new Vector2(face - skew, 0),                        // BR
+            pos + new Vector2(skew, 0)                                // BL
+        };
+    
+        // 2. Draw side face (skewed right)
+        Vector2[] side = new Vector2[]
+        {
+            pos + new Vector2(face, -thickness),                      // TL
+            pos + new Vector2(face, face - thickness),                // TR
+            pos + new Vector2(face - skew, face),                     // BR
+            pos + new Vector2(face - skew, 0)                         // BL
+        };
+    
+        // 3. Draw front face (straight)
+        Vector2[] front = new Vector2[]
+        {
+            pos + new Vector2(skew, 0),                               // TL
+            pos + new Vector2(face - skew, 0),                        // TR
+            pos + new Vector2(face - skew, face),                     // BR
+            pos + new Vector2(skew, face)                             // BL
+        };
+    
+        // Helper for drawing a quad with a texture
+        void DrawQuad(Texture2D t, Vector2[] verts)
+        {
+            Vertex[] vertices = new Vertex[4];
+            
+            for (int i = 0; i < 4; i++)
+            {
+                vertices[i].Position = verts[i];
+                vertices[i].TexCoord = new Vector2((i == 1 || i == 2) ? 1 : 0, (i >= 2) ? 1 : 0);
+                vertices[i].Color = Color.White;
+            }
+            
+            Rlgl.SetTexture(t.Id);
+            Rlgl.Begin(DrawMode.Quads);
+            
+            foreach (var v in vertices)
+            {
+                Rlgl.Color4ub(v.Color.R, v.Color.G, v.Color.B, v.Color.A);
+                Rlgl.TexCoord2f(v.TexCoord.X, v.TexCoord.Y);
+                Rlgl.Vertex2f(v.Position.X, v.Position.Y);
+            }
+            
+            Rlgl.End();
+            Rlgl.SetTexture(0);
+        }
+    
+        // Draw order: side, top, front (front last covers seams)
+        DrawQuad(tex, side);
+        DrawQuad(tex, top);
+        DrawQuad(tex, front);
+    }
+    
     public void Resize()
     {
         var hotbarPos = UI.BottomCenterPivot;
