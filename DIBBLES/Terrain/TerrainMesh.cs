@@ -1,9 +1,9 @@
-using System.Numerics;
+using Microsoft.Xna.Framework;
 using System.Runtime.InteropServices;
 using DIBBLES.Scenes;
+using DIBBLES.Systems;
 using DIBBLES.Utils;
-using Raylib_cs;
-
+using Microsoft.Xna.Framework.Graphics;
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
@@ -15,8 +15,8 @@ public class TerrainMesh
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
 
-    public Dictionary<Vector3Int, Model> OpaqueModels = new();
-    public Dictionary<Vector3Int, Model> TransparentModels = new();
+    public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
+    public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
     public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass, Vector3? cameraPosition = null)
@@ -188,48 +188,57 @@ public class TerrainMesh
     }
     
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
-    public Model UploadMesh(MeshData data)
+    public RuntimeModel UploadMesh(MeshData data)
     {
-        unsafe
+        var graphicsDevice = MonoEngine.Graphics.GraphicsDevice;
+        
+        // Create vertex array
+        var vertices = new VertexPositionNormalTexture[data.VertexCount];
+        for (int i = 0; i < data.VertexCount; i++)
         {
-            Mesh mesh = new Mesh
-            {
-                VertexCount = data.VertexCount,
-                TriangleCount = data.TriangleCount
-            };
-
-            // Allocate and copy arrays
-            mesh.Vertices = (float*)Raylib.MemAlloc((uint)data.Vertices.Length * sizeof(float));
-            Marshal.Copy(data.Vertices, 0, (IntPtr)mesh.Vertices, data.Vertices.Length);
-
-            mesh.Normals = (float*)Raylib.MemAlloc((uint)data.Normals.Length * sizeof(float));
-            Marshal.Copy(data.Normals, 0, (IntPtr)mesh.Normals, data.Normals.Length);
-
-            mesh.TexCoords = (float*)Raylib.MemAlloc((uint)data.TexCoords.Length * sizeof(float));
-            Marshal.Copy(data.TexCoords, 0, (IntPtr)mesh.TexCoords, data.TexCoords.Length);
-
-            mesh.Colors = (byte*)Raylib.MemAlloc((uint)data.Colors.Length * sizeof(byte));
-            Marshal.Copy(data.Colors, 0, (IntPtr)mesh.Colors, data.Colors.Length);
-
-            mesh.Indices = (ushort*)Raylib.MemAlloc((uint)data.Indices.Length * sizeof(ushort));
-            
-            byte[] indicesBytes = new byte[data.Indices.Length * sizeof(ushort)];
-            Buffer.BlockCopy(data.Indices, 0, indicesBytes, 0, indicesBytes.Length);
-            Marshal.Copy(indicesBytes, 0, (IntPtr)mesh.Indices, indicesBytes.Length);
-
-            Raylib.UploadMesh(&mesh, false);
-
-            Model model = Raylib.LoadModelFromMesh(mesh);
-
-            // Assign texture atlas
-            if (BlockData.TextureAtlas != null)
-            {
-                model.Materials[0].Shader = TerrainShader;
-                model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture = BlockData.TextureAtlas;
-            }
-
-            return model;
+            var pos = new Vector3(
+                data.Vertices[i * 3 + 0],
+                data.Vertices[i * 3 + 1],
+                data.Vertices[i * 3 + 2]
+            );
+            var normal = new Vector3(
+                data.Normals[i * 3 + 0],
+                data.Normals[i * 3 + 1],
+                data.Normals[i * 3 + 2]
+            );
+            var uv = new Vector2(
+                data.TexCoords[i * 2 + 0],
+                data.TexCoords[i * 2 + 1]
+            );
+            vertices[i] = new VertexPositionNormalTexture(pos, normal, uv);
         }
+
+        // Create index array
+        var indices = new ushort[data.TriangleCount * 3];
+        Array.Copy(data.Indices, indices, indices.Length);
+
+        var vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionNormalTexture), data.VertexCount, BufferUsage.WriteOnly);
+        vertexBuffer.SetData(vertices);
+
+        var indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
+        indexBuffer.SetData(indices);
+
+        var effect = new BasicEffect(graphicsDevice)
+        {
+            TextureEnabled = true,
+            Texture = BlockData.TextureAtlas,
+            LightingEnabled = false,
+            VertexColorEnabled = false
+        };
+
+        return new RuntimeModel
+        {
+            VertexBuffer = vertexBuffer,
+            IndexBuffer = indexBuffer,
+            TriangleCount = data.TriangleCount,
+            Effect = effect,
+            Texture = BlockData.TextureAtlas
+        };
     }
     
     private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
