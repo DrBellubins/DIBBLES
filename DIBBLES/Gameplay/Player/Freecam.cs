@@ -11,6 +11,9 @@ public class Freecam
     
     public void Update(PlayerCharacter playerCharacter)
     {
+        if (Chat.IsOpen)
+            return;
+        
         float currentMovespeed;
 
         if (Input.Run())

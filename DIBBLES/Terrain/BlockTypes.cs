@@ -13,5 +13,6 @@ public enum BlockType
     Wisp,
     WoodLog,
     Leaves,
-    Glass
+    Glass,
+    Feeb
 }

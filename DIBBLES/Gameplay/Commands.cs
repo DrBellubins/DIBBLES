@@ -12,6 +12,6 @@ public static class Commands
 
     public static void RegisterCommand(string command, string description, Action action)
     {
-        Registry.Add(new Command($"/{command}", description), action);
+        Registry.Add(new Command($"{command}", description), action);
     }
 }

@@ -48,7 +48,7 @@ public class Hotbar
         hotbarSlots[3] = new ItemSlot(1, BlockType.Sand);
         hotbarSlots[4] = new ItemSlot(1, BlockType.Wood);
         hotbarSlots[5] = new ItemSlot(1, BlockType.WoodLog);
-        hotbarSlots[6] = new ItemSlot(1, BlockType.Leaves);
+        hotbarSlots[6] = new ItemSlot(1, BlockType.Feeb);
         hotbarSlots[7] = new ItemSlot(1, BlockType.Glass);
 
         SelectedItem = hotbarSlots[0];

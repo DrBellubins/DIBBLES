@@ -5,6 +5,7 @@ namespace DIBBLES.Systems;
 
 public static class Input
 {
+    // Mouse
     public static Vector2 LookDelta()
     {
         return Raylib.GetMouseDelta();
@@ -20,6 +21,7 @@ public static class Input
         return Raylib.GetMouseWheelMove();
     }
     
+    // Movement
     public static bool MoveForward()
     {
         return Raylib.IsKeyDown(KeyboardKey.W);
@@ -74,6 +76,7 @@ public static class Input
         return Raylib.IsKeyPressed(KeyboardKey.Escape);
     }
     
+    // Chat
     public static bool OpenChat()
     {
         return Raylib.IsKeyPressed(KeyboardKey.T);
@@ -97,5 +100,11 @@ public static class Input
     public static bool NewerMessage()
     {
         return Raylib.IsKeyPressed(KeyboardKey.Down);
+    }
+    
+    // Various
+    public static bool Quit()
+    {
+        return Raylib.IsKeyPressed(KeyboardKey.Q);
     }
 }

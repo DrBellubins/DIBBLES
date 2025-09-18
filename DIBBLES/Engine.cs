@@ -5,6 +5,7 @@ using DIBBLES.Effects;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using System.Threading;
+using DIBBLES.Gameplay;
 using DIBBLES.Systems;
 
 namespace DIBBLES;
@@ -31,7 +32,7 @@ public class Engine
         // Initialize window
         Raylib.InitWindow(ScreenWidth, ScreenHeight, "DIBBLES");
         Raylib.SetTargetFPS(0); // Disable Raylib's FPS cap
-        Raylib.SetExitKey(KeyboardKey.Q);
+        Raylib.SetExitKey(KeyboardKey.Null);
 
         Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
         
@@ -57,7 +58,7 @@ public class Engine
         
         while (IsRunning)
         {
-            if (Raylib.WindowShouldClose())
+            if ((!Chat.IsOpen && Input.Quit()) || Raylib.WindowShouldClose())
                 Close();
             
             // Update and draw

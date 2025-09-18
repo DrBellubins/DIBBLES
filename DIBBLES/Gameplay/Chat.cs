@@ -12,6 +12,7 @@ public enum ChatMessageType
 {
     Message,
     Command,
+    CommandHeader,
     Warning,
     Error
 }
@@ -22,6 +23,7 @@ public struct ChatMessage(ChatMessageType type, string message)
     public string Message = message;
 }
 
+// TODO: Text box sometimes disappears
 // TODO: Implement text wrapping.
 public class Chat
 {
@@ -90,12 +92,12 @@ public class Chat
             if (textBox.Text[0] == '/')
             {
                 var cmdEntry = Commands.Registry
-                    .FirstOrDefault(pair => pair.Key.Name == textBox.Text);
+                    .FirstOrDefault(pair => $"/{pair.Key.Name}" == textBox.Text);
                 
                 if (!cmdEntry.Equals(default(KeyValuePair<Command, Action>)))
                 {
+                    Write(ChatMessageType.CommandHeader, $"Result from command '{cmdEntry.Key.Name}' :");
                     cmdEntry.Value();
-                    Write(ChatMessageType.Command, $"Executed '{textBox.Text}' command.");
                     
                     Console.WriteLine($"Player executed command '{textBox.Text}'.");
                 }
@@ -195,6 +197,9 @@ public class Chat
                     case ChatMessageType.Command:
                         msgColor = Color.SkyBlue;
                         break;
+                    case ChatMessageType.CommandHeader:
+                        msgColor = Color.Purple;
+                        break;
                     case ChatMessageType.Warning:
                         msgColor = Color.Yellow;
                         break;
@@ -261,6 +266,6 @@ public class Chat
     public static void WriteHelp()
     {
         foreach (var cmd in Commands.Registry)
-            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"{cmd.Key.Name}: {cmd.Key.Description}"));
+            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"/{cmd.Key.Name}: {cmd.Key.Description}"));
     }
 }

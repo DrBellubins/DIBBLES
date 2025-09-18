@@ -94,7 +94,7 @@ public class PlayerCharacter
         handModel.Start();
         
         Commands.RegisterCommand("kill", "Kills the player", Kill);
-        Commands.RegisterCommand("spawn", "Respawns player at spawn point.", Respawn);
+        Commands.RegisterCommand("spawn", "Respawns player at spawn point.", RespawnCmd);
         
         CursorManager.LockCursor();
     }
@@ -397,7 +397,7 @@ public class PlayerCharacter
         Velocity = Vector3.Zero;
     }
     
-    public void Respawn()
+    public void RespawnCmd()
     {
         Position = spawnPosition;
         SetCameraDirection(WorldSave.Data.CameraDirection);
@@ -405,6 +405,8 @@ public class PlayerCharacter
         Velocity = Vector3.Zero;
         IsDead = false;
         IsFrozen = false;
+        
+        Chat.Write(ChatMessageType.Command, $"Spawning at {WorldSave.Data.PlayerPosition}");
     }
     
     public void SetCameraDirection(Vector3 direction)
