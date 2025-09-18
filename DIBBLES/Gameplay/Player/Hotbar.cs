@@ -150,6 +150,7 @@ public class Hotbar
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
+                //Raylib.ImageDrawTriangle();
                 drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), itemDestRect.Width);
                 //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
@@ -171,78 +172,72 @@ public class Hotbar
     
     private void drawBlockCube2D(Texture2D tex, Vector2 pos, float size)
     {
-        // Parameters
+        // Parameters for cube illusion
         float s = size;
         float skew = s * 0.2f;
         float thickness = s * 0.2f;
-
-        // Top face
-        Vector2[] top = new Vector2[]
-        {
-            pos + new Vector2(skew, 0),            // TL
-            pos + new Vector2(s - skew, 0),        // TR
-            pos + new Vector2(s, thickness),       // BR
-            pos + new Vector2(0, thickness)        // BL
-        };
-        
-        // Side face
-        Vector2[] side = new Vector2[]
-        {
-            pos + new Vector2(s, thickness),       // TL
-            pos + new Vector2(s, s - thickness),   // TR
-            pos + new Vector2(s - skew, s),        // BR
-            pos + new Vector2(s - skew, 0)         // BL
-        };
-        
+    
+        // Triangle vertices for the 3 visible faces
+        // Top face (skewed above)
+        Vector2 top0 = pos + new Vector2(skew, 0);
+        Vector2 top1 = pos + new Vector2(s - skew, 0);
+        Vector2 top2 = pos + new Vector2(s, thickness);
+        Vector2 top3 = pos + new Vector2(0, thickness);
+    
+        // Side face (right face, skewed)
+        Vector2 side0 = pos + new Vector2(s, thickness);
+        Vector2 side1 = pos + new Vector2(s, s - thickness);
+        Vector2 side2 = pos + new Vector2(s - skew, s);
+        Vector2 side3 = pos + new Vector2(s - skew, 0);
+    
         // Front face
-        Vector2[] front = new Vector2[]
-        {
-            pos + new Vector2(0, thickness),       // TL
-            pos + new Vector2(s, thickness),       // TR
-            pos + new Vector2(s - skew, s),        // BR
-            pos + new Vector2(skew, s)             // BL
-        };
+        Vector2 front0 = pos + new Vector2(0, thickness);
+        Vector2 front1 = pos + new Vector2(s, thickness);
+        Vector2 front2 = pos + new Vector2(s - skew, s);
+        Vector2 front3 = pos + new Vector2(skew, s);
     
-        // Helper for drawing a quad with a texture
-        void DrawQuad(Texture2D t, Vector2[] verts)
+        // 1. Create a temporary image to draw the cube faces
+        int imgSize = (int)Math.Ceiling(size);
+        Image img = Raylib.GenImageColor(imgSize, imgSize, new Color(0, 0, 0, 0)); // transparent
+    
+        // Helper to draw a textured quad (2 triangles)
+        unsafe void DrawFace(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color tint)
         {
-            Vertex[] vertices = new Vertex[4];
-            
-            for (int i = 0; i < 4; i++)
+            Vector2 uv0 = new Vector2(0, 0);
+            Vector2 uv1 = new Vector2(1, 0);
+            Vector2 uv2 = new Vector2(1, 1);
+            Vector2 uv3 = new Vector2(0, 1);
+
+            fixed (Image* imgPtr = &img)
             {
-                vertices[i].Position = verts[i];
-                vertices[i].TexCoord = new Vector2((i == 1 || i == 2) ? 1 : 0, (i >= 2) ? 1 : 0);
-                vertices[i].Color = Color.White;
+                Raylib.ImageDrawTriangle(imgPtr,
+                    p0 - pos, p1 - pos, p2 - pos,
+                    uv0 * new Vector2(tex.Width, tex.Height),
+                    uv1 * new Vector2(tex.Width, tex.Height),
+                    uv2 * new Vector2(tex.Width, tex.Height),
+                    tex, tint);
+
+                Raylib.ImageDrawTriangle(imgPtr,
+                    p0 - pos, p2 - pos, p3 - pos,
+                    uv0 * new Vector2(tex.Width, tex.Height),
+                    uv2 * new Vector2(tex.Width, tex.Height),
+                    uv3 * new Vector2(tex.Width, tex.Height),
+                    tex, tint);
             }
-            
-            Rlgl.SetTexture(t.Id);
-            Rlgl.Begin(DrawMode.Quads);
-            
-            foreach (var v in vertices)
-            {
-                Rlgl.Color4ub(v.Color.R, v.Color.G, v.Color.B, v.Color.A);
-                Rlgl.TexCoord2f(v.TexCoord.X, v.TexCoord.Y);
-                Rlgl.Vertex2f(v.Position.X, v.Position.Y);
-            }
-            
-            Rlgl.End();
-            Rlgl.SetTexture(0);
-        }
-        
-        void DrawQuadSolid(Vector2[] verts, Color color)
-        {
-            Raylib.DrawTriangle(verts[0], verts[1], verts[2], color);
-            Raylib.DrawTriangle(verts[0], verts[2], verts[3], color);
         }
     
-        // Draw order: side, top, front (front last covers seams)
-        //DrawQuad(tex, side);
-        //DrawQuad(tex, top);
-        //DrawQuad(tex, front);
-        
-        DrawQuadSolid(side, Color.DarkGray);
-        DrawQuadSolid(top, Color.DarkGray);
-        DrawQuadSolid(front, Color.Blue);
+        // Draw order: side (dark), top (light), front (full)
+        DrawFace(side0, side1, side2, side3, Color.Gray);      // Side (dark)
+        DrawFace(top0, top1, top2, top3, Color.LightGray);     // Top (light)
+        DrawFace(front0, front1, front2, front3, Color.White); // Front
+    
+        // Convert image to texture and draw it
+        Texture2D cubeTex = Raylib.LoadTextureFromImage(img);
+        Raylib.DrawTextureV(cubeTex, pos, Color.White);
+    
+        // Clean up
+        Raylib.UnloadTexture(cubeTex);
+        Raylib.UnloadImage(img);
     }
     
     public void Resize()
