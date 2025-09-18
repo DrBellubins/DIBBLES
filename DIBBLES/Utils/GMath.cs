@@ -1,4 +1,4 @@
-using System.Numerics;
+using Microsoft.Xna.Framework;
 
 namespace DIBBLES.Utils;
 
@@ -146,7 +146,7 @@ public static class GMath
         return value;
     }
     
-    public static void MatrixToAxisAngle(Matrix4x4 m, out Vector3 axis, out float angleDeg)
+    public static void MatrixToAxisAngle(Matrix m, out Vector3 axis, out float angleDeg)
     {
         float angleRad = MathF.Acos((m.M11 + m.M22 + m.M33 - 1f) / 2f);
         angleDeg = angleRad * (180f / MathF.PI);
