@@ -46,8 +46,6 @@ public class Hotbar
 
         Resize();
         
-        hotbarSlots[0] = new ItemSlot(WorldSave.Data.HotbarPosition, BlockType.Grass);
-        
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", args =>
         {
             if (args.Length != 1)
