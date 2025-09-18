@@ -8,7 +8,7 @@ using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
-using Debug = DIBBLES.Utils.Debug;
+//using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Terrain;
 
@@ -116,8 +116,8 @@ public class TerrainGeneration
             TMesh.OpaqueModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
-            if (currentModel.MeshCount > 0)
-                Raylib.UnloadModel(currentModel);
+            //if (currentModel.MeshCount > 0)
+            //    Raylib.UnloadModel(currentModel);
             
             TMesh.OpaqueModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
@@ -135,8 +135,8 @@ public class TerrainGeneration
             TMesh.TransparentModels.TryGetValue(chunk.Position, out var currentModel);
             
             // Upload mesh on main thread
-            if (currentModel.MeshCount > 0)
-                Raylib.UnloadModel(currentModel);
+            //if (currentModel.MeshCount > 0)
+            //    Raylib.UnloadModel(currentModel);
             
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(meshData);
             
@@ -158,8 +158,8 @@ public class TerrainGeneration
             tickElapsed -= TickRate;
         }
         
-        if (Raylib.IsKeyPressed(KeyboardKey.U) && !Chat.IsOpen)
-            Console.WriteLine($"Seed: {Seed}");
+        //if (Raylib.IsKeyPressed(KeyboardKey.U) && !Chat.IsOpen)
+        //    Console.WriteLine($"Seed: {Seed}");
     }
     
     SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -436,7 +436,7 @@ public class TerrainGeneration
             {
                 if (oModel.MeshCount > 0)
                 {
-                    Raylib.UnloadModel(oModel);
+                    //Raylib.UnloadModel(oModel);
                     TMesh.OpaqueModels[coord] = default; // Prevent double-unload
                 }
                 
@@ -448,7 +448,7 @@ public class TerrainGeneration
             {
                 if (tModel.MeshCount > 0)
                 {
-                    Raylib.UnloadModel(tModel);
+                    //Raylib.UnloadModel(tModel);
                     TMesh.TransparentModels[coord] = default;
                 }
                 
@@ -462,12 +462,12 @@ public class TerrainGeneration
     
     public void Draw()
     {
-        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "cameraPos"),
+        /*Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "cameraPos"),
             GameScene.PlayerCharacter.Camera.Position,ShaderUniformDataType.Vec3);
         
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogNear"), FogEffect.FogNear, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);
+        Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
         // TODO: Monogame
         // Draw opaque
@@ -475,17 +475,14 @@ public class TerrainGeneration
         //    Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
         
         // Draw transparent
-        Rlgl.DisableBackfaceCulling();
         
         // TODO: Monogame
         //foreach (var tModel in TMesh.TransparentModels)
         //    Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
         
         //TMesh.DrawTransparentBuckets(GameScene.PlayerCharacter.Camera);
-        
-        Rlgl.EnableBackfaceCulling();
 
-        if (Debug.ShowDebugExtended)
+        /*if (Debug.ShowDebugExtended)
         {
             // Draw chunk coordinates in 2D after 3D rendering
             foreach (var chunk in ECSChunks)
@@ -509,7 +506,7 @@ public class TerrainGeneration
 
             var pos = new Vector3(SelectedBlock.Position.X + 0.5f, SelectedBlock.Position.Y + 1.5f, SelectedBlock.Position.Z + 0.5f);
             Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Microsoft.Xna.Framework.Color.White, 0.25f);
-        }
+        }*/
         
         /*if (SelectedBlock.GeneratedInsideIsland)
         {
@@ -528,10 +525,10 @@ public class TerrainGeneration
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
             
             // Face selection overlay
-            RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
+            //RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
             
             // Draw block selection overlay
-            RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+            //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
         }
     }
 }

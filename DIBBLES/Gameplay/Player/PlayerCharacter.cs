@@ -5,7 +5,7 @@ using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
 using static DIBBLES.Terrain.TerrainGeneration;
-using Debug = DIBBLES.Utils.Debug;
+//using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -56,7 +56,7 @@ public class PlayerCharacter
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
 
-    private Sound fallSound;
+    //private Sound fallSound;
     private HandModel handModel = new();
     
     private float currentSpeed = WalkSpeed;
@@ -80,7 +80,7 @@ public class PlayerCharacter
     
     public void Start()
     {
-        fallSound = Resource.LoadSoundSpecial("pain.ogg");
+        //fallSound = Resource.LoadSoundSpecial("pain.ogg");
         
         Camera = new Systems.Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
@@ -475,15 +475,15 @@ public class PlayerCharacter
     {
         hotbar.Draw(Health);
         
-        Debug.Draw2DText($"Position: {Position}", Microsoft.Xna.Framework.Color.White);
+        /*Debug.Draw2DText($"Position: {Position}", Microsoft.Xna.Framework.Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Microsoft.Xna.Framework.Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Microsoft.Xna.Framework.Color.White);
-        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
+        Debug.Draw2DText($"Velocity: {Velocity}", Color.White);*/
         
         // TODO: Temporary death screen
         if (IsDead)
         {
-            var deathScreen = new Rectangle(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
+            var deathScreen = new Rectangle(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
             
             // TODO: Monogame
             //Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
@@ -558,9 +558,9 @@ public class PlayerCharacter
         Position = newPosition;
     }
     
-    private static List<Microsoft.Xna.Framework.BoundingBox> getBlockBoxes(Vector3 center, float radius)
+    private static List<BoundingBox> getBlockBoxes(Vector3 center, float radius)
     {
-        var result = new List<Microsoft.Xna.Framework.BoundingBox>();
+        var result = new List<BoundingBox>();
         
         int minX = (int)MathF.Floor(center.X - radius);
         int maxX = (int)MathF.Floor(center.X + radius);

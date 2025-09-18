@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+/*using Microsoft.Xna.Framework;
 using System.Numerics;
 using System.Text;
 using DIBBLES.Scenes;
@@ -106,4 +106,4 @@ public class Debug
         // Draw the billboard with the cached texture
         Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);
     }
-}
+}*/
