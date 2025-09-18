@@ -3,25 +3,24 @@ using Microsoft.Xna.Framework;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
-
-//using Raylib_cs;
-
 namespace DIBBLES.Gameplay.Player;
 
 public class HandModel
 {
-    private Model handBlockModel;
+    private MonoCubeMesh handBlockModel;
     
     public void Start()
     {
-        handBlockModel = MeshUtils.GenTexturedCube(BlockData.Textures[BlockType.Dirt]);
+        //handBlockModel = MeshUtilsMonoGame.GenTexturedCube(graphics, dirtTexture);
+        
+        //handBlockModel = MeshUtils.GenTexturedCube(BlockData.Textures[BlockType.Dirt]);
     }
 
     public void Draw(Camera3D camera, Vector3 cameraForward, Vector3 cameraRight, Vector3 cameraUp, Quaternion cameraRotation, ItemSlot? selectedItem = null)
     {
         if (selectedItem != null)
         {
-            MeshUtils.SetModelTexture(handBlockModel, BlockData.Textures[selectedItem.Type]);
+            /*MeshUtils.SetModelTexture(handBlockModel, BlockData.Textures[selectedItem.Type]);
 
             // Adjust these distances for the best effect
             float forwardDistance = 0.5f; // In front of camera
@@ -41,7 +40,7 @@ public class HandModel
             GMath.MatrixToAxisAngle(rotationMat, out axis, out angleDeg);
             
             // TODO: Monogame
-            //Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);
+            //Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);*/
         }
     }
 }
