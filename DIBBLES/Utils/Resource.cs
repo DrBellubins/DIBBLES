@@ -1,151 +1,109 @@
-using System.Runtime.InteropServices;
-using Raylib_cs;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Audio;
 
-namespace DIBBLES;
+namespace DIBBLES.Utils;
 
 public static class Resource
 {
     private static string execDirectory = AppContext.BaseDirectory;
     private static string assetsPath = Path.Combine(execDirectory, "Assets");
 
-    private static List<Texture2D> textures = new List<Texture2D>();
-    private static List<Shader> shaders = new List<Shader>();
+    private static List<Texture2D> textures = new();
+    private static List<SoundEffect> sounds = new();
+    //private static List<Effect> shaders = new();
     
-    private static string findTexture(string fileName, bool isItem)
+    private static string FindTexture(string fileName, bool isItem)
     {
-        if (!Directory.Exists(assetsPath))
-            throw new DirectoryNotFoundException(assetsPath);
-        
-        // Search recursively for the file
-        string path;
-        
-        if (isItem)
-            path = Path.Combine(assetsPath, "Textures", "Items");
-        else
-            path = Path.Combine(assetsPath, "Textures", "Blocks");
+        string path = Path.Combine(assetsPath, "Textures", isItem ? "Items" : "Blocks");
+        string fullPath = Path.Combine(path, fileName);
 
-        var fullpath = Path.Combine(path, fileName);
-        
-        if (!File.Exists(fullpath))
-            throw new FileNotFoundException($"File '{fullpath}' not found.");
-        
-        var files = Directory.EnumerateFiles(path, fileName, SearchOption.AllDirectories);
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Texture file '{fullPath}' not found.");
 
-        var file = files.First();
-        
-        return file;
+        return fullPath;
     }
-    
-    private static string findSound(string fileName, bool isItem)
-    {
-        if (!Directory.Exists(assetsPath))
-            throw new DirectoryNotFoundException(assetsPath);
-        
-        // Search recursively for the file
-        string path;
-        
-        if (isItem)
-            path = Path.Combine(assetsPath, "Sounds", "Items");
-        else
-            path = Path.Combine(assetsPath, "Sounds", "Blocks");
-        
-        var files = Directory.EnumerateFiles(path, fileName, SearchOption.AllDirectories);
-        
-        var file = files.First();
-        
-        if (file == string.Empty)
-            throw new FileNotFoundException($"File '{fileName}' not found.");
-        
-        return file;
-    }
-    
-    private static string findMusic(string fileName)
-    {
-        if (!Directory.Exists(assetsPath))
-            throw new DirectoryNotFoundException(assetsPath);
 
-        // Search recursively for the file
+    private static string FindSound(string fileName, bool isItem)
+    {
+        string path = Path.Combine(assetsPath, "Sounds", isItem ? "Items" : "Blocks");
+        string fullPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Sound file '{fullPath}' not found.");
+
+        return fullPath;
+    }
+
+    private static string FindMusic(string fileName)
+    {
         string path = Path.Combine(assetsPath, "Music");
-        
-        var files = Directory.EnumerateFiles(path, fileName, SearchOption.AllDirectories);
-        
-        var file = files.First();
-        
-        if (file == string.Empty)
-            throw new FileNotFoundException($"File '{fileName}' not found.");
-        
-        return file;
+        string fullPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"Music file '{fullPath}' not found.");
+
+        return fullPath;
     }
-    
-    // Load method that adds preprocessing universally.
+
+    // Load method for Texture2D and SoundEffect
     public static T Load<T>(string fileName, bool isItem = false)
     {
-        switch (typeof(T))
+        if (typeof(T) == typeof(Texture2D))
         {
-            case Type t when t == typeof(Texture2D):
-            {
-                var file = findTexture(fileName, isItem);
-                
-                var texture = Raylib.LoadTexture(file);
-                
-                textures.Add(texture);
-                
-                return (T)(object)texture;
-            }
+            string file = FindTexture(fileName, isItem);
             
-            case Type t when t == typeof(Sound):
-            {
-                var file = findSound(fileName, isItem);
-                return (T)(object)Raylib.LoadSound(file);
-            }
-
-            case Type t when t == typeof(Music):
-            {
-                var file = findMusic(fileName);
-                return (T)(object)Raylib.LoadMusicStream(file);
-            }
-
-            default:
-                throw new ArgumentException($"Unsupported type: {typeof(T).Name}");
+            var texture = Texture2D.FromFile(MonoEngine.Graphics.GraphicsDevice, file);
+            textures.Add(texture);
+            
+            return (T)(object)texture;
+        }
+        else if (typeof(T) == typeof(SoundEffect))
+        {
+            string file = FindSound(fileName, isItem);
+            
+            var sound = SoundEffect.FromFile(file);
+            sounds.Add(sound);
+            
+            return (T)(object)sound;
+        }
+        //else if (typeof(T) == typeof(Effect))
+        //{
+        //    // TODO: Use Content.Load<Effect> later
+        //}
+        else
+        {
+            throw new ArgumentException($"Unsupported type: {typeof(T).Name}");
         }
     }
 
-    public static Sound LoadSoundSpecial(string fileName)
+    public static SoundEffect LoadSoundSpecial(string fileName)
     {
-        var path = Path.Combine(assetsPath, "Sounds", fileName);
-        return Raylib.LoadSound(path);
+        string path = Path.Combine(assetsPath, "Sounds", fileName);
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"Sound file '{path}' not found.");
+        var sound = SoundEffect.FromFile(path);
+        sounds.Add(sound);
+        return sound;
     }
-    
-    public static Shader LoadShader(string? vsName, string fsName)
-    {
-        var vsFilename = vsName != null ? $"Assets/Shaders/{vsName}" : null;
-        var shader = Raylib.LoadShader(vsFilename, $"Assets/Shaders/{fsName}");
-        shaders.Add(shader);
-        
-        return shader;
-    }
+
+    //public static Effect LoadShader(string? vsName, string fsName)
+    //{
+    //    // Comment out for now, will use Content Pipeline later
+    //    return null;
+    //}
 
     public static void UnloadAllResources()
     {
         foreach (var texture in textures)
-            Raylib.UnloadTexture(texture);
-        
-        foreach (var shader in shaders)
-        {
-            unsafe
-            {
-                if (shader.Locs != null)
-                {
-                    Marshal.FreeHGlobal((IntPtr)shader.Locs);
-                }
-            }
-            Raylib.UnloadShader(shader);
-        }
-    }
+            texture.Dispose();
 
-    private static class GL
-    {
-        [DllImport("raylib", CallingConvention = CallingConvention.Cdecl)]
-        public static extern uint rlLoadComputeShaderProgram(IntPtr shaderCode);
+        foreach (var sound in sounds)
+            sound.Dispose();
+
+        //foreach (var shader in shaders)
+        //    shader.Dispose();
     }
 }

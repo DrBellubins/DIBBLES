@@ -17,7 +17,7 @@ public class MonoEngine : Game
     public static bool IsRunning;
     public static bool IsPaused;
 
-    public static GraphicsDeviceManager Graphics;
+    public static GraphicsDeviceManager Graphics =  new GraphicsDeviceManager(null);
     private SpriteBatch _spriteBatch;
 
     // Custom deltaTime logic
@@ -26,11 +26,8 @@ public class MonoEngine : Game
 
     public static List<Scene> Scenes = new();
 
-    private static MonoEngine? _instance;
-
     public MonoEngine()
     {
-        _instance = this;
         Graphics = new GraphicsDeviceManager(this);
         
         Content.RootDirectory = "Content";

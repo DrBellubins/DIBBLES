@@ -1,8 +1,8 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Numerics;
-using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
-using Raylib_cs;
-
+using Microsoft.Xna.Framework.Audio;
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
@@ -74,7 +74,7 @@ public class BlockData
         {
             var texture = loadBlockTexture(blockType);
 
-            if (texture.Id == 0) // Check if texture failed to load
+            if (texture == null) // Check if texture failed to load
                 texture = Resource.Load<Texture2D>("Error.png");
 
             tempTextures.Add(texture);
@@ -170,22 +170,22 @@ public class BlockData
         return Resource.Load<Texture2D>($"{blockType.ToString()}.png");
     }
     
-    private static Sound loadBlockSounds(BlockType blockType, int index)
+    private static SoundEffect loadBlockSounds(BlockType blockType, int index)
     {
         var i = index + 1; // Sounds start at 1
         var blockName = blockType.ToString();
-        return Resource.Load<Sound>(Path.Combine(blockName, $"{blockName}{i}.ogg"));
+        return Resource.Load<SoundEffect>(Path.Combine(blockName, $"{blockName}{i}.ogg"));
     }
 }
 
 public class BlockSounds
 {
-    public Sound[] Sounds = new Sound[4];
+    public SoundEffect[] Sounds = new SoundEffect[4];
 
     /// <summary>
     /// Get random sound from array
     /// </summary>
-    public Sound RND
+    public SoundEffect RND
     {
         get { return Sounds[new Random().Next(0, 3)]; }
     }
