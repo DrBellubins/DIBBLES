@@ -1,10 +1,7 @@
-using System.Numerics;
-using Raylib_cs;
+using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
-using DIBBLES.Effects;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
-using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
@@ -22,9 +19,6 @@ public class GameSceneMono : Scene
     
     public override void Start()
     {
-        // Must be set for proper depth buffers
-        Rlgl.SetClipPlanes(0.01f, 1000f);
-        
         // Initial terrain generation
         TerrainGen.Start();
         TerrainGen.Update(PlayerCharacter);
@@ -47,11 +41,11 @@ public class GameSceneMono : Scene
         
         gameChat.Update();
         
-        if (!Chat.IsOpen && Raylib.IsKeyPressed(KeyboardKey.L))
-            WorldSave.SaveWorldData("test");
+        //if (!Chat.IsOpen && Raylib.IsKeyPressed(KeyboardKey.L))
+        //    WorldSave.SaveWorldData("test");
         
-        if (Raylib.IsKeyPressed(KeyboardKey.F2))
-            Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
+        //if (Raylib.IsKeyPressed(KeyboardKey.F2))
+        //    Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
         
         CursorManager.Update(); // Must happen after everything for MouseDelta to work.
         
@@ -60,7 +54,7 @@ public class GameSceneMono : Scene
 
     public override void Draw()
     {
-        Raylib.BeginDrawing();
+        /*Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
         // Draw 3d world to back buffer
@@ -89,6 +83,6 @@ public class GameSceneMono : Scene
         
         gameChat.Draw();
         
-        Raylib.EndDrawing();
+        Raylib.EndDrawing();*/
     }
 }

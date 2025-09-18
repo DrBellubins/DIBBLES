@@ -181,7 +181,7 @@ public class Hotbar
             RenderTexture2D renderTexture = Raylib.LoadRenderTexture(iconSize, iconSize);
 
             // Set up the isometric orthographic camera
-            var cam = new Camera3D();
+            var cam = new Raylib_cs.Camera3D();
             cam.Position = new Vector3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;

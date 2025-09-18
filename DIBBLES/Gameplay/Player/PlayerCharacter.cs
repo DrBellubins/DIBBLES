@@ -1,5 +1,4 @@
-using Raylib_cs;
-using System.Numerics;
+using Microsoft.Xna.Framework;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
@@ -36,9 +35,9 @@ public class PlayerCharacter
     public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
     
-    public Camera3D Camera;
+    public Systems.Camera3D Camera;
 
-    public BoundingBox CollisionBox = new();
+    public Microsoft.Xna.Framework.BoundingBox CollisionBox = new();
 
     public Quaternion CameraRotation = Quaternion.Identity;
     
@@ -83,12 +82,11 @@ public class PlayerCharacter
     {
         fallSound = Resource.LoadSoundSpecial("pain.ogg");
         
-        Camera = new Camera3D();
+        Camera = new Systems.Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
-        Camera.FovY = 90.0f;
-        Camera.Projection = CameraProjection.Perspective;
+        Camera.Fov = 90.0f;
 
         hotbar.Start();
         handModel.Start();
@@ -182,13 +180,14 @@ public class PlayerCharacter
             }
         }
         
-        if (Raylib.IsKeyPressed(KeyboardKey.Tab))
+        // TODO: Monogame
+        /*if (Raylib.IsKeyPressed(KeyboardKey.Tab))
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
             
             FreeCamEnabled = !FreeCamEnabled;
-        }
+        }*/
 
         if (FreeCamEnabled)
         {
@@ -476,16 +475,18 @@ public class PlayerCharacter
     {
         hotbar.Draw(Health);
         
-        Debug.Draw2DText($"Position: {Position}", Color.White);
-        Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
-        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Color.White);
+        Debug.Draw2DText($"Position: {Position}", Microsoft.Xna.Framework.Color.White);
+        Debug.Draw2DText($"Camera Direction: {CameraForward}", Microsoft.Xna.Framework.Color.White);
+        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Microsoft.Xna.Framework.Color.White);
         //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
         
         // TODO: Temporary death screen
         if (IsDead)
         {
             var deathScreen = new Rectangle(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
-            Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+            
+            // TODO: Monogame
+            //Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
         }
     }
     
@@ -507,7 +508,9 @@ public class PlayerCharacter
         newPosition.X += moveDelta.X;
         
         var playerBoxX = getBoundingBox(newPosition, currentHeight);
-        var collidedX = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxX, box));
+        
+        // TODO: Monogame
+        //var collidedX = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxX, box));
         
         if (collidedX)
         {
@@ -521,7 +524,9 @@ public class PlayerCharacter
         newPosition.Y += moveDelta.Y;
         
         var playerBoxY = getBoundingBox(newPosition, currentHeight);
-        var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
+        
+        // TODO: Monogame
+        //var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
         
         if (collidedY)
         {
@@ -538,7 +543,9 @@ public class PlayerCharacter
         newPosition.Z += moveDelta.Z;
         
         var playerBoxZ = getBoundingBox(newPosition, currentHeight);
-        var collidedZ = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxZ, box));
+        
+        // TODO: Monogame
+        //var collidedZ = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxZ, box));
         
         if (collidedZ)
         {
@@ -551,9 +558,9 @@ public class PlayerCharacter
         Position = newPosition;
     }
     
-    private static List<BoundingBox> getBlockBoxes(Vector3 center, float radius)
+    private static List<Microsoft.Xna.Framework.BoundingBox> getBlockBoxes(Vector3 center, float radius)
     {
-        var result = new List<BoundingBox>();
+        var result = new List<Microsoft.Xna.Framework.BoundingBox>();
         
         int minX = (int)MathF.Floor(center.X - radius);
         int maxX = (int)MathF.Floor(center.X + radius);

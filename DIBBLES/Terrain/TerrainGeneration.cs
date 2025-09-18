@@ -1,6 +1,5 @@
-using Raylib_cs;
+using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
-using System.Numerics;
 using DIBBLES.Utils;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -28,7 +27,8 @@ public class TerrainGeneration
     
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
     
-    public static Shader TerrainShader;
+    // TODO: Monogame
+    //public static Shader TerrainShader;
 
     public int Seed = -1413840509;
     //public int Seed = 1234567;
@@ -65,7 +65,8 @@ public class TerrainGeneration
         
         WorldSave.Data.Seed = Seed;
         
-        TerrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
+        // TODO: Monogame
+        //TerrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
     }
     
     private int chunksLoaded = 0;
@@ -468,15 +469,17 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);
         
+        // TODO: Monogame
         // Draw opaque
-        foreach (var oModel in TMesh.OpaqueModels)
-            Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Color.White);
+        //foreach (var oModel in TMesh.OpaqueModels)
+        //    Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
         
         // Draw transparent
         Rlgl.DisableBackfaceCulling();
         
-        foreach (var tModel in TMesh.TransparentModels)
-            Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Color.White);
+        // TODO: Monogame
+        //foreach (var tModel in TMesh.TransparentModels)
+        //    Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
         
         //TMesh.DrawTransparentBuckets(GameScene.PlayerCharacter.Camera);
         
@@ -488,23 +491,24 @@ public class TerrainGeneration
             foreach (var chunk in ECSChunks)
             {
                 var chunkCenter = chunk.Key + new Vector3Int(ChunkSize / 2, ChunkSize / 2, ChunkSize / 2);
-                Debug.Draw3DText($"Chunk ({chunk.Key.X}, {chunk.Key.Z})", chunkCenter.ToVector3(), Color.White);
+                Debug.Draw3DText($"Chunk ({chunk.Key.X}, {chunk.Key.Z})", chunkCenter.ToVector3(), Microsoft.Xna.Framework.Color.White);
                 
-                Color debugColor;
+                Microsoft.Xna.Framework.Color debugColor;
             
                 if (chunk.Value.GenerationState == ChunkGenerationState.Modified)
-                    debugColor = Color.Red;
+                    debugColor = Microsoft.Xna.Framework.Color.Red;
                 else
-                    debugColor = Color.Blue;
+                    debugColor = Microsoft.Xna.Framework.Color.Blue;
 
                 var padding = 0.01f;
                 
-                Raylib.DrawCubeWires(chunk.Value.Position.ToVector3() + new Vector3(ChunkSize / 2f + padding, ChunkSize / 2f + padding, ChunkSize / 2f + padding),
-                    ChunkSize - padding, ChunkSize - padding, ChunkSize - padding, debugColor);
+                // TODO: Monogame
+                //Raylib.DrawCubeWires(chunk.Value.Position.ToVector3() + new Vector3(ChunkSize / 2f + padding, ChunkSize / 2f + padding, ChunkSize / 2f + padding),
+                //    ChunkSize - padding, ChunkSize - padding, ChunkSize - padding, debugColor);
             }
 
             var pos = new Vector3(SelectedBlock.Position.X + 0.5f, SelectedBlock.Position.Y + 1.5f, SelectedBlock.Position.Z + 0.5f);
-            Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Color.White, 0.25f);
+            Debug.Draw3DText($"Block: {SelectedBlock.Position}", pos, Microsoft.Xna.Framework.Color.White, 0.25f);
         }
         
         /*if (SelectedBlock.GeneratedInsideIsland)

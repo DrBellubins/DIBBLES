@@ -1,4 +1,4 @@
-using System.Numerics;
+using Microsoft.Xna.Framework;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
@@ -12,13 +12,13 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    public void Update(Camera3D camera)
+    public void Update(Systems.Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
     }
     
-    private (Block, Vector3Int) selectBlock(Camera3D camera)
+    private (Block, Vector3Int) selectBlock(Systems.Camera3D camera)
     {
         var rayPosition = camera.Position;
         var rayDirection = Vector3.Normalize(camera.Target - camera.Position);
@@ -261,8 +261,9 @@ public class TerrainGameplay
         var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());
 
         // Don't place if collides with player
-        if (Raylib.CheckCollisionBoxes(player.CollisionBox, newBlockBoundingBox))
-            return;
+        // TODO: Update to monogame
+        //if (Raylib.CheckCollisionBoxes(player.CollisionBox, newBlockBoundingBox))
+        //    return;
         
         // Place the new block
         var generatedInsideIsland = chunk.GetBlock(localX, localY, localZ).GeneratedInsideIsland;
@@ -311,7 +312,7 @@ public class TerrainGameplay
         );
     }
     
-    private BoundingBox getBlockBB(Vector3 position)
+    private Microsoft.Xna.Framework.BoundingBox getBlockBB(Vector3 position)
     {
         Vector3 min = new Vector3(
             position.X - 0.5f,
@@ -324,6 +325,6 @@ public class TerrainGameplay
             position.Z + 0.5f
         );
         
-        return new BoundingBox(min + new Vector3(0.5f), max + new Vector3(0.5f));
+        return new Microsoft.Xna.Framework.BoundingBox(min + new Vector3(0.5f), max + new Vector3(0.5f));
     }
 }
