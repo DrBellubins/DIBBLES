@@ -23,17 +23,22 @@ public class Hotbar
 {
     public ItemSlot? SelectedItem;
 
+    // Item slots
     private ItemSlot[] hotbarSlots = new ItemSlot[9];
 
     private Rectangle hotbarRect = new Rectangle(0f, 0f, 900f, 100f);
     private Rectangle hotbarSelectionRect;
-
-    private const float healthBarWidth = 400f;
-    private Rectangle healthBarRect = new Rectangle(0f, 0f, healthBarWidth, 10f);
     
     private int hotBarSelectionIndex;
     private float hotBarSelectionPosX;
+    
+    // Health
+    private const float healthBarWidth = 400f;
+    private Rectangle healthBarRect = new Rectangle(0f, 0f, healthBarWidth, 10f);
 
+    // Icons
+    private Dictionary<BlockType, Texture2D> blockIcons = new();
+    
     public void Start()
     {
         if (WorldSave.Data.HotbarPosition != 0)
@@ -65,6 +70,8 @@ public class Hotbar
                 Chat.Write(ChatMessageType.Error, $"Unknown block type: '{blockName}'");
             }
         });
+
+        renderBlockIcons();
     }
 
     public void Update(bool isPlayerDead, bool isFrozen)
@@ -150,8 +157,6 @@ public class Hotbar
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
-                //Raylib.ImageDrawTriangle();
-                drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), itemDestRect.Width);
                 //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }
@@ -163,81 +168,23 @@ public class Hotbar
         Raylib.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
-    struct Vertex
+    // Draw each block type as a cube, then render out to a texture
+    private void renderBlockIcons()
     {
-        public Vector2 Position;
-        public Vector2 TexCoord;
-        public Color Color;
-    }
-    
-    private void drawBlockCube2D(Texture2D tex, Vector2 pos, float size)
-    {
-        // Parameters for cube illusion
-        float s = size;
-        float skew = s * 0.2f;
-        float thickness = s * 0.2f;
-    
-        // Triangle vertices for the 3 visible faces
-        // Top face (skewed above)
-        Vector2 top0 = pos + new Vector2(skew, 0);
-        Vector2 top1 = pos + new Vector2(s - skew, 0);
-        Vector2 top2 = pos + new Vector2(s, thickness);
-        Vector2 top3 = pos + new Vector2(0, thickness);
-    
-        // Side face (right face, skewed)
-        Vector2 side0 = pos + new Vector2(s, thickness);
-        Vector2 side1 = pos + new Vector2(s, s - thickness);
-        Vector2 side2 = pos + new Vector2(s - skew, s);
-        Vector2 side3 = pos + new Vector2(s - skew, 0);
-    
-        // Front face
-        Vector2 front0 = pos + new Vector2(0, thickness);
-        Vector2 front1 = pos + new Vector2(s, thickness);
-        Vector2 front2 = pos + new Vector2(s - skew, s);
-        Vector2 front3 = pos + new Vector2(skew, s);
-    
-        // 1. Create a temporary image to draw the cube faces
-        int imgSize = (int)Math.Ceiling(size);
-        Image img = Raylib.GenImageColor(imgSize, imgSize, new Color(0, 0, 0, 0)); // transparent
-    
-        // Helper to draw a textured quad (2 triangles)
-        unsafe void DrawFace(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color tint)
+        for (var i = 0; i < <Number of Block Types here>; i++)
         {
-            Vector2 uv0 = new Vector2(0, 0);
-            Vector2 uv1 = new Vector2(1, 0);
-            Vector2 uv2 = new Vector2(1, 1);
-            Vector2 uv3 = new Vector2(0, 1);
-
-            fixed (Image* imgPtr = &img)
-            {
-                Raylib.ImageDrawTriangle(imgPtr,
-                    p0 - pos, p1 - pos, p2 - pos,
-                    uv0 * new Vector2(tex.Width, tex.Height),
-                    uv1 * new Vector2(tex.Width, tex.Height),
-                    uv2 * new Vector2(tex.Width, tex.Height),
-                    tex, tint);
-
-                Raylib.ImageDrawTriangle(imgPtr,
-                    p0 - pos, p2 - pos, p3 - pos,
-                    uv0 * new Vector2(tex.Width, tex.Height),
-                    uv2 * new Vector2(tex.Width, tex.Height),
-                    uv3 * new Vector2(tex.Width, tex.Height),
-                    tex, tint);
-            }
+            var renderTexture = new RenderTexture2D();
+            var orthoCamera = new Camera3D();
+        
+            Raylib.BeginTextureMode(renderTexture);
+            Raylib.BeginMode3D(orthoCamera);
+        
+            // Draw using MeshUtils.GenTexturedCube
+            blockIcons.Add(currentBlockType, renderTexture.Texture);
+        
+            Raylib.EndMode3D();
+            Raylib.EndTextureMode();
         }
-    
-        // Draw order: side (dark), top (light), front (full)
-        DrawFace(side0, side1, side2, side3, Color.Gray);      // Side (dark)
-        DrawFace(top0, top1, top2, top3, Color.LightGray);     // Top (light)
-        DrawFace(front0, front1, front2, front3, Color.White); // Front
-    
-        // Convert image to texture and draw it
-        Texture2D cubeTex = Raylib.LoadTextureFromImage(img);
-        Raylib.DrawTextureV(cubeTex, pos, Color.White);
-    
-        // Clean up
-        Raylib.UnloadTexture(cubeTex);
-        Raylib.UnloadImage(img);
     }
     
     public void Resize()
