@@ -133,6 +133,9 @@ public class Hotbar
     {
         Raylib.DrawRectangleRec(hotbarRect, UI.MainColor);
 
+        if (blockIcons.Values.FirstOrDefault() is Texture2D tex)
+            Raylib.DrawTexture(tex, 0, 0, Color.White);
+        
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
@@ -190,7 +193,7 @@ public class Hotbar
             cam.Position = new Vector3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
-            cam.FovY = 10.0f; // Try 10, 20, 30, etc.
+            cam.FovY = 2.0f;
             cam.Projection = CameraProjection.Orthographic;
 
             // Create the cube model with correct texture
@@ -198,11 +201,9 @@ public class Hotbar
 
             Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
-            //Raylib.ClearBackground(Color.White);
             Raylib.BeginMode3D(cam);
 
-            Raylib.DrawCube(Vector3.Zero, 1f, 1f, 1f, Color.Red);
-            //Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
+            Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
 
             Raylib.EndMode3D();
             Raylib.EndTextureMode();
