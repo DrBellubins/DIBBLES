@@ -148,7 +148,7 @@ public class Hotbar
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
-                drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), 1f);
+                drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), itemDestRect.Width);
                 //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
         }
