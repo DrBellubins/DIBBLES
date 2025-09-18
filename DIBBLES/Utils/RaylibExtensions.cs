@@ -12,7 +12,7 @@ public static class RayEx
     /// <summary>
     /// Draws a cube wireframe with customizable line thickness.
     /// </summary>
-    public static void DrawCubeWiresThick(Vector3 position, float width, float height, float length, Color color, float thickness = 0.02f)
+    /*public static void DrawCubeWiresThick(Vector3 position, float width, float height, float length, Color color, float thickness = 0.02f)
     {
         var padding = 0.01f; // To prevent z fighting
         
@@ -51,7 +51,7 @@ public static class RayEx
         {
             DrawThickLine3D(corners[edges[i,0]], corners[edges[i,1]], color, thickness, camPos, camUp, camForward);
         }
-    }
+    }*/
 
     /// <summary>
     /// Draws a 3D line with thickness as a quad facing the camera.

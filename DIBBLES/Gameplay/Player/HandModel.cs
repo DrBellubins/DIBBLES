@@ -1,7 +1,10 @@
-using System.Numerics;
+using DIBBLES.Systems;
+using Microsoft.Xna.Framework;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
-using Raylib_cs;
+using Microsoft.Xna.Framework.Graphics;
+
+//using Raylib_cs;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -31,13 +34,14 @@ public class HandModel
                               + cameraUp * upDistance;
 
             var rot = Quaternion.Inverse(cameraRotation);
-            Matrix4x4 rotationMat = Matrix4x4.CreateFromQuaternion(rot);
+            Matrix rotationMat = Matrix.CreateFromQuaternion(rot);
             
             Vector3 axis;
             float angleDeg;
             GMath.MatrixToAxisAngle(rotationMat, out axis, out angleDeg);
             
-            Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);
+            // TODO: Monogame
+            //Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);
         }
     }
 }

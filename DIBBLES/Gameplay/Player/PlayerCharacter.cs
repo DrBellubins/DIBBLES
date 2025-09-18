@@ -35,9 +35,9 @@ public class PlayerCharacter
     public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
     
-    public Systems.Camera3D Camera;
+    public Camera3D Camera;
 
-    public Microsoft.Xna.Framework.BoundingBox CollisionBox = new();
+    public BoundingBox CollisionBox = new();
 
     public Quaternion CameraRotation = Quaternion.Identity;
     
@@ -82,7 +82,7 @@ public class PlayerCharacter
     {
         //fallSound = Resource.LoadSoundSpecial("pain.ogg");
         
-        Camera = new Systems.Camera3D();
+        Camera = new Camera3D();
         Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
@@ -508,9 +508,7 @@ public class PlayerCharacter
         newPosition.X += moveDelta.X;
         
         var playerBoxX = getBoundingBox(newPosition, currentHeight);
-        
-        // TODO: Monogame
-        //var collidedX = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxX, box));
+        var collidedX = blockBoxes.Any(box => box.Intersects(playerBoxX));
         
         if (collidedX)
         {
@@ -524,9 +522,7 @@ public class PlayerCharacter
         newPosition.Y += moveDelta.Y;
         
         var playerBoxY = getBoundingBox(newPosition, currentHeight);
-        
-        // TODO: Monogame
-        //var collidedY = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxY, box));
+        var collidedY = blockBoxes.Any(box => box.Intersects(playerBoxY));
         
         if (collidedY)
         {
@@ -543,9 +539,7 @@ public class PlayerCharacter
         newPosition.Z += moveDelta.Z;
         
         var playerBoxZ = getBoundingBox(newPosition, currentHeight);
-        
-        // TODO: Monogame
-        //var collidedZ = blockBoxes.Any(box => Raylib.CheckCollisionBoxes(playerBoxZ, box));
+        var collidedZ = blockBoxes.Any(box => box.Intersects(playerBoxZ));
         
         if (collidedZ)
         {
