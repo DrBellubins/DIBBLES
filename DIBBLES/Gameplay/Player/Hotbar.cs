@@ -150,7 +150,6 @@ public class Hotbar
                     hotbarRect.Y + 0.1f * hotbarRect.Height,
                     hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
 
-                Raylib.DrawRectangle((int)itemDestRect.X, (int)itemDestRect.Y, (int)itemDestRect.Width, (int)itemDestRect.Height, Color.Red);
                 drawBlockCube2D(itemTexture, new Vector2(itemDestRect.X, itemDestRect.Y), itemDestRect.Width);
                 //Raylib.DrawTexturePro(itemTexture, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
             }
@@ -235,17 +234,17 @@ public class Hotbar
         
         void DrawQuadSolid(Vector2[] verts, Color color)
         {
-            Rlgl.Begin(DrawMode.Quads);
-            
-            foreach (var v in verts)
-                Rlgl.Vertex2f(v.X, v.Y);
-            
-            Rlgl.End();
+            Raylib.DrawTriangle(verts[0], verts[1], verts[2], color);
+            Raylib.DrawTriangle(verts[0], verts[2], verts[3], color);
         }
     
         // Draw order: side, top, front (front last covers seams)
-        DrawQuad(tex, side);
-        DrawQuad(tex, top);
+        //DrawQuad(tex, side);
+        //DrawQuad(tex, top);
+        //DrawQuad(tex, front);
+        
+        DrawQuadSolid(side, Color.DarkGray);
+        DrawQuadSolid(top, Color.DarkGray);
         DrawQuadSolid(front, Color.Blue);
     }
     
