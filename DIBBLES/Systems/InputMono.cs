@@ -93,8 +93,20 @@ public static class InputMono
     }
 
     // Utility for single-frame key presses
-    private static bool IsKeyPressed(Keys key) => _currentKey.IsKeyDown(key) && _prevKey.IsKeyUp(key);
+    public static bool IsKeyPressed(Keys key) => _currentKey.IsKeyDown(key) && _prevKey.IsKeyUp(key);
 
+    public static Keys GetKeyPressed()
+    {
+        // Loop through all possible Keys values
+        foreach (Keys key in Enum.GetValues(typeof(Keys)))
+        {
+            if (_currentKey.IsKeyDown(key) && _prevKey.IsKeyUp(key))
+                return key;
+        }
+        
+        return Keys.None; // No key pressed this frame
+    }
+    
     // Utility for single-frame mouse button presses
     private enum ButtonType { Left, Right, Middle, XButton1, XButton2 }
     

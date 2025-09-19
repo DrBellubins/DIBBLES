@@ -196,8 +196,8 @@ public class TerrainGameplay
             Lighting.Generate(chunk);
             
             // Regenerate mesh
-            TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
-            TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
+            //TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
+            //TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
         
             var meshData = TMesh.GenerateMeshData(chunk, false);
             var tMeshData = TMesh.GenerateMeshData(chunk, true);
@@ -213,10 +213,10 @@ public class TerrainGameplay
                 WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
 
             // Play break sound
-            var sound = BlockData.Sounds[SelectedBlock.Type].RND;
+            //var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
-            if (sound != null)
-                sound.Play();
+            //if (sound != null)
+            //    sound.Play();
         }
     }
     
@@ -279,8 +279,8 @@ public class TerrainGameplay
         Lighting.Generate(chunk);
         
         // Regenerate mesh
-        TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
-        TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
+        //TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
+        //TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
         
         var meshData = TMesh.GenerateMeshData(chunk, false);
         var tMeshData = TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);
@@ -296,10 +296,10 @@ public class TerrainGameplay
             WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
         
         // Play place sound
-        var sound = BlockData.Sounds[blockType].RND;
+        //var sound = BlockData.Sounds[blockType].RND;
         
-        if (sound != null)
-            sound.Play();
+        //if (sound != null)
+        //    sound.Play();
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

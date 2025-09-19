@@ -5,6 +5,7 @@ using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -75,9 +76,9 @@ public class Hotbar
 
     public void Update(bool isPlayerDead, bool isFrozen)
     {
-        /*if (!isPlayerDead && !isFrozen)
+        if (!isPlayerDead && !isFrozen)
         {
-            var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
+            var mouseWheelNormalized = MathF.Ceiling(-InputMono.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
             {
@@ -85,35 +86,35 @@ public class Hotbar
                 hotBarSelectionIndex = GMath.Repeat(hotBarSelectionIndex, 0, 8);
             }
 
-            var numKeys = (KeyboardKey)Raylib.GetKeyPressed();
+            var numKeys = InputMono.GetKeyPressed();
 
             switch (numKeys)
             {
-                case KeyboardKey.One:
+                case Keys.D1:
                     hotBarSelectionIndex = 0;
                     break;
-                case KeyboardKey.Two:
+                case Keys.D2:
                     hotBarSelectionIndex = 1;
                     break;
-                case KeyboardKey.Three:
+                case Keys.D3:
                     hotBarSelectionIndex = 2;
                     break;
-                case KeyboardKey.Four:
+                case Keys.D4:
                     hotBarSelectionIndex = 3;
                     break;
-                case KeyboardKey.Five:
+                case Keys.D5:
                     hotBarSelectionIndex = 4;
                     break;
-                case KeyboardKey.Six:
+                case Keys.D6:
                     hotBarSelectionIndex = 5;
                     break;
-                case KeyboardKey.Seven:
+                case Keys.D7:
                     hotBarSelectionIndex = 6;
                     break;
-                case KeyboardKey.Eight:
+                case Keys.D8:
                     hotBarSelectionIndex = 7;
                     break;
-                case KeyboardKey.Nine:
+                case Keys.D9:
                     hotBarSelectionIndex = 8;
                     break;
             }
@@ -125,7 +126,7 @@ public class Hotbar
             hotbarSelectionRect.Y = hotbarRect.Y;
         }
         
-        WorldSave.Data.HotbarPosition = hotBarSelectionIndex;*/
+        WorldSave.Data.HotbarPosition = hotBarSelectionIndex;
     }
 
     public void Draw(int health)
@@ -158,6 +159,8 @@ public class Hotbar
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
                     var itemOrigRect = new Rectangle(0, 0, iconTex.Width, iconTex.Height);
+                    
+                    Primatives.DrawRectangleRec(itemOrigRect, Color.AliceBlue);
                     
                     //Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
                 }

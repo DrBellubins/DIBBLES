@@ -208,9 +208,6 @@ public class TerrainMesh
     {
         foreach (var chunk in ECSChunks.Values)
         {
-            if (TMesh.TransparentModels.TryGetValue(chunk.Position, out var oldModel) && oldModel != null)
-                oldModel.Dispose();
-
             var tMeshData = TMesh.GenerateMeshData(chunk, true, cameraPos);
             TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(tMeshData);
         }
@@ -370,10 +367,6 @@ public class TerrainMesh
         {
             // Opaque or transparent model dictionary
             var modelDict = isTransparentPass ? TransparentModels : OpaqueModels;
-
-            // Unload existing model if present
-            if (modelDict.TryGetValue(neighborPos, out var oldModel))
-                oldModel.Dispose();
 
             // Generate new mesh
             var meshData = GenerateMeshData(neighborChunk, isTransparentPass);

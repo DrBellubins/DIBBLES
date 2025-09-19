@@ -49,8 +49,6 @@ public class GameSceneMono : Scene
         //if (Raylib.IsKeyPressed(KeyboardKey.F2))
         //    Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
         
-        //CursorManager.Update(); // Must happen after everything for MouseDelta to work.
-        
         Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }
 
@@ -68,9 +66,9 @@ public class GameSceneMono : Scene
         //Debug.Draw3D();
         
         // Draw UI
-        /*PlayerCharacter.DrawUI();
+        PlayerCharacter.DrawUI();
         
-        if (Chat.IsOpen || Chat.IsClosedButShown)
+        /*if (Chat.IsOpen || Chat.IsClosedButShown)
             gameChat.DrawBG();
         
         // TODO: Monogame
