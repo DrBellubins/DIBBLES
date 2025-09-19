@@ -159,7 +159,6 @@ public class Chat
         sprites.Begin();
         
         MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), new Vector2(chatBox.X, chatBox.Y), UI.MainColor);
-        //Raylib.DrawRectangleRec(chatBox, UI.MainColor);
         
         sprites.End();
     }
