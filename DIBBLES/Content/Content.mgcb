@@ -1,0 +1,13 @@
+#----------------------------- Global Properties ----------------------------#
+
+/outputDir:bin
+/intermediateDir:obj
+/platform:DesktopGL
+/config:
+/profile:Reach
+/compress:False
+
+#----------------------------- Content ----------------------------#
+
+# Build the MainFont.spritefont as a SpriteFont
+/build:Fonts/MainFont.spritefont

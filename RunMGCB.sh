@@ -1,3 +1,3 @@
 #!/bin/bash
 cd DIBBLES
-dotnet mgcb --help
+dotnet mgcb-editor

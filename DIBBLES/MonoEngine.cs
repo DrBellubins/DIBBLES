@@ -17,7 +17,7 @@ public class MonoEngine : Game
     public static bool IsRunning;
     public static bool IsPaused;
 
-    public static GraphicsDeviceManager GraphicsManager = new GraphicsDeviceManager(null);
+    public static GraphicsDeviceManager GraphicsManager;
     public static GraphicsDevice Graphics;
     
     public static SpriteBatch Sprites;
@@ -35,9 +35,10 @@ public class MonoEngine : Game
         GraphicsManager = new GraphicsDeviceManager(this);
         Graphics = GraphicsManager.GraphicsDevice;
         
+        Content.RootDirectory = "Content";
+        
         MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         
-        Content.RootDirectory = "Content";
         IsMouseVisible = true;
 
         GraphicsManager.PreferredBackBufferWidth = ScreenWidth;

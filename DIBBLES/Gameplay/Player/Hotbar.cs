@@ -75,7 +75,7 @@ public class Hotbar
 
     public void Update(bool isPlayerDead, bool isFrozen)
     {
-        if (!isPlayerDead && !isFrozen)
+        /*if (!isPlayerDead && !isFrozen)
         {
             var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
@@ -125,7 +125,7 @@ public class Hotbar
             hotbarSelectionRect.Y = hotbarRect.Y;
         }
         
-        WorldSave.Data.HotbarPosition = hotBarSelectionIndex;
+        WorldSave.Data.HotbarPosition = hotBarSelectionIndex;*/
     }
 
     public void Draw(int health)

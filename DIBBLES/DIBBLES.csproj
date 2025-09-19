@@ -32,6 +32,18 @@
       </Content>
     </ItemGroup>
 
+    <Target Name="BuildContent" BeforeTargets="Build">
+      <Exec Command="dotnet mgcb -b -@=Content/Content.mgcb" IgnoreExitCode="true" />
+    </Target>
+
+    <Target Name="CopyContent" AfterTargets="Build">
+      <ItemGroup>
+        <ContentFiles Include="Content/bin/**" />
+      </ItemGroup>
+
+      <Copy SourceFiles="@(ContentFiles)" DestinationFolder="$(OutputPath)Content\" />
+    </Target>
+
     <ItemGroup>
       <Folder Include="Assets\Shaders\" />
       <Folder Include="Assets\Sounds\" />
