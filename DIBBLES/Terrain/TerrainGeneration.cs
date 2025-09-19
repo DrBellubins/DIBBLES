@@ -459,18 +459,35 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
-        // TODO: Monogame
         // Draw opaque
-        //foreach (var oModel in TMesh.OpaqueModels)
-        //    Raylib.DrawModel(oModel.Value, oModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
+        foreach (var oModel in TMesh.OpaqueModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (oModel.Value != null)
+            {
+                oModel.Value.Draw(
+                    MonoEngine.Graphics, // GraphicsDevice
+                    Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
+                    GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
         
         // Draw transparent
-        
-        // TODO: Monogame
-        //foreach (var tModel in TMesh.TransparentModels)
-        //    Raylib.DrawModel(tModel.Value, tModel.Key.ToVector3(), 1.0f, Microsoft.Xna.Framework.Color.White);
-        
-        //TMesh.DrawTransparentBuckets(GameScene.PlayerCharacter.Camera);
+        foreach (var tModel in TMesh.TransparentModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (tModel.Value != null)
+            {
+                tModel.Value.Draw(
+                    MonoEngine.Graphics, // GraphicsDevice
+                    Matrix.CreateTranslation(tModel.Key.ToVector3()), // World matrix for chunk position
+                    GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
 
         /*if (Debug.ShowDebugExtended)
         {
