@@ -461,6 +461,8 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
+        Console.WriteLine($"Is atlas null: {BlockData.TextureAtlas.IsDisposed}");
+        
         // Draw opaque
         foreach (var oModel in TMesh.OpaqueModels)
         {
