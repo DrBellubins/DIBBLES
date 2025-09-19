@@ -87,6 +87,7 @@ public class PlayerCharacter
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
         Camera.Fov = 90.0f;
+        Camera.SetPerspective();
 
         hotbar.Start();
         handModel.Start();

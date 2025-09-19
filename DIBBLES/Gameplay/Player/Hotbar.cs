@@ -130,18 +130,19 @@ public class Hotbar
 
     public void Draw(int health)
     {
-        Raylib.DrawRectangleRec(hotbarRect, UI.MainColor);
+        Primatives.DrawRectangleRec(hotbarRect, UI.MainColor);
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
             var xPos = hotbarRect.X + (i + 1.0f) * hotbarRect.Height;
 
-            Raylib.DrawLineEx(new Vector2(xPos, hotbarRect.Y),
-                new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
+            //Raylib.DrawLineEx(new Vector2(xPos, hotbarRect.Y),
+            //    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
         }
 
-        Raylib.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
+        Primatives.DrawRectangleRec(hotbarSelectionRect, UI.AccentColor);
+        //Raylib.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
 
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -150,23 +151,24 @@ public class Hotbar
             {
                 var xPos = hotbarRect.X + i * hotbarRect.Height;
                 
-                var itemDestRect = new Rectangle(xPos + 0.1f * hotbarRect.Height,
-                    hotbarRect.Y + 0.1f * hotbarRect.Height,
-                    hotbarRect.Height * 0.8f, hotbarRect.Height * 0.8f);
+                var itemDestRect = new Rectangle((int)(xPos + 0.1f * hotbarRect.Height),
+                    (int)(hotbarRect.Y + 0.1f * hotbarRect.Height),
+                    (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
-                    var itemOrigRect = new Rectangle(0.0f, 0.0f, iconTex.Width, iconTex.Height);
-                    Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
+                    var itemOrigRect = new Rectangle(0, 0, iconTex.Width, iconTex.Height);
+                    
+                    //Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
                 }
             }
         }
         
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
-        healthBarRect.Width = healthPercent;
+        healthBarRect.Width = (int)healthPercent;
         
-        Raylib.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
-        Raylib.DrawRectangleRec(healthBarRect, Color.Red);
+        Primatives.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        Primatives.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
     // Draw each block type as a cube, then render out to a texture
@@ -187,7 +189,7 @@ public class Hotbar
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
             cam.Fov = 2f;
-            //cam.Projection = Matrix.CreateOrthographic();
+            cam.SetOrthographic();
 
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtilsMonoGame.GenTexturedCubeIcon(BlockData.Textures[blockType]);
@@ -215,14 +217,14 @@ public class Hotbar
         hotbarPos.X -= hotbarRect.Width / 2f;
         hotbarPos.Y -= 110f;
 
-        hotbarRect.X = hotbarPos.X;
-        hotbarRect.Y = hotbarPos.Y;
+        hotbarRect.X = (int)hotbarPos.X;
+        hotbarRect.Y = (int)hotbarPos.Y;
 
         hotbarSelectionRect = new Rectangle(hotbarRect.X, hotbarRect.Y, hotbarRect.Height, hotbarRect.Height);
 
         var healthBarPos = hotbarPos;
         healthBarPos.Y -= 20f;
         
-        healthBarRect = new Rectangle(healthBarPos.X, healthBarPos.Y, healthBarRect.Width, healthBarRect.Height);
+        healthBarRect = new Rectangle((int)healthBarPos.X, (int)healthBarPos.Y, healthBarRect.Width, healthBarRect.Height);
     }
 }

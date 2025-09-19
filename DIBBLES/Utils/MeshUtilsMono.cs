@@ -149,7 +149,38 @@ public static class TextureUtils
 
 public static class Primatives
 {
+    private static Texture2D? _pixel;
 
+    // Ensures the pixel texture exists for drawing rectangles/lines
+    private static void EnsurePixel()
+    {
+        var gd = MonoEngine.Graphics;
+        
+        if (_pixel == null || _pixel.IsDisposed)
+        {
+            _pixel = new Texture2D(gd, 1, 1);
+            _pixel.SetData(new[] { Color.White });
+        }
+    }
+
+    /// <summary>
+    /// Fills a rectangle with the given color. Equivalent to Raylib.DrawRectangleRec.
+    /// </summary>
+    public static void DrawRectangleRec(Rectangle rect, Color color)
+    {
+        var sprites = MonoEngine.Sprites;
+        
+        EnsurePixel();
+        sprites.Draw(_pixel!, rect, color);
+    }
+
+    /// <summary>
+    /// Fills a rectangle given as (x, y, width, height).
+    /// </summary>
+    public static void DrawRectangleRec(int x, int y, int width, int height, Color color)
+    {
+        DrawRectangleRec(new Rectangle(x, y, width, height), color);
+    }
 }
 
 // Static utility class to provide cube mesh creation (matches Raylib MeshUtils)

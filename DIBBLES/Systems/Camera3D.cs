@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 
 namespace DIBBLES.Systems;
 
-public struct Camera3D
+public class Camera3D
 {
     public Vector3 Position;
     public Vector3 Target;
@@ -14,12 +14,15 @@ public struct Camera3D
     public float FarPlane = 1000f;
 
     public Matrix View => Matrix.CreateLookAt(Position, Target, Up);
-    public Matrix Projection => Matrix.CreatePerspectiveFieldOfView(Fov, AspectRatio, NearPlane, FarPlane);
+    public Matrix Projection { get; private set; }
 
-    public Camera3D(Vector3 position, Vector3 target, Vector3 up)
+    public void SetPerspective()
     {
-        Position = position;
-        Target = target;
-        Up = up;
+        Projection = Matrix.CreatePerspectiveFieldOfView(Fov, AspectRatio, NearPlane, FarPlane);
+    }
+    
+    public void SetOrthographic()
+    {
+        Projection = Matrix.CreateOrthographic(Fov * AspectRatio, Fov, NearPlane, FarPlane);
     }
 }
