@@ -173,9 +173,7 @@ public static class Primatives
         EnsurePixel();
         
         sprites.Begin();
-        
         sprites.Draw(_pixel!, rect, color);
-        
         sprites.End();
     }
 
