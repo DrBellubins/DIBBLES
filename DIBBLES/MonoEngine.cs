@@ -32,17 +32,9 @@ public class MonoEngine : Game
 
     public MonoEngine()
     {
-        GraphicsManager = new GraphicsDeviceManager(this);
-        Graphics = GraphicsManager.GraphicsDevice;
-        
         Content.RootDirectory = "Content";
         
         IsMouseVisible = true;
-
-        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
-        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
-        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
-        
         IsFixedTimeStep = false;
     }
 
@@ -54,17 +46,24 @@ public class MonoEngine : Game
         previousTicks = timer.ElapsedTicks;
 
         IsRunning = true;
+    }
+
+    protected override void LoadContent()
+    {
+        GraphicsManager = new GraphicsDeviceManager(this);
+        Graphics = GraphicsManager.GraphicsDevice;
+        
+        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
+        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
+        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
+        
+        Sprites = new SpriteBatch(GraphicsDevice);
+        MainFont = Content.Load<SpriteFont>("MainFont");
         
         var voxelScene = new GameSceneMono();
         
         foreach (var scene in Scenes)
             scene.Start();
-    }
-
-    protected override void LoadContent()
-    {
-        Sprites = new SpriteBatch(GraphicsDevice);
-        MainFont = Content.Load<SpriteFont>("MainFont");
     }
 
     protected override void Update(GameTime gameTime)
