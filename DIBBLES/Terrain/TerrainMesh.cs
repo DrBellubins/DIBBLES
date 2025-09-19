@@ -9,6 +9,34 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
 
+// Define a custom vertex struct with Position, Normal, Texcoord, Color
+[StructLayout(LayoutKind.Sequential)]
+public struct VertexPositionNormalTextureColor : IVertexType
+{
+    public Vector3 Position;
+    public Vector3 Normal;
+    public Vector2 TexCoord;
+    public Color Color;
+
+    public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
+    (
+        new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
+        new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
+        new VertexElement(32, VertexElementFormat.Color, VertexElementUsage.Color, 0)
+    );
+
+    VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
+
+    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color)
+    {
+        Position = pos;
+        Normal = norm;
+        TexCoord = tex;
+        Color = color;
+    }
+}
+
 public class TerrainMesh
 {
     public const bool Fullbright = false;
@@ -192,64 +220,72 @@ public class TerrainMesh
     public RuntimeModel UploadMesh(MeshData data)
     {
         var graphicsDevice = MonoEngine.Graphics;
-        
-        // Create vertex array
-        var vertices = new VertexPositionNormalTexture[data.VertexCount];
+
+        // Step 1: Pack mesh data into vertex structs
+        var vertices = new VertexPositionNormalTextureColor[data.VertexCount];
+
         for (int i = 0; i < data.VertexCount; i++)
         {
             var pos = new Vector3(
                 data.Vertices[i * 3 + 0],
                 data.Vertices[i * 3 + 1],
-                data.Vertices[i * 3 + 2]
-            );
-            var normal = new Vector3(
+                data.Vertices[i * 3 + 2]);
+
+            var norm = new Vector3(
                 data.Normals[i * 3 + 0],
                 data.Normals[i * 3 + 1],
-                data.Normals[i * 3 + 2]
-            );
-            var uv = new Vector2(
+                data.Normals[i * 3 + 2]);
+
+            var tex = new Vector2(
                 data.TexCoords[i * 2 + 0],
-                data.TexCoords[i * 2 + 1]
-            );
-            vertices[i] = new VertexPositionNormalTexture(pos, normal, uv);
+                data.TexCoords[i * 2 + 1]);
+
+            var color = new Color(
+                data.Colors[i * 4 + 0],
+                data.Colors[i * 4 + 1],
+                data.Colors[i * 4 + 2],
+                data.Colors[i * 4 + 3]);
+
+            vertices[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color);
         }
 
-        // Create index array
-        var indices = new ushort[data.TriangleCount * 3];
-        Array.Copy(data.Indices, indices, indices.Length);
-
-        VertexPositionNormalTexture[] verts = new VertexPositionNormalTexture[data.VertexCount];
+        // Step 2: Create VertexBuffer
+        var vertexBuffer = new VertexBuffer(
+            graphicsDevice,
+            VertexPositionNormalTextureColor.VertexDeclaration,
+            vertices.Length,
+            BufferUsage.WriteOnly
+        );
         
-        for (int i = 0; i < data.VertexCount; i++)
-        {
-            verts[i] = new VertexPositionNormalTexture(
-                new Vector3(data.Vertices[i * 3 + 0], data.Vertices[i * 3 + 1], data.Vertices[i * 3 + 2]),
-                new Vector3(data.Normals[i * 3 + 0], data.Normals[i * 3 + 1], data.Normals[i * 3 + 2]),
-                new Vector2(data.TexCoords[i * 2 + 0], data.TexCoords[i * 2 + 1])
-            );
-        }
-        
-        var vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionNormalTexture), data.VertexCount, BufferUsage.WriteOnly);
-        vertexBuffer.SetData(verts);
+        vertexBuffer.SetData(vertices);
 
-        var indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
-        indexBuffer.SetData(indices);
+        // Step 3: Create IndexBuffer
+        var indexBuffer = new IndexBuffer(
+            graphicsDevice,
+            IndexElementSize.SixteenBits,
+            data.Indices.Length,
+            BufferUsage.WriteOnly
+        );
+        indexBuffer.SetData(data.Indices);
 
+        // Step 4: Create or assign an Effect
+        // You can use BasicEffect for basic lighting, or a custom Effect if you have one
         var effect = new BasicEffect(graphicsDevice)
         {
-            TextureEnabled = true,
-            Texture = BlockData.TextureAtlas,
             LightingEnabled = false,
-            VertexColorEnabled = false
+            TextureEnabled = true,
+            VertexColorEnabled = true,
+            // Texture = ... assign your block atlas here if needed
         };
 
+        // Step 5: Build RuntimeModel and return
         return new RuntimeModel
         {
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
             Effect = effect,
-            Texture = BlockData.TextureAtlas
+            // Texture = ... assign atlas here if needed
         };
     }
     
