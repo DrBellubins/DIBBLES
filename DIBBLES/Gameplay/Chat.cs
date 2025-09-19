@@ -72,7 +72,7 @@ public class Chat
         {
             textBox.Update();
             
-            float wheel = Input.ScrollDelta();
+            float wheel = InputMono.ScrollDelta();
             
             if (wheel != 0)
             {
@@ -86,7 +86,7 @@ public class Chat
         }
         
         // Send msg/cmd to chat
-        if (Input.SendChat() && textBox.Text != string.Empty)
+        if (InputMono.SendChat() && textBox.Text != string.Empty)
         {
             if (textBox.Text.StartsWith("/"))
             {
@@ -124,13 +124,13 @@ public class Chat
             elapsed = 0f;
         }
         
-        if (Input.OpenChat())
+        if (InputMono.OpenChat())
             OpenChat();
         
-        if (Input.OpenChatCmd())
+        if (InputMono.OpenChatCmd())
             OpenChatCmd();
         
-        if (Input.Pause())
+        if (InputMono.Pause())
             CloseChat();
         
         /*if (Input.PreviousMessage() && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)

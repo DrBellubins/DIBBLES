@@ -34,6 +34,8 @@ public class GameSceneMono : Scene
 
     public override void Update()
     {
+        InputMono.Update();
+        
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);

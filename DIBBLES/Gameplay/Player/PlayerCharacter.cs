@@ -150,13 +150,13 @@ public class PlayerCharacter
         {
             placeBreakTimer += Time.DeltaTime;
             
-            if (Input.StartedBreaking) // Break immediately
+            if (InputMono.StartedBreaking) // Break immediately
             {
                 TerrainGeneration.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
         
-            if (Input.Break() && !Input.StartedBreaking) // Hold break
+            if (InputMono.Break() && !InputMono.StartedBreaking) // Hold break
             {
                 if (placeBreakTimer >= 0.3f)
                 {
@@ -165,13 +165,13 @@ public class PlayerCharacter
                 }
             }
 
-            if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
+            if (InputMono.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
             {
                 TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
             }
         
-            if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
+            if (InputMono.Interact() && hotbar.SelectedItem != null) // Hold place
             {
                 if (placeBreakTimer >= 0.3f)
                 {
@@ -204,7 +204,7 @@ public class PlayerCharacter
         // Allow tabbing out and back into game
         //if (Input.Pause()) CursorManager.ReleaseCursor();
         
-        var mousePosition = Input.CursorPosition();
+        var mousePosition = InputMono.CursorPosition();
         
         var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= MonoEngine.ScreenWidth &&
                                 mousePosition.Y >= 0 && mousePosition.Y <= MonoEngine.ScreenHeight;
@@ -212,20 +212,20 @@ public class PlayerCharacter
         //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsFrozen)
         //    CursorManager.LockCursor();
         
-        if (Input.MoveForward()) inputDir.Z += 1.0f;
-        if (Input.MoveBackward()) inputDir.Z -= 1.0f;
-        if (Input.MoveLeft()) inputDir.X -= 1.0f;
-        if (Input.MoveRight()) inputDir.X += 1.0f;
+        if (InputMono.MoveForward()) inputDir.Z += 1.0f;
+        if (InputMono.MoveBackward()) inputDir.Z -= 1.0f;
+        if (InputMono.MoveLeft()) inputDir.X -= 1.0f;
+        if (InputMono.MoveRight()) inputDir.X += 1.0f;
 
         // Run
-        if (Input.Run())
+        if (InputMono.Run())
             run();
 
         if (isRunning && isCrouching)
             isRunning = false;
         
         // Crouching
-        isCrouching = !IsFrozen && Input.Crouch();
+        isCrouching = !IsFrozen && InputMono.Crouch();
 
         // Run vs Crouch checks
         if (isCrouching)
@@ -236,7 +236,7 @@ public class PlayerCharacter
             currentSpeed = WalkSpeed;
         
         if (!IsFrozen)
-            isJumping = Input.Jump(isCrouching);
+            isJumping = InputMono.Jump(isCrouching);
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
@@ -270,7 +270,7 @@ public class PlayerCharacter
         Vector2 lookDelta = Vector2.Zero;
         
         if (!IsFrozen)
-            lookDelta = Input.LookDelta();
+            lookDelta = InputMono.LookDelta();
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
         var lookDeltaY = lookDelta.Y * mouseSensitivity;

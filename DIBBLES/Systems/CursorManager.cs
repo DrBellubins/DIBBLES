@@ -1,5 +1,4 @@
-using System.Numerics;
-using Raylib_cs;
+using Microsoft.Xna.Framework;
 
 namespace DIBBLES.Systems;
 
@@ -11,18 +10,18 @@ public static class CursorManager
     
     public static void LockCursor()
     {
-        previousMousePosition = Input.CursorPosition();
+        previousMousePosition = InputMono.CursorPosition();
 
-        Raylib.HideCursor();
+        //Raylib.HideCursor();
         IsLocked = true;;
     }
 
     public static void ReleaseCursor()
     {
-        Raylib.EnableCursor();
-        Raylib.SetMousePosition((int)previousMousePosition.X, (int)previousMousePosition.Y);
+        //Raylib.EnableCursor();
+        //Raylib.SetMousePosition((int)previousMousePosition.X, (int)previousMousePosition.Y);
         
-        Raylib.ShowCursor();
+        //Raylib.ShowCursor();
         IsLocked = false;
     }
 
@@ -30,7 +29,7 @@ public static class CursorManager
     {
         if (IsLocked)
         {
-            Raylib.SetMousePosition(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
+            //Raylib.SetMousePosition(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
         }
     }
 }

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Diagnostics;
+using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 
@@ -76,6 +77,9 @@ public class MonoEngine : Game
             base.Update(gameTime);
             return;
         }
+        
+        if ((!Chat.IsOpen && InputMono.Quit()))
+            Exit();
         
         foreach (var scene in Scenes)
             scene.Update();
