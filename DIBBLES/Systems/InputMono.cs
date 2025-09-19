@@ -10,6 +10,8 @@ public static class InputMono
     private static Point _windowCenter = new Point(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
     private static int _prevScrollWheel;
     
+    private static bool _justWarped = false;
+    
     public static Vector2 MouseDelta { get; private set; }
     
     public static void Update()
@@ -20,7 +22,16 @@ public static class InputMono
         _prevMouse = _currentMouse;
         _currentMouse = Mouse.GetState();
 
-        MouseDelta = new Vector2(_currentMouse.X - _prevMouse.X, _currentMouse.Y - _prevMouse.Y);
+        if (_justWarped)
+        {
+            MouseDelta = Vector2.Zero;
+            _justWarped = false;
+        }
+        else
+        {
+            MouseDelta = new Vector2(_currentMouse.X - _prevMouse.X, _currentMouse.Y - _prevMouse.Y);
+        }
+        
         _prevScrollWheel = _currentMouse.ScrollWheelValue;
     }
 
@@ -48,6 +59,12 @@ public static class InputMono
         return (_currentMouse.ScrollWheelValue - _prevMouse.ScrollWheelValue) / 120f; // 120 per notch
     }
 
+    public static void WarpMouseToCenter()
+    {
+        Mouse.SetPosition(_windowCenter.X, _windowCenter.Y);
+        _justWarped = true;
+    }
+    
     // Mouse buttons
     public static bool StartedBreaking => IsMouseButtonPressed(ButtonType.Left);
     public static bool Break() => _currentMouse.LeftButton == ButtonState.Pressed;

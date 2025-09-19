@@ -37,7 +37,8 @@ public static class CursorManager
         if (IsLocked)
         {
             // Recenter mouse every frame to the middle of the screen (typical FPS-style lock)
-            Mouse.SetPosition(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
+            InputMono.WarpMouseToCenter();
+            //Mouse.SetPosition(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
         }
     }
 }
