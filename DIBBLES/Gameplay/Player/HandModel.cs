@@ -11,9 +11,7 @@ public class HandModel
     
     public void Start()
     {
-        //handBlockModel = MeshUtilsMonoGame.GenTexturedCube(graphics, dirtTexture);
-        
-        //handBlockModel = MeshUtils.GenTexturedCube(BlockData.Textures[BlockType.Dirt]);
+        handBlockModel = MeshUtilsMonoGame.GenTexturedCube(MonoEngine.Graphics, BlockData.Textures[BlockType.Dirt]);
     }
 
     public void Draw(Camera3D camera, Vector3 cameraForward, Vector3 cameraRight, Vector3 cameraUp, Quaternion cameraRotation, ItemSlot? selectedItem = null)
