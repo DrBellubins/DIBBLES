@@ -5,6 +5,7 @@ using DIBBLES.Gameplay.Player;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Scenes;
 
@@ -60,12 +61,17 @@ public class GameSceneMono : Scene
         
         gd.Clear(Color.Black);
         
+        MonoEngine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
+        MonoEngine.Graphics.BlendState = BlendState.AlphaBlend;
+        
         TerrainGen.Draw();
         //PlayerCharacter.Draw();
         
         //Debug.Draw3D();
         
         // Draw UI
+        sprites.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+        
         PlayerCharacter.DrawUI();
         
         /*if (Chat.IsOpen || Chat.IsClosedButShown)
@@ -80,5 +86,7 @@ public class GameSceneMono : Scene
         Debug.Draw2D();
         
         gameChat.Draw();*/
+        
+        sprites.End();
     }
 }
