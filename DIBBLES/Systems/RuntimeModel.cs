@@ -13,8 +13,10 @@ public class RuntimeModel : IDisposable
     public Texture2D Texture;
     private bool disposed = false;
 
-    public void Draw(GraphicsDevice gd, Matrix world, Matrix view, Matrix projection)
+    public void Draw(Matrix world, Matrix view, Matrix projection)
     {
+        var gd = MonoEngine.Graphics;
+        
         if (Effect is BasicEffect basic)
         {
             basic.World = world;

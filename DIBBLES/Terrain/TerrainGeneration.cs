@@ -8,6 +8,8 @@ using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
+using Microsoft.Xna.Framework.Graphics;
+
 //using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Terrain;
@@ -465,9 +467,12 @@ public class TerrainGeneration
             // oModel.Value is a RuntimeModel
             if (oModel.Value != null)
             {
-                oModel.Value.Draw(
-                    MonoEngine.Graphics, // GraphicsDevice
-                    Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
+                var effect = (BasicEffect)oModel.Value.Effect;
+                effect.Texture = BlockData.TextureAtlas;
+                
+                oModel.Value.Texture = BlockData.TextureAtlas;
+                
+                oModel.Value.Draw(Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
                     GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
@@ -480,9 +485,7 @@ public class TerrainGeneration
             // oModel.Value is a RuntimeModel
             if (tModel.Value != null)
             {
-                tModel.Value.Draw(
-                    MonoEngine.Graphics, // GraphicsDevice
-                    Matrix.CreateTranslation(tModel.Key.ToVector3()), // World matrix for chunk position
+                tModel.Value.Draw(Matrix.CreateTranslation(tModel.Key.ToVector3()), // World matrix for chunk position
                     GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
