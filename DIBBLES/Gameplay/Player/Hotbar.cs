@@ -179,20 +179,20 @@ public class Hotbar
         {
             if (blockType == BlockType.Air || blockType == BlockType.Water) continue; // Skip air and water
 
-            RenderTarget2D renderTexture = Raylib.LoadRenderTexture(iconSize, iconSize);
+            RenderTarget2D renderTexture = new RenderTarget2D(MonoEngine.Graphics, iconSize, iconSize);
 
             // Set up the isometric orthographic camera
-            var cam = new Raylib_cs.Camera3D();
+            var cam = new Camera3D();
             cam.Position = new Vector3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
-            cam.FovY = 2f;
-            cam.Projection = CameraProjection.Orthographic;
+            cam.Fov = 2f;
+            //cam.Projection = Matrix.CreateOrthographic();
 
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtilsMonoGame.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
-            Raylib.BeginTextureMode(renderTexture);
+            /*Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
             Raylib.BeginMode3D(cam);
 
@@ -205,7 +205,7 @@ public class Hotbar
             Raylib.UnloadModel(cubeModel);
 
             // Store the icon texture (renderTexture.Texture) in your dictionary
-            blockIcons[blockType] = renderTexture.Texture;
+            blockIcons[blockType] = renderTexture.Texture;*/
         }
     }
     
