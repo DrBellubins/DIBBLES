@@ -49,6 +49,7 @@ public class Hotbar
         Resize();
 
         hotbarSlots[0] = new ItemSlot(1, BlockType.Dirt);
+        hotbarSlots[1] = new ItemSlot(1, BlockType.Stone);
         
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", args =>
         {
@@ -158,14 +159,14 @@ public class Hotbar
                     (int)(hotbarRect.Y + 0.1f * hotbarRect.Height),
                     (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
-                if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
+                // TODO: Temporary until 3d icons can be fixed
+                MonoEngine.Sprites.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
+                
+                /*if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
                     var itemOrigRect = new Rectangle(0, 0, iconTex.Width, iconTex.Height);
-                    
-                    Primatives.DrawRectangleRec(itemOrigRect, Color.AliceBlue);
-                    
-                    //Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
-                }
+                    Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
+                }*/
             }
         }
         

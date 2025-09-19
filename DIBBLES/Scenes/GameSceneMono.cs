@@ -61,11 +61,13 @@ public class GameSceneMono : Scene
         
         gd.Clear(Color.Black);
         
-        MonoEngine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
-        MonoEngine.Graphics.BlendState = BlendState.AlphaBlend;
+        gd.BlendState = BlendState.AlphaBlend;
+        gd.DepthStencilState = DepthStencilState.Default;
+        gd.RasterizerState = RasterizerState.CullCounterClockwise;
+        gd.SamplerStates[0] = SamplerState.PointClamp;
         
         TerrainGen.Draw();
-        //PlayerCharacter.Draw();
+        PlayerCharacter.Draw();
         
         //Debug.Draw3D();
         

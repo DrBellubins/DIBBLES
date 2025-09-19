@@ -14,31 +14,56 @@ public class HandModel
         handBlockModel = MeshUtilsMonoGame.GenTexturedCube(MonoEngine.Graphics, BlockData.Textures[BlockType.Dirt]);
     }
 
-    public void Draw(Camera3D camera, Vector3 cameraForward, Vector3 cameraRight, Vector3 cameraUp, Quaternion cameraRotation, ItemSlot? selectedItem = null)
+    public void Draw(
+        Camera3D camera, 
+        Vector3 cameraForward, 
+        Vector3 cameraRight, 
+        Vector3 cameraUp, 
+        Quaternion cameraRotation, 
+        ItemSlot? selectedItem = null)
     {
-        if (selectedItem != null)
-        {
-            /*MeshUtils.SetModelTexture(handBlockModel, BlockData.Textures[selectedItem.Type]);
+        if (selectedItem == null)
+            return;
 
-            // Adjust these distances for the best effect
-            float forwardDistance = 0.5f; // In front of camera
-            float rightDistance = 0.5f;   // To the right
-            float upDistance = -0.3f;     // Down a bit (optional)
+        /*handBlockModel.Effect.LightingEnabled = true;
+        handBlockModel.Effect.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
+        
+        handBlockModel.Effect.DirectionalLight0.Enabled = true;
+        handBlockModel.Effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, -1.0f));
+        handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
+        handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
+        
+        // Set the hand model texture
+        Texture2D texture = BlockData.Textures[selectedItem.Type];
+        MeshUtilsMonoGame.SetCubeMeshTexture(handBlockModel, texture);
 
-            Vector3 handPos = camera.Position 
-                              + cameraForward * forwardDistance
-                              + cameraRight * rightDistance
-                              + cameraUp * upDistance;
+        // Position relative to camera
+        float forwardDistance = 0.5f;
+        float rightDistance = 0.5f;
+        float upDistance = -0.3f;
 
-            var rot = Quaternion.Inverse(cameraRotation);
-            Matrix rotationMat = Matrix.CreateFromQuaternion(rot);
-            
-            Vector3 axis;
-            float angleDeg;
-            GMath.MatrixToAxisAngle(rotationMat, out axis, out angleDeg);
-            
-            // TODO: Monogame
-            //Raylib.DrawModelEx(handBlockModel, handPos, axis, angleDeg, new Vector3(0.25f), Color.White);*/
-        }
+        Vector3 handPos = camera.Position
+                          + cameraForward * forwardDistance
+                          + cameraRight * rightDistance
+                          + cameraUp * upDistance;
+
+        // Rotation
+        Quaternion rotation = cameraRotation;
+
+        // Scale (adjust as desired)
+        Vector3 scale = new Vector3(0.5f);
+
+        // Build world matrix: Scale * Rotation * Translation
+        Matrix world =
+            Matrix.CreateScale(scale)
+            * Matrix.CreateFromQuaternion(rotation)
+            * Matrix.CreateTranslation(handPos);
+
+        // Set camera matrices
+        Matrix view = camera.View;
+        Matrix projection = camera.Projection;
+
+        // Draw the model
+        handBlockModel.Draw(world, view, projection);
     }
 }

@@ -98,12 +98,16 @@ public class MonoCubeMesh
         {
             int vi = f * 4;
             int ii = f * 6;
+            
+            // First triangle (CCW): 0,2,1
             indices[ii + 0] = (short)(vi + 0);
-            indices[ii + 1] = (short)(vi + 1);
-            indices[ii + 2] = (short)(vi + 2);
+            indices[ii + 1] = (short)(vi + 2);
+            indices[ii + 2] = (short)(vi + 1);
+            
+            // Second triangle (CCW): 0,3,2
             indices[ii + 3] = (short)(vi + 0);
-            indices[ii + 4] = (short)(vi + 2);
-            indices[ii + 5] = (short)(vi + 3);
+            indices[ii + 4] = (short)(vi + 3);
+            indices[ii + 5] = (short)(vi + 2);
         }
     }
 
@@ -144,6 +148,11 @@ public static class TextureUtils
         }
             
         return whitePixel;
+    }
+
+    public static void DrawTexturePro()
+    {
+        
     }
 }
 
