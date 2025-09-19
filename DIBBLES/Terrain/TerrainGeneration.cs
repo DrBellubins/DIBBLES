@@ -469,6 +469,8 @@ public class TerrainGeneration
             {
                 var effect = (BasicEffect)oModel.Value.Effect;
                 effect.Texture = BlockData.TextureAtlas;
+                effect.TextureEnabled = true;
+                effect.LightingEnabled = false; // If you don't want lighting
                 
                 oModel.Value.Texture = BlockData.TextureAtlas;
                 
