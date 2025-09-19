@@ -30,7 +30,7 @@ public static class InputMono
     public static bool MoveLeft() => _currentKey.IsKeyDown(Keys.A);
     public static bool MoveRight() => _currentKey.IsKeyDown(Keys.D);
 
-    public static bool Run() => IsMouseButtonPressed(ButtonType.XButton1);
+    public static bool Run() => IsMouseButtonPressed(ButtonType.XButton2);
 
     public static bool Crouch() => _currentKey.IsKeyDown(Keys.LeftShift);
 
@@ -42,6 +42,7 @@ public static class InputMono
     // Mouse input
     public static Vector2 LookDelta() => MouseDelta;
     public static Vector2 CursorPosition() => new Vector2(_currentMouse.X, _currentMouse.Y);
+    
     public static float ScrollDelta()
     {
         return (_currentMouse.ScrollWheelValue - _prevMouse.ScrollWheelValue) / 120f; // 120 per notch
@@ -70,6 +71,7 @@ public static class InputMono
             if (IsKeyPressed(Keys.D1 + i))
                 return i;
         }
+        
         return -1;
     }
 
@@ -78,6 +80,7 @@ public static class InputMono
 
     // Utility for single-frame mouse button presses
     private enum ButtonType { Left, Right, Middle, XButton1, XButton2 }
+    
     private static bool IsMouseButtonPressed(ButtonType btn)
     {
         switch (btn)
