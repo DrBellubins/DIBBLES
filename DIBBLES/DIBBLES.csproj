@@ -26,6 +26,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <RdXmlFile Include="rd.xml" />
+    </ItemGroup>
+
+    <ItemGroup>
       <Content Include="Assets/**">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
