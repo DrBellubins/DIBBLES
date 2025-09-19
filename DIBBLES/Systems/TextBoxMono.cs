@@ -77,7 +77,7 @@ public class TextBoxMono
     {
         // Draw box (different color if focused)
         Color boxColor = IsFocused ? Color.Gray : Color.DarkGray;
-        MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(MonoEngine.Graphics), Bounds, boxColor);
+        MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), Bounds, boxColor);
 
         // Draw text
         var padding = 8f;
@@ -94,7 +94,7 @@ public class TextBoxMono
             float caretY = textPos.Y;
             float caretH = MonoEngine.MainFont.LineSpacing;
 
-            MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(MonoEngine.Graphics),
+            MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(),
                 new Rectangle((int)caretX, (int)caretY, 2, (int)caretH), Color.White);
         }
     }

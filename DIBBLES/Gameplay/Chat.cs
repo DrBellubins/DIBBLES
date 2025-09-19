@@ -154,75 +154,76 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        //MonoEngine.Sprites.dr
+        MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), new Vector2(chatBox.X, chatBox.Y), UI.MainColor);
         //Raylib.DrawRectangleRec(chatBox, UI.MainColor);
     }
     
     public void Draw()
     {
-        if (IsClosedButShown)
-            elapsed += Time.DeltaTime;
-
-        if (elapsed >= disappearTime)
-        {
-            IsClosedButShown = false;
-            elapsed -= disappearTime;
-        }
+        var sprites = MonoEngine.Sprites;
         
-        if (IsOpen || IsClosedButShown)
+        // 1. Draw chat background and text to offscreen RenderTarget2D
+        MonoEngine.Graphics.SetRenderTarget(ChatTexture);
+        MonoEngine.Graphics.Clear(Color.Transparent);
+
+        sprites.Begin();
+
+        // Draw background rectangle (optional, for chat background)
+        sprites.Draw(
+            TextureUtils.GetWhitePixel(), // 1x1 white pixel
+            new Rectangle(0, 0, Width, Height),
+            new Color(0, 0, 0, 180) // semi-transparent black
+        );
+
+        // Draw messages
+        int maxLines = (int)(Height / FontSize);
+        int start = Math.Max(0, ChatMessages.Count - maxLines); // auto-scroll
+        var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+
+        int index = 0;
+        
+        foreach (var msg in toDisplay)
         {
-            Raylib.BeginTextureMode(ChatTexture);
-            Raylib.ClearBackground(new Color(0, 0, 0, 0));
-
-            if (!isUserScrolling) scrollOffset = 0; // Auto-scroll if not user scrolling
+            var color = GetMsgColor(msg.Type);
             
-            int start = Math.Max(0, ChatMessages.Count - maxLines - (int)scrollOffset);
-            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+            Vector2 pos = new Vector2(0f, index * FontSize);
             
-            int index = 0;
+            sprites.DrawString(MonoEngine.MainFont, msg.Message, pos, color);
             
-            foreach (var msg in toDisplay)
-            {
-                Color msgColor = Color.Black;
-                
-                switch (msg.Type)
-                {
-                    case ChatMessageType.Message:
-                        msgColor = Color.White;
-                        break;
-                    case ChatMessageType.Command:
-                        msgColor = Color.SkyBlue;
-                        break;
-                    case ChatMessageType.CommandHeader:
-                        msgColor = Color.Purple;
-                        break;
-                    case ChatMessageType.Warning:
-                        msgColor = Color.Yellow;
-                        break;
-                    case ChatMessageType.Error:
-                        msgColor = Color.Red;
-                        break;
-                }
-                
-                Raylib.DrawTextEx(MonoEngine.MainFont, msg.Message, new Vector2(0f, index * FontSize), FontSize, 1f, msgColor);
-
-                index++;
-            }
-            
-            Raylib.EndTextureMode();
-            
-            Raylib.DrawTextureRec(
-                ChatTexture.Texture,
-                new Rectangle(0, 0, ChatTexture.Texture.Width, -ChatTexture.Texture.Height),
-                new Vector2(0f, heightPos),
-                Color.White
-            );
-            
-            if (!IsClosedButShown)
-                textBox.Draw();
+            index++;
         }
+
+        sprites.End();
+
+        // 2. Reset render target to backbuffer
+        MonoEngine.Graphics.SetRenderTarget(null);
+
+        // 3. Draw the chat texture to the screen (e.g. bottom left)
+        sprites.Begin();
+        
+        sprites.Draw(
+            ChatTexture,
+            new Vector2(20f, MonoEngine.ScreenHeight - Height - 20f), // adjust as needed
+            Color.White
+        );
+        
+        sprites.End();
     }
 
+    // Utility: get color by message type
+    private Color GetMsgColor(ChatMessageType type)
+    {
+        return type switch
+        {
+            ChatMessageType.Message => Color.White,
+            ChatMessageType.Command => Color.SkyBlue,
+            ChatMessageType.CommandHeader => Color.Purple,
+            ChatMessageType.Warning => Color.Yellow,
+            ChatMessageType.Error => Color.Red,
+            _ => Color.White
+        };
+    }
+    
     public void OpenChat()
     {
         if (!IsOpen)

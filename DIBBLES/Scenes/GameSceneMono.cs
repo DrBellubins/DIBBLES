@@ -54,27 +54,27 @@ public class GameSceneMono : Scene
 
     public override void Draw()
     {
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.Black);
+        var gd = MonoEngine.Graphics;
+        var sprites = MonoEngine.Sprites;
+        var font = MonoEngine.MainFont;
         
-        // Draw 3d world to back buffer
-        Raylib.ClearBackground(Color.SkyBlue);
-        Raylib.BeginMode3D(PlayerCharacter.Camera);
+        gd.Clear(Color.Black);
         
         TerrainGen.Draw();
         PlayerCharacter.Draw();
         
         Debug.Draw3D();
         
-        Raylib.EndMode3D();
-        
         // Draw UI
+        sprites.Begin();
+        
         PlayerCharacter.DrawUI();
         
         if (Chat.IsOpen || Chat.IsClosedButShown)
             gameChat.DrawBG();
         
-        Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
+        // TODO: Monogame
+        //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
@@ -83,6 +83,6 @@ public class GameSceneMono : Scene
         
         gameChat.Draw();
         
-        Raylib.EndDrawing();
+        sprites.End();
     }
 }

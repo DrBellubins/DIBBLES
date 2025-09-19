@@ -134,11 +134,11 @@ public static class TextureUtils
 {
     private static Texture2D whitePixel;
         
-    public static Texture2D GetWhitePixel(GraphicsDevice gd)
+    public static Texture2D GetWhitePixel()
     {
         if (whitePixel == null)
         {
-            whitePixel = new Texture2D(gd, 1, 1);
+            whitePixel = new Texture2D(MonoEngine.Graphics, 1, 1);
             whitePixel.SetData(new[] { Color.White });
         }
             
