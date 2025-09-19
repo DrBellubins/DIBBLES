@@ -208,7 +208,7 @@ public class TerrainMesh
     {
         foreach (var chunk in ECSChunks.Values)
         {
-            if (TMesh.TransparentModels.TryGetValue(chunk.Position, out var oldModel))
+            if (TMesh.TransparentModels.TryGetValue(chunk.Position, out var oldModel) && oldModel != null)
                 oldModel.Dispose();
 
             var tMeshData = TMesh.GenerateMeshData(chunk, true, cameraPos);
@@ -221,71 +221,68 @@ public class TerrainMesh
     {
         var graphicsDevice = MonoEngine.Graphics;
 
-        // Step 1: Pack mesh data into vertex structs
-        var vertices = new VertexPositionNormalTextureColor[data.VertexCount];
+        // Don't process empty mesh data
+        if (data.VertexCount == 0 || data.Vertices == null || data.Indices == null || data.Indices.Length == 0)
+            return null;
 
+        // Pack vertex data
+        var verts = new VertexPositionNormalTextureColor[data.VertexCount];
         for (int i = 0; i < data.VertexCount; i++)
         {
             var pos = new Vector3(
                 data.Vertices[i * 3 + 0],
                 data.Vertices[i * 3 + 1],
                 data.Vertices[i * 3 + 2]);
-
             var norm = new Vector3(
                 data.Normals[i * 3 + 0],
                 data.Normals[i * 3 + 1],
                 data.Normals[i * 3 + 2]);
-
             var tex = new Vector2(
                 data.TexCoords[i * 2 + 0],
                 data.TexCoords[i * 2 + 1]);
-
             var color = new Color(
                 data.Colors[i * 4 + 0],
                 data.Colors[i * 4 + 1],
                 data.Colors[i * 4 + 2],
                 data.Colors[i * 4 + 3]);
 
-            vertices[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color);
+            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color);
         }
 
-        // Step 2: Create VertexBuffer
+        // Create buffers
         var vertexBuffer = new VertexBuffer(
             graphicsDevice,
             VertexPositionNormalTextureColor.VertexDeclaration,
-            vertices.Length,
-            BufferUsage.WriteOnly
-        );
-        
-        vertexBuffer.SetData(vertices);
+            verts.Length,
+            BufferUsage.WriteOnly);
 
-        // Step 3: Create IndexBuffer
+        vertexBuffer.SetData(verts);
+
         var indexBuffer = new IndexBuffer(
             graphicsDevice,
             IndexElementSize.SixteenBits,
             data.Indices.Length,
-            BufferUsage.WriteOnly
-        );
+            BufferUsage.WriteOnly);
+
         indexBuffer.SetData(data.Indices);
 
-        // Step 4: Create or assign an Effect
-        // You can use BasicEffect for basic lighting, or a custom Effect if you have one
+        // Create effect
         var effect = new BasicEffect(graphicsDevice)
         {
-            LightingEnabled = false,
             TextureEnabled = true,
             VertexColorEnabled = true,
-            // Texture = ... assign your block atlas here if needed
+            LightingEnabled = false,
+            // Texture = ... assign your atlas here
         };
 
-        // Step 5: Build RuntimeModel and return
+        // Return as RuntimeModel
         return new RuntimeModel
         {
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
             Effect = effect,
-            // Texture = ... assign atlas here if needed
+            // Texture = ... assign atlas here
         };
     }
     

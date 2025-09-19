@@ -61,14 +61,12 @@ public class GameSceneMono : Scene
         gd.Clear(Color.Black);
         
         TerrainGen.Draw();
-        PlayerCharacter.Draw();
+        //PlayerCharacter.Draw();
         
-        Debug.Draw3D();
+        //Debug.Draw3D();
         
         // Draw UI
-        sprites.Begin();
-        
-        PlayerCharacter.DrawUI();
+        /*PlayerCharacter.DrawUI();
         
         if (Chat.IsOpen || Chat.IsClosedButShown)
             gameChat.DrawBG();
@@ -81,8 +79,6 @@ public class GameSceneMono : Scene
         
         Debug.Draw2D();
         
-        gameChat.Draw();
-        
-        sprites.End();
+        gameChat.Draw();*/
     }
 }

@@ -151,11 +151,17 @@ public class Chat
 
     public void DrawBG()
     {
+        var sprites = MonoEngine.Sprites;
+        
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
+        sprites.Begin();
+        
         MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), new Vector2(chatBox.X, chatBox.Y), UI.MainColor);
         //Raylib.DrawRectangleRec(chatBox, UI.MainColor);
+        
+        sprites.End();
     }
     
     public void Draw()
@@ -185,8 +191,7 @@ public class Chat
         foreach (var msg in toDisplay)
         {
             var color = GetMsgColor(msg.Type);
-            
-            Vector2 pos = new Vector2(0f, index * FontSize);
+            var pos = new Vector2(0f, index * FontSize);
             
             sprites.DrawString(MonoEngine.MainFont, msg.Message, pos, color);
             

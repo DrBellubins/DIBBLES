@@ -171,7 +171,12 @@ public static class Primatives
         var sprites = MonoEngine.Sprites;
         
         EnsurePixel();
+        
+        sprites.Begin();
+        
         sprites.Draw(_pixel!, rect, color);
+        
+        sprites.End();
     }
 
     /// <summary>

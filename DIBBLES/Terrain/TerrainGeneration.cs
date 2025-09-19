@@ -432,14 +432,14 @@ public class TerrainGeneration
         foreach (var coord in chunksToRemove)
         {
             // Opaque model
-            if (TMesh.OpaqueModels.TryGetValue(coord, out var oModel))
+            if (TMesh.OpaqueModels.TryGetValue(coord, out var oModel) && oModel != null)
             {
                 oModel.Dispose();
                 TMesh.OpaqueModels.Remove(coord);
             }
 
             // Transparent model
-            if (TMesh.TransparentModels.TryGetValue(coord, out var tModel))
+            if (TMesh.TransparentModels.TryGetValue(coord, out var tModel) &&  tModel != null)
             {
                 tModel.Dispose();
                 TMesh.TransparentModels.Remove(coord);
