@@ -66,7 +66,7 @@ public class BlockData
                 atlasBlockTypes.Add(blockType);
         }
         
-        List<Texture2D> tempTextures = new List<Texture2D>();
+        /*List<Texture2D> tempTextures = new List<Texture2D>();
         
         int maxWidth = 0;
         int maxHeight = 0;
@@ -104,7 +104,7 @@ public class BlockData
             
                 Sounds.Add(blockType, blockSounds);
             }
-        }
+        }*/
 
         // Create texture atlas in a 5x1 layout
         // 1. Get your block types (skip air/water)

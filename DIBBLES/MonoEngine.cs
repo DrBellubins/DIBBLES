@@ -37,8 +37,6 @@ public class MonoEngine : Game
         
         Content.RootDirectory = "Content";
         
-        MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
-        
         IsMouseVisible = true;
 
         GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
@@ -46,11 +44,6 @@ public class MonoEngine : Game
         GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
         
         IsFixedTimeStep = false;
-        
-        var voxelScene = new GameSceneMono();
-        
-        foreach (var scene in Scenes)
-            scene.Start();
     }
 
     protected override void Initialize()
@@ -61,11 +54,17 @@ public class MonoEngine : Game
         previousTicks = timer.ElapsedTicks;
 
         IsRunning = true;
+        
+        var voxelScene = new GameSceneMono();
+        
+        foreach (var scene in Scenes)
+            scene.Start();
     }
 
     protected override void LoadContent()
     {
         Sprites = new SpriteBatch(GraphicsDevice);
+        MainFont = Content.Load<SpriteFont>("MainFont");
     }
 
     protected override void Update(GameTime gameTime)

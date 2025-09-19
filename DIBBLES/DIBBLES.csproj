@@ -33,7 +33,7 @@
     </ItemGroup>
 
     <Target Name="BuildContent" BeforeTargets="Build">
-      <Exec Command="dotnet mgcb -b -@=Content/Content.mgcb" IgnoreExitCode="true" />
+      <Exec Command="dotnet mgcb -b -@=Content/Content.mgcb" ContinueOnError="true" />
     </Target>
 
     <Target Name="CopyContent" AfterTargets="Build">
