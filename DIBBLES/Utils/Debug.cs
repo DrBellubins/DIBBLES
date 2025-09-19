@@ -1,5 +1,5 @@
-/*using Microsoft.Xna.Framework;
-using System.Numerics;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Text;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
@@ -15,7 +15,7 @@ public class Debug
     private static Dictionary<Vector3, Vector3> debugBoxes = new();
     
     // Cache for text textures: key is a combination of text and position
-    private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new Dictionary<(string, Vector3), Texture2D>();
+    private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
     
     public static bool ShowDebug { get; private set; }
     public static bool ShowDebugExtended { get; private set; }
@@ -37,7 +37,8 @@ public class Debug
         
             foreach (var text in textBuffer2d)
             {
-                Raylib.DrawTextEx(Engine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
+                // TODO: Monogame
+                //Raylib.DrawTextEx(MonoEngine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
                 index += 24;
             }
         }
@@ -47,8 +48,9 @@ public class Debug
     {
         if (ShowDebug)
         {
-            foreach (var box in debugBoxes)
-                Raylib.DrawCubeV(box.Key, box.Value, new Color(1f, 0f, 0f, 0.5f));
+            // TODO: Monogame
+            //foreach (var box in debugBoxes)
+            //    Raylib.DrawCubeV(box.Key, box.Value, new Color(1f, 0f, 0f, 0.5f));
         
             debugBoxes.Clear();
         }
@@ -67,7 +69,8 @@ public class Debug
     // TODO: Strings too long get cut off
     public static void Draw3DText(string text, Vector3 position, Color color, float scale = 1f)
     {
-        // Create a unique key for the text and position
+        // TODO: Monogame
+        /*// Create a unique key for the text and position
         var cacheKey = (text, position);
 
         // Check if texture already exists in cache
@@ -104,6 +107,6 @@ public class Debug
         }
         
         // Draw the billboard with the cached texture
-        Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);
+        Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);*/
     }
-}*/
+}

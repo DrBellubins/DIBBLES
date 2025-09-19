@@ -27,9 +27,9 @@ public class GameSceneMono : Scene
         
         gameChat.Start();
         
-        /*Commands.RegisterCommand("help", "Lists all available commands", args => Chat.WriteHelp());
+        Commands.RegisterCommand("help", "Lists all available commands", args => Chat.WriteHelp());
         Commands.RegisterCommand("debug", "Toggle debug information", args => Debug.ToggleDebug());
-        Commands.RegisterCommand("debugEx", "Toggle extended debug information", args => Debug.ToggleDebugExtended());*/
+        Commands.RegisterCommand("debugEx", "Toggle extended debug information", args => Debug.ToggleDebugExtended());
     }
 
     public override void Update()
@@ -49,12 +49,12 @@ public class GameSceneMono : Scene
         
         CursorManager.Update(); // Must happen after everything for MouseDelta to work.
         
-        //Debug.Update(PlayerCharacter.Camera); // Must run after everything
+        Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }
 
     public override void Draw()
     {
-        /*Raylib.BeginDrawing();
+        Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.Black);
         
         // Draw 3d world to back buffer
@@ -83,6 +83,6 @@ public class GameSceneMono : Scene
         
         gameChat.Draw();
         
-        Raylib.EndDrawing();*/
+        Raylib.EndDrawing();
     }
 }

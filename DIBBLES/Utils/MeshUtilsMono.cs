@@ -129,6 +129,23 @@ public class MonoCubeMesh
     }
 }
 
+// Utility: Returns a single white pixel texture (for box/caret drawing)
+public static class TextureUtils
+{
+    private static Texture2D whitePixel;
+        
+    public static Texture2D GetWhitePixel(GraphicsDevice gd)
+    {
+        if (whitePixel == null)
+        {
+            whitePixel = new Texture2D(gd, 1, 1);
+            whitePixel.SetData(new[] { Color.White });
+        }
+            
+        return whitePixel;
+    }
+}
+
 // Utility class to provide cube mesh creation (matches Raylib MeshUtils)
 public static class MeshUtilsMonoGame
 {

@@ -99,23 +99,6 @@ public class TextBoxMono
         }
     }
 
-    // Utility: Returns a single white pixel texture (for box/caret drawing)
-    private static class TextureUtils
-    {
-        private static Texture2D whitePixel;
-        
-        public static Texture2D GetWhitePixel(GraphicsDevice gd)
-        {
-            if (whitePixel == null)
-            {
-                whitePixel = new Texture2D(gd, 1, 1);
-                whitePixel.SetData(new[] { Color.White });
-            }
-            
-            return whitePixel;
-        }
-    }
-
     // Utility: very basic key to char (for demo; for robust, see TextInput event)
     private static char? KeyToChar(Keys key, bool shift)
     {

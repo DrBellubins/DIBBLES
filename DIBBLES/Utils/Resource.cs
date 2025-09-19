@@ -55,7 +55,7 @@ public static class Resource
         {
             string file = FindTexture(fileName, isItem);
             
-            var texture = Texture2D.FromFile(MonoEngine.Graphics.GraphicsDevice, file);
+            var texture = Texture2D.FromFile(MonoEngine.Graphics, file);
             textures.Add(texture);
             
             return (T)(object)texture;
