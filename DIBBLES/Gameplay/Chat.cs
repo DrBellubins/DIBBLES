@@ -40,7 +40,7 @@ public class Chat
     public RenderTarget2D ChatTexture;
     
     private Rectangle chatBox = new Rectangle(0, 0, Width, Height);
-    private TextBox textBox = new TextBox(new Rectangle(0, 0, Width, 40));
+    private TextBoxMono textBox = new TextBoxMono(new Rectangle(0, 0, Width, 40));
     
     public float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
@@ -60,7 +60,7 @@ public class Chat
     
     public void Start()
     {
-        ChatTexture = Raylib.LoadRenderTexture(Width, Height);
+        ChatTexture = new RenderTarget2D(MonoEngine.Graphics, Width, Height);
         
         textBox.Bounds.X = (int)UI.LeftCenterPivot.X;
         textBox.Bounds.Y = (int)(UI.LeftCenterPivot.Y + (Height / 2f));

@@ -115,7 +115,7 @@ public class BlockData
 
         // 2. Call the generator
         var result = AtlasGenerator.GenerateBlockAtlas(
-            MonoEngine.Graphics.GraphicsDevice,
+            MonoEngine.Graphics,
             Path.Combine(AppContext.BaseDirectory, "Assets/Textures/Blocks"),
             blockTypes,
             16 // or your tile size

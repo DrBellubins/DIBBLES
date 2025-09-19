@@ -17,7 +17,9 @@ public class MonoEngine : Game
     public static bool IsRunning;
     public static bool IsPaused;
 
-    public static GraphicsDeviceManager Graphics =  new GraphicsDeviceManager(null);
+    public static GraphicsDeviceManager GraphicsManager = new GraphicsDeviceManager(null);
+    public static GraphicsDevice Graphics;
+    
     public static SpriteBatch Sprites;
     
     public static SpriteFont MainFont;
@@ -30,16 +32,17 @@ public class MonoEngine : Game
 
     public MonoEngine()
     {
-        Graphics = new GraphicsDeviceManager(this);
+        GraphicsManager = new GraphicsDeviceManager(this);
+        Graphics = GraphicsManager.GraphicsDevice;
         
         MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
 
-        Graphics.PreferredBackBufferWidth = ScreenWidth;
-        Graphics.PreferredBackBufferHeight = ScreenHeight;
-        Graphics.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
+        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
+        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
+        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
         
         IsFixedTimeStep = false;
         

@@ -191,7 +191,7 @@ public class TerrainMesh
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
     public RuntimeModel UploadMesh(MeshData data)
     {
-        var graphicsDevice = MonoEngine.Graphics.GraphicsDevice;
+        var graphicsDevice = MonoEngine.Graphics;
         
         // Create vertex array
         var vertices = new VertexPositionNormalTexture[data.VertexCount];
