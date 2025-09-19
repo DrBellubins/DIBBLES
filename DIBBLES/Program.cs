@@ -1,7 +1,4 @@
-﻿using System.Numerics;
-using Raylib_cs;
-
-namespace DIBBLES;
+﻿namespace DIBBLES;
 
 class Program
 {

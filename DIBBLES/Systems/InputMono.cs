@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using DIBBLES;
+using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
@@ -9,8 +10,6 @@ public static class InputMono
     private static MouseState _currentMouse, _prevMouse;
     private static Point _windowCenter = new Point(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
     private static int _prevScrollWheel;
-    
-    private static bool _justWarped = false;
     
     public static Vector2 MouseDelta { get; private set; }
     
@@ -22,13 +21,18 @@ public static class InputMono
         _prevMouse = _currentMouse;
         _currentMouse = Mouse.GetState();
 
-        if (_justWarped)
+        if (CursorManager.IsLocked)
         {
-            MouseDelta = Vector2.Zero;
-            _justWarped = false;
+            // Calculate delta from center, then warp back
+            MouseDelta = new Vector2(_currentMouse.X - _windowCenter.X, _currentMouse.Y - _windowCenter.Y);
+            
+            // Warp back to center for next frame
+            if (MouseDelta != Vector2.Zero)
+                Mouse.SetPosition(_windowCenter.X, _windowCenter.Y);
         }
         else
         {
+            // Normal delta
             MouseDelta = new Vector2(_currentMouse.X - _prevMouse.X, _currentMouse.Y - _prevMouse.Y);
         }
         
@@ -58,12 +62,6 @@ public static class InputMono
     {
         return (_currentMouse.ScrollWheelValue - _prevMouse.ScrollWheelValue) / 120f; // 120 per notch
     }
-
-    public static void WarpMouseToCenter()
-    {
-        Mouse.SetPosition(_windowCenter.X, _windowCenter.Y);
-        _justWarped = true;
-    }
     
     // Mouse buttons
     public static bool StartedBreaking => IsMouseButtonPressed(ButtonType.Left);
@@ -72,6 +70,8 @@ public static class InputMono
     public static bool Interact() => _currentMouse.RightButton == ButtonState.Pressed;
 
     // Special keys
+    public static bool FlyToggle() => IsKeyPressed(Keys.Tab);
+    
     public static bool Pause() => IsKeyPressed(Keys.Escape);
 
     public static bool OpenChat() => IsKeyPressed(Keys.T);

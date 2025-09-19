@@ -181,14 +181,13 @@ public class PlayerCharacter
             }
         }
         
-        // TODO: Monogame
-        /*if (Raylib.IsKeyPressed(KeyboardKey.Tab))
+        if (InputMono.FlyToggle())
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
             
             FreeCamEnabled = !FreeCamEnabled;
-        }*/
+        }
 
         if (FreeCamEnabled)
         {

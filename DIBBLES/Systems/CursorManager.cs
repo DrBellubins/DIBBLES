@@ -32,12 +32,18 @@ public static class CursorManager
         IsLocked = false;
     }
 
-    public static void Update()
+    /*public static void Update()
     {
         if (IsLocked)
         {
-            // Recenter mouse every frame to the middle of the screen (typical FPS-style lock)
-            InputMono.WarpMouseToCenter();
+            // Only warp if mouse is NOT at center (avoids per-frame zeroing)
+            var mouse = Mouse.GetState();
+            
+            int cx = MonoEngine.ScreenWidth / 2;
+            int cy = MonoEngine.ScreenHeight / 2;
+            
+            if (mouse.X != cx || mouse.Y != cy)
+                InputMono.WarpMouseToCenter();
         }
-    }
+    }*/
 }
