@@ -8,8 +8,8 @@ public class Camera3D
     public Vector3 Target;
     public Vector3 Up = Vector3.Up;
 
-    public float Fov = MathHelper.ToRadians(90f);
-    public float AspectRatio;
+    public float Fov = 90f;
+    public float AspectRatio = (float)MonoEngine.ScreenWidth / MonoEngine.ScreenHeight;
     public float NearPlane = 0.01f;
     public float FarPlane = 1000f;
 
@@ -18,7 +18,7 @@ public class Camera3D
 
     public void SetPerspective()
     {
-        Projection = Matrix.CreatePerspectiveFieldOfView(Fov, AspectRatio, NearPlane, FarPlane);
+        Projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(Fov), AspectRatio, NearPlane, FarPlane);
     }
     
     public void SetOrthographic()

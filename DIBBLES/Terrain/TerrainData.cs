@@ -66,7 +66,7 @@ public class BlockData
                 atlasBlockTypes.Add(blockType);
         }
         
-        /*List<Texture2D> tempTextures = new List<Texture2D>();
+        List<Texture2D> tempTextures = new List<Texture2D>();
         
         int maxWidth = 0;
         int maxHeight = 0;
@@ -87,7 +87,7 @@ public class BlockData
         }
 
         // Load textures and sounds for remaining block types (Air, Water)
-        foreach (BlockType blockType in Enum.GetValues<BlockType>())
+        /*foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
             if (blockType != BlockType.Air && blockType != BlockType.Water)
             {
@@ -96,12 +96,12 @@ public class BlockData
                     var texture = loadBlockTexture(blockType);
                     Textures.Add(blockType, texture);
                 }
-            
+
                 var blockSounds = new BlockSounds();
-            
+
                 for (int i = 0; i < 4; i++)
                     blockSounds.Sounds[i] = loadBlockSounds(blockType, i);
-            
+
                 Sounds.Add(blockType, blockSounds);
             }
         }*/

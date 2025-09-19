@@ -32,6 +32,12 @@ public class MonoEngine : Game
 
     public MonoEngine()
     {
+        GraphicsManager = new GraphicsDeviceManager(this);
+        
+        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
+        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
+        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
+        
         Content.RootDirectory = "Content";
         
         IsMouseVisible = true;
@@ -50,12 +56,7 @@ public class MonoEngine : Game
 
     protected override void LoadContent()
     {
-        GraphicsManager = new GraphicsDeviceManager(this);
         Graphics = GraphicsManager.GraphicsDevice;
-        
-        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
-        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
-        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
         
         Sprites = new SpriteBatch(GraphicsDevice);
         MainFont = Content.Load<SpriteFont>("MainFont");
@@ -73,6 +74,9 @@ public class MonoEngine : Game
             base.Update(gameTime);
             return;
         }
+        
+        foreach (var scene in Scenes)
+            scene.Update();
 
         // Cap frame rate with optimized spin-wait
         long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
@@ -100,10 +104,9 @@ public class MonoEngine : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.CornflowerBlue);
-
-        // TODO: Port draw logic
-
+        foreach (var scene in Scenes)
+            scene.Draw();
+        
         base.Draw(gameTime);
     }
 

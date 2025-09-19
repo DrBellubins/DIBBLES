@@ -218,8 +218,19 @@ public class TerrainMesh
         var indices = new ushort[data.TriangleCount * 3];
         Array.Copy(data.Indices, indices, indices.Length);
 
+        VertexPositionNormalTexture[] verts = new VertexPositionNormalTexture[data.VertexCount];
+        
+        for (int i = 0; i < data.VertexCount; i++)
+        {
+            verts[i] = new VertexPositionNormalTexture(
+                new Vector3(data.Vertices[i * 3 + 0], data.Vertices[i * 3 + 1], data.Vertices[i * 3 + 2]),
+                new Vector3(data.Normals[i * 3 + 0], data.Normals[i * 3 + 1], data.Normals[i * 3 + 2]),
+                new Vector2(data.TexCoords[i * 2 + 0], data.TexCoords[i * 2 + 1])
+            );
+        }
+        
         var vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionNormalTexture), data.VertexCount, BufferUsage.WriteOnly);
-        vertexBuffer.SetData(vertices);
+        vertexBuffer.SetData(verts);
 
         var indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
         indexBuffer.SetData(indices);
