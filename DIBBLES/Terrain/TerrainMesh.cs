@@ -126,11 +126,11 @@ public class TerrainMesh
                         normals.AddRange(Enumerable.Repeat(normal, 4));
                         texcoords.AddRange(faceUVs);
                         colors.AddRange(faceColors);
-        
+                        
                         indices.AddRange(new int[]
                         {
-                            vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
-                            vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
+                            vertexOffset + 2, vertexOffset + 1, vertexOffset + 0,
+                            vertexOffset + 3, vertexOffset + 2, vertexOffset + 0
                         });
         
                         vertexOffset += 4;
@@ -155,8 +155,8 @@ public class TerrainMesh
                 
                 indices.AddRange(new int[]
                 {
-                    vertexOffset + 0, vertexOffset + 1, vertexOffset + 2,
-                    vertexOffset + 0, vertexOffset + 2, vertexOffset + 3
+                    vertexOffset + 2, vertexOffset + 1, vertexOffset + 0,
+                    vertexOffset + 3, vertexOffset + 2, vertexOffset + 0
                 });
                 
                 vertexOffset += 4;
@@ -272,7 +272,7 @@ public class TerrainMesh
             TextureEnabled = true,
             VertexColorEnabled = true,
             LightingEnabled = false,
-            // Texture = ... assign your atlas here
+            Texture = BlockData.TextureAtlas
         };
 
         // Return as RuntimeModel
@@ -282,7 +282,7 @@ public class TerrainMesh
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
             Effect = effect,
-            // Texture = ... assign atlas here
+            Texture = BlockData.TextureAtlas
         };
     }
     
