@@ -1,9 +1,10 @@
-using System.Numerics;
+//using System.Numerics;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
-using Raylib_cs;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -26,15 +27,15 @@ public class Hotbar
     // Item slots
     private ItemSlot[] hotbarSlots = new ItemSlot[9];
 
-    private Rectangle hotbarRect = new Rectangle(0f, 0f, 900f, 100f);
+    private Rectangle hotbarRect = new Rectangle(0, 0, 900, 100);
     private Rectangle hotbarSelectionRect;
     
     private int hotBarSelectionIndex;
-    private float hotBarSelectionPosX;
+    private int hotBarSelectionPosX;
     
     // Health
-    private const float healthBarWidth = 400f;
-    private Rectangle healthBarRect = new Rectangle(0f, 0f, healthBarWidth, 10f);
+    private const int healthBarWidth = 400;
+    private Rectangle healthBarRect = new Rectangle(0, 0, healthBarWidth, 10);
 
     // Icons
     private Dictionary<BlockType, Texture2D> blockIcons = new();
@@ -178,7 +179,7 @@ public class Hotbar
         {
             if (blockType == BlockType.Air || blockType == BlockType.Water) continue; // Skip air and water
 
-            RenderTexture2D renderTexture = Raylib.LoadRenderTexture(iconSize, iconSize);
+            RenderTarget2D renderTexture = Raylib.LoadRenderTexture(iconSize, iconSize);
 
             // Set up the isometric orthographic camera
             var cam = new Raylib_cs.Camera3D();
@@ -189,7 +190,7 @@ public class Hotbar
             cam.Projection = CameraProjection.Orthographic;
 
             // Create the cube model with correct texture
-            Model cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
+            RuntimeModel cubeModel = MeshUtilsMonoGame.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
             Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background

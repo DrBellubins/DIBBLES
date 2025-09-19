@@ -1,3 +1,4 @@
+using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -146,7 +147,12 @@ public static class TextureUtils
     }
 }
 
-// Utility class to provide cube mesh creation (matches Raylib MeshUtils)
+public static class Primatives
+{
+
+}
+
+// Static utility class to provide cube mesh creation (matches Raylib MeshUtils)
 public static class MeshUtilsMonoGame
 {
     // Returns a simple cube mesh with the given texture
@@ -156,4 +162,144 @@ public static class MeshUtilsMonoGame
     // Sets the texture on an existing cube mesh
     public static void SetCubeMeshTexture(MonoCubeMesh mesh, Texture2D texture)
         => mesh.SetTexture(texture);
+    
+    public static RuntimeModel GenTexturedCubeIcon(Texture2D texture)
+    {
+        var gd = MonoEngine.Graphics;
+        
+        // Define face colors for the icon
+        var faceColors = new Color[]
+        {
+            new Color(180,180,180,255), // Right (-Z)
+            new Color(0,0,0,0),         // Unused (+Z)
+            new Color(150,150,150,255), // Left (-X)
+            new Color(0,0,0,0),         // Unused (+X)
+            new Color(255,255,255,255), // Top (-Y)
+            new Color(0,0,0,0),         // Unused (+Y)
+        };
+
+        return GenMeshCubeWithColors(1f, 1f, 1f, faceColors, texture);
+    }
+    
+    /// <summary>
+    /// Generates a cube mesh with per-face colors and a texture. Only visible faces are colored.
+    /// </summary>
+    public static RuntimeModel GenMeshCubeWithColors(float width, float height, float length, Color[] faceColors, Texture2D texture)
+    {
+        var gd = MonoEngine.Graphics;
+        
+        // 6 faces, 4 vertices per face (no sharing for unique face colors)
+        int faceCount = 6;
+        int vertsPerFace = 4;
+        int indicesPerFace = 6;
+
+        var vertices = new VertexPositionNormalTexture[faceCount * vertsPerFace];
+        var indices = new short[faceCount * indicesPerFace];
+
+        float x = width * 0.5f;
+        float y = height * 0.5f;
+        float z = length * 0.5f;
+
+        // Cube face data (positions, normals, uvs)
+        Vector3[] faceNormals = new[]
+        {
+            new Vector3(0,0,-1), // Front (-Z)
+            new Vector3(0,0,1),  // Back (+Z)
+            new Vector3(-1,0,0), // Left (-X)
+            new Vector3(1,0,0),  // Right (+X)
+            new Vector3(0,-1,0), // Bottom (-Y)
+            new Vector3(0,1,0),  // Top (+Y)
+        };
+
+        // Each face: 4 corners (counter-clockwise)
+        Vector3[][] faceVerts = new Vector3[][]
+        {
+            // Front (-Z)
+            new[] { new Vector3(-x,-y,-z), new Vector3(-x, y,-z), new Vector3( x, y,-z), new Vector3( x,-y,-z) },
+            // Back (+Z)
+            new[] { new Vector3( x,-y, z), new Vector3( x, y, z), new Vector3(-x, y, z), new Vector3(-x,-y, z) },
+            // Left (-X)
+            new[] { new Vector3(-x,-y, z), new Vector3(-x, y, z), new Vector3(-x, y,-z), new Vector3(-x,-y,-z) },
+            // Right (+X)
+            new[] { new Vector3( x,-y,-z), new Vector3( x, y,-z), new Vector3( x, y, z), new Vector3( x,-y, z) },
+            // Bottom (-Y)
+            new[] { new Vector3(-x,-y, z), new Vector3(-x,-y,-z), new Vector3( x,-y,-z), new Vector3( x,-y, z) },
+            // Top (+Y)
+            new[] { new Vector3(-x, y,-z), new Vector3(-x, y, z), new Vector3( x, y, z), new Vector3( x, y,-z) },
+        };
+
+        Vector2[] uvs = new[]
+        {
+            new Vector2(0,1), new Vector2(0,0), new Vector2(1,0), new Vector2(1,1)
+        };
+
+        // Build vertex and index arrays
+        int v = 0, i = 0;
+        for (int f = 0; f < faceCount; f++)
+        {
+            var normal = faceNormals[f];
+
+            // Only color selected faces for icon
+            Color color = faceColors[f];
+            if (color.A == 0) continue; // Skip unused faces
+
+            // 4 vertices per face
+            for (int j = 0; j < 4; j++)
+            {
+                // NOTE: VertexPositionNormalTexture does not support per-vertex color. 
+                // For per-face color, you need a custom vertex type and a custom shader.
+                // Here we use BasicEffect with texture only, so color must be baked into the texture for a true effect.
+                vertices[v + j] = new VertexPositionNormalTexture(
+                    faceVerts[f][j],
+                    normal,
+                    uvs[j]
+                );
+            }
+
+            // 2 triangles per face (0,1,2) (0,2,3)
+            indices[i++] = (short)(v + 0);
+            indices[i++] = (short)(v + 1);
+            indices[i++] = (short)(v + 2);
+            indices[i++] = (short)(v + 0);
+            indices[i++] = (short)(v + 2);
+            indices[i++] = (short)(v + 3);
+
+            v += 4;
+        }
+
+        // Remove unused vertices (those with color.A == 0)
+        int usedVerts = v;
+        int usedIndices = i;
+        var finalVertices = new VertexPositionNormalTexture[usedVerts];
+        var finalIndices = new short[usedIndices];
+        Array.Copy(vertices, finalVertices, usedVerts);
+        Array.Copy(indices, finalIndices, usedIndices);
+
+        // Create buffers
+        var vb = new VertexBuffer(gd, typeof(VertexPositionNormalTexture), usedVerts, BufferUsage.WriteOnly);
+        vb.SetData(finalVertices);
+
+        var ib = new IndexBuffer(gd, IndexElementSize.SixteenBits, usedIndices, BufferUsage.WriteOnly);
+        ib.SetData(finalIndices);
+
+        // BasicEffect
+        var effect = new BasicEffect(gd)
+        {
+            TextureEnabled = true,
+            Texture = texture,
+            LightingEnabled = false,
+            VertexColorEnabled = false // If you want per-vertex color, use a custom shader and vertex struct
+        };
+
+        var model = new RuntimeModel
+        {
+            VertexBuffer = vb,
+            IndexBuffer = ib,
+            TriangleCount = usedIndices / 3,
+            Effect = effect,
+            Texture = texture
+        };
+
+        return model;
+    }
 }
