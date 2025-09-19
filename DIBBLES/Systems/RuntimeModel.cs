@@ -38,8 +38,10 @@ public class RuntimeModel : IDisposable
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {
             pass.Apply();
+            
             gd.SetVertexBuffer(VertexBuffer);
             gd.Indices = IndexBuffer;
+            
             gd.DrawIndexedPrimitives(
                 PrimitiveType.TriangleList,
                 0,
@@ -55,7 +57,7 @@ public class RuntimeModel : IDisposable
         {
             VertexBuffer?.Dispose();
             IndexBuffer?.Dispose();
-            Texture?.Dispose();
+            //Texture?.Dispose();
             Effect?.Dispose(); // Optional, only if it's not shared
             disposed = true;
             GC.SuppressFinalize(this);

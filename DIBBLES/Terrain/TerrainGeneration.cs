@@ -461,7 +461,7 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
-        Console.WriteLine($"Is atlas null: {BlockData.TextureAtlas.IsDisposed}");
+        //Console.WriteLine($"Is atlas null: {BlockData.TextureAtlas.IsDisposed}");
         
         // Draw opaque
         foreach (var oModel in TMesh.OpaqueModels)
@@ -469,13 +469,6 @@ public class TerrainGeneration
             // oModel.Value is a RuntimeModel
             if (oModel.Value != null)
             {
-                var effect = (BasicEffect)oModel.Value.Effect;
-                effect.Texture = BlockData.TextureAtlas;
-                effect.TextureEnabled = true;
-                effect.LightingEnabled = false; // If you don't want lighting
-                
-                oModel.Value.Texture = BlockData.TextureAtlas;
-                
                 oModel.Value.Draw(Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
                     GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix

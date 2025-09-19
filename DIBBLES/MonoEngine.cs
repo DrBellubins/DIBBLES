@@ -58,6 +58,8 @@ public class MonoEngine : Game
     {
         Graphics = GraphicsManager.GraphicsDevice;
         
+        Graphics.SamplerStates[0] = SamplerState.PointClamp;
+        
         Sprites = new SpriteBatch(GraphicsDevice);
         MainFont = Content.Load<SpriteFont>("MainFont");
         
