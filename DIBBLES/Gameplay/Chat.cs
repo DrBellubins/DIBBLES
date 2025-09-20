@@ -173,8 +173,8 @@ public class Chat
         var sprites = MonoEngine.Sprites;
         
         // 1. Draw chat background and text to offscreen RenderTarget2D
-        MonoEngine.Graphics.SetRenderTarget(ChatTexture);
-        MonoEngine.Graphics.Clear(Color.Transparent);
+        //MonoEngine.Graphics.SetRenderTarget(ChatTexture);
+        //MonoEngine.Graphics.Clear(Color.Transparent);
         
         // Draw background rectangle (optional, for chat background)
         sprites.Draw(
@@ -201,7 +201,7 @@ public class Chat
         }
 
         // 2. Reset render target to backbuffer
-        MonoEngine.Graphics.SetRenderTarget(null);
+        //MonoEngine.Graphics.SetRenderTarget(null);
 
         // 3. Draw the chat texture to the screen (e.g. bottom left)
         sprites.Draw(
