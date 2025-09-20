@@ -52,7 +52,7 @@ public class TerrainTick
                 }
                 catch (Exception ex)
                 {
-                    Console.Write(ex);
+                    //Console.Write(ex);
                     throw;
                 }
                 finally

@@ -45,31 +45,8 @@ public class TextBoxMono
         else if (mouse.LeftButton == ButtonState.Pressed && !mouseInBox)
             IsFocused = false;
 
-        if (IsFocused)
-        {
-            /*KeyboardState keyboard = Keyboard.GetState();
-            Keys[] pressed = keyboard.GetPressedKeys();
-
-            // Basic character entry (not robust: for full IME support, use GameWindow.TextInput event)
-            foreach (var key in pressed)
-            {
-                char? ch = KeyToChar(key, keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift));
-                
-                if (ch != null && Text.Length < MaxLength)
-                {
-                    Text += ch.Value;
-                }
-            }
-
-            // Handle backspace
-            if (keyboard.IsKeyDown(Keys.Back) && Text.Length > 0)
-            {
-                Text = Text[..^1];
-            }*/
-        }
-
         // Blink caret
-        caretBlinkTime += Time.time;
+        caretBlinkTime += Time.DeltaTime;
         
         if (caretBlinkTime >= 0.5f)
         {
@@ -107,7 +84,7 @@ public class TextBoxMono
 
     public void OnTextInput(TextInputEventArgs e)
     {
-        if (char.IsControl(e.Character)) return; // Ignore control chars
+        if (char.IsControl(e.Character) && !IsFocused) return; // Ignore control chars
         
         if (Text.Length < MaxLength)
             Text += e.Character;
