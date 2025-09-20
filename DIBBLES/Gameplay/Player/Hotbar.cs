@@ -113,7 +113,7 @@ public class Hotbar
 
     public void Draw(int health)
     {
-        Primatives.DrawRectangleRec(hotbarRect, UI.MainColor);
+        Primatives2D.DrawRectangleRec(hotbarRect, UI.MainColor);
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -124,8 +124,8 @@ public class Hotbar
             //    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
         }
 
-        Primatives.DrawRectangleRec(hotbarSelectionRect, UI.AccentColor);
-        //Raylib.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
+        //Primatives2D.DrawRectangleRec(hotbarSelectionRect, UI.AccentColor);
+        Primatives2D.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
 
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -152,8 +152,8 @@ public class Hotbar
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
         
-        Primatives.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
-        Primatives.DrawRectangleRec(healthBarRect, Color.Red);
+        Primatives2D.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        Primatives2D.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
     // Draw each block type as a cube, then render out to a texture

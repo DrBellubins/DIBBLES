@@ -174,7 +174,7 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        Primatives.DrawRectangleRec(chatBox, UI.MainColor);
+        Primatives2D.DrawRectangleRec(chatBox, UI.MainColor);
     }
     
     public void Draw()

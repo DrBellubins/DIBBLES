@@ -494,7 +494,7 @@ public class PlayerCharacter
         {
             var deathScreen = new Rectangle(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
             
-            Primatives.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+            Primatives2D.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
         }
     }
     
