@@ -60,7 +60,16 @@ public class Chat
     
     public void Start()
     {
-        ChatTexture = new RenderTarget2D(MonoEngine.Graphics, Width, Height);
+        ChatTexture = new RenderTarget2D(
+            MonoEngine.Graphics,
+            Width,
+            Height,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents // Allows transparency
+        );
         
         textBox.Bounds.X = (int)UI.LeftCenterPivot.X;
         textBox.Bounds.Y = (int)(UI.LeftCenterPivot.Y + (Height / 2f));
