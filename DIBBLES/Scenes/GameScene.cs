@@ -75,7 +75,7 @@ public class GameScene : Scene
         // Draw UI (UI Batch)
         UIBatch.Begin();
         
-        PlayerCharacter.DrawUI();
+        //PlayerCharacter.DrawUI();
         
         gameChat.DrawBG();
         //gameChat.Draw();

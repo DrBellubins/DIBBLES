@@ -174,8 +174,10 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
+        UIBatch.DrawRect(new RectangleF(0f, 0f, 1600f, 900f), Color.Red);
+        
         //if (IsOpen || IsClosedButShown)
-            UIBatch.DrawRect(chatBox, UI.MainColor);
+        //    UIBatch.DrawRect(chatBox, UI.MainColor);
     }
     
     public void Draw()
