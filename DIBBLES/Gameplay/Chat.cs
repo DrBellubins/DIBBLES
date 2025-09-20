@@ -39,7 +39,7 @@ public class Chat
     
     public RenderTarget2D ChatTexture;
     
-    private Rectangle chatBox = new Rectangle(0, 0, Width, Height);
+    private RectangleF chatBox = new RectangleF(0f, 0f, Width, Height);
     private TextBox textBox = new TextBox(new Rectangle(0, 0, Width, 40));
     
     public float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
@@ -174,7 +174,8 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        Primatives2D.DrawRectangleRec(chatBox, UI.MainColor);
+        //if (IsOpen || IsClosedButShown)
+            UIBatch.DrawRect(chatBox, UI.MainColor);
     }
     
     public void Draw()

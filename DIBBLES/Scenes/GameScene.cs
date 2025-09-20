@@ -73,24 +73,26 @@ public class GameScene : Scene
         //Debug.Draw3D();
         
         // Draw UI (UI Batch)
+        UIBatch.Begin();
+        
         PlayerCharacter.DrawUI();
         
-        if (Chat.IsOpen || Chat.IsClosedButShown)
-            gameChat.DrawBG();
+        gameChat.DrawBG();
+        //gameChat.Draw();
+        
+        UIBatch.End();
         
         // TODO: Monogame
         //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
         // Draw UI (Sprite Batch)
-        sprites.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+        /*sprites.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
         
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
         
         Debug.Draw2D();
         
-        gameChat.Draw();
-        
-        sprites.End();
+        sprites.End();*/
     }
 }
