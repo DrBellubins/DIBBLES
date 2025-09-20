@@ -77,6 +77,15 @@ public class Chat
 
     public void Update()
     {
+        if (IsClosedButShown)
+            elapsed += Time.DeltaTime;
+
+        if (elapsed >= disappearTime)
+        {
+            IsClosedButShown = false;
+            elapsed -= disappearTime;
+        }
+        
         if (IsOpen)
         {
             textBox.Update();
@@ -165,50 +174,32 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), new Vector2(chatBox.X, chatBox.Y), UI.MainColor);
+        Primatives.DrawRectangleRec(chatBox, UI.MainColor);
     }
     
     public void Draw()
     {
         var sprites = MonoEngine.Sprites;
         
-        // 1. Draw chat background and text to offscreen RenderTarget2D
-        //MonoEngine.Graphics.SetRenderTarget(ChatTexture);
-        //MonoEngine.Graphics.Clear(Color.Transparent);
-        
-        // Draw background rectangle (optional, for chat background)
-        sprites.Draw(
-            TextureUtils.GetWhitePixel(), // 1x1 white pixel
-            new Rectangle(0, 0, Width, Height),
-            new Color(0, 0, 0, 180) // semi-transparent black
-        );
-
-        // Draw messages
-        int maxLines = (int)(Height / FontSize);
-        int start = Math.Max(0, ChatMessages.Count - maxLines); // auto-scroll
-        var toDisplay = ChatMessages.Skip(start).Take(maxLines);
-
-        int index = 0;
-        
-        foreach (var msg in toDisplay)
+        if (IsOpen || IsClosedButShown)
         {
-            var color = GetMsgColor(msg.Type);
-            var pos = new Vector2(0f, index * FontSize);
+            // Draw messages
+            int maxLines = (int)(Height / FontSize);
+            int start = Math.Max(0, ChatMessages.Count - maxLines); // auto-scroll
+            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+
+            int index = 0;
+        
+            foreach (var msg in toDisplay)
+            {
+                var color = GetMsgColor(msg.Type);
+                var pos = new Vector2(0f, heightPos + (index * FontSize));
             
-            sprites.DrawString(MonoEngine.MainFont, msg.Message, pos, color);
+                sprites.DrawString(MonoEngine.MainFont, msg.Message, pos, color);
             
-            index++;
+                index++;
+            }
         }
-
-        // 2. Reset render target to backbuffer
-        //MonoEngine.Graphics.SetRenderTarget(null);
-
-        // 3. Draw the chat texture to the screen (e.g. bottom left)
-        sprites.Draw(
-            ChatTexture,
-            new Vector2(20f, MonoEngine.ScreenHeight - Height - 20f), // adjust as needed
-            Color.White
-        );
     }
 
     // Utility: get color by message type
