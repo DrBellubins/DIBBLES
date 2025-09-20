@@ -28,7 +28,7 @@ public static class CursorManager
 
         // Restore mouse position (optional, can be omitted for FPS-style controls)
         Mouse.SetPosition((int)previousMousePosition.X, (int)previousMousePosition.Y);
-
+        
         IsLocked = false;
     }
 

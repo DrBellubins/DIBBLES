@@ -244,7 +244,7 @@ public class Chat
     public void CloseChat()
     {
         CursorManager.LockCursor();
-        textBox.Text = string.Empty;
+        textBox.Clear();
         textBox.IsFocused = false;
         IsOpen = false;
     }

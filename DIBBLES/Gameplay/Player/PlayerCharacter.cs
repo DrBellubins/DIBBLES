@@ -269,7 +269,7 @@ public class PlayerCharacter
         Vector2 lookDelta = Vector2.Zero;
         
         if (!IsFrozen)
-            lookDelta = InputMono.LookDelta();
+            lookDelta = InputMono.LookDelta;
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
         var lookDeltaY = lookDelta.Y * mouseSensitivity;

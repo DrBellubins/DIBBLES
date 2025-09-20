@@ -47,7 +47,7 @@ public class Freecam
         if (InputMono.Crouch())
             playerCharacter.Position -= Vector3.UnitY * moveSpeed;
         
-        var lookDelta = InputMono.LookDelta();
+        var lookDelta = InputMono.LookDelta;
         var lookDeltaX = lookDelta.X * 0.1f;
         var lookDeltaY = lookDelta.Y * 0.1f;
 

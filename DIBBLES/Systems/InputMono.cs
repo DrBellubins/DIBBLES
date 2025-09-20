@@ -11,8 +11,6 @@ public static class InputMono
     private static Point _windowCenter = new Point(MonoEngine.ScreenWidth / 2, MonoEngine.ScreenHeight / 2);
     private static int _prevScrollWheel;
     
-    public static Vector2 MouseDelta { get; private set; }
-    
     public static void Update()
     {
         _prevKey = _currentKey;
@@ -24,16 +22,16 @@ public static class InputMono
         if (CursorManager.IsLocked)
         {
             // Calculate delta from center, then warp back
-            MouseDelta = new Vector2(_currentMouse.X - _windowCenter.X, _currentMouse.Y - _windowCenter.Y);
+            LookDelta = new Vector2(_currentMouse.X - _windowCenter.X, _currentMouse.Y - _windowCenter.Y);
             
             // Warp back to center for next frame
-            if (MouseDelta != Vector2.Zero)
+            if (LookDelta != Vector2.Zero)
                 Mouse.SetPosition(_windowCenter.X, _windowCenter.Y);
         }
         else
         {
             // Normal delta
-            MouseDelta = new Vector2(_currentMouse.X - _prevMouse.X, _currentMouse.Y - _prevMouse.Y);
+            LookDelta = new Vector2(_currentMouse.X - _prevMouse.X, _currentMouse.Y - _prevMouse.Y);
         }
         
         _prevScrollWheel = _currentMouse.ScrollWheelValue;
@@ -55,7 +53,7 @@ public static class InputMono
     }
 
     // Mouse input
-    public static Vector2 LookDelta() => MouseDelta;
+    public static Vector2 LookDelta { get; set; }
     public static Vector2 CursorPosition() => new Vector2(_currentMouse.X, _currentMouse.Y);
     
     public static float ScrollDelta()

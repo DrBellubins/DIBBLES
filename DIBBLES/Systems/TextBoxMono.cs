@@ -25,17 +25,15 @@ public class TextBoxMono
         Bounds = rect;
         MaxLength = maxLength;
         
-        /*MonoEngine.Instance.Window.TextInput += (s, e) =>
+        MonoEngine.Instance.Window.TextInput += (s, e) =>
         {
             if (IsFocused)
                 OnTextInput(e);
-        };*/
+        };
     }
 
     public void Update()
     {
-        Text = "/help";
-        
         MouseState mouse = Mouse.GetState();
         Point mousePos = mouse.Position;
 
@@ -87,31 +85,17 @@ public class TextBoxMono
     public void OnTextInput(TextInputEventArgs e)
     {
         if (char.IsControl(e.Character)) return; // Ignore control chars
-        
+
         if (Text.Length < MaxLength)
-            Text += e.Character;
+        {
+            textBuilder.Append(e.Character);
+            Text = textBuilder.ToString();
+        }
     }
-    
-    // Utility: very basic key to char (for demo; for robust, see TextInput event)
-    private static char? KeyToChar(Keys key, bool shift)
+
+    public void Clear()
     {
-        if (key >= Keys.A && key <= Keys.Z)
-        {
-            char c = (char)('a' + (key - Keys.A));
-            
-            return shift ? char.ToUpper(c) : c;
-        }
-        
-        if (key >= Keys.D0 && key <= Keys.D9)
-        {
-            char c = (char)('0' + (key - Keys.D0));
-            
-            return c;
-        }
-        
-        if (key == Keys.Space)
-            return ' ';
-        
-        return null;
+        textBuilder.Clear();
+        Text = string.Empty;
     }
 }
