@@ -8,5 +8,13 @@ public class FogEffect
 {
     public const float FogNear = 50.0f;
     public const float FogFar = 150.0f;
-    public static Vector4 FogColor = new Vector4(0.4f, 0.7f, 1.0f, 1.0f); // Used in the terrain shader!
+    
+    // Used in the terrain shader!
+    //public static Vector4 FogColor = new Vector4(GameScene.SkyColor.R, GameScene.SkyColor.G, GameScene.SkyColor.B, 1.0f);
+
+    public static Vector4 FogColor()
+    {
+        var colorVec = new Vector4(GameScene.SkyColor.R / 255f, GameScene.SkyColor.G / 255f, GameScene.SkyColor.B / 255f, 1.0f);
+        return colorVec;
+    }
 }

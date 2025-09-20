@@ -9,7 +9,7 @@ public class RuntimeModel : IDisposable
     public VertexBuffer VertexBuffer;
     public IndexBuffer IndexBuffer;
     public int TriangleCount;
-    public Effect Effect;
+    public Effect Shader;
     public Texture2D Texture;
     private bool disposed = false;
 
@@ -17,7 +17,7 @@ public class RuntimeModel : IDisposable
     {
         var gd = Engine.Graphics;
         
-        if (Effect is BasicEffect basic)
+        if (Shader is BasicEffect basic)
         {
             basic.World = world;
             basic.View = view;
@@ -27,15 +27,15 @@ public class RuntimeModel : IDisposable
         }
         else
         {
-            Effect.Parameters["World"]?.SetValue(world);
-            Effect.Parameters["View"]?.SetValue(view);
-            Effect.Parameters["Projection"]?.SetValue(projection);
+            Shader.Parameters["World"]?.SetValue(world);
+            Shader.Parameters["View"]?.SetValue(view);
+            Shader.Parameters["Projection"]?.SetValue(projection);
             
             if (Texture != null)
-                Effect.Parameters["Texture"]?.SetValue(Texture);
+                Shader.Parameters["Texture"]?.SetValue(Texture);
         }
 
-        foreach (var pass in Effect.CurrentTechnique.Passes)
+        foreach (var pass in Shader.CurrentTechnique.Passes)
         {
             pass.Apply();
             
@@ -58,7 +58,7 @@ public class RuntimeModel : IDisposable
             VertexBuffer?.Dispose();
             IndexBuffer?.Dispose();
             //Texture?.Dispose();
-            Effect?.Dispose(); // Optional, only if it's not shared
+            Shader?.Dispose(); // Optional, only if it's not shared
             disposed = true;
             GC.SuppressFinalize(this);
         }

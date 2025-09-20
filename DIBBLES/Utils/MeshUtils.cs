@@ -382,7 +382,7 @@ public static class MeshUtils
             VertexBuffer = vb,
             IndexBuffer = ib,
             TriangleCount = usedIndices / 3,
-            Effect = effect,
+            Shader = effect,
             Texture = texture
         };
 

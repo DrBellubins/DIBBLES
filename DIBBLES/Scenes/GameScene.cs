@@ -16,6 +16,8 @@ public class GameScene : Scene
 
     public static List<BlockLogic> BlockLogicList = new();
 
+    public static Color SkyColor = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+    
     private Chat gameChat = new();
     
     public override void Start()
@@ -57,11 +59,10 @@ public class GameScene : Scene
     {
         var gd = Engine.Graphics;
         var sprites = Engine.Sprites;
-        var font = Engine.MainFont;
         
-        gd.Clear(Color.Black);
+        gd.Clear(SkyColor);
         
-        gd.BlendState = BlendState.AlphaBlend;
+        gd.BlendState = BlendState.NonPremultiplied;
         gd.DepthStencilState = DepthStencilState.Default;
         gd.RasterizerState = RasterizerState.CullCounterClockwise;
         gd.SamplerStates[0] = SamplerState.PointClamp;
