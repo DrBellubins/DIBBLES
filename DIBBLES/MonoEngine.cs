@@ -5,6 +5,7 @@ using System.Diagnostics;
 using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Utils;
 
 namespace DIBBLES;
 
@@ -56,7 +57,9 @@ public class MonoEngine : Game
         Graphics = GraphicsManager.GraphicsDevice;
         
         Sprites = new SpriteBatch(GraphicsDevice);
+        
         MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
+        MainFont = TextureUtils.AlterSpriteFont(MainFont, ' ', 8f);
         
         var voxelScene = new GameSceneMono();
         

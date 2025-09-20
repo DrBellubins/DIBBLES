@@ -150,9 +150,54 @@ public static class TextureUtils
         return whitePixel;
     }
 
-    public static void DrawTexturePro()
+    /// <summary>
+    /// Alter a character in this spritefont.
+    /// requires ... using System.Collections.Generic;
+    /// </summary>
+    public static SpriteFont AlterSpriteFont(SpriteFont sf, char chartoalter, float width_amount_to_add)
     {
+        Dictionary<char, SpriteFont.Glyph> dgyphs;
+        SpriteFont.Glyph defaultglyph;
+        char defaultchar = ' ';
         
+        // Alter one of my methods a bit here for this purpose.
+        // just drop all the alterd values into a new spritefont
+        dgyphs = sf.GetGlyphs();
+        defaultglyph = new SpriteFont.Glyph();
+        
+        if (sf.DefaultCharacter.HasValue)
+        {
+            defaultchar = (char)(sf.DefaultCharacter.Value);
+            defaultglyph = dgyphs[defaultchar];
+        }
+        else
+        {
+            // we could create a default value from like a pixel in the sprite font and add the glyph.
+        }
+        
+        var altered = dgyphs[chartoalter];
+        altered.Width = altered.Width + width_amount_to_add;  // ect 
+        dgyphs.Remove(chartoalter);
+        dgyphs.Add(chartoalter, altered);
+
+        //sf.Glyphs = _glyphs;  // cant do it as its readonly private that sucks hard we would of been done
+
+        List<Rectangle> glyphBounds = new List<Rectangle>();
+        List<Rectangle> cropping = new List<Rectangle>();
+        List<char> characters = new List<char>();
+        List<Vector3> kerning = new List<Vector3>();
+        
+        foreach (var item in dgyphs)
+        {
+            glyphBounds.Add(item.Value.BoundsInTexture);
+            cropping.Add(item.Value.Cropping);
+            characters.Add(item.Value.Character);
+            kerning.Add(new Vector3(item.Value.LeftSideBearing, item.Value.Width, item.Value.RightSideBearing));
+        }
+        
+        List<Rectangle> b = new List<Rectangle>();
+        sf = new SpriteFont(sf.Texture, glyphBounds, cropping, characters, sf.LineSpacing, sf.Spacing, kerning, defaultchar);
+        return sf;
     }
 }
 
