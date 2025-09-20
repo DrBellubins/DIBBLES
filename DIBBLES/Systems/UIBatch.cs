@@ -53,6 +53,7 @@ public static class UIBatch
     {
         if (_inBatch)
             throw new InvalidOperationException("Already in batch!");
+        
         _inBatch = true;
         _vertices.Clear();
         _indices.Clear();
@@ -64,6 +65,7 @@ public static class UIBatch
     /// </summary>
     public static void DrawRect(RectangleF rect, Color color)
     {
+        if (_whitePixel == null) Console.WriteLine("UIBatch: _whitePixel is null!");
         Draw(_whitePixel, new Vector2(rect.X, rect.Y), new Vector2(rect.Width, rect.Height), color);
     }
     
@@ -128,10 +130,10 @@ public static class UIBatch
         short baseIndex = (short)_vertices.Count;
         Vector2 uv = Vector2.Zero; // White pixel
 
-        _vertices.Add(new UIVertex { Position = new Vector3(p0, 0), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p1, 0), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p2, 0), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p3, 0), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p0, 0.5f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p1, 0.5f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p2, 0.5f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p3, 0.5f), Color = color, TexCoord = uv });
 
         // Two triangles: 0,1,2 and 0,2,3
         _indices.Add((short)(baseIndex + 0));
@@ -150,6 +152,7 @@ public static class UIBatch
         // Precompute points along the arc
         double angleStep = (angleEnd - angleStart) / segments;
         List<Vector2> arc = new List<Vector2>();
+        
         for (int i = 0; i <= segments; i++)
         {
             double angle = MathHelper.ToRadians((float)(angleStart + i * angleStep));
@@ -160,9 +163,10 @@ public static class UIBatch
         short baseIndex = (short)_vertices.Count;
         Vector2 uv = Vector2.Zero; // White pixel
 
-        _vertices.Add(new UIVertex { Position = new Vector3(center, 0), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(center, 0.5f), Color = color, TexCoord = uv });
+        
         for (int i = 0; i < arc.Count; i++)
-            _vertices.Add(new UIVertex { Position = new Vector3(arc[i], 0), Color = color, TexCoord = uv });
+            _vertices.Add(new UIVertex { Position = new Vector3(arc[i], 0.5f), Color = color, TexCoord = uv });
 
         // Build triangle fan indices
         for (short i = 1; i < arc.Count; i++)
@@ -204,10 +208,10 @@ public static class UIBatch
 
         short baseIndex = (short)_vertices.Count;
 
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y, 0), Color = color, TexCoord = new Vector2(uvTL.X, uvTL.Y) }); // TL
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y, 0), Color = color, TexCoord = new Vector2(uvBR.X, uvTL.Y) }); // TR
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y + sz.Y, 0), Color = color, TexCoord = new Vector2(uvBR.X, uvBR.Y) }); // BR
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y + sz.Y, 0), Color = color, TexCoord = new Vector2(uvTL.X, uvBR.Y) }); // BL
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y, 0.5f), Color = color, TexCoord = new Vector2(uvTL.X, uvTL.Y) }); // TL
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y, 0.5f), Color = color, TexCoord = new Vector2(uvBR.X, uvTL.Y) }); // TR
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y + sz.Y, 0.5f), Color = color, TexCoord = new Vector2(uvBR.X, uvBR.Y) }); // BR
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y + sz.Y, 0.5f), Color = color, TexCoord = new Vector2(uvTL.X, uvBR.Y) }); // BL
 
         // Two triangles: 0,1,2 and 0,2,3
         _indices.Add((short)(baseIndex + 0));
@@ -219,11 +223,21 @@ public static class UIBatch
         _indices.Add((short)(baseIndex + 3));
     }
     
+    public static void End()
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() first!");
+        if (_vertices.Count > 0)
+            Flush();
+        _inBatch = false;
+    }
+    
     /// <summary>
     /// Flushes all draws (called automatically on End, or on texture switch).
     /// </summary>
     public static void Flush()
     {
+        //Console.WriteLine($"Vertices: {_vertices.Count}, Indices: {_indices.Count}, Texture: {_currentTexture} ");
+        
         if (_vertices.Count == 0 || _currentTexture == null) return;
 
         var vertexArray = new VertexPositionColorTexture[_vertices.Count];
@@ -233,7 +247,7 @@ public static class UIBatch
             vertexArray[i] = new VertexPositionColorTexture(v.Position, v.Color, v.TexCoord);
         }
 
-        _graphics.BlendState = BlendState.AlphaBlend;
+        _graphics.BlendState = BlendState.Opaque;
         _graphics.RasterizerState = RasterizerState.CullNone;
         _graphics.DepthStencilState = DepthStencilState.None;
         _graphics.SamplerStates[0] = SamplerState.PointClamp;
@@ -258,13 +272,5 @@ public static class UIBatch
         _vertices.Clear();
         _indices.Clear();
         _currentTexture = null;
-    }
-
-    public static void End()
-    {
-        if (!_inBatch) throw new InvalidOperationException("Call Begin() first!");
-        if (_vertices.Count > 0)
-            Flush();
-        _inBatch = false;
     }
 }
