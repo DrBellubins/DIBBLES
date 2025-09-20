@@ -25,15 +25,17 @@ public class TextBoxMono
         Bounds = rect;
         MaxLength = maxLength;
         
-        MonoEngine.Instance.Window.TextInput += (s, e) =>
+        /*MonoEngine.Instance.Window.TextInput += (s, e) =>
         {
             if (IsFocused)
                 OnTextInput(e);
-        };
+        };*/
     }
 
     public void Update()
     {
+        Text = "/help";
+        
         MouseState mouse = Mouse.GetState();
         Point mousePos = mouse.Position;
 

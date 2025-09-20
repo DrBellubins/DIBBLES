@@ -56,7 +56,7 @@ public class MonoEngine : Game
         Graphics = GraphicsManager.GraphicsDevice;
         
         Sprites = new SpriteBatch(GraphicsDevice);
-        MainFont = Content.Load<SpriteFont>("MainFont");
+        MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         
         var voxelScene = new GameSceneMono();
         
