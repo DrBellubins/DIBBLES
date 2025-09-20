@@ -76,18 +76,18 @@ public class GameSceneMono : Scene
         
         PlayerCharacter.DrawUI();
         
-        /*if (Chat.IsOpen || Chat.IsClosedButShown)
+        if (Chat.IsOpen || Chat.IsClosedButShown)
             gameChat.DrawBG();
         
         // TODO: Monogame
         //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
-        Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
-        Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
+        //Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
+        //Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
         
-        Debug.Draw2D();
+        //Debug.Draw2D();
         
-        gameChat.Draw();*/
+        gameChat.Draw();
         
         sprites.End();
     }

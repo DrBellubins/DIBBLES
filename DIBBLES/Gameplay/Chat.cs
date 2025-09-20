@@ -156,11 +156,7 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        sprites.Begin();
-        
         MonoEngine.Sprites.Draw(TextureUtils.GetWhitePixel(), new Vector2(chatBox.X, chatBox.Y), UI.MainColor);
-        
-        sprites.End();
     }
     
     public void Draw()
@@ -170,9 +166,7 @@ public class Chat
         // 1. Draw chat background and text to offscreen RenderTarget2D
         MonoEngine.Graphics.SetRenderTarget(ChatTexture);
         MonoEngine.Graphics.Clear(Color.Transparent);
-
-        sprites.Begin();
-
+        
         // Draw background rectangle (optional, for chat background)
         sprites.Draw(
             TextureUtils.GetWhitePixel(), // 1x1 white pixel
@@ -197,21 +191,15 @@ public class Chat
             index++;
         }
 
-        sprites.End();
-
         // 2. Reset render target to backbuffer
         MonoEngine.Graphics.SetRenderTarget(null);
 
         // 3. Draw the chat texture to the screen (e.g. bottom left)
-        sprites.Begin();
-        
         sprites.Draw(
             ChatTexture,
             new Vector2(20f, MonoEngine.ScreenHeight - Height - 20f), // adjust as needed
             Color.White
         );
-        
-        sprites.End();
     }
 
     // Utility: get color by message type
