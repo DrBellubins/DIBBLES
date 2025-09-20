@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Text;
+using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 
@@ -26,8 +27,17 @@ public class Debug
         textBuffer2d.Clear();
     }
 
-    public static void ToggleDebug() { ShowDebug = !ShowDebug; }
-    public static void ToggleDebugExtended() { ShowDebugExtended = !ShowDebugExtended; }
+    public static void ToggleDebug(string[] args)
+    {
+        ShowDebug = !ShowDebug;
+        Chat.Write(ChatMessageType.Command, "Toggled debug information");
+    }
+    
+    public static void ToggleDebugExtended(string[] args)
+    {
+        ShowDebugExtended = !ShowDebugExtended;
+        Chat.Write(ChatMessageType.Command, "Toggled extended debug information");
+    }
     
     public static void Draw2D()
     {

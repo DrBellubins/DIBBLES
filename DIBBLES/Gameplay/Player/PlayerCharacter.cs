@@ -92,46 +92,10 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
-        Commands.RegisterCommand("kill", "Kills the player", args => Kill());
-        Commands.RegisterCommand("spawn", "Respawns player at spawn point",  args => RespawnCmd());
-        
-        Commands.RegisterCommand("heal", "Heals the player: /heal for full health", args =>
-        {
-            int healAmount = 0;
-
-            if (args.Length != 1)
-            {
-                healAmount = 100;
-                Chat.Write(ChatMessageType.Command, $"Set player health to full health");
-            }
-            else if (int.TryParse(args[0], out var amount))
-            {
-                healAmount = amount;
-                Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
-            }
-            else
-                Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
-            
-            SetHealth(healAmount);
-        });
-        
-        Commands.RegisterCommand("teleport", "Teleport to a position: /teleport x y z", args =>
-        {
-            if (args.Length == 1 && args[0].Contains(','))
-                args = args[0].Split(',');
-
-            if (args.Length != 3 ||
-                !float.TryParse(args[0], out var x) ||
-                !float.TryParse(args[1], out var y) ||
-                !float.TryParse(args[2], out var z))
-            {
-                Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
-                return;
-            }
-
-            Position = new Vector3(x, y, z);
-            Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
-        });
+        Commands.RegisterCommand("kill", "Kills the player", killCMD);
+        Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
+        Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
+        Commands.RegisterCommand("teleport", "Teleport to a position: /teleport x y z", teleportCMD);
         
         CursorManager.LockCursor();
     }
@@ -438,8 +402,15 @@ public class PlayerCharacter
         
         Velocity = Vector3.Zero;
     }
+
+    // Commands
+    private void killCMD(string[] args)
+    {
+        Kill();
+        Chat.Write(ChatMessageType.Command, "Killed the player");
+    }
     
-    public void RespawnCmd()
+    private void respawnCMD(string[] args)
     {
         Position = spawnPosition;
         SetCameraDirection(WorldSave.Data.CameraDirection);
@@ -450,6 +421,44 @@ public class PlayerCharacter
         IsFrozen = false;
         
         Chat.Write(ChatMessageType.Command, $"Spawning at {WorldSave.Data.PlayerPosition}");
+    }
+    
+    private void healCMD(string[] args)
+    {
+        int healAmount = 0;
+
+        if (args.Length != 1)
+        {
+            healAmount = 100;
+            Chat.Write(ChatMessageType.Command, $"Set player health to full health");
+        }
+        else if (int.TryParse(args[0], out var amount))
+        {
+            healAmount = amount;
+            Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
+        }
+        else
+            Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
+            
+        SetHealth(healAmount);
+    }
+
+    private void teleportCMD(string[] args)
+    {
+        if (args.Length == 1 && args[0].Contains(','))
+            args = args[0].Split(',');
+
+        if (args.Length != 3 ||
+            !float.TryParse(args[0], out var x) ||
+            !float.TryParse(args[1], out var y) ||
+            !float.TryParse(args[2], out var z))
+        {
+            Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
+            return;
+        }
+
+        Position = new Vector3(x, y, z);
+        Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
     }
     
     public void SetCameraDirection(Vector3 direction)

@@ -255,7 +255,7 @@ public class Chat
         ChatMessages.Add(msg);
     }
 
-    public static void WriteHelp()
+    public static void WriteHelp(string[] args)
     {
         foreach (var cmd in Commands.Registry)
             ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"/{cmd.Value.Name}: {cmd.Value.Description}"));

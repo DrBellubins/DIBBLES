@@ -83,9 +83,16 @@ public class TextBox
 
     public void OnTextInput(TextInputEventArgs e)
     {
-        if (char.IsControl(e.Character)) return; // Ignore control chars
+        // Handle Backspace
+        if (e.Character == '\b')
+        {
+            if (Text.Length > 0)
+                Text = Text[..^1];
+            
+            return;
+        }
 
-        if (Text.Length < MaxLength)
+        if (!char.IsControl(e.Character) && Text.Length < MaxLength)
             Text += e.Character.ToString();
     }
 

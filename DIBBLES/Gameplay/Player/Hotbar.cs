@@ -51,28 +51,7 @@ public class Hotbar
         hotbarSlots[0] = new ItemSlot(1, BlockType.Dirt);
         hotbarSlots[1] = new ItemSlot(1, BlockType.Stone);
         
-        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", args =>
-        {
-            if (args.Length != 1)
-            {
-                Chat.Write(ChatMessageType.Error, "Usage: /give blocktype");
-                return;
-            }
-
-            var blockName = args[0].ToLower();
-            
-            if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
-            {
-                // Give block logic (e.g., add to hotbar or inventory)
-                hotbarSlots[hotBarSelectionIndex] = new ItemSlot(1, blockType);
-                
-                Chat.Write(ChatMessageType.Command, $"Gave yourself '{blockType}'");
-            }
-            else
-            {
-                Chat.Write(ChatMessageType.Error, $"Unknown block type: '{blockName}'");
-            }
-        });
+        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
 
         renderBlockIcons();
     }
@@ -214,6 +193,30 @@ public class Hotbar
 
             // Store the icon texture (renderTexture.Texture) in your dictionary
             blockIcons[blockType] = renderTexture.Texture;*/
+        }
+    }
+    
+    // Commands
+    private void giveCMD(string[] args)
+    {
+        if (args.Length != 1)
+        {
+            Chat.Write(ChatMessageType.Error, "Usage: /give blocktype");
+            return;
+        }
+
+        var blockName = args[0].ToLower();
+            
+        if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
+        {
+            // Give block logic (e.g., add to hotbar or inventory)
+            hotbarSlots[hotBarSelectionIndex] = new ItemSlot(1, blockType);
+                
+            Chat.Write(ChatMessageType.Command, $"Gave yourself '{blockType}'");
+        }
+        else
+        {
+            Chat.Write(ChatMessageType.Error, $"Unknown block type: '{blockName}'");
         }
     }
     
