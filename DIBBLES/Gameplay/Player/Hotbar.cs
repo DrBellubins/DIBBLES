@@ -124,9 +124,7 @@ public class Hotbar
             //    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
         }
 
-        //Primatives2D.DrawRectangleRec(hotbarSelectionRect, UI.AccentColor);
-        Primatives2D.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
-        //Raylib.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 2, UI.AccentColor);
+        Primatives2D.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 4, UI.SecondaryAccentColor);
 
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)

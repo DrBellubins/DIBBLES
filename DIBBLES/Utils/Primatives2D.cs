@@ -47,93 +47,109 @@ public static class Primatives2D
     /// <param name="color">Fill color.</param>
     public static void DrawRectangleRounded(Rectangle rect, float roundness, int segments, Color color)
     {
-        // Clamp roundness
         roundness = Math.Clamp(roundness, 0f, 1f);
         segments = Math.Max(segments, 2);
-
         EnsurePixel();
         var sprites = Engine.Sprites;
-
+    
         float radius = roundness * (Math.Min(rect.Width, rect.Height) / 2f);
-
-        // Draw center rect (without corners)
-        Rectangle center = new Rectangle(
-            (int)(rect.X + radius),
-            (int)(rect.Y + radius),
-            (int)(rect.Width - 2 * radius),
-            (int)(rect.Height - 2 * radius)
-        );
-        if (center.Width > 0 && center.Height > 0)
-            sprites.Draw(_pixel!, center, color);
-
-        // Draw side rectangles
-        // Top
-        if (radius > 0)
-            sprites.Draw(_pixel!, new Rectangle((int)(rect.X + radius), rect.Y, (int)(rect.Width - 2 * radius), (int)radius), color);
-        // Bottom
-        if (radius > 0)
-            sprites.Draw(_pixel!, new Rectangle((int)(rect.X + radius), (int)(rect.Y + rect.Height - radius), (int)(rect.Width - 2 * radius), (int)radius), color);
-        // Left
-        if (radius > 0)
-            sprites.Draw(_pixel!, new Rectangle(rect.X, (int)(rect.Y + radius), (int)radius, (int)(rect.Height - 2 * radius)), color);
-        // Right
-        if (radius > 0)
-            sprites.Draw(_pixel!, new Rectangle((int)(rect.X + rect.Width - radius), (int)(rect.Y + radius), (int)radius, (int)(rect.Height - 2 * radius)), color);
-
-        // Draw corners (quarter circles)
-        if (radius > 0)
+        if (radius < 1f)
         {
-            DrawQuarterCircle(sprites, rect.X + radius, rect.Y + radius, radius, 180, 270, segments, color); // Top-left
-            DrawQuarterCircle(sprites, rect.X + rect.Width - radius, rect.Y + radius, radius, 270, 360, segments, color); // Top-right
-            DrawQuarterCircle(sprites, rect.X + radius, rect.Y + rect.Height - radius, radius, 90, 180, segments, color); // Bottom-left
-            DrawQuarterCircle(sprites, rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, 0, 90, segments, color); // Bottom-right
+            // Not rounded, just draw a rectangle
+            sprites.Draw(_pixel!, rect, color);
+            return;
         }
+    
+        // 1. Draw 4 quarter-circle corners
+        DrawQuarterCircleFilled(sprites, rect.X + radius, rect.Y + radius, radius, 180, 270, segments, color); // Top-left
+        DrawQuarterCircleFilled(sprites, rect.X + rect.Width - radius, rect.Y + radius, radius, 270, 360, segments, color); // Top-right
+        DrawQuarterCircleFilled(sprites, rect.X + radius, rect.Y + rect.Height - radius, radius, 90, 180, segments, color); // Bottom-left
+        DrawQuarterCircleFilled(sprites, rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, 0, 90, segments, color); // Bottom-right
+    
+        // 2. Draw 4 rectangles for sides (between corners)
+        // Top: between top-left and top-right corners
+        sprites.Draw(_pixel!, new Rectangle(
+            (int)(rect.X + radius), rect.Y,
+            (int)(rect.Width - 2 * radius), (int)radius), color);
+    
+        // Bottom: between bottom-left and bottom-right
+        sprites.Draw(_pixel!, new Rectangle(
+            (int)(rect.X + radius), (int)(rect.Y + rect.Height - radius),
+            (int)(rect.Width - 2 * radius), (int)radius), color);
+    
+        // Left: between top-left and bottom-left
+        sprites.Draw(_pixel!, new Rectangle(
+            rect.X, (int)(rect.Y + radius),
+            (int)radius, (int)(rect.Height - 2 * radius)), color);
+    
+        // Right: between top-right and bottom-right
+        sprites.Draw(_pixel!, new Rectangle(
+            (int)(rect.X + rect.Width - radius), (int)(rect.Y + radius),
+            (int)radius, (int)(rect.Height - 2 * radius)), color);
+    
+        // 3. Draw center rectangle (touches all sides)
+        sprites.Draw(_pixel!, new Rectangle(
+            (int)(rect.X + radius), (int)(rect.Y + radius),
+            (int)(rect.Width - 2 * radius), (int)(rect.Height - 2 * radius)), color);
     }
-
-    // Helper: draws a filled quarter circle using vertical lines (fans from center)
-    private static void DrawQuarterCircle(SpriteBatch sprites, float cx, float cy, float radius, float startAngle, float endAngle, int segments, Color color)
+    
+    // Draw a filled quarter circle as a triangle fan using SpriteBatch
+    private static void DrawQuarterCircleFilled(SpriteBatch sprites, float cx, float cy, float radius, float startAngle, float endAngle, int segments, Color color)
     {
         double angleStep = (endAngle - startAngle) / segments;
-
-        for (int i = 0; i < segments; i++)
+        var points = new List<Vector2> { new Vector2(cx, cy) }; // Center
+    
+        for (int i = 0; i <= segments; i++)
         {
-            double angle0 = MathHelper.ToRadians((float)(startAngle + i * angleStep));
-            double angle1 = MathHelper.ToRadians((float)(startAngle + (i + 1) * angleStep));
-
-            float x0 = cx + (float)Math.Cos(angle0) * radius;
-            float y0 = cy + (float)Math.Sin(angle0) * radius;
-            float x1 = cx + (float)Math.Cos(angle1) * radius;
-            float y1 = cy + (float)Math.Sin(angle1) * radius;
-
-            // Draw triangle fan from center to arc edge
-            // We'll draw a thin rectangle (line) between center and each arc segment
-            DrawThickLine(sprites, cx, cy, x0, y0, x1, y1, color);
+            double angle = MathHelper.ToRadians((float)(startAngle + i * angleStep));
+            float x = cx + (float)Math.Cos(angle) * radius;
+            float y = cy + (float)Math.Sin(angle) * radius;
+            points.Add(new Vector2(x, y));
+        }
+    
+        // Draw as triangles
+        for (int i = 1; i < points.Count - 1; i++)
+        {
+            DrawTriangle(sprites, points[0], points[i], points[i + 1], color);
         }
     }
-
-    // Helper: Draws a filled triangle (used for quarter circle)
-    private static void DrawThickLine(SpriteBatch sprites, float cx, float cy, float x0, float y0, float x1, float y1, Color color)
+    
+    // Draw a filled triangle with SpriteBatch using a pixel texture
+    private static void DrawTriangle(SpriteBatch sprites, Vector2 v0, Vector2 v1, Vector2 v2, Color color)
     {
-        // Draw two triangles between (cx,cy)-(x0,y0)-(x1,y1)
-        // But since we have only a pixel, approximate by drawing a filled polygon as a very thin rectangle
-        // Instead, just draw lines between center and arc
-        // For a filled look, draw vertical lines between arc points and center
-
-        // We'll draw a line from (x0,y0) to center and (x1,y1) to center as a 1px thick rectangle
-        // But SpriteBatch can't draw rotated rectangles by default.
-        // Instead, draw a 1x1 pixel at (x0,y0), and let the segment count fill the area.
-
-        // For better coverage, draw a line from (x0,y0) to (x1,y1)
-        int steps = (int)Math.Ceiling(Vector2.Distance(new Vector2(x0, y0), new Vector2(x1, y1)));
-        steps = Math.Max(steps, 1);
-
-        for (int i = 0; i <= steps; i++)
+        // Sort points by Y
+        if (v1.Y < v0.Y) (v0, v1) = (v1, v0);
+        if (v2.Y < v0.Y) (v0, v2) = (v2, v0);
+        if (v2.Y < v1.Y) (v1, v2) = (v2, v1);
+    
+        // Compute edge slopes
+        float dx1 = (v1.Y - v0.Y) > 0 ? (v1.X - v0.X) / (v1.Y - v0.Y) : 0;
+        float dx2 = (v2.Y - v0.Y) > 0 ? (v2.X - v0.X) / (v2.Y - v0.Y) : 0;
+        float dx3 = (v2.Y - v1.Y) > 0 ? (v2.X - v1.X) / (v2.Y - v1.Y) : 0;
+    
+        float sx = v0.X;
+        float ex = v0.X;
+    
+        // Top half
+        for (float y = v0.Y; y < v1.Y; y++)
         {
-            float t = i / (float)steps;
-            float x = MathHelper.Lerp(x0, x1, t);
-            float y = MathHelper.Lerp(y0, y1, t);
-
-            sprites.Draw(_pixel!, new Rectangle((int)x, (int)y, 1, 1), color);
+            float xStart = sx;
+            float xEnd = ex;
+            if (xStart > xEnd) (xStart, xEnd) = (xEnd, xStart);
+            sprites.Draw(_pixel!, new Rectangle((int)xStart, (int)y, (int)(xEnd - xStart + 1), 1), color);
+            sx += dx1;
+            ex += dx2;
+        }
+        // Bottom half
+        sx = v1.X;
+        for (float y = v1.Y; y < v2.Y; y++)
+        {
+            float xStart = sx;
+            float xEnd = ex;
+            if (xStart > xEnd) (xStart, xEnd) = (xEnd, xStart);
+            sprites.Draw(_pixel!, new Rectangle((int)xStart, (int)y, (int)(xEnd - xStart + 1), 1), color);
+            sx += dx3;
+            ex += dx2;
         }
     }
 }
