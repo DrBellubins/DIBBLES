@@ -21,6 +21,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
       <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
@@ -35,22 +36,26 @@
       </Content>
     </ItemGroup>
 
-    <Target Name="BuildContent" BeforeTargets="Build">
+    <PropertyGroup>
+      <!-- Remove extra /Content path for MonoGame content output -->
+      <MonoGameContentOutputDir>$(MSBuildProjectDirectory)/Content/bin/</MonoGameContentOutputDir>
+    </PropertyGroup>
+
+    <!-- <Target Name="BuildContent" BeforeTargets="Build">
       <Exec Command="mgcb -c" />
       <Exec Command="mgcb -b -@=Content/Content.mgcb" ContinueOnError="true" />
     </Target>
 
     <Target Name="CopyContent" AfterTargets="Build">
       <ItemGroup>
-        <ContentFiles Include="Content/bin/**" />
-    </ItemGroup>
+        <BinContent Include="Content/bin/**" />
+      </ItemGroup>
       <Copy
-        SourceFiles="@(ContentFiles)"
-        DestinationFiles="@(ContentFiles->'$(OutputPath)%(RecursiveDir)%(Filename)%(Extension)')"
+        SourceFiles="@(BinContent)"
+        DestinationFolder="$(OutDir)Content\%(RecursiveDir)"
         SkipUnchangedFiles="true"
-        OverwriteReadOnlyFiles="true"
       />
-    </Target>
+    </Target> -->
 
     <ItemGroup>
       <Folder Include="Assets\Shaders\" />

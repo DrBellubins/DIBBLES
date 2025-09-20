@@ -264,13 +264,13 @@ public class TerrainMesh
         indexBuffer.SetData(data.Indices);
 
         // Create effect
-        var effect = new BasicEffect(graphicsDevice)
+        /*var effect = new BasicEffect(graphicsDevice)
         {
             TextureEnabled = true,
             VertexColorEnabled = true,
             LightingEnabled = false,
             Texture = BlockData.TextureAtlas
-        };
+        };*/
 
         // Return as RuntimeModel
         return new RuntimeModel
@@ -278,7 +278,7 @@ public class TerrainMesh
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
-            Effect = effect,
+            Effect = terrainShader,
             Texture = BlockData.TextureAtlas
         };
     }

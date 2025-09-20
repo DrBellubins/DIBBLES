@@ -28,9 +28,8 @@ public class TerrainGeneration
     public static TerrainTick TerrainTick = new TerrainTick();
     
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
-    
-    // TODO: Monogame
-    //public static Shader TerrainShader;
+
+    public static Effect terrainShader;
 
     public int Seed = -1413840509;
     //public int Seed = 1234567;
@@ -67,8 +66,7 @@ public class TerrainGeneration
         
         WorldSave.Data.Seed = Seed;
         
-        // TODO: Monogame
-        //TerrainShader = Resource.LoadShader("terrain.vs", "terrain.fs");
+        terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
     }
     
     private int chunksLoaded = 0;
@@ -461,7 +459,14 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
-        //Console.WriteLine($"Is atlas null: {BlockData.TextureAtlas.IsDisposed}");
+        terrainShader.Parameters["World"].SetValue(world);
+        terrainShader.Parameters["View"].SetValue(view);
+        terrainShader.Parameters["Projection"].SetValue(projection);
+        terrainShader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+        terrainShader.Parameters["CameraPos"].SetValue(cameraPos);
+        terrainShader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+        terrainShader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+        terrainShader.Parameters["FogColor"].SetValue(FogEffect.FogColor);
         
         // Draw opaque
         foreach (var oModel in TMesh.OpaqueModels)

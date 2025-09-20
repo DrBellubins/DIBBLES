@@ -11,3 +11,6 @@
 
 # Build the MainFont.spritefont as a SpriteFont
 /build:Fonts/MainFont.spritefont
+
+# Build the terrain shader
+/build:Shaders/Terrain.fx
