@@ -19,16 +19,15 @@ public class MonoEngine : Game
     
     public static bool IsRunning;
     public static bool IsPaused;
-
-    public static GraphicsDeviceManager GraphicsManager;
-    public static GraphicsDevice Graphics;
     
+    public static GraphicsDevice Graphics;
     public static SpriteBatch Sprites;
     
     public static SpriteFont MainFont;
-
     public static List<Scene> Scenes = new();
 
+    private static GraphicsDeviceManager GraphicsManager;
+    
     public MonoEngine()
     {
         Instance = this;

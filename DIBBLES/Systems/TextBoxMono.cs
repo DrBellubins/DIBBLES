@@ -24,6 +24,12 @@ public class TextBoxMono
     {
         Bounds = rect;
         MaxLength = maxLength;
+        
+        MonoEngine.Instance.Window.TextInput += (s, e) =>
+        {
+            if (IsFocused)
+                OnTextInput(e);
+        };
     }
 
     public void Update()
@@ -41,7 +47,7 @@ public class TextBoxMono
 
         if (IsFocused)
         {
-            KeyboardState keyboard = Keyboard.GetState();
+            /*KeyboardState keyboard = Keyboard.GetState();
             Keys[] pressed = keyboard.GetPressedKeys();
 
             // Basic character entry (not robust: for full IME support, use GameWindow.TextInput event)
@@ -59,7 +65,7 @@ public class TextBoxMono
             if (keyboard.IsKeyDown(Keys.Back) && Text.Length > 0)
             {
                 Text = Text[..^1];
-            }
+            }*/
         }
 
         // Blink caret
@@ -99,6 +105,14 @@ public class TextBoxMono
         }
     }
 
+    public void OnTextInput(TextInputEventArgs e)
+    {
+        if (char.IsControl(e.Character)) return; // Ignore control chars
+        
+        if (Text.Length < MaxLength)
+            Text += e.Character;
+    }
+    
     // Utility: very basic key to char (for demo; for robust, see TextInput event)
     private static char? KeyToChar(Keys key, bool shift)
     {

@@ -199,6 +199,9 @@ public class Chat
             
                 index++;
             }
+            
+            if (!IsClosedButShown)
+                textBox.Draw();
         }
     }
 
