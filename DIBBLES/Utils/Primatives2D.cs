@@ -61,10 +61,10 @@ public static class Primatives2D
         }
     
         // 1. Draw 4 quarter-circle corners
-        DrawQuarterCircleFilled(sprites, rect.X + radius, rect.Y + radius, radius, 180, 270, segments, color); // Top-left
-        DrawQuarterCircleFilled(sprites, rect.X + rect.Width - radius, rect.Y + radius, radius, 270, 360, segments, color); // Top-right
-        DrawQuarterCircleFilled(sprites, rect.X + radius, rect.Y + rect.Height - radius, radius, 90, 180, segments, color); // Bottom-left
-        DrawQuarterCircleFilled(sprites, rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, 0, 90, segments, color); // Bottom-right
+        DrawQuarterCircle(sprites, rect.X + radius, rect.Y + radius, radius, 180, 270, segments, color); // Top-left
+        DrawQuarterCircle(sprites, rect.X + rect.Width - radius, rect.Y + radius, radius, 270, 360, segments, color); // Top-right
+        DrawQuarterCircle(sprites, rect.X + radius, rect.Y + rect.Height - radius, radius, 90, 180, segments, color); // Bottom-left
+        DrawQuarterCircle(sprites, rect.X + rect.Width - radius, rect.Y + rect.Height - radius, radius, 0, 90, segments, color); // Bottom-right
     
         // 2. Draw 4 rectangles for sides (between corners)
         // Top: between top-left and top-right corners
@@ -94,11 +94,12 @@ public static class Primatives2D
     }
     
     // Draw a filled quarter circle as a triangle fan using SpriteBatch
-    private static void DrawQuarterCircleFilled(SpriteBatch sprites, float cx, float cy, float radius, float startAngle, float endAngle, int segments, Color color)
+    private static void DrawQuarterCircle(SpriteBatch sprites, float cx, float cy, float radius, float startAngle, float endAngle, int segments, Color color)
     {
+        // Build fan points
         double angleStep = (endAngle - startAngle) / segments;
-        var points = new List<Vector2> { new Vector2(cx, cy) }; // Center
-    
+        var points = new List<Vector2> { new Vector2(cx, cy) };
+
         for (int i = 0; i <= segments; i++)
         {
             double angle = MathHelper.ToRadians((float)(startAngle + i * angleStep));
@@ -106,8 +107,8 @@ public static class Primatives2D
             float y = cy + (float)Math.Sin(angle) * radius;
             points.Add(new Vector2(x, y));
         }
-    
-        // Draw as triangles
+
+        // Draw as filled triangles (fan)
         for (int i = 1; i < points.Count - 1; i++)
         {
             DrawTriangle(sprites, points[0], points[i], points[i + 1], color);
@@ -115,23 +116,21 @@ public static class Primatives2D
     }
     
     // Draw a filled triangle with SpriteBatch using a pixel texture
-    private static void DrawTriangle(SpriteBatch sprites, Vector2 v0, Vector2 v1, Vector2 v2, Color color)
+    private static void DrawTriangle(SpriteBatch sprites, Vector2 p0, Vector2 p1, Vector2 p2, Color color)
     {
-        // Sort points by Y
-        if (v1.Y < v0.Y) (v0, v1) = (v1, v0);
-        if (v2.Y < v0.Y) (v0, v2) = (v2, v0);
-        if (v2.Y < v1.Y) (v1, v2) = (v2, v1);
-    
-        // Compute edge slopes
-        float dx1 = (v1.Y - v0.Y) > 0 ? (v1.X - v0.X) / (v1.Y - v0.Y) : 0;
-        float dx2 = (v2.Y - v0.Y) > 0 ? (v2.X - v0.X) / (v2.Y - v0.Y) : 0;
-        float dx3 = (v2.Y - v1.Y) > 0 ? (v2.X - v1.X) / (v2.Y - v1.Y) : 0;
-    
-        float sx = v0.X;
-        float ex = v0.X;
-    
-        // Top half
-        for (float y = v0.Y; y < v1.Y; y++)
+        // Sort by Y
+        if (p1.Y < p0.Y) (p0, p1) = (p1, p0);
+        if (p2.Y < p0.Y) (p0, p2) = (p2, p0);
+        if (p2.Y < p1.Y) (p1, p2) = (p2, p1);
+
+        float dx1 = p1.Y - p0.Y > 0 ? (p1.X - p0.X) / (p1.Y - p0.Y) : 0;
+        float dx2 = p2.Y - p0.Y > 0 ? (p2.X - p0.X) / (p2.Y - p0.Y) : 0;
+        float dx3 = p2.Y - p1.Y > 0 ? (p2.X - p1.X) / (p2.Y - p1.Y) : 0;
+
+        float sx = p0.X, ex = p0.X;
+
+        // Top
+        for (float y = p0.Y; y < p1.Y; y++)
         {
             float xStart = sx;
             float xEnd = ex;
@@ -140,9 +139,9 @@ public static class Primatives2D
             sx += dx1;
             ex += dx2;
         }
-        // Bottom half
-        sx = v1.X;
-        for (float y = v1.Y; y < v2.Y; y++)
+        // Bottom
+        sx = p1.X;
+        for (float y = p1.Y; y < p2.Y; y++)
         {
             float xStart = sx;
             float xEnd = ex;
