@@ -38,7 +38,7 @@ public class TextBoxMono
         Point mousePos = mouse.Position;
 
         bool mouseInBox = Bounds.Contains(mousePos);
-
+        
         // Click to focus
         if (mouse.LeftButton == ButtonState.Pressed && mouseInBox)
             IsFocused = true;
@@ -84,7 +84,7 @@ public class TextBoxMono
 
     public void OnTextInput(TextInputEventArgs e)
     {
-        if (char.IsControl(e.Character) && !IsFocused) return; // Ignore control chars
+        if (char.IsControl(e.Character)) return; // Ignore control chars
         
         if (Text.Length < MaxLength)
             Text += e.Character;

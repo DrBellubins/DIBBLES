@@ -121,7 +121,7 @@ public class Chat
                 else
                 {
                     Write(ChatMessageType.Error, $"Unknown command: {cmdName}");
-                    Console.WriteLine($"\n\n[ERROR] Player attempted to execute nonexistent command '{textBox.Text}'.\n\n");
+                    Console.WriteLine($"[ERROR] Player attempted to execute nonexistent command '{textBox.Text}'");
                 }
             }
             else
