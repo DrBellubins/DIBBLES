@@ -15,7 +15,7 @@ public class RuntimeModel : IDisposable
 
     public void Draw(Matrix world, Matrix view, Matrix projection)
     {
-        var gd = MonoEngine.Graphics;
+        var gd = Engine.Graphics;
         
         if (Effect is BasicEffect basic)
         {

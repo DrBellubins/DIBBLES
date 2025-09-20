@@ -9,7 +9,7 @@ public class Camera3D
     public Vector3 Up = Vector3.Up;
 
     public float Fov = 90f;
-    public float AspectRatio = (float)MonoEngine.ScreenWidth / MonoEngine.ScreenHeight;
+    public float AspectRatio = (float)Engine.ScreenWidth / Engine.ScreenHeight;
     public float NearPlane = 0.01f;
     public float FarPlane = 1000f;
 

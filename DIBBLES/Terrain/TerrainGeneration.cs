@@ -356,7 +356,7 @@ public class TerrainGeneration
 
                 // Mesh generation (thread safe)
                 var meshData = TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = TMesh.GenerateMeshData(chunk, true, GameSceneMono.PlayerCharacter.Camera.Position);
+                var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
                 // Enqueue mesh upload for main thread
                 meshUploadQueue.Enqueue((chunk, meshData));
@@ -470,8 +470,8 @@ public class TerrainGeneration
             if (oModel.Value != null)
             {
                 oModel.Value.Draw(Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
-                    GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
             }
         }
@@ -483,8 +483,8 @@ public class TerrainGeneration
             if (tModel.Value != null)
             {
                 tModel.Value.Draw(Matrix.CreateTranslation(tModel.Key.ToVector3()), // World matrix for chunk position
-                    GameSceneMono.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameSceneMono.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
             }
         }

@@ -150,13 +150,13 @@ public class PlayerCharacter
         {
             placeBreakTimer += Time.DeltaTime;
             
-            if (InputMono.StartedBreaking) // Break immediately
+            if (Input.StartedBreaking) // Break immediately
             {
                 TerrainGeneration.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
         
-            if (InputMono.Break() && !InputMono.StartedBreaking) // Hold break
+            if (Input.Break() && !Input.StartedBreaking) // Hold break
             {
                 if (placeBreakTimer >= 0.3f)
                 {
@@ -165,13 +165,13 @@ public class PlayerCharacter
                 }
             }
 
-            if (InputMono.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
+            if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
             {
                 TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
             }
         
-            if (InputMono.Interact() && hotbar.SelectedItem != null) // Hold place
+            if (Input.Interact() && hotbar.SelectedItem != null) // Hold place
             {
                 if (placeBreakTimer >= 0.3f)
                 {
@@ -181,7 +181,7 @@ public class PlayerCharacter
             }
         }
         
-        if (InputMono.FlyToggle())
+        if (Input.FlyToggle())
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
@@ -203,28 +203,28 @@ public class PlayerCharacter
         // Allow tabbing out and back into game
         //if (Input.Pause()) CursorManager.ReleaseCursor();
         
-        var mousePosition = InputMono.CursorPosition();
+        var mousePosition = Input.CursorPosition();
         
-        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= MonoEngine.ScreenWidth &&
-                                mousePosition.Y >= 0 && mousePosition.Y <= MonoEngine.ScreenHeight;
+        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
+                                mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
         
         //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsFrozen)
         //    CursorManager.LockCursor();
         
-        if (InputMono.MoveForward()) inputDir.Z += 1.0f;
-        if (InputMono.MoveBackward()) inputDir.Z -= 1.0f;
-        if (InputMono.MoveLeft()) inputDir.X -= 1.0f;
-        if (InputMono.MoveRight()) inputDir.X += 1.0f;
+        if (Input.MoveForward()) inputDir.Z += 1.0f;
+        if (Input.MoveBackward()) inputDir.Z -= 1.0f;
+        if (Input.MoveLeft()) inputDir.X -= 1.0f;
+        if (Input.MoveRight()) inputDir.X += 1.0f;
 
         // Run
-        if (InputMono.Run())
+        if (Input.Run())
             run();
 
         if (isRunning && isCrouching)
             isRunning = false;
         
         // Crouching
-        isCrouching = !IsFrozen && InputMono.Crouch();
+        isCrouching = !IsFrozen && Input.Crouch();
 
         // Run vs Crouch checks
         if (isCrouching)
@@ -235,7 +235,7 @@ public class PlayerCharacter
             currentSpeed = WalkSpeed;
         
         if (!IsFrozen)
-            isJumping = InputMono.Jump(isCrouching);
+            isJumping = Input.Jump(isCrouching);
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
@@ -269,7 +269,7 @@ public class PlayerCharacter
         Vector2 lookDelta = Vector2.Zero;
         
         if (!IsFrozen)
-            lookDelta = InputMono.LookDelta;
+            lookDelta = Input.LookDelta;
         
         var lookDeltaX = lookDelta.X * mouseSensitivity;
         var lookDeltaY = lookDelta.Y * mouseSensitivity;
@@ -475,18 +475,17 @@ public class PlayerCharacter
     {
         hotbar.Draw(Health);
         
-        /*Debug.Draw2DText($"Position: {Position}", Microsoft.Xna.Framework.Color.White);
-        Debug.Draw2DText($"Camera Direction: {CameraForward}", Microsoft.Xna.Framework.Color.White);
-        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} WasGrounded: {wasGrounded}", Microsoft.Xna.Framework.Color.White);
-        Debug.Draw2DText($"Velocity: {Velocity}", Color.White);*/
+        Debug.Draw2DText($"Position: {Position}", Color.White);
+        Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
+        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
+        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
         
         // TODO: Temporary death screen
         if (IsDead)
         {
-            var deathScreen = new Rectangle(0, 0, MonoEngine.ScreenWidth, MonoEngine.ScreenHeight);
+            var deathScreen = new Rectangle(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
             
-            // TODO: Monogame
-            //Raylib.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+            Primatives.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
         }
     }
     

@@ -40,7 +40,7 @@ public class Chat
     public RenderTarget2D ChatTexture;
     
     private Rectangle chatBox = new Rectangle(0, 0, Width, Height);
-    private TextBoxMono textBox = new TextBoxMono(new Rectangle(0, 0, Width, 40));
+    private TextBox textBox = new TextBox(new Rectangle(0, 0, Width, 40));
     
     public float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
@@ -61,7 +61,7 @@ public class Chat
     public void Start()
     {
         ChatTexture = new RenderTarget2D(
-            MonoEngine.Graphics,
+            Engine.Graphics,
             Width,
             Height,
             false,
@@ -90,7 +90,7 @@ public class Chat
         {
             textBox.Update();
             
-            float wheel = InputMono.ScrollDelta();
+            float wheel = Input.ScrollDelta();
             
             if (wheel != 0)
             {
@@ -104,7 +104,7 @@ public class Chat
         }
         
         // Send msg/cmd to chat
-        if (InputMono.SendChat() && textBox.Text != string.Empty)
+        if (Input.SendChat() && textBox.Text != string.Empty)
         {
             if (textBox.Text.StartsWith("/"))
             {
@@ -142,13 +142,13 @@ public class Chat
             elapsed = 0f;
         }
         
-        if (InputMono.OpenChat())
+        if (Input.OpenChat())
             OpenChat();
         
-        if (InputMono.OpenChatCmd())
+        if (Input.OpenChatCmd())
             OpenChatCmd();
         
-        if (InputMono.Pause())
+        if (Input.Pause())
             CloseChat();
         
         /*if (Input.PreviousMessage() && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)
@@ -164,12 +164,12 @@ public class Chat
         }*/
         
         if (TerrainGeneration.DoneLoading)
-            GameSceneMono.PlayerCharacter.IsFrozen = IsOpen;
+            GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
 
     public void DrawBG()
     {
-        var sprites = MonoEngine.Sprites;
+        var sprites = Engine.Sprites;
         
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
@@ -179,7 +179,7 @@ public class Chat
     
     public void Draw()
     {
-        var sprites = MonoEngine.Sprites;
+        var sprites = Engine.Sprites;
         
         if (IsOpen || IsClosedButShown)
         {
@@ -195,7 +195,7 @@ public class Chat
                 var color = GetMsgColor(msg.Type);
                 var pos = new Vector2(0f, heightPos + (index * FontSize));
             
-                sprites.DrawString(MonoEngine.MainFont, msg.Message, pos, color);
+                sprites.DrawString(Engine.MainFont, msg.Message, pos, color);
             
                 index++;
             }

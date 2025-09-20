@@ -15,7 +15,7 @@ public class Freecam
         
         float currentMovespeed;
 
-        if (InputMono.Run())
+        if (Input.Run())
             isRunning = !isRunning;
         
         if (isRunning)
@@ -29,25 +29,25 @@ public class Freecam
 
         var forwardXZ = new Vector3(playerCharacter.CameraForward.X, 0f, playerCharacter.CameraForward.Z);
         
-        if (InputMono.MoveForward())
+        if (Input.MoveForward())
             playerCharacter.Position += forwardXZ * moveSpeed;
         
-        if (InputMono.MoveBackward())
+        if (Input.MoveBackward())
             playerCharacter.Position -= forwardXZ * moveSpeed;
 
-        if (InputMono.MoveLeft())
+        if (Input.MoveLeft())
             playerCharacter.Position -= playerCharacter.CameraRight * moveSpeed;
         
-        if (InputMono.MoveRight())
+        if (Input.MoveRight())
             playerCharacter.Position += playerCharacter.CameraRight * moveSpeed;
         
-        if (InputMono.Jump(false))
+        if (Input.Jump(false))
             playerCharacter.Position += Vector3.UnitY * moveSpeed;
         
-        if (InputMono.Crouch())
+        if (Input.Crouch())
             playerCharacter.Position -= Vector3.UnitY * moveSpeed;
         
-        var lookDelta = InputMono.LookDelta;
+        var lookDelta = Input.LookDelta;
         var lookDeltaX = lookDelta.X * 0.1f;
         var lookDeltaY = lookDelta.Y * 0.1f;
 

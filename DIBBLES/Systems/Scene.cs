@@ -6,7 +6,7 @@ public abstract class Scene
 {
     public Scene()
     {
-        MonoEngine.Scenes.Add(this);
+        Engine.Scenes.Add(this);
     }
     
     public virtual void Start()

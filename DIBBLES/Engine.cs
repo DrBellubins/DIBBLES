@@ -1,100 +1,103 @@
-/*using System.Diagnostics;
-using Raylib_cs;
-using System.Numerics;
-using DIBBLES.Effects;
-using DIBBLES.Scenes;
-using DIBBLES.Utils;
-using System.Threading;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using System.Diagnostics;
 using DIBBLES.Gameplay;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Utils;
 
 namespace DIBBLES;
 
-public class Engine
+public class Engine : Game
 {
     public const int ScreenWidth = 1600;
     public const int ScreenHeight = 900;
-    public static readonly int VirtualScreenWidth = (int)((float)ScreenWidth / ScreenHeight * VirtualScreenHeight);
-    //public const int VirtualScreenWidth = 640;
-    public const int VirtualScreenHeight = 480;
-
     public const int FPS = 165;
     public const float FrameTimestep = 1.0f / (float)FPS;
+
+    public static Engine Instance { get; private set; }
     
     public static bool IsRunning;
     public static bool IsPaused;
     
-    public static List<Scene> Scenes = new();
-    public static Font MainFont;
+    public static GraphicsDevice Graphics;
+    public static SpriteBatch Sprites;
     
-    public static void Initialize()
-    {
-        // Initialize window
-        Raylib.InitWindow(ScreenWidth, ScreenHeight, "DIBBLES");
-        Raylib.SetTargetFPS(0); // Disable Raylib's FPS cap
-        Raylib.SetExitKey(KeyboardKey.Null);
+    public static SpriteFont MainFont;
+    public static List<Scene> Scenes = new();
 
-        Raylib.SetTraceLogLevel(TraceLogLevel.Warning);
+    private static GraphicsDeviceManager GraphicsManager;
+    
+    public Engine()
+    {
+        Instance = this;
         
-        Raylib.InitAudioDevice();
+        GraphicsManager = new GraphicsDeviceManager(this);
         
-        GMath.Init();
+        GraphicsManager.PreferredBackBufferWidth = ScreenWidth;
+        GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
+        GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
         
-        var timer = new Stopwatch();
-        timer.Start();
+        Content.RootDirectory = "Content";
         
-        long previousTicks = timer.ElapsedTicks;
+        IsMouseVisible = true;
+        IsFixedTimeStep = false;
+    }
+
+    protected override void Initialize()
+    {
+        base.Initialize();
 
         IsRunning = true;
-        MainFont = Raylib.LoadFont("Assets/Textures/romulus.png");
+    }
 
+    protected override void LoadContent()
+    {
+        Graphics = GraphicsManager.GraphicsDevice;
+        
+        Sprites = new SpriteBatch(GraphicsDevice);
+        
+        MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
+        MainFont = TextureUtils.AlterSpriteFont(MainFont, ' ', 8f);
+        
         var voxelScene = new GameScene();
-        //var testScene = new TestScene();
-        //var bezierScene = new BezierMeshScene();
-        //var pathTracerScene = new PathTracerScene();
         
         foreach (var scene in Scenes)
             scene.Start();
-        
-        while (IsRunning)
-        {
-            if ((!Chat.IsOpen && Input.Quit()) || Raylib.WindowShouldClose())
-                Close();
-            
-            // Update and draw
-            foreach (var scene in Scenes)
-                scene.Update();
-        
-            foreach (var scene in Scenes)
-                scene.Draw();
-            
-            // Cap frame rate with optimized spin-wait
-            long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
-            long beforeWait = timer.ElapsedTicks;
-            long elapsedTicks = beforeWait - previousTicks;
-            int spinCount = 0;
-            
-            while (elapsedTicks < targetTicks)
-            {
-                Thread.SpinWait(100); // Brief spin-wait to reduce CPU usage
-                elapsedTicks = timer.ElapsedTicks - previousTicks;
-                spinCount++;
-            }
-            
-            long afterWait = timer.ElapsedTicks;
-            
-            // Calculate DeltaTime after spin-wait to include wait time
-            Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
-            Time.time += Time.DeltaTime;
+    }
 
-            previousTicks = afterWait; // Update to the end of the frame
+    protected override void Update(GameTime gameTime)
+    {
+        if (!IsActive || !IsRunning)
+        {
+            base.Update(gameTime);
+            return;
         }
         
-        Raylib.CloseWindow();
+        if ((!Chat.IsOpen && Input.Quit()))
+            Exit();
+        
+        Time.DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+        Time.time += Time.DeltaTime;
+        
+        foreach (var scene in Scenes)
+            scene.Update();
+
+        base.Update(gameTime);
     }
-    
-    public static void Close()
+
+    protected override void Draw(GameTime gameTime)
     {
-        IsRunning = false;
+        foreach (var scene in Scenes)
+            scene.Draw();
+        
+        base.Draw(gameTime);
     }
-}*/
+
+    protected override void UnloadContent()
+    {
+        // TODO: Port resource cleanup
+        base.UnloadContent();
+    }
+}

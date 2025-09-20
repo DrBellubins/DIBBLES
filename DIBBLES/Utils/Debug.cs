@@ -16,8 +16,8 @@ public class Debug
     
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
-    
-    public static bool ShowDebug { get; private set; }
+
+    public static bool ShowDebug { get; private set; } = true;
     public static bool ShowDebugExtended { get; private set; }
     
     public static void Update(Camera3D camera)
@@ -31,12 +31,16 @@ public class Debug
     
     public static void Draw2D()
     {
+        var sprites = Engine.Sprites;
+        
         if (ShowDebug)
         {
             int index = 0;
         
             foreach (var text in textBuffer2d)
             {
+                sprites.DrawString(Engine.MainFont, text.Key, new Vector2(0f, index), Color.White);
+                
                 // TODO: Monogame
                 //Raylib.DrawTextEx(MonoEngine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
                 index += 24;

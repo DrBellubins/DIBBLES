@@ -4,7 +4,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        var game = new MonoEngine();
+        var game = new Engine();
         game.Run();
         
         //Engine.Initialize();

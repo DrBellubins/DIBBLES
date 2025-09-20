@@ -16,34 +16,25 @@ public static class CursorManager
         previousMousePosition = new Vector2(state.X, state.Y);
 
         // Hide cursor
-        MonoEngine.Instance.IsMouseVisible = false; // You must provide a static reference to your MonoEngine/Game instance
+        Engine.Instance.IsMouseVisible = false; // You must provide a static reference to your MonoEngine/Game instance
 
+        // Warp mouse to center
+        Mouse.SetPosition(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2);
+        
+        // Flush look delta
+        Input.FlushLookDelta();
+        
         IsLocked = true;
     }
 
     public static void ReleaseCursor()
     {
         // Show cursor
-        MonoEngine.Instance.IsMouseVisible = true;
+        Engine.Instance.IsMouseVisible = true;
 
         // Restore mouse position (optional, can be omitted for FPS-style controls)
         Mouse.SetPosition((int)previousMousePosition.X, (int)previousMousePosition.Y);
         
         IsLocked = false;
     }
-
-    /*public static void Update()
-    {
-        if (IsLocked)
-        {
-            // Only warp if mouse is NOT at center (avoids per-frame zeroing)
-            var mouse = Mouse.GetState();
-            
-            int cx = MonoEngine.ScreenWidth / 2;
-            int cy = MonoEngine.ScreenHeight / 2;
-            
-            if (mouse.X != cx || mouse.Y != cy)
-                InputMono.WarpMouseToCenter();
-        }
-    }*/
 }

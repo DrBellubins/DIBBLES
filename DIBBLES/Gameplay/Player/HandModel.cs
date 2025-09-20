@@ -7,11 +7,11 @@ namespace DIBBLES.Gameplay.Player;
 
 public class HandModel
 {
-    private MonoCubeMesh handBlockModel;
+    private CubeMesh handBlockModel;
     
     public void Start()
     {
-        handBlockModel = MeshUtilsMonoGame.GenTexturedCube(MonoEngine.Graphics, BlockData.Textures[BlockType.Dirt]);
+        handBlockModel = MeshUtils.GenTexturedCube(Engine.Graphics, BlockData.Textures[BlockType.Dirt]);
     }
 
     public void Draw(
@@ -35,7 +35,7 @@ public class HandModel
         
         // Set the hand model texture
         Texture2D texture = BlockData.Textures[selectedItem.Type];
-        MeshUtilsMonoGame.SetCubeMeshTexture(handBlockModel, texture);
+        MeshUtils.SetCubeMeshTexture(handBlockModel, texture);
 
         // Position relative to camera
         float forwardDistance = 0.5f;

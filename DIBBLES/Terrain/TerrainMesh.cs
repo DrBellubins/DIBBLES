@@ -80,7 +80,7 @@ public class TerrainMesh
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
         
-                long chunkSeed = GameSceneMono.TerrainGen.Seed 
+                long chunkSeed = GameScene.TerrainGen.Seed 
                                  ^ (block.Position.X * 73428767L)
                                  ^ (block.Position.Y * 9127841L)
                                  ^ (block.Position.Z * 192837465L);
@@ -216,7 +216,7 @@ public class TerrainMesh
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
     public RuntimeModel UploadMesh(MeshData data)
     {
-        var graphicsDevice = MonoEngine.Graphics;
+        var graphicsDevice = Engine.Graphics;
 
         // Don't process empty mesh data
         if (data.VertexCount == 0 || data.Vertices == null || data.Indices == null || data.Indices.Length == 0)

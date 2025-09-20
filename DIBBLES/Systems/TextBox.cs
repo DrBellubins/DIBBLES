@@ -1,9 +1,12 @@
-/*using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
+using System.Text;
 using DIBBLES.Systems;
 
 namespace DIBBLES.Utils;
 
-// Simple single-line text field with focus/click logic
+// Simple single-line text field with focus/click logic for MonoGame
 public class TextBox
 {
     public string Text { get; set; } = "";
@@ -11,70 +14,83 @@ public class TextBox
     public int MaxLength { get; set; } = 32;
 
     public Rectangle Bounds;
+    
+    private float caretBlinkTime = 0;
+    private bool showCaret = true;
+    private int caretPos => Text.Length;
 
     public TextBox(Rectangle rect, int maxLength = 32)
     {
         Bounds = rect;
         MaxLength = maxLength;
+        
+        Engine.Instance.Window.TextInput += (s, e) =>
+        {
+            if (IsFocused)
+                OnTextInput(e);
+        };
     }
 
     public void Update()
     {
-        Vector2 mousePos = Input.CursorPosition();
-        bool mouseInBox = Raylib.CheckCollisionPointRec(mousePos, Bounds);
+        MouseState mouse = Mouse.GetState();
+        Point mousePos = mouse.Position;
 
+        bool mouseInBox = Bounds.Contains(mousePos);
+        
         // Click to focus
-        if (Input.StartedBreaking)
-            IsFocused = mouseInBox;
+        if (mouse.LeftButton == ButtonState.Pressed && mouseInBox)
+            IsFocused = true;
+        else if (mouse.LeftButton == ButtonState.Pressed && !mouseInBox)
+            IsFocused = false;
 
-        if (IsFocused)
+        // Blink caret
+        caretBlinkTime += Time.DeltaTime;
+        
+        if (caretBlinkTime >= 0.5f)
         {
-            int c = Raylib.GetCharPressed();
-            
-            while (c > 0)
-            {
-                // Accept printable characters (ASCII 32..126), ignore others except backspace
-                if (c >= 32 && c <= 126 && Text.Length < MaxLength)
-                    Text += (char)c;
-
-                c = Raylib.GetCharPressed();
-            }
-            
-            // Handle backspace
-            if (Raylib.IsKeyPressed(KeyboardKey.Backspace) && Text.Length > 0)
-                Text = Text[..^1];
+            showCaret = !showCaret;
+            caretBlinkTime = 0;
         }
     }
 
+    // Draw using MonoEngine.Sprites and MonoEngine.MainFont
     public void Draw()
     {
         // Draw box (different color if focused)
-        Color boxColor = IsFocused ? UI.FocusColor : UI.SecondaryAccentColor;
-
-        Raylib.DrawRectangleRec(Bounds, boxColor);
+        Color boxColor = IsFocused ? Color.Gray : Color.DarkGray;
+        Engine.Sprites.Draw(TextureUtils.GetWhitePixel(), Bounds, boxColor);
 
         // Draw text
         var padding = 8f;
         Vector2 textPos = new Vector2(Bounds.X + padding, Bounds.Y + padding);
 
-        UI.DrawText(Text, 24, textPos, Color.White);
+        Engine.Sprites.DrawString(Engine.MainFont, Text, textPos, Color.White);
 
-        // Draw blinking caret if focused
-        if (IsFocused)
+        // Draw caret if focused
+        if (IsFocused && showCaret)
         {
-            float time = Time.time;
+            Vector2 textSize = Engine.MainFont.MeasureString(Text);
             
-            if ((int)(time * 2) % 2 == 0) // Blinks every 0.5s
-            {
-                // Get text width
-                var textWidth = Raylib.MeasureTextEx(MonoEngine.MainFont, Text, 24, 0).X;
-                
-                float caretX = textPos.X + textWidth + 2f;
-                float caretY = textPos.Y;
-                float caretH = 24f;
+            float caretX = textPos.X + textSize.X + 2f;
+            float caretY = textPos.Y;
+            float caretH = Engine.MainFont.LineSpacing;
 
-                Raylib.DrawRectangle((int)caretX, (int)caretY, 2, (int)caretH, Color.White);
-            }
+            Engine.Sprites.Draw(TextureUtils.GetWhitePixel(),
+                new Rectangle((int)caretX, (int)caretY, 2, (int)caretH), Color.White);
         }
     }
-}*/
+
+    public void OnTextInput(TextInputEventArgs e)
+    {
+        if (char.IsControl(e.Character)) return; // Ignore control chars
+
+        if (Text.Length < MaxLength)
+            Text += e.Character.ToString();
+    }
+
+    public void Clear()
+    {
+        Text = string.Empty;
+    }
+}

@@ -81,7 +81,7 @@ public class Hotbar
     {
         if (!isPlayerDead && !isFrozen)
         {
-            var mouseWheelNormalized = MathF.Ceiling(-InputMono.ScrollDelta());
+            var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
             {
@@ -89,7 +89,7 @@ public class Hotbar
                 hotBarSelectionIndex = GMath.Repeat(hotBarSelectionIndex, 0, 8);
             }
 
-            var numKeys = InputMono.GetKeyPressed();
+            var numKeys = Input.GetKeyPressed();
 
             switch (numKeys)
             {
@@ -160,7 +160,7 @@ public class Hotbar
                     (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
                 // TODO: Temporary until 3d icons can be fixed
-                MonoEngine.Sprites.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
+                Engine.Sprites.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
                 
                 /*if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
@@ -187,7 +187,7 @@ public class Hotbar
         {
             if (blockType == BlockType.Air || blockType == BlockType.Water) continue; // Skip air and water
 
-            RenderTarget2D renderTexture = new RenderTarget2D(MonoEngine.Graphics, iconSize, iconSize);
+            RenderTarget2D renderTexture = new RenderTarget2D(Engine.Graphics, iconSize, iconSize);
 
             // Set up the isometric orthographic camera
             var cam = new Camera3D();
@@ -198,7 +198,7 @@ public class Hotbar
             cam.SetOrthographic();
 
             // Create the cube model with correct texture
-            RuntimeModel cubeModel = MeshUtilsMonoGame.GenTexturedCubeIcon(BlockData.Textures[blockType]);
+            RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
             /*Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background

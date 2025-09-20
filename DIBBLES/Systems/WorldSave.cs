@@ -62,7 +62,7 @@ public class WorldSave
         {
             writer.Write("W_DIBBLES");
             
-            writer.Write(GameSceneMono.TerrainGen.Seed);
+            writer.Write(GameScene.TerrainGen.Seed);
         }
         
         // Player data
@@ -72,13 +72,13 @@ public class WorldSave
             {
                 writer.Write("P_DIBBLES");
                 
-                writer.Write(GameSceneMono.PlayerCharacter.Position.X);
-                writer.Write(GameSceneMono.PlayerCharacter.Position.Y);
-                writer.Write(GameSceneMono.PlayerCharacter.Position.Z);
+                writer.Write(GameScene.PlayerCharacter.Position.X);
+                writer.Write(GameScene.PlayerCharacter.Position.Y);
+                writer.Write(GameScene.PlayerCharacter.Position.Z);
                 
-                writer.Write(GameSceneMono.PlayerCharacter.CameraForward.X);
-                writer.Write(GameSceneMono.PlayerCharacter.CameraForward.Y);
-                writer.Write(GameSceneMono.PlayerCharacter.CameraForward.Z);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.X);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.Y);
+                writer.Write(GameScene.PlayerCharacter.CameraForward.Z);
                 
                 writer.Write(Data.HotbarPosition);
             }
