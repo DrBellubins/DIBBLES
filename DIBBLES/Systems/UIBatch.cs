@@ -65,7 +65,6 @@ public static class UIBatch
     /// </summary>
     public static void DrawRect(RectangleF rect, Color color)
     {
-        if (_whitePixel == null) Console.WriteLine("UIBatch: _whitePixel is null!");
         Draw(_whitePixel, new Vector2(rect.X, rect.Y), new Vector2(rect.Width, rect.Height), color);
     }
     
@@ -130,10 +129,10 @@ public static class UIBatch
         short baseIndex = (short)_vertices.Count;
         Vector2 uv = Vector2.Zero; // White pixel
 
-        _vertices.Add(new UIVertex { Position = new Vector3(p0, 0.5f), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p1, 0.5f), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p2, 0.5f), Color = color, TexCoord = uv });
-        _vertices.Add(new UIVertex { Position = new Vector3(p3, 0.5f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p0, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p1, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p2, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p3, 0f), Color = color, TexCoord = uv });
 
         // Two triangles: 0,1,2 and 0,2,3
         _indices.Add((short)(baseIndex + 0));
@@ -163,10 +162,10 @@ public static class UIBatch
         short baseIndex = (short)_vertices.Count;
         Vector2 uv = Vector2.Zero; // White pixel
 
-        _vertices.Add(new UIVertex { Position = new Vector3(center, 0.5f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(center, 0f), Color = color, TexCoord = uv });
         
         for (int i = 0; i < arc.Count; i++)
-            _vertices.Add(new UIVertex { Position = new Vector3(arc[i], 0.5f), Color = color, TexCoord = uv });
+            _vertices.Add(new UIVertex { Position = new Vector3(arc[i], 0f), Color = color, TexCoord = uv });
 
         // Build triangle fan indices
         for (short i = 1; i < arc.Count; i++)
@@ -208,10 +207,10 @@ public static class UIBatch
 
         short baseIndex = (short)_vertices.Count;
 
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y, 0.5f), Color = color, TexCoord = new Vector2(uvTL.X, uvTL.Y) }); // TL
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y, 0.5f), Color = color, TexCoord = new Vector2(uvBR.X, uvTL.Y) }); // TR
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y + sz.Y, 0.5f), Color = color, TexCoord = new Vector2(uvBR.X, uvBR.Y) }); // BR
-        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y + sz.Y, 0.5f), Color = color, TexCoord = new Vector2(uvTL.X, uvBR.Y) }); // BL
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y, 0f), Color = color, TexCoord = new Vector2(uvTL.X, uvTL.Y) }); // TL
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y, 0f), Color = color, TexCoord = new Vector2(uvBR.X, uvTL.Y) }); // TR
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X + sz.X, pos.Y + sz.Y, 0f), Color = color, TexCoord = new Vector2(uvBR.X, uvBR.Y) }); // BR
+        _vertices.Add(new UIVertex { Position = new Vector3(pos.X, pos.Y + sz.Y, 0f), Color = color, TexCoord = new Vector2(uvTL.X, uvBR.Y) }); // BL
 
         // Two triangles: 0,1,2 and 0,2,3
         _indices.Add((short)(baseIndex + 0));
@@ -247,7 +246,7 @@ public static class UIBatch
             vertexArray[i] = new VertexPositionColorTexture(v.Position, v.Color, v.TexCoord);
         }
 
-        _graphics.BlendState = BlendState.Opaque;
+        _graphics.BlendState = BlendState.NonPremultiplied;
         _graphics.RasterizerState = RasterizerState.CullNone;
         _graphics.DepthStencilState = DepthStencilState.None;
         _graphics.SamplerStates[0] = SamplerState.PointClamp;

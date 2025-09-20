@@ -74,7 +74,9 @@ public class GameScene : Scene
         
         // Draw UI (UI Batch)
         gd.DepthStencilState = DepthStencilState.None;
-        gd.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1.0f, 0);
+        gd.Clear(Color.CornflowerBlue);
+        
+        Engine.Graphics.Viewport = new Viewport(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
         
         UIBatch.Begin();
         
