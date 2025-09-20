@@ -55,6 +55,7 @@ public class Engine : Game
     protected override void LoadContent()
     {
         Graphics = GraphicsManager.GraphicsDevice;
+        UIBatch.Initialize();
         
         Sprites = new SpriteBatch(GraphicsDevice);
         

@@ -72,9 +72,7 @@ public class GameScene : Scene
         
         //Debug.Draw3D();
         
-        // Draw UI
-        sprites.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
-        
+        // Draw UI (UI Batch)
         PlayerCharacter.DrawUI();
         
         if (Chat.IsOpen || Chat.IsClosedButShown)
@@ -83,6 +81,9 @@ public class GameScene : Scene
         // TODO: Monogame
         //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
 
+        // Draw UI (Sprite Batch)
+        sprites.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone);
+        
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGen.Seed}", Color.White);
         
