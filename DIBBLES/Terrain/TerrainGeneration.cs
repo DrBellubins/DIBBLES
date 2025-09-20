@@ -459,22 +459,29 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogFar"), FogEffect.FogFar, ShaderUniformDataType.Float);
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
-        terrainShader.Parameters["World"].SetValue(world);
-        terrainShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
-        terrainShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-        terrainShader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-        terrainShader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
-        terrainShader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
-        terrainShader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
-        terrainShader.Parameters["FogColor"].SetValue(FogEffect.FogColor);
-        
         // Draw opaque
         foreach (var oModel in TMesh.OpaqueModels)
         {
             // oModel.Value is a RuntimeModel
             if (oModel.Value != null)
             {
-                oModel.Value.Draw(Matrix.CreateTranslation(oModel.Key.ToVector3()), // World matrix for chunk position
+                var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
+                
+                terrainShader.Parameters["World"].SetValue(world);
+                terrainShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                terrainShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                terrainShader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                terrainShader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                terrainShader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                terrainShader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                terrainShader.Parameters["FogColor"].SetValue(FogEffect.FogColor);
+                
+                Console.WriteLine($"IsDisposed: {terrainShader.IsDisposed}");
+                
+                //foreach (var pass in terrainShader.CurrentTechnique.Passes)
+                //    pass.Apply();
+                
+                oModel.Value.Draw(world,                        // World matrix for chunk position
                     GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
@@ -487,7 +494,21 @@ public class TerrainGeneration
             // oModel.Value is a RuntimeModel
             if (tModel.Value != null)
             {
-                tModel.Value.Draw(Matrix.CreateTranslation(tModel.Key.ToVector3()), // World matrix for chunk position
+                var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
+                
+                terrainShader.Parameters["World"].SetValue(world);
+                terrainShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                terrainShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                terrainShader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                terrainShader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                terrainShader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                terrainShader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                terrainShader.Parameters["FogColor"].SetValue(FogEffect.FogColor);
+                
+                //foreach (var pass in terrainShader.CurrentTechnique.Passes)
+                //    pass.Apply();
+                
+                tModel.Value.Draw(world,                        // World matrix for chunk position
                     GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
