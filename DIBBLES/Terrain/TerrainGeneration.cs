@@ -460,10 +460,10 @@ public class TerrainGeneration
         Raylib.SetShaderValue(TerrainShader, Raylib.GetShaderLocation(TerrainShader, "fogColor"), FogEffect.FogColor, ShaderUniformDataType.Vec4);*/
         
         terrainShader.Parameters["World"].SetValue(world);
-        terrainShader.Parameters["View"].SetValue(view);
-        terrainShader.Parameters["Projection"].SetValue(projection);
+        terrainShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+        terrainShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
         terrainShader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-        terrainShader.Parameters["CameraPos"].SetValue(cameraPos);
+        terrainShader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
         terrainShader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
         terrainShader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
         terrainShader.Parameters["FogColor"].SetValue(FogEffect.FogColor);
