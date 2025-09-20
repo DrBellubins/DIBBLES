@@ -12,7 +12,7 @@ public static class AtlasGenerator
     public struct AtlasResult
     {
         public Texture2D AtlasTexture;
-        public Dictionary<BlockType, RectangleF> BlockUVs; // [0,1] UV rectangles for each block
+        public Dictionary<BlockType, SixLabors.ImageSharp.RectangleF> BlockUVs; // [0,1] UV rectangles for each block
     }
 
     // Generates an atlas from all block textures (expects square PNGs of same size)
@@ -25,7 +25,7 @@ public static class AtlasGenerator
         int atlasHeight = atlasRows * tileSize;
 
         using var atlasImage = new Image<Rgba32>(atlasWidth, atlasHeight);
-        var blockUVs = new Dictionary<BlockType, RectangleF>();
+        var blockUVs = new Dictionary<BlockType, SixLabors.ImageSharp.RectangleF>();
 
         int idx = 0;
         
@@ -49,7 +49,7 @@ public static class AtlasGenerator
             float uSize = (float)tileSize / atlasWidth;
             float vSize = (float)tileSize / atlasHeight;
             
-            blockUVs[type] = new RectangleF(u, v, uSize, vSize);
+            blockUVs[type] = new SixLabors.ImageSharp.RectangleF(u, v, uSize, vSize);
 
             idx++;
         }

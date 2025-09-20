@@ -1,4 +1,3 @@
-//using System.Numerics;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
@@ -28,15 +27,15 @@ public class Hotbar
     // Item slots
     private ItemSlot[] hotbarSlots = new ItemSlot[9];
 
-    private Rectangle hotbarRect = new Rectangle(0, 0, 900, 100);
-    private Rectangle hotbarSelectionRect;
+    private RectangleF hotbarRect = new RectangleF(0f, 0f, 900f, 100f);
+    private RectangleF hotbarSelectionRect;
     
     private int hotBarSelectionIndex;
-    private int hotBarSelectionPosX;
+    private float hotBarSelectionPosX;
     
     // Health
-    private const int healthBarWidth = 400;
-    private Rectangle healthBarRect = new Rectangle(0, 0, healthBarWidth, 10);
+    private const float healthBarWidth = 400f;
+    private RectangleF healthBarRect = new RectangleF(0f, 0f, healthBarWidth, 10);
 
     // Icons
     private Dictionary<BlockType, Texture2D> blockIcons = new();
@@ -151,7 +150,7 @@ public class Hotbar
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
         
-        Primatives2D.DrawRectangleRec(new Rectangle(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        Primatives2D.DrawRectangleRec(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
         Primatives2D.DrawRectangleRec(healthBarRect, Color.Red);
     }
 
@@ -228,11 +227,11 @@ public class Hotbar
         hotbarRect.X = (int)hotbarPos.X;
         hotbarRect.Y = (int)hotbarPos.Y;
 
-        hotbarSelectionRect = new Rectangle(hotbarRect.X, hotbarRect.Y, hotbarRect.Height, hotbarRect.Height);
+        hotbarSelectionRect = new RectangleF(hotbarRect.X, hotbarRect.Y, hotbarRect.Height, hotbarRect.Height);
 
         var healthBarPos = hotbarPos;
         healthBarPos.Y -= 20f;
         
-        healthBarRect = new Rectangle((int)healthBarPos.X, (int)healthBarPos.Y, healthBarRect.Width, healthBarRect.Height);
+        healthBarRect = new RectangleF((int)healthBarPos.X, (int)healthBarPos.Y, healthBarRect.Width, healthBarRect.Height);
     }
 }
