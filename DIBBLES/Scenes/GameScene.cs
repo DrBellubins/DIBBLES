@@ -26,6 +26,8 @@ public class GameScene : Scene
         TerrainGen.Start();
         TerrainGen.Update(PlayerCharacter);
         
+        UIBatch.Initialize();
+        
         PlayerCharacter.Start(); // Must be started after terrain
         
         gameChat.Start();
@@ -76,16 +78,16 @@ public class GameScene : Scene
         gd.DepthStencilState = DepthStencilState.None;
         gd.Clear(Color.CornflowerBlue);
         
-        Engine.Graphics.Viewport = new Viewport(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
+        UIBatch.Test();
         
-        UIBatch.Begin();
+        //UIBatch.Begin();
         
         //PlayerCharacter.DrawUI();
         
-        gameChat.DrawBG();
+        //gameChat.DrawBG();
         //gameChat.Draw();
         
-        UIBatch.End();
+        //UIBatch.End();
         
         // TODO: Monogame
         //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);

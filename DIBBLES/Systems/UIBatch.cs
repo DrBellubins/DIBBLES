@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Systems;
@@ -44,9 +45,11 @@ public static class UIBatch
             World = Matrix.Identity
         };
 
+        _whitePixel = BlockData.Textures[BlockType.Dirt];
+        
         // White pixel for solid color rectangles
-        _whitePixel = new Texture2D(_graphics, 1, 1, false, SurfaceFormat.Color);
-        _whitePixel.SetData(new[] { Color.White });
+        //_whitePixel = new Texture2D(_graphics, 1, 1, false, SurfaceFormat.Color);
+        //_whitePixel.SetData(new[] { Color.White });
     }
 
     public static void Begin()
@@ -80,6 +83,7 @@ public static class UIBatch
 
         // Calculate corner radius
         float radius = (rect.Width > rect.Height) ? (rect.Height * roundness) / 2f : (rect.Width * roundness) / 2f;
+        
         if (radius <= 0.5f)
         {
             DrawRect(rect, color);
@@ -229,6 +233,24 @@ public static class UIBatch
             Flush();
         _inBatch = false;
     }
+
+    public static void Test()
+    {
+        var testVerts = new VertexPositionColorTexture[] {
+            new VertexPositionColorTexture(new Vector3(100, 100, 0), Color.Red, Vector2.Zero),
+            new VertexPositionColorTexture(new Vector3(800, 100, 0), Color.Green, Vector2.Zero),
+            new VertexPositionColorTexture(new Vector3(100, 600, 0), Color.Blue, Vector2.Zero),
+        };
+        
+        _effect.TextureEnabled = false;
+        _effect.VertexColorEnabled = true;
+        
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            _graphics.DrawUserPrimitives(PrimitiveType.TriangleList, testVerts, 0, 1);
+        }
+    }
     
     /// <summary>
     /// Flushes all draws (called automatically on End, or on texture switch).
@@ -257,12 +279,10 @@ public static class UIBatch
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            _graphics.DrawUserIndexedPrimitives<VertexPositionColorTexture>(
+            
+            _graphics.DrawUserPrimitives<VertexPositionColorTexture>(
                 PrimitiveType.TriangleList,
                 vertexArray,
-                0,
-                vertexArray.Length,
-                _indices.ToArray(),
                 0,
                 _indices.Count / 3
             );
