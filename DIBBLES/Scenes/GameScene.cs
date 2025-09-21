@@ -62,7 +62,7 @@ public class GameScene : Scene
         var gd = Engine.Graphics;
         var sprites = Engine.Sprites;
         
-        /*gd.Clear(SkyColor);
+        gd.Clear(SkyColor);
         
         gd.BlendState = BlendState.NonPremultiplied;
         gd.DepthStencilState = DepthStencilState.Default;
@@ -70,13 +70,11 @@ public class GameScene : Scene
         gd.SamplerStates[0] = SamplerState.PointClamp;
         
         TerrainGen.Draw();
-        PlayerCharacter.Draw();*/
+        PlayerCharacter.Draw();
         
         //Debug.Draw3D();
         
         // Draw UI (UI Batch)
-        gd.DepthStencilState = DepthStencilState.None;
-        gd.Clear(Color.CornflowerBlue);
         
         //UIBatch.Test();
         
@@ -85,7 +83,7 @@ public class GameScene : Scene
         //PlayerCharacter.DrawUI();
         
         gameChat.DrawBG();
-        //gameChat.Draw();
+        gameChat.Draw();
         
         UIBatch.End();
         

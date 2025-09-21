@@ -26,8 +26,8 @@ public struct ChatMessage(ChatMessageType type, string message)
 // TODO: Implement text wrapping.
 public class Chat
 {
-    public const int Width = 800;
-    public const int Height = 400;
+    public const float Width = 800f;
+    public const float Height = 400f;
     public const float FontSize = 24f;
     
     public static bool IsOpen {get; private set;}
@@ -40,7 +40,7 @@ public class Chat
     public RenderTarget2D ChatTexture;
     
     private RectangleF chatBox = new RectangleF(0f, 0f, Width, Height);
-    private TextBox textBox = new TextBox(new Rectangle(0, 0, Width, 40));
+    private TextBox textBox = new TextBox(new RectangleF(0f, 0f, Width, 40f));
     
     public float heightPos = UI.LeftCenterPivot.Y - (Height / 2f);
     
@@ -62,8 +62,8 @@ public class Chat
     {
         ChatTexture = new RenderTarget2D(
             Engine.Graphics,
-            Width,
-            Height,
+            (int)Width,
+            (int)Height,
             false,
             SurfaceFormat.Color,
             DepthFormat.None,
@@ -174,10 +174,8 @@ public class Chat
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
-        UIBatch.DrawRect(new RectangleF(0f, 0f, 1600f, 900f), Color.Red);
-        
-        //if (IsOpen || IsClosedButShown)
-        //    UIBatch.DrawRect(chatBox, UI.MainColor);
+        if (IsOpen || IsClosedButShown)
+            UIBatch.DrawRect(chatBox, UI.MainColor);
     }
     
     public void Draw()
@@ -198,7 +196,8 @@ public class Chat
                 var color = GetMsgColor(msg.Type);
                 var pos = new Vector2(0f, heightPos + (index * FontSize));
             
-                sprites.DrawString(Engine.MainFont, msg.Message, pos, color);
+                UIBatch.DrawString(Engine.MainFont, msg.Message, pos, color);
+                //sprites.DrawString(Engine.MainFont, msg.Message, pos, color);
             
                 index++;
             }

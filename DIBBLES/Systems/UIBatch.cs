@@ -125,6 +125,62 @@ public static class UIBatch
         DrawQuad(points[8], points[9], points[10], points[11], color);
     }
 
+    /// <summary>
+    /// Draws text to screen
+    /// </summary>
+    public static void DrawString(SpriteFont font, string text, Vector2 position, Color color, float scale = 1f)
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() before DrawString()");
+        if (string.IsNullOrEmpty(text)) return;
+    
+        Texture2D fontTex = font.Texture;
+        Vector2 currentPos = position;
+    
+        // Per-glyph data
+        var glyphs = font.GetGlyphs();
+        char defaultChar = font.DefaultCharacter ?? '?';
+    
+        foreach (char c in text)
+        {
+            SpriteFont.Glyph glyph;
+            
+            if (!glyphs.TryGetValue(c, out glyph))
+            {
+                if (!glyphs.TryGetValue(defaultChar, out glyph))
+                    continue; // Skip missing glyphs
+            }
+    
+            Rectangle srcRect = glyph.BoundsInTexture;
+            Rectangle cropping = glyph.Cropping;
+            Vector3 vPos = new Vector3(currentPos.X + cropping.X * scale, currentPos.Y + cropping.Y * scale, 0f);
+    
+            Vector2 size = new Vector2(srcRect.Width * scale, srcRect.Height * scale);
+    
+            // Texture UVs (normalized)
+            Vector2 texTL = new Vector2((float)srcRect.X / fontTex.Width, (float)srcRect.Y / fontTex.Height);
+            Vector2 texBR = new Vector2((float)(srcRect.X + srcRect.Width) / fontTex.Width, (float)(srcRect.Y + srcRect.Height) / fontTex.Height);
+    
+            short baseIndex = (short)_vertices.Count;
+    
+            _vertices.Add(new UIVertex { Position = vPos, Color = color, TexCoord = texTL }); // Top-left
+            _vertices.Add(new UIVertex { Position = vPos + new Vector3(size.X, 0, 0), Color = color, TexCoord = new Vector2(texBR.X, texTL.Y) }); // Top-right
+            _vertices.Add(new UIVertex { Position = vPos + new Vector3(size.X, size.Y, 0), Color = color, TexCoord = texBR }); // Bottom-right
+            _vertices.Add(new UIVertex { Position = vPos + new Vector3(0, size.Y, 0), Color = color, TexCoord = new Vector2(texTL.X, texBR.Y) }); // Bottom-left
+    
+            _indices.Add((short)(baseIndex + 0));
+            _indices.Add((short)(baseIndex + 1));
+            _indices.Add((short)(baseIndex + 2));
+            _indices.Add((short)(baseIndex + 0));
+            _indices.Add((short)(baseIndex + 2));
+            _indices.Add((short)(baseIndex + 3));
+    
+            _currentTexture = fontTex;
+    
+            // Advance to next character
+            currentPos.X += glyph.Width * scale;
+        }
+    }
+    
     // Draws a quad (as two triangles) using UIBatch
     private static void DrawQuad(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color color)
     {
@@ -176,6 +232,7 @@ public static class UIBatch
             _indices.Add((short)(baseIndex + i));
             _indices.Add((short)(baseIndex + i + 1));
         }
+        
         _currentTexture = _whitePixel;
     }
 
@@ -227,27 +284,11 @@ public static class UIBatch
     public static void End()
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() first!");
+        
         if (_vertices.Count > 0)
             Flush();
+        
         _inBatch = false;
-    }
-
-    public static void Test()
-    {
-        var testVerts = new VertexPositionColorTexture[] {
-            new VertexPositionColorTexture(new Vector3(100, 100, 0), Color.Red, Vector2.Zero),
-            new VertexPositionColorTexture(new Vector3(800, 100, 0), Color.Green, Vector2.Zero),
-            new VertexPositionColorTexture(new Vector3(100, 600, 0), Color.Blue, Vector2.Zero),
-        };
-        
-        _effect.TextureEnabled = false;
-        _effect.VertexColorEnabled = true;
-        
-        foreach (var pass in _effect.CurrentTechnique.Passes)
-        {
-            pass.Apply();
-            _graphics.DrawUserPrimitives(PrimitiveType.TriangleList, testVerts, 0, 1);
-        }
     }
     
     /// <summary>
@@ -266,7 +307,7 @@ public static class UIBatch
             vertexArray[i] = new VertexPositionColorTexture(v.Position, v.Color, v.TexCoord);
         }
 
-        _graphics.BlendState = BlendState.NonPremultiplied;
+        _graphics.BlendState = BlendState.AlphaBlend;
         _graphics.RasterizerState = RasterizerState.CullNone;
         _graphics.DepthStencilState = DepthStencilState.None;
         _graphics.SamplerStates[0] = SamplerState.PointClamp;
@@ -277,12 +318,6 @@ public static class UIBatch
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
             pass.Apply();
-            
-            Console.WriteLine($"Vertex count: {_vertices.Count}");
-            Console.WriteLine($"vertex color: {_vertices[0].Color}, Vertex TexCoord: {_vertices[0].TexCoord}, Vertex Position: {_vertices[0].Position}");
-            Console.WriteLine($"vertex color: {_vertices[1].Color}, Vertex TexCoord: {_vertices[1].TexCoord}, Vertex Position: {_vertices[1].Position}");
-            Console.WriteLine($"vertex color: {_vertices[2].Color}, Vertex TexCoord: {_vertices[2].TexCoord}, Vertex Position: {_vertices[2].Position}");
-            Console.WriteLine($"vertex color: {_vertices[3].Color}, Vertex TexCoord: {_vertices[3].TexCoord}, Vertex Position: {_vertices[3].Position}");
             
             _graphics.DrawUserIndexedPrimitives<VertexPositionColorTexture>(
                 PrimitiveType.TriangleList,

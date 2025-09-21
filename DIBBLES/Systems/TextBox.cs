@@ -13,13 +13,13 @@ public class TextBox
     public bool IsFocused { get; set; } = false;
     public int MaxLength { get; set; } = 32;
 
-    public Rectangle Bounds;
+    public RectangleF Bounds;
     
     private float caretBlinkTime = 0;
     private bool showCaret = true;
     private int caretPos => Text.Length;
 
-    public TextBox(Rectangle rect, int maxLength = 32)
+    public TextBox(RectangleF rect, int maxLength = 32)
     {
         Bounds = rect;
         MaxLength = maxLength;
@@ -59,13 +59,16 @@ public class TextBox
     {
         // Draw box (different color if focused)
         Color boxColor = IsFocused ? Color.Gray : Color.DarkGray;
-        Engine.Sprites.Draw(TextureUtils.GetWhitePixel(), Bounds, boxColor);
+        
+        UIBatch.DrawRect(Bounds, boxColor);
+        //Engine.Sprites.Draw(TextureUtils.GetWhitePixel(), Bounds, boxColor);
 
         // Draw text
         var padding = 8f;
         Vector2 textPos = new Vector2(Bounds.X + padding, Bounds.Y + padding);
 
-        Engine.Sprites.DrawString(Engine.MainFont, Text, textPos, Color.White);
+        UIBatch.DrawString(Engine.MainFont, Text, textPos, boxColor);
+        //Engine.Sprites.DrawString(Engine.MainFont, Text, textPos, Color.White);
 
         // Draw caret if focused
         if (IsFocused && showCaret)
@@ -76,8 +79,10 @@ public class TextBox
             float caretY = textPos.Y;
             float caretH = Engine.MainFont.LineSpacing;
 
-            Engine.Sprites.Draw(TextureUtils.GetWhitePixel(),
-                new Rectangle((int)caretX, (int)caretY, 2, (int)caretH), Color.White);
+            UIBatch.DrawRect(new RectangleF(caretX, caretY, 2f, caretH), Color.White);
+            
+            //Engine.Sprites.Draw(TextureUtils.GetWhitePixel(),
+            //    new Rectangle((int)caretX, (int)caretY, 2, (int)caretH), Color.White);
         }
     }
 
