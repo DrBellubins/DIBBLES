@@ -179,6 +179,9 @@ public class Hotbar
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
+            var flipY = Matrix.CreateScale(1, -1, 1); // -1 on the X axis (Y is up in MonoGame)
+            var world = flipY * Matrix.CreateTranslation(Vector3.Zero);
+            
             var shader = (BasicEffect)cubeModel.Shader;
 
             shader.LightingEnabled = true;
@@ -190,7 +193,7 @@ public class Hotbar
             Engine.Graphics.SetRenderTarget(renderTexture);
             Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));
             
-            cubeModel.Draw(Matrix.CreateTranslation(Vector3.Zero), cam.View, cam.Projection);
+            cubeModel.Draw(world, cam.View, cam.Projection);
             
             Engine.Graphics.SetRenderTarget(null);
             
