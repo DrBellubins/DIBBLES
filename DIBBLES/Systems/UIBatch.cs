@@ -296,7 +296,7 @@ public static class UIBatch
     /// <summary>
     /// Draw a texture with rectangle
     /// </summary>
-    public static void DrawRect(Texture2D texture, Rectangle destinationRectangle, Color color)
+    public static void DrawTextureRect(Texture2D texture, Rectangle destinationRectangle, Color color)
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() before Draw()");
 
@@ -331,6 +331,48 @@ public static class UIBatch
         _indices.Add((short)(baseIndex + 3));
     }
     
+    /// <summary>
+    /// Draws a filled circle. Equivalent to Raylib.DrawCircle.
+    /// </summary>
+    public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 32)
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() before DrawCircle()");
+
+        // Flush if texture switches (should always be white pixel here)
+        if (_currentTexture != null && _currentTexture != _whitePixel)
+            Flush();
+        _currentTexture = _whitePixel;
+
+        // Calculate vertices for the triangle fan
+        short baseIndex = (short)_vertices.Count;
+        Vector2 uv = Vector2.Zero; // White pixel
+
+        // Center point
+        _vertices.Add(new UIVertex { Position = new Vector3(center, 0f), Color = color, TexCoord = uv });
+
+        // Perimeter points
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = MathHelper.TwoPi * i / segments;
+            float x = center.X + MathF.Cos(angle) * radius;
+            float y = center.Y + MathF.Sin(angle) * radius;
+            _vertices.Add(new UIVertex { Position = new Vector3(x, y, 0f), Color = color, TexCoord = uv });
+        }
+
+        // Indices for triangle fan
+        for (short i = 1; i <= segments; i++)
+        {
+            _indices.Add(baseIndex);         // center
+            _indices.Add((short)(baseIndex + i));
+            _indices.Add((short)(baseIndex + i + 1));
+        }
+    }
+
+    public static void DrawCircle(float x, float y, float radius, Color color, int segments = 32)
+    {
+        DrawCircle(new  Vector2(x, y), radius, color, segments);
+    }
+    
     public static void End()
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() first!");
@@ -346,8 +388,6 @@ public static class UIBatch
     /// </summary>
     public static void Flush()
     {
-        //Console.WriteLine($"Vertices: {_vertices.Count}, Indices: {_indices.Count}, Texture: {_currentTexture} ");
-        
         if (_vertices.Count == 0 || _currentTexture == null) return;
 
         var vertexArray = new VertexPositionColorTexture[_vertices.Count];

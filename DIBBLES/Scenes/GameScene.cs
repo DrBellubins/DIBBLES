@@ -88,8 +88,5 @@ public class GameScene : Scene
         Debug.Draw2D();
         
         UIBatch.End();
-        
-        // TODO: Monogame
-        //Raylib.DrawCircle(Engine.ScreenWidth / 2, Engine.ScreenHeight / 2, 1f, Color.White);
     }
 }

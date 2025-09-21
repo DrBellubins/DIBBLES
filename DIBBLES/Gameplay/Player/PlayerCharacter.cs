@@ -496,6 +496,8 @@ public class PlayerCharacter
             
             Primatives2D.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
         }
+        
+        UIBatch.DrawCircle(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f, 1f, Color.White);
     }
     
     private void run()
