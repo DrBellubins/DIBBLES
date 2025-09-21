@@ -172,11 +172,20 @@ public class Hotbar
             cam.Position = new Vector3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
+            cam.AspectRatio = (float)iconSize / iconSize; // which is 1.0f for a square
             cam.Fov = 2f;
             cam.SetOrthographic();
 
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
+            
+            var shader = (BasicEffect)cubeModel.Shader;
+
+            shader.LightingEnabled = true;
+            shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
+            shader.DirectionalLight0.Enabled = true;
+            shader.DirectionalLight0.Direction = new Vector3(45f, 0f, 0f);
+            shader.DirectionalLight0.DiffuseColor = new Vector3(0.1f, 0.1f, 0.1f);
             
             Engine.Graphics.SetRenderTarget(renderTexture);
             Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));
