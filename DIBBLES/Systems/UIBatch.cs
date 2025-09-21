@@ -280,9 +280,14 @@ public static class UIBatch
         {
             pass.Apply();
             
+            var flatTriangleVerts = new VertexPositionColorTexture[_indices.Count];
+            
+            for (int i = 0; i < _indices.Count; i++)
+                flatTriangleVerts[i] = vertexArray[_indices[i]];
+            
             _graphics.DrawUserPrimitives<VertexPositionColorTexture>(
                 PrimitiveType.TriangleList,
-                vertexArray,
+                flatTriangleVerts,
                 0,
                 _indices.Count / 3
             );
