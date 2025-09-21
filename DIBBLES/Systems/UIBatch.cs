@@ -296,7 +296,7 @@ public static class UIBatch
     /// <summary>
     /// Draw a texture with rectangle
     /// </summary>
-    public static void DrawTextureRect(Texture2D texture, Rectangle destinationRectangle, Color color)
+    public static void DrawTextureRect(Texture2D texture, RectangleF destinationRectangle, Color color)
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() before Draw()");
 
@@ -337,8 +337,8 @@ public static class UIBatch
     /// </summary>
     public static void DrawTexturePro(
         Texture2D texture,
-        Rectangle sourceRec,
-        Rectangle destRec,
+        RectangleF sourceRec,
+        RectangleF destRec,
         Vector2 origin,
         float rotation,
         Color color)
@@ -352,9 +352,9 @@ public static class UIBatch
         _currentTexture = texture;
     
         // Compute normalized UVs
-        Vector2 uvTL = new Vector2((float)sourceRec.X / texture.Width, (float)sourceRec.Y / texture.Height);
-        Vector2 uvBR = new Vector2((float)(sourceRec.X + sourceRec.Width) / texture.Width,
-                                   (float)(sourceRec.Y + sourceRec.Height) / texture.Height);
+        Vector2 uvTL = new Vector2(sourceRec.X / texture.Width, (sourceRec.Y / texture.Height));
+        Vector2 uvBR = new Vector2((sourceRec.X + sourceRec.Width) / texture.Width,
+                                   (sourceRec.Y + sourceRec.Height) / texture.Height);
     
         // Define destination quad in local space (-origin), then rotate, then translate
         Vector2[] corners = new Vector2[4];

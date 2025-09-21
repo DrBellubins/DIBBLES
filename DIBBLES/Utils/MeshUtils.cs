@@ -324,8 +324,10 @@ public static class MeshUtils
         // Remove unused vertices (those with color.A == 0)
         int usedVerts = v;
         int usedIndices = i;
+        
         var finalVertices = new VertexPositionNormalTexture[usedVerts];
         var finalIndices = new short[usedIndices];
+        
         Array.Copy(vertices, finalVertices, usedVerts);
         Array.Copy(indices, finalIndices, usedIndices);
 

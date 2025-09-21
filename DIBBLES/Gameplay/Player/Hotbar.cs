@@ -132,18 +132,25 @@ public class Hotbar
             {
                 var xPos = hotbarRect.X + i * hotbarRect.Height;
                 
-                var itemDestRect = new Rectangle((int)(xPos + 0.1f * hotbarRect.Height),
-                    (int)(hotbarRect.Y + 0.1f * hotbarRect.Height),
-                    (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
+                var itemDestRect = new RectangleF((xPos + 0.1f * hotbarRect.Height),
+                    (hotbarRect.Y + 0.1f * hotbarRect.Height),
+                    (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
 
                 // TODO: Temporary until 3d icons can be fixed
                 //UIBatch.DrawTextureRect(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
                 
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
-                    var itemOrigRect = new Rectangle(0, 0, iconTex.Width, iconTex.Height);
+                    var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
                     
-                    UIBatch.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
+                    var flippedDestRect = new RectangleF(
+                        itemDestRect.X,
+                        itemDestRect.Y + itemDestRect.Height, // move Y down by height
+                        itemDestRect.Width,
+                        -itemDestRect.Height // negative height to flip
+                    );
+                    
+                    UIBatch.DrawTexturePro(iconTex, itemOrigRect, flippedDestRect, Vector2.Zero, 0.0f, Color.White);
                 }
             }
         }
@@ -158,8 +165,7 @@ public class Hotbar
     // Draw each block type as a cube, then render out to a texture
     private void renderBlockIcons()
     {
-        int iconSize = 96; // icon pixel size
-        float cubeScale = 1.25f; // scale the cube to fit nicely in the icon
+        int iconSize = 128; // icon pixel size
 
         foreach (BlockType blockType in Enum.GetValues(typeof(BlockType)))
         {
@@ -173,22 +179,24 @@ public class Hotbar
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
             cam.AspectRatio = (float)iconSize / iconSize; // which is 1.0f for a square
-            cam.Fov = 2f;
+            cam.Fov = 1.7f;
             cam.SetOrthographic();
 
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
             
-            var flipY = Matrix.CreateScale(1, -1, 1); // -1 on the X axis (Y is up in MonoGame)
-            var world = flipY * Matrix.CreateTranslation(Vector3.Zero);
-            
+            var world = Matrix.CreateTranslation(Vector3.Zero);
             var shader = (BasicEffect)cubeModel.Shader;
-
+            
+            shader.World = world;
+            shader.View = cam.View;
+            shader.Projection = cam.Projection;
+            
             shader.LightingEnabled = true;
-            //shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
+            shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
             shader.DirectionalLight0.Enabled = true;
-            shader.DirectionalLight0.Direction = new Vector3(0.5f, 0.3f, 0f);
-            shader.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
+            shader.DirectionalLight0.Direction = new Vector3(0.3f, 1f, 0.7f);
+            shader.DirectionalLight0.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
             
             Engine.Graphics.SetRenderTarget(renderTexture);
             Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));
