@@ -199,7 +199,7 @@ public class PlayerCharacter
             currentSpeed = WalkSpeed;
         
         if (!IsFrozen)
-            isJumping = Input.Jump(isCrouching);
+            isJumping = Input.Jump();
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;

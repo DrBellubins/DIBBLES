@@ -116,7 +116,7 @@ public class Chat
                 if (Commands.Registry.TryGetValue(cmdName, out var cmd))
                 {
                     cmd.Handler(args);
-                    Console.WriteLine($"Player executed command '{textBox.Text}'.");
+                    Console.WriteLine($"[INFO] Player executed command '{textBox.Text}'.");
                 }
                 else
                 {
@@ -127,7 +127,7 @@ public class Chat
             else
             {
                 Write(ChatMessageType.Message, textBox.Text);
-                Console.WriteLine($"Player typed: '{textBox.Text}'");
+                Console.WriteLine($"[INFO] Player typed: '{textBox.Text}'");
                 
                 if (!isUserScrolling)
                     scrollOffset = 0;

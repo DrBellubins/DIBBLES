@@ -13,40 +13,7 @@ public class Freecam
         if (Chat.IsOpen)
             return;
         
-        float currentMovespeed;
-
-        if (Input.Run())
-            isRunning = !isRunning;
-        
-        if (isRunning)
-            currentMovespeed = 20f;
-        else
-            currentMovespeed = 5f;
-        
-        float moveSpeed = currentMovespeed * Time.DeltaTime;
-
-        var direction = new Vector3();
-
-        var forwardXZ = new Vector3(playerCharacter.CameraForward.X, 0f, playerCharacter.CameraForward.Z);
-        
-        if (Input.MoveForward())
-            playerCharacter.Position += forwardXZ * moveSpeed;
-        
-        if (Input.MoveBackward())
-            playerCharacter.Position -= forwardXZ * moveSpeed;
-
-        if (Input.MoveLeft())
-            playerCharacter.Position -= playerCharacter.CameraRight * moveSpeed;
-        
-        if (Input.MoveRight())
-            playerCharacter.Position += playerCharacter.CameraRight * moveSpeed;
-        
-        if (Input.Jump(false))
-            playerCharacter.Position += Vector3.UnitY * moveSpeed;
-        
-        if (Input.Crouch())
-            playerCharacter.Position -= Vector3.UnitY * moveSpeed;
-        
+        // Camera
         var lookDelta = Input.LookDelta;
         var lookDeltaX = lookDelta.X * 0.1f;
         var lookDeltaY = lookDelta.Y * 0.1f;
@@ -71,5 +38,50 @@ public class Freecam
         playerCharacter.Camera.Position = playerCharacter.Position + new Vector3(0.0f, PlayerCharacter.PlayerHeight * 0.5f, 0.0f);
         playerCharacter.Camera.Target = playerCharacter.Camera.Position + playerCharacter.CameraForward;
         playerCharacter.Camera.Up = playerCharacter.CameraUp;
+        
+        // Input
+        Vector3 inputDir = Vector3.Zero;
+        
+        if (Input.MoveForward()) inputDir.Z += 1.0f;
+        if (Input.MoveBackward()) inputDir.Z -= 1.0f;
+        if (Input.MoveLeft()) inputDir.X -= 1.0f;
+        if (Input.MoveRight()) inputDir.X += 1.0f;
+        
+        if (Input.Jump()) inputDir.Y += 1.0f;
+        if (Input.Crouch()) inputDir.Y -= 1.0f;
+        
+        // Movement
+        float currentMovespeed;
+
+        if (Input.Run())
+            isRunning = !isRunning;
+        
+        if (isRunning)
+            currentMovespeed = 20f;
+        else
+            currentMovespeed = 5f;
+        
+        float moveSpeed = currentMovespeed * Time.DeltaTime;
+        
+        // Forward on XZ plane ignoring pitch
+        Vector3 forwardXZ = new Vector3(
+            MathF.Sin(playerCharacter.CameraYaw),
+            0.0f,
+            MathF.Cos(playerCharacter.CameraYaw)
+        );
+
+        // Right on XZ plane ignoring pitch
+        Vector3 rightXZ = new Vector3(
+            MathF.Cos(playerCharacter.CameraYaw),
+            0.0f,
+            -MathF.Sin(playerCharacter.CameraYaw)
+        );
+        
+        Vector3 wishDir = (-rightXZ * inputDir.X) + (new Vector3(0f, inputDir.Y, 0)) + (forwardXZ * inputDir.Z);
+        
+        if (wishDir.Length() > 0)
+            wishDir = Vector3.Normalize(wishDir);
+        
+        playerCharacter.Position += wishDir * moveSpeed;
     }
 }

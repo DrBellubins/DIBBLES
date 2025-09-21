@@ -44,13 +44,13 @@ public static class Input
     public static bool MoveRight() => _currentKey.IsKeyDown(Keys.D);
 
     public static bool Run() => IsMouseButtonPressed(ButtonType.XButton2);
-
     public static bool Crouch() => _currentKey.IsKeyDown(Keys.LeftShift);
-
-    public static bool Jump(bool isCrouching)
+    public static bool Jump() => _currentKey.IsKeyDown(Keys.Space);
+    
+    /*public static bool Jump(bool isCrouching)
     {
         return isCrouching ? IsKeyPressed(Keys.Space) : _currentKey.IsKeyDown(Keys.Space);
-    }
+    }*/
 
     // Mouse input
     public static Vector2 LookDelta { get; set; }

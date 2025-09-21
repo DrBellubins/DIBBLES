@@ -11,7 +11,7 @@ public class Debug
 {
     private static Camera3D debugCamera;
 
-    private static Dictionary<string, Color> textBuffer2d = new();
+    private static List<(string, Color)> textBuffer2d = new();
     
     private static Dictionary<Vector3, Vector3> debugBoxes = new();
     
@@ -47,9 +47,12 @@ public class Debug
         {
             int index = 0;
         
-            foreach (var text in textBuffer2d)
+            foreach (var bufferText in textBuffer2d)
             {
-                UIBatch.DrawString(Engine.MainFont, text.Key, new Vector2(0f, index), Color.White);
+                var text = bufferText.Item1;
+                var color = bufferText.Item2;
+                
+                UIBatch.DrawString(Engine.MainFont, text, new Vector2(0f, index), color);
                 
                 // TODO: Monogame
                 //Raylib.DrawTextEx(MonoEngine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
@@ -77,7 +80,7 @@ public class Debug
     
     public static void Draw2DText(string text, Color color)
     {
-        textBuffer2d.Add(text, color);
+        textBuffer2d.Add((text, color));
     }
     
     // TODO: Strings too long get cut off
