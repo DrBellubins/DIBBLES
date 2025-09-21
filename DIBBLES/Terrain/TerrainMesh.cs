@@ -5,7 +5,7 @@ using DIBBLES.Systems;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 
-using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGenerationNew;
 
 namespace DIBBLES.Terrain;
 
@@ -206,10 +206,10 @@ public class TerrainMesh
     
     public void RemeshAllTransparentChunks(Vector3 cameraPos)
     {
-        foreach (var chunk in ECSChunks.Values)
+        foreach (var chunk in ChunkBuffer.Values)
         {
-            var tMeshData = TMesh.GenerateMeshData(chunk, true, cameraPos);
-            TMesh.TransparentModels[chunk.Position] = TMesh.UploadMesh(tMeshData);
+            var tMeshData = Mesh.GenerateMeshData(chunk, true, cameraPos);
+            Mesh.TransparentModels[chunk.Position] = Mesh.UploadMesh(tMeshData);
         }
     }
     
@@ -309,7 +309,7 @@ public class TerrainMesh
             );
 
             // Look up the neighboring chunk
-            if (ECSChunks.TryGetValue(neighborChunkPos, out var neighborChunk))
+            if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
                 info = neighborChunk.GetBlock(nx, ny, nz).Info;
             }
@@ -343,7 +343,7 @@ public class TerrainMesh
                 if (axis == 1) neighborPos.Y += offset;
                 if (axis == 2) neighborPos.Z += offset;
 
-                if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
+                if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk))
                     RemeshNeighborPos(neighborChunk.Position, isTransparentPass);
             }
         }
@@ -354,7 +354,7 @@ public class TerrainMesh
         if (RecentlyRemeshedNeighbors.Contains(neighborPos))
             return; // Already remeshed this frame
 
-        if (ECSChunks.TryGetValue(neighborPos, out var neighborChunk))
+        if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk))
         {
             // Opaque or transparent model dictionary
             var modelDict = isTransparentPass ? TransparentModels : OpaqueModels;

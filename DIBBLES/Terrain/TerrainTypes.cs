@@ -41,32 +41,32 @@ public class Chunk
 
     public bool IsModified = false;
     
-    public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
+    //public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
     
     public Chunk(Vector3Int pos)
     {
         Position = pos;
-        Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        Blocks = new Block[TerrainGenerationNew.ChunkSize * TerrainGenerationNew.ChunkSize * TerrainGenerationNew.ChunkSize];
     }
 
     // Helper for flat indexing
     public Block GetBlock(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= TerrainGenerationNew.ChunkSize ||
+            y < 0 || y >= TerrainGenerationNew.ChunkSize ||
+            z < 0 || z >= TerrainGenerationNew.ChunkSize)
         {
             // Return Air block if out of bounds
             return new Block(new Vector3Int(x, y, z), BlockType.Air);
         }
 
-        int index = x + TerrainGeneration.ChunkSize * (y + TerrainGeneration.ChunkSize * z);
+        int index = x + TerrainGenerationNew.ChunkSize * (y + TerrainGenerationNew.ChunkSize * z);
         return Blocks[index];
     }
 
     public void SetBlock(int x, int y, int z, Block data)
     {
-        int index = x + TerrainGeneration.ChunkSize * (y + TerrainGeneration.ChunkSize * z);
+        int index = x + TerrainGenerationNew.ChunkSize * (y + TerrainGenerationNew.ChunkSize * z);
         Blocks[index] = data;
     }
 }

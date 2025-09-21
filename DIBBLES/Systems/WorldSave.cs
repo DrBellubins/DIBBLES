@@ -4,7 +4,7 @@ using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using DIBBLES.Terrain;
 
-using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGenerationNew;
 
 namespace DIBBLES.Systems;
 
@@ -126,7 +126,7 @@ public class WorldSave
     
         if (!Directory.Exists(currentSaveDir))
         {
-            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist, creating...");
+            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist");
             return;
         }
     

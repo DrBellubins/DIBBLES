@@ -4,7 +4,7 @@ using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGenerationNew;
 //using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Gameplay.Player;
@@ -116,7 +116,7 @@ public class PlayerCharacter
             
             if (Input.StartedBreaking) // Break immediately
             {
-                TerrainGeneration.Gameplay.BreakBlock();
+                TerrainGenerationNew.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
         
@@ -124,14 +124,14 @@ public class PlayerCharacter
             {
                 if (placeBreakTimer >= 0.3f)
                 {
-                    TerrainGeneration.Gameplay.BreakBlock();
+                    TerrainGenerationNew.Gameplay.BreakBlock();
                     placeBreakTimer = 0f;
                 }
             }
 
             if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
             {
-                TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                TerrainGenerationNew.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
             }
         
@@ -139,7 +139,7 @@ public class PlayerCharacter
             {
                 if (placeBreakTimer >= 0.3f)
                 {
-                    TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                    TerrainGenerationNew.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                     placeBreakTimer = 0f;
                 }
             }
@@ -590,7 +590,7 @@ public class PlayerCharacter
             int chunkZ = (int)Math.Floor((float)z / ChunkSize) * ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!ECSChunks.TryGetValue(chunkCoord, out var chunk))
+            if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
                 continue;
             
             int localX = x - chunkX;

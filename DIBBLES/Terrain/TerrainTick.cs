@@ -29,7 +29,7 @@ public class TerrainTick
     // Main tick update
     public void Tick(Vector3Int playerChunkPos)
     {
-        var chunkEntries = TerrainGeneration.ECSChunks
+        var chunkEntries = TerrainGenerationNew.ChunkBuffer
             .Select(kv => new
             {
                 Position = kv.Key,
@@ -65,21 +65,21 @@ public class TerrainTick
         // Main thread: process mesh update requests
         while (meshUpdateQueue.TryDequeue(out var chunkPos))
         {
-            if (TerrainGeneration.ECSChunks.TryGetValue(chunkPos, out var chunk))
+            if (TerrainGenerationNew.ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                var meshData = TerrainGeneration.TMesh.GenerateMeshData(chunk, false);
-                var tMeshData = TerrainGeneration.TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+                var meshData = TerrainGenerationNew.Mesh.GenerateMeshData(chunk, false);
+                var tMeshData = TerrainGenerationNew.Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
                 // Unload and upload models (main thread only)
-                if (TerrainGeneration.TMesh.OpaqueModels.TryGetValue(chunkPos, out var oldOpaque))
+                if (TerrainGenerationNew.Mesh.OpaqueModels.TryGetValue(chunkPos, out var oldOpaque))
                     oldOpaque.Dispose();
                 
-                TerrainGeneration.TMesh.OpaqueModels[chunkPos] = TerrainGeneration.TMesh.UploadMesh(meshData);
+                TerrainGenerationNew.Mesh.OpaqueModels[chunkPos] = TerrainGenerationNew.Mesh.UploadMesh(meshData);
 
-                if (TerrainGeneration.TMesh.TransparentModels.TryGetValue(chunkPos, out var oldTrans))
+                if (TerrainGenerationNew.Mesh.TransparentModels.TryGetValue(chunkPos, out var oldTrans))
                     oldTrans.Dispose();
                 
-                TerrainGeneration.TMesh.TransparentModels[chunkPos] = TerrainGeneration.TMesh.UploadMesh(tMeshData);
+                TerrainGenerationNew.Mesh.TransparentModels[chunkPos] = TerrainGenerationNew.Mesh.UploadMesh(tMeshData);
             }
         }
     }
@@ -89,9 +89,9 @@ public class TerrainTick
     {
         bool needsMeshUpdate = false;
 
-        for (int x = 0; x < TerrainGeneration.ChunkSize; x++)
-        for (int y = 0; y < TerrainGeneration.ChunkSize; y++)
-        for (int z = 0; z < TerrainGeneration.ChunkSize; z++)
+        for (int x = 0; x < TerrainGenerationNew.ChunkSize; x++)
+        for (int y = 0; y < TerrainGenerationNew.ChunkSize; y++)
+        for (int z = 0; z < TerrainGenerationNew.ChunkSize; z++)
         {
             var block = chunk.GetBlock(x, y, z);
 

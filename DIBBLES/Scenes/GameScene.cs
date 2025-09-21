@@ -38,12 +38,10 @@ public class GameScene : Scene
     {
         Input.Update();
         
-        Console.WriteLine("update");
-        
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);
-        TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
+        TerrainGenerationNew.Gameplay.Update(PlayerCharacter.Camera);
         
         gameChat.Update();
         

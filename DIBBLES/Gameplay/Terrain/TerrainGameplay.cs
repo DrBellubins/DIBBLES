@@ -5,7 +5,7 @@ using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGenerationNew;
 
 namespace DIBBLES.Gameplay.Terrain;
 
@@ -66,7 +66,7 @@ public class TerrainGameplay
             (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
         );
         
-        if (ECSChunks.TryGetValue(startChunkPos, out var startChunk))
+        if (ChunkBuffer.TryGetValue(startChunkPos, out var startChunk))
         {
             var localX = (mapPos.X - startChunkPos.X);
             var localY = (mapPos.Y - startChunkPos.X);
@@ -128,7 +128,7 @@ public class TerrainGameplay
                 (int)Math.Floor((float)mapPos.Z / ChunkSize) * ChunkSize
             );
     
-            if (!ECSChunks.TryGetValue(currentChunkPos, out var chunk)) continue;
+            if (!ChunkBuffer.TryGetValue(currentChunkPos, out var chunk)) continue;
     
             var localX = (mapPos.X - currentChunkPos.X);
             var localY = (mapPos.Y - currentChunkPos.Y);
@@ -162,7 +162,7 @@ public class TerrainGameplay
         
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!ECSChunks.TryGetValue(chunkCoord, out var chunk))
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             return;
 
         // Calculate local block coordinates within the chunk
@@ -192,14 +192,14 @@ public class TerrainGameplay
             Lighting.Generate(chunk);
             
             // Regenerate mesh
-            var meshData = TMesh.GenerateMeshData(chunk, false);
-            var tMeshData = TMesh.GenerateMeshData(chunk, true);
+            var meshData = Mesh.GenerateMeshData(chunk, false);
+            var tMeshData = Mesh.GenerateMeshData(chunk, true);
             
-            TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
-            TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);
+            Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
+            Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
             
-            TMesh.RemeshNeighbors(chunk, false);
-            TMesh.RemeshNeighbors(chunk, true);
+            Mesh.RemeshNeighbors(chunk, false);
+            Mesh.RemeshNeighbors(chunk, true);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -231,7 +231,7 @@ public class TerrainGameplay
         
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
         
-        ECSChunks.TryGetValue(chunkCoord, out var chunk);
+        ChunkBuffer.TryGetValue(chunkCoord, out var chunk);
         
         // There is no chunk to build in
         if (chunk == null)
@@ -269,14 +269,14 @@ public class TerrainGameplay
         Lighting.Generate(chunk);
         
         // Regenerate mesh
-        var meshData = TMesh.GenerateMeshData(chunk, false);
-        var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+        var meshData = Mesh.GenerateMeshData(chunk, false);
+        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
             
-        TMesh.OpaqueModels[chunkCoord] = TMesh.UploadMesh(meshData);
-        TMesh.TransparentModels[chunkCoord] = TMesh.UploadMesh(tMeshData);
+        Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
+        Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
             
-        TMesh.RemeshNeighbors(chunk, false);
-        TMesh.RemeshNeighbors(chunk, true);
+        Mesh.RemeshNeighbors(chunk, false);
+        Mesh.RemeshNeighbors(chunk, true);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))

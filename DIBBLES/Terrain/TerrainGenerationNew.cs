@@ -17,17 +17,22 @@ public class TerrainGenerationNew
     public const float ReachDistance = 5f; // Has to be finite!
     
     public static int Seed = -1413840509;
-    public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
+    public static readonly ConcurrentDictionary<Vector3Int, Chunk> ChunkBuffer = new();
     public static TerrainMesh Mesh = new();
     public static TerrainLighting Lighting = new();
     public static TerrainGameplay Gameplay = new();
     public static Effect terrainShader;
     public static bool DoneLoading = false;
     
+    // Gameplay
+    public static Block SelectedBlock;
+    public static Vector3Int SelectedNormal;
+    
     // Thread-safe mesh generation queues
     private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> meshUploadQueue = new(); // Opaque
     private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
-    
+
+    private ChunkGenerationState terrainStage = ChunkGenerationState.Uninitialized;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     private int chunksLoaded = 0;
     
@@ -35,19 +40,15 @@ public class TerrainGenerationNew
     {
         BlockData.InitializeBlockPrefabs();
         
-        /*WorldSave.Initialize();
-        WorldSave.LoadWorldData("test");
+        WorldSave.Initialize();
+        //WorldSave.LoadWorldData("test");
         
-        if (WorldSave.Exists)
+        /*if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
-        
-        WorldSave.Data.Seed = Seed;*/
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
-        
-        Update(GameScene.PlayerCharacter);
     }
 
     public void Update(PlayerCharacter playerCharacter)
@@ -86,10 +87,6 @@ public class TerrainGenerationNew
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
-
-            // Unload previous model if exists
-            if (Mesh.OpaqueModels.TryGetValue(chunkPos, out var currentModel))
-                currentModel.Dispose();
             
             // Upload mesh on main thread
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
@@ -98,19 +95,17 @@ public class TerrainGenerationNew
         }
         
         // Transparent pass
-        while (meshUploadQueue.TryDequeue(out var entry))
+        while (tMeshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
-            
-            // Unload previous model if exists
-            if (Mesh.TransparentModels.TryGetValue(chunkPos, out var currentModel))
-                currentModel.Dispose();
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
             
             unloadDistantChunks(centerChunk);
+            
+            chunksLoaded++;
         }
     }
 
@@ -128,7 +123,7 @@ public class TerrainGenerationNew
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
             // TODO: May need to chunk generation state
-            if (!ECSChunks.ContainsKey(chunkPos))
+            if (!ChunkBuffer.ContainsKey(chunkPos))
                 chunksToGenerate.Add(chunkPos);
         }
 
@@ -137,7 +132,7 @@ public class TerrainGenerationNew
             (a - centerChunk * ChunkSize).ToVector3().LengthSquared()
             .CompareTo((b - centerChunk * ChunkSize).ToVector3().LengthSquared())
         );
-
+        
         foreach (var pos in chunksToGenerate)
         {
             ThreadPool.QueueUserWorkItem(x =>
@@ -148,21 +143,45 @@ public class TerrainGenerationNew
                 {
                     Chunk chunk = new Chunk(pos);
                     
-                    /*if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
-                        chunk = savedChunk;
-                    else
+                    switch (terrainStage)
                     {
-                        generateChunkData(chunk);
-                        generateChunkDecorations(chunk);
-                    }*/
-                    
-                    generateChunkData(chunk);
-                    generateChunkDecorations(chunk);
-                    
-                    generateLighting(chunk);
-                    //generateMesh(chunk);
-
-                    ECSChunks.TryAdd(pos, chunk);
+                        case ChunkGenerationState.Uninitialized:
+                        {
+                            if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                                chunk = savedChunk;
+                            else
+                                generateChunkData(chunk);
+                            
+                            ChunkBuffer.TryAdd(pos, chunk);
+                            
+                            break;
+                        }
+                        case ChunkGenerationState.ChunkData:
+                        {
+                            generateChunkDecorations(chunk);
+                            
+                            // TODO: MODIFY CHUNKBUFFER!!
+                            break;
+                        }
+                        case ChunkGenerationState.Decorations:
+                        {
+                            generateLighting(chunk);
+                            
+                            // TODO: MODIFY CHUNKBUFFER!!
+                            break;
+                        }
+                        case ChunkGenerationState.Lighting:
+                        {
+                            generateMesh(chunk);
+                            
+                            // TODO: MODIFY CHUNKBUFFER!!
+                            break;
+                        }
+                        case ChunkGenerationState.Meshing:
+                        {
+                            break;
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -176,7 +195,7 @@ public class TerrainGenerationNew
 
     private void generateChunkData(Chunk chunk)
     {
-        if (chunk.GenerationState != ChunkGenerationState.Uninitialized)
+        if (terrainStage != ChunkGenerationState.Uninitialized)
             return;
         
         long chunkSeed = Seed 
@@ -243,13 +262,11 @@ public class TerrainGenerationNew
                 }
             }
         }
-        
-        chunk.GenerationState = ChunkGenerationState.ChunkData;
     }
     
     private void generateChunkDecorations(Chunk chunk)
     {
-        if (chunk.GenerationState != ChunkGenerationState.ChunkData)
+        if (terrainStage != ChunkGenerationState.ChunkData)
             return;
         
         long chunkSeed = Seed 
@@ -283,8 +300,7 @@ public class TerrainGenerationNew
     {
         // Can be generate either after decorations for natural terrain,
         // Or after ChunkData in the case of modified chunks.
-        if (chunk.GenerationState != ChunkGenerationState.Decorations ||
-            chunk.GenerationState != ChunkGenerationState.ChunkData)
+        if (terrainStage != ChunkGenerationState.Decorations)
             return;
         
         Lighting.Generate(chunk);
@@ -292,7 +308,7 @@ public class TerrainGenerationNew
 
     public void generateMesh(Chunk chunk)
     {
-        if (chunk.GenerationState != ChunkGenerationState.Lighting)
+        if (terrainStage != ChunkGenerationState.Lighting)
             return;
         
         var meshData = Mesh.GenerateMeshData(chunk, false);
@@ -307,7 +323,7 @@ public class TerrainGenerationNew
     {
         List<Vector3Int> chunksToRemove = new List<Vector3Int>();
 
-        foreach (var chunk in ECSChunks)
+        foreach (var chunk in ChunkBuffer)
         {
             // Convert world-space key to chunk coordinates
             int chunkX = chunk.Key.X / ChunkSize;
@@ -345,7 +361,7 @@ public class TerrainGenerationNew
             }
 
             // TODO: This should be preserved as a buffer
-            ECSChunks.TryRemove(coord, out var cchunk);
+            ChunkBuffer.TryRemove(coord, out var cchunk);
         }
     }
     

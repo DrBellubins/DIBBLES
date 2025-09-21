@@ -1,5 +1,5 @@
 using DIBBLES.Utils;
-using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainGenerationNew;
 
 namespace DIBBLES.Terrain;
 
