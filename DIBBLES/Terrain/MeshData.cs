@@ -2,7 +2,7 @@ using System;
 
 namespace DIBBLES.Terrain;
 
-public class MeshData
+public struct MeshData
 {
     public float[] Vertices;
     public float[] Normals;

@@ -42,7 +42,6 @@ public class WorldSave
             Directory.CreateDirectory(SavesDirectory);
     }
     
-    // TODO: Only save world data that has changed
     public static void SaveWorldData(string worldName)
     {
         var currentSaveDir = Path.Combine(SavesDirectory, $"{worldName}");
@@ -62,7 +61,7 @@ public class WorldSave
         {
             writer.Write("W_DIBBLES");
             
-            writer.Write(GameScene.TerrainGen.Seed);
+            writer.Write(TerrainGenerationNew.Seed);
         }
         
         // Player data
@@ -113,7 +112,6 @@ public class WorldSave
                     writer.Write(block.Position.Z);
                     writer.Write((int)block.Type);
                     writer.Write((int)block.Biome);
-                    writer.Write(block.GeneratedInsideIsland);
                 }
             }
         }
@@ -128,7 +126,7 @@ public class WorldSave
     
         if (!Directory.Exists(currentSaveDir))
         {
-            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist");
+            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist, creating...");
             return;
         }
     
@@ -222,12 +220,10 @@ public class WorldSave
                     int z = reader.ReadInt32();
                     var type = (BlockType)reader.ReadInt32();
                     var biome = (TerrainBiome)reader.ReadInt32();
-                    bool generatedInsideIsland = reader.ReadBoolean();
     
                     var blockPos = new Vector3Int(x, y, z);
                     var block = new Block(blockPos, type);
                     block.Biome = biome;
-                    block.GeneratedInsideIsland = generatedInsideIsland;
     
                     // Convert world pos to local pos
                     int localX = x - chunkPos.X;
@@ -236,6 +232,8 @@ public class WorldSave
     
                     chunk.SetBlock(localX, localY, localZ, block);
                 }
+
+                chunk.IsModified = true;
     
                 Data.ModifiedChunks.Add(chunk.Position, chunk);
             }

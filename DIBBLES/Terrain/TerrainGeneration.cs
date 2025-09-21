@@ -202,7 +202,7 @@ public class TerrainGeneration
                     {
                         chunk = savedChunk;
                         chunk.IsModified = true;
-                        chunk.GenerationState = ChunkGenerationState.Modified;
+                        //chunk.GenerationState = ChunkGenerationState.Modified;
                     }
                     else
                     {
@@ -293,8 +293,6 @@ public class TerrainGeneration
                             plainsBiome.Generate(ref blockReturnData);
                         else // Fallback
                             snowlandsBiome.Generate(ref blockReturnData);
-                        
-                        blockReturnData.CurrentBlock.GeneratedInsideIsland = true;
                     }
                     else // Not islands
                         blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
@@ -304,7 +302,7 @@ public class TerrainGeneration
             }
         }
         
-        chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
+        //chunk.GenerationState = ChunkGenerationState.TerrainGenerated;
     }
 
     private void tryQueueChunkForStaging(Vector3Int chunkPos, Vector3Int centerChunk)
@@ -314,7 +312,7 @@ public class TerrainGeneration
         if (!ECSChunks.TryGetValue(chunkPos, out var chunk))
             return;
 
-        if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated ||
+        /*if (chunk.GenerationState == ChunkGenerationState.TerrainGenerated ||
             chunk.GenerationState == ChunkGenerationState.Modified &&
             Math.Abs(chunkPos.X / ChunkSize - centerChunk.X) <= halfRenderDistance &&
             Math.Abs(chunkPos.Y / ChunkSize - centerChunk.Y) <= halfRenderDistance &&
@@ -322,7 +320,7 @@ public class TerrainGeneration
         {
             chunk.GenerationState = ChunkGenerationState.StagingQueued;
             chunkStagingQueue.Enqueue(chunkPos);
-        }
+        }*/
     }
     
     private const int MAX_STAGING_PER_FRAME = 2;

@@ -181,24 +181,17 @@ public class TerrainGameplay
 
         if (oldBlock.Info.Hardness != 10)
         {
-            // Maintain GeneratedInsideIsland for lighting checks.
-            var generatedInsideIsland = oldBlock.GeneratedInsideIsland;
-
             var newBlock = new Block(blockPos, BlockType.Air);
-            newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
 
-            chunk.GenerationState = ChunkGenerationState.Modified;
+            //chunk.GenerationState = ChunkGenerationState.Modified;
             chunk.IsModified = true;
 
             // Update lighting if the broken block was opaque or emissive
             Lighting.Generate(chunk);
             
             // Regenerate mesh
-            //TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
-            //TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
-        
             var meshData = TMesh.GenerateMeshData(chunk, false);
             var tMeshData = TMesh.GenerateMeshData(chunk, true);
             
@@ -265,23 +258,17 @@ public class TerrainGameplay
         //    return;
         
         // Place the new block
-        var generatedInsideIsland = chunk.GetBlock(localX, localY, localZ).GeneratedInsideIsland;
-
         var newBlock = new Block(newBlockPos, blockType);
-        newBlock.GeneratedInsideIsland = generatedInsideIsland;
             
         chunk.SetBlock(localX, localY, localZ, newBlock);
 
-        chunk.GenerationState = ChunkGenerationState.Modified;
+        //chunk.GenerationState = ChunkGenerationState.Modified;
         chunk.IsModified = true;
         
         // Update lighting for the placed block
         Lighting.Generate(chunk);
         
         // Regenerate mesh
-        //TMesh.OpaqueModels[chunkCoord].Dispose(); // Unload old model
-        //TMesh.TransparentModels[chunkCoord].Dispose(); // Unload old tModel
-        
         var meshData = TMesh.GenerateMeshData(chunk, false);
         var tMeshData = TMesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
             

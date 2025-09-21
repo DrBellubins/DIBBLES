@@ -10,7 +10,6 @@ public struct Block
     public TerrainBiome Biome;
     public BlockInfo Info;
     public byte LightLevel;
-    public bool GeneratedInsideIsland;
 
     public bool IsAir => Type == BlockType.Air;
     
@@ -23,19 +22,16 @@ public struct Block
         Biome = TerrainBiome.Plains;
         Info = info;
         LightLevel = info.LightEmission;
-        
-        GeneratedInsideIsland = false;
     }
 }
 
 public enum ChunkGenerationState
 {
     Uninitialized,
-    Modified,
-    TerrainGenerated,
-    StagingQueued,
+    ChunkData,
     Decorations,
-    LightingAndRemesh
+    Lighting,
+    Meshing
 }
 
 public class Chunk

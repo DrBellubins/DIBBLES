@@ -1,8 +1,11 @@
 using System.Collections.Concurrent;
+using DIBBLES.Effects;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Terrain;
@@ -14,22 +17,25 @@ public class TerrainGenerationNew
     public const float ReachDistance = 5f; // Has to be finite!
     
     public static int Seed = -1413840509;
-    
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ECSChunks = new();
-    
     public static TerrainMesh Mesh = new();
     public static TerrainLighting Lighting = new();
     public static TerrainGameplay Gameplay = new();
-    
     public static Effect terrainShader;
+    public static bool DoneLoading = false;
+    
+    // Thread-safe mesh generation queues
+    private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> meshUploadQueue = new(); // Opaque
+    private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
     
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
+    private int chunksLoaded = 0;
     
     public void Start()
     {
         BlockData.InitializeBlockPrefabs();
         
-        WorldSave.Initialize();
+        /*WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
         if (WorldSave.Exists)
@@ -37,7 +43,7 @@ public class TerrainGenerationNew
         else
             Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
-        WorldSave.Data.Seed = Seed;
+        WorldSave.Data.Seed = Seed;*/
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
     }
@@ -45,23 +51,360 @@ public class TerrainGenerationNew
     public void Update(PlayerCharacter playerCharacter)
     {
         // Calculate current chunk coordinates based on camera position
-        var currentChunk = new Vector3Int(
+        var centerChunk = new Vector3Int(
             (int)Math.Floor(playerCharacter.Position.X / ChunkSize),
             (int)Math.Floor(playerCharacter.Position.Y / ChunkSize),
             (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
         
         // Only update if the camera has moved to a new chunk
-        if (currentChunk != lastCameraChunk)
+        if (centerChunk != lastCameraChunk)
         {
-            lastCameraChunk = currentChunk;
+            lastCameraChunk = centerChunk;
+            chunksLoaded = 0;
+
+            // Start chunk staging
+            chunkGenerationStages(centerChunk);
+        }
+        
+        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
+        
+        // After all chunk data in render distance has loaded in
+        if (chunksLoaded >= expectedChunkCount && !DoneLoading)
+        {
+            playerCharacter.NeedsToSpawn = true;
+            playerCharacter.FreeCamEnabled = false;
+            playerCharacter.ShouldUpdate = true;
+            DoneLoading = true;
+        }
+        
+        // Try to upload any queued meshes (must be done on main thread)
+        // Opaque pass
+        /*while (meshUploadQueue.TryDequeue(out var entry))
+        {
+            var chunkPos = entry.chunkPos;
+            var meshData = entry.meshData;
+
+            // Unload previous model if exists
+            if (Mesh.OpaqueModels.TryGetValue(chunkPos, out var currentModel))
+                currentModel.Dispose();
             
-            // Stage new chunks for generation.
+            // Upload mesh on main thread
+            Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
+            
+            unloadDistantChunks(centerChunk);
+        }
+        
+        // Transparent pass
+        while (meshUploadQueue.TryDequeue(out var entry))
+        {
+            var chunkPos = entry.chunkPos;
+            var meshData = entry.meshData;
+            
+            // Unload previous model if exists
+            if (Mesh.TransparentModels.TryGetValue(chunkPos, out var currentModel))
+                currentModel.Dispose();
+            
+            // Upload mesh on main thread
+            Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
+            
+            unloadDistantChunks(centerChunk);
+        }*/
+    }
+
+    private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
+    
+    private void chunkGenerationStages(Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        List<Vector3Int> chunksToGenerate = new();
+
+        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        {
+            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+
+            // TODO: May need to chunk generation state
+            if (!ECSChunks.ContainsKey(chunkPos))
+                chunksToGenerate.Add(chunkPos);
+        }
+
+        // Sort by distance to centerChunk
+        chunksToGenerate.Sort((a, b) => 
+            (a - centerChunk * ChunkSize).ToVector3().LengthSquared()
+            .CompareTo((b - centerChunk * ChunkSize).ToVector3().LengthSquared())
+        );
+
+        foreach (var pos in chunksToGenerate)
+        {
+            ThreadPool.QueueUserWorkItem(x =>
+            {
+                semaphore.Wait();
+
+                try
+                {
+                    Chunk chunk = new Chunk(pos);
+                    
+                    /*if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                        chunk = savedChunk;
+                    else
+                    {
+                        generateChunkData(chunk);
+                        generateChunkDecorations(chunk);
+                    }*/
+                    
+                    generateChunkData(chunk);
+                    generateChunkDecorations(chunk);
+                    
+                    generateLighting(chunk);
+                    generateMesh(chunk);
+
+                    ECSChunks.TryAdd(pos, chunk);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally{ semaphore.Release(); }
+            });
         }
     }
 
+    private void generateChunkData(Chunk chunk)
+    {
+        if (chunk.GenerationState != ChunkGenerationState.Uninitialized)
+            return;
+        
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
+        var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
+        
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var blockReturnData = new BlockReturnData();
+                blockReturnData.RNG = rng;
+                blockReturnData.Noise = noise;
+                
+                for (int y = ChunkSize - 1; y >= 0; y--)
+                {
+                    var plainsBiome = new PlainsBiome();
+                    var desertBiome = new DesertBiome();
+                    var snowlandsBiome = new SnowlandsBiome();
+                    
+                    var worldX = chunk.Position.X + x;
+                    var worldY = chunk.Position.Y + y;
+                    var worldZ = chunk.Position.Z + z;
+                    
+                    blockReturnData.WorldPos = new Vector3Int(worldX, worldY, worldZ);
+                    
+                    // Island noise
+                    noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+                    noise.SetFrequency(0.01f);
+                    noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+                    noise.SetFractalOctaves(4);
+                    noise.SetFractalLacunarity(2.0f);
+                    noise.SetFractalGain(0.5f);
+                    
+                    var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                    
+                    // Loop downward
+                    if (islandNoise > 0.6f) // Islands
+                    {
+                        // TODO: Biomes other than Plains are really rare
+                        // Biome noise
+                        noise.SetFrequency(0.001f);
+                        
+                        var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+
+                        if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
+                            desertBiome.Generate(ref blockReturnData);
+                        else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
+                            plainsBiome.Generate(ref blockReturnData);
+                        else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
+                            plainsBiome.Generate(ref blockReturnData);
+                        else // Fallback
+                            snowlandsBiome.Generate(ref blockReturnData);
+                    }
+                    else // Not islands
+                        blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
+                    
+                    chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
+                }
+            }
+        }
+        
+        chunk.GenerationState = ChunkGenerationState.ChunkData;
+    }
+    
+    private void generateChunkDecorations(Chunk chunk)
+    {
+        if (chunk.GenerationState != ChunkGenerationState.ChunkData)
+            return;
+        
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
+        var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
+        
+        var decorations = new TerrainDecorations();
+        
+        for (int x = 0; x < ChunkSize; x++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            for (int y = ChunkSize - 1; y >= 0; y--)
+            {
+                var currentBlock =  chunk.GetBlock(x, y, z);
+
+                if (currentBlock.Type == BlockType.Grass)
+                {
+                    if (rng.NextChance(2f))
+                        decorations.GenerateTrees(currentBlock.Position);
+                }
+            }
+        }
+    }
+
+    private void generateLighting(Chunk chunk)
+    {
+        // Can be generate either after decorations for natural terrain,
+        // Or after ChunkData in the case of modified chunks.
+        if (chunk.GenerationState != ChunkGenerationState.Decorations ||
+            chunk.GenerationState != ChunkGenerationState.ChunkData)
+            return;
+        
+        Lighting.Generate(chunk);
+    }
+
+    public void generateMesh(Chunk chunk)
+    {
+        if (chunk.GenerationState != ChunkGenerationState.Lighting)
+            return;
+        
+        var meshData = Mesh.GenerateMeshData(chunk, false);
+        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+
+        // Enqueue for main thread mesh upload
+        meshUploadQueue.Enqueue((chunk.Position, meshData));
+        tMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
+    }
+    
+    private void unloadDistantChunks(Vector3Int centerChunk)
+    {
+        List<Vector3Int> chunksToRemove = new List<Vector3Int>();
+
+        foreach (var chunk in ECSChunks)
+        {
+            // Convert world-space key to chunk coordinates
+            int chunkX = chunk.Key.X / ChunkSize;
+            int chunkY = chunk.Key.Y / ChunkSize;
+            int chunkZ = chunk.Key.Z / ChunkSize;
+            
+            int centerX = centerChunk.X;
+            int centerY = centerChunk.Y;
+            int centerZ = centerChunk.Z;
+
+            int dx = Math.Abs(chunkX - centerX);
+            int dy = Math.Abs(chunkY - centerY);
+            int dz = Math.Abs(chunkZ - centerZ);
+        
+            if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
+            {
+                chunksToRemove.Add(chunk.Key);
+            }
+        }
+
+        foreach (var coord in chunksToRemove)
+        {
+            // Opaque model
+            if (Mesh.OpaqueModels.TryGetValue(coord, out var oModel) && oModel != null)
+            {
+                oModel.Dispose();
+                Mesh.OpaqueModels.Remove(coord);
+            }
+
+            // Transparent model
+            if (Mesh.TransparentModels.TryGetValue(coord, out var tModel) &&  tModel != null)
+            {
+                tModel.Dispose();
+                Mesh.TransparentModels.Remove(coord);
+            }
+
+            // TODO: This should be preserved as a buffer
+            ECSChunks.TryRemove(coord, out var cchunk);
+        }
+    }
+    
     public void Draw()
     {
+        // Draw opaque
+        foreach (var oModel in Mesh.OpaqueModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (oModel.Value != null)
+            {
+                var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
+                
+                var shader = oModel.Value.Shader;
+                
+                shader.Parameters["World"].SetValue(world);
+                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
+                
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                    pass.Apply();
+                
+                oModel.Value.Draw(world,                        // World matrix for chunk position
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
         
+        // Draw transparent
+        foreach (var tModel in Mesh.TransparentModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (tModel.Value != null)
+            {
+                var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
+                
+                var shader = tModel.Value.Shader;
+                
+                shader.Parameters["World"].SetValue(world);
+                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
+                
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                    pass.Apply();
+                
+                tModel.Value.Draw(world,                        // World matrix for chunk position
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
     }
 }
