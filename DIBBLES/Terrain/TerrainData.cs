@@ -1,11 +1,7 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using System.Numerics;
-using DIBBLES.Scenes;
-using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Audio;
-using SixLabors.ImageSharp;
-using static DIBBLES.Terrain.TerrainGeneration;
+using Microsoft.Xna.Framework.Graphics;
+using DIBBLES.Utils;
 
 namespace DIBBLES.Terrain;
 
