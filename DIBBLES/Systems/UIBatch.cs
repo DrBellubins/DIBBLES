@@ -332,6 +332,127 @@ public static class UIBatch
     }
     
     /// <summary>
+    /// Draws a texture with source and destination rectangles, origin, and rotation.
+    /// Equivalent to Raylib.DrawTexturePro.
+    /// </summary>
+    public static void DrawTexturePro(
+        Texture2D texture,
+        Rectangle sourceRec,
+        Rectangle destRec,
+        Vector2 origin,
+        float rotation,
+        Color color)
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() before DrawTexturePro()");
+    
+        // Flush if texture switches
+        if (_currentTexture != null && _currentTexture != texture)
+            Flush();
+        
+        _currentTexture = texture;
+    
+        // Compute normalized UVs
+        Vector2 uvTL = new Vector2((float)sourceRec.X / texture.Width, (float)sourceRec.Y / texture.Height);
+        Vector2 uvBR = new Vector2((float)(sourceRec.X + sourceRec.Width) / texture.Width,
+                                   (float)(sourceRec.Y + sourceRec.Height) / texture.Height);
+    
+        // Define destination quad in local space (-origin), then rotate, then translate
+        Vector2[] corners = new Vector2[4];
+        corners[0] = new Vector2(0, 0) - origin;                        // Top-left
+        corners[1] = new Vector2(destRec.Width, 0) - origin;            // Top-right
+        corners[2] = new Vector2(destRec.Width, destRec.Height) - origin; // Bottom-right
+        corners[3] = new Vector2(0, destRec.Height) - origin;           // Bottom-left
+    
+        // Apply rotation
+        if (rotation != 0f)
+        {
+            float rad = MathHelper.ToRadians(rotation);
+            float cos = MathF.Cos(rad);
+            float sin = MathF.Sin(rad);
+            
+            for (int i = 0; i < 4; i++)
+            {
+                var v = corners[i];
+                
+                corners[i] = new Vector2(
+                    v.X * cos - v.Y * sin,
+                    v.X * sin + v.Y * cos
+                );
+            }
+        }
+    
+        // Translate to final position
+        Vector2 destPos = new Vector2(destRec.X, destRec.Y);
+        
+        for (int i = 0; i < 4; i++)
+            corners[i] += destPos;
+    
+        // Vertex order: TL, TR, BR, BL
+        Vector2[] uvs = new Vector2[4]
+        {
+            new Vector2(uvTL.X, uvTL.Y),               // TL
+            new Vector2(uvBR.X, uvTL.Y),               // TR
+            new Vector2(uvBR.X, uvBR.Y),               // BR
+            new Vector2(uvTL.X, uvBR.Y),               // BL
+        };
+    
+        short baseIndex = (short)_vertices.Count;
+        
+        for (int i = 0; i < 4; i++)
+            _vertices.Add(new UIVertex { Position = new Vector3(corners[i], 0f), Color = color, TexCoord = uvs[i] });
+    
+        // Two triangles: 0,1,2 and 0,2,3
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 1));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 3));
+    }
+    
+    /// <summary>
+    /// Draws a thick line between two points. Equivalent to Raylib.DrawLineEx.
+    /// </summary>
+    public static void DrawLine(Vector2 start, Vector2 end, float thickness, Color color)
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() before DrawLineEx()");
+
+        // If texture switches, flush
+        if (_currentTexture != null && _currentTexture != _whitePixel)
+            Flush();
+        
+        _currentTexture = _whitePixel;
+
+        Vector2 direction = end - start;
+        if (direction.LengthSquared() < float.Epsilon)
+            return; // Points are the same; nothing to draw
+
+        Vector2 normal = Vector2.Normalize(new Vector2(-direction.Y, direction.X));
+        Vector2 offset = normal * (thickness / 2f);
+
+        Vector2 p0 = start + offset;
+        Vector2 p1 = start - offset;
+        Vector2 p2 = end - offset;
+        Vector2 p3 = end + offset;
+
+        short baseIndex = (short)_vertices.Count;
+        Vector2 uv = Vector2.Zero; // White pixel
+
+        _vertices.Add(new UIVertex { Position = new Vector3(p0, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p1, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p2, 0f), Color = color, TexCoord = uv });
+        _vertices.Add(new UIVertex { Position = new Vector3(p3, 0f), Color = color, TexCoord = uv });
+
+        // Two triangles: 0,1,2 and 0,2,3
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 1));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 3));
+    }
+    
+    /// <summary>
     /// Draws a filled circle. Equivalent to Raylib.DrawCircle.
     /// </summary>
     public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 32)

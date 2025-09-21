@@ -119,11 +119,11 @@ public class Hotbar
         {
             var xPos = hotbarRect.X + (i + 1.0f) * hotbarRect.Height;
 
-            //Raylib.DrawLineEx(new Vector2(xPos, hotbarRect.Y),
-            //    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
+            UIBatch.DrawLine(new Vector2(xPos, hotbarRect.Y),
+                new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
         }
 
-        UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, UI.SecondaryAccentColor);
+        UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, UI.AccentColor);
 
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -137,13 +137,14 @@ public class Hotbar
                     (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
                 // TODO: Temporary until 3d icons can be fixed
-                UIBatch.DrawTextureRect(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
+                //UIBatch.DrawTextureRect(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
                 
-                /*if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
+                if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
                     var itemOrigRect = new Rectangle(0, 0, iconTex.Width, iconTex.Height);
-                    Raylib.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
-                }*/
+                    
+                    UIBatch.DrawTexturePro(iconTex, itemOrigRect, itemDestRect, Vector2.Zero, 0.0f, Color.White);
+                }
             }
         }
         
@@ -176,6 +177,15 @@ public class Hotbar
 
             // Create the cube model with correct texture
             RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
+            
+            Engine.Graphics.SetRenderTarget(renderTexture);
+            Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));
+            
+            cubeModel.Draw(Matrix.CreateTranslation(Vector3.Zero), cam.View, cam.Projection);
+            
+            Engine.Graphics.SetRenderTarget(null);
+            
+            blockIcons[blockType] = renderTexture;
             
             /*Raylib.BeginTextureMode(renderTexture);
             Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
