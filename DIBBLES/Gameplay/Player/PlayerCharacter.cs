@@ -89,8 +89,8 @@ public class PlayerCharacter
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
 
-        hotbar.Start();
-        handModel.Start();
+        //hotbar.Start();
+        //handModel.Start();
         
         Commands.RegisterCommand("kill", "Kills the player", killCMD);
         Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
@@ -477,12 +477,12 @@ public class PlayerCharacter
     
     public void Draw()
     {
-        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
+        //handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
     }
 
     public void DrawUI()
     {
-        hotbar.Draw(Health);
+        //hotbar.Draw(Health);
         
         Debug.Draw2DText($"Position: {Position}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);

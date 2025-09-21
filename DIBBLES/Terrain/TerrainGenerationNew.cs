@@ -46,6 +46,8 @@ public class TerrainGenerationNew
         WorldSave.Data.Seed = Seed;*/
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
+        
+        Update(GameScene.PlayerCharacter);
     }
 
     public void Update(PlayerCharacter playerCharacter)
@@ -80,7 +82,7 @@ public class TerrainGenerationNew
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass
-        /*while (meshUploadQueue.TryDequeue(out var entry))
+        while (meshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
@@ -109,7 +111,7 @@ public class TerrainGenerationNew
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
             
             unloadDistantChunks(centerChunk);
-        }*/
+        }
     }
 
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -158,7 +160,7 @@ public class TerrainGenerationNew
                     generateChunkDecorations(chunk);
                     
                     generateLighting(chunk);
-                    generateMesh(chunk);
+                    //generateMesh(chunk);
 
                     ECSChunks.TryAdd(pos, chunk);
                 }

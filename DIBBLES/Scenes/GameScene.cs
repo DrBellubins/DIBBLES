@@ -23,14 +23,10 @@ public class GameScene : Scene
     
     public override void Start()
     {
-        // Initial terrain generation
-        TerrainGen.Start();
-        TerrainGen.Update(PlayerCharacter);
-        
         UIBatch.Initialize();
         
+        TerrainGen.Start(); // Initial terrain generation
         PlayerCharacter.Start(); // Must be started after terrain
-        
         gameChat.Start();
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
@@ -41,6 +37,8 @@ public class GameScene : Scene
     public override void Update()
     {
         Input.Update();
+        
+        Console.WriteLine("update");
         
         PlayerCharacter.Update();
         
