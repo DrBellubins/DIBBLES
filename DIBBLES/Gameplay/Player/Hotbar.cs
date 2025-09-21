@@ -182,10 +182,10 @@ public class Hotbar
             var shader = (BasicEffect)cubeModel.Shader;
 
             shader.LightingEnabled = true;
-            shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
+            //shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
             shader.DirectionalLight0.Enabled = true;
-            shader.DirectionalLight0.Direction = new Vector3(45f, 0f, 0f);
-            shader.DirectionalLight0.DiffuseColor = new Vector3(0.1f, 0.1f, 0.1f);
+            shader.DirectionalLight0.Direction = new Vector3(0.5f, 0.3f, 0f);
+            shader.DirectionalLight0.DiffuseColor = new Vector3(1f, 1f, 1f);
             
             Engine.Graphics.SetRenderTarget(renderTexture);
             Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));

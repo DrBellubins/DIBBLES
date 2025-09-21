@@ -74,6 +74,10 @@ public class CubeMesh
             Vector3.Backward, Vector3.Backward, Vector3.Backward, Vector3.Backward
         };
 
+        // Flip normals
+        //for (int i = 0; i < normals.Length; i++)
+        //    normals[i] = -normals[i];
+        
         Vector2[] uvs =
         {
             // +X
@@ -290,6 +294,7 @@ public static class MeshUtils
 
             // Only color selected faces for icon
             Color color = faceColors[f];
+            
             if (color.A == 0) continue; // Skip unused faces
 
             // 4 vertices per face
