@@ -61,14 +61,12 @@ public class TextBox
         Color boxColor = IsFocused ? Color.Gray : Color.DarkGray;
         
         UIBatch.DrawRect(Bounds, boxColor);
-        //Engine.Sprites.Draw(TextureUtils.GetWhitePixel(), Bounds, boxColor);
 
         // Draw text
         var padding = 8f;
         Vector2 textPos = new Vector2(Bounds.X + padding, Bounds.Y + padding);
 
-        UIBatch.DrawString(Engine.MainFont, Text, textPos, boxColor);
-        //Engine.Sprites.DrawString(Engine.MainFont, Text, textPos, Color.White);
+        UIBatch.DrawString(Engine.MainFont, Text, textPos, Color.White);
 
         // Draw caret if focused
         if (IsFocused && showCaret)
@@ -80,9 +78,6 @@ public class TextBox
             float caretH = Engine.MainFont.LineSpacing;
 
             UIBatch.DrawRect(new RectangleF(caretX, caretY, 2f, caretH), Color.White);
-            
-            //Engine.Sprites.Draw(TextureUtils.GetWhitePixel(),
-            //    new Rectangle((int)caretX, (int)caretY, 2, (int)caretH), Color.White);
         }
     }
 

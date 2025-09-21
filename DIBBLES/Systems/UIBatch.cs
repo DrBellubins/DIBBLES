@@ -134,8 +134,15 @@ public static class UIBatch
         if (string.IsNullOrEmpty(text)) return;
     
         Texture2D fontTex = font.Texture;
+
+        // Flush if texture changes
+        if (_currentTexture != null && _currentTexture != fontTex)
+            Flush();
+        
+        _currentTexture = fontTex;
+
         Vector2 currentPos = position;
-    
+        
         // Per-glyph data
         var glyphs = font.GetGlyphs();
         char defaultChar = font.DefaultCharacter ?? '?';
@@ -174,8 +181,6 @@ public static class UIBatch
             _indices.Add((short)(baseIndex + 2));
             _indices.Add((short)(baseIndex + 3));
     
-            _currentTexture = fontTex;
-    
             // Advance to next character
             currentPos.X += glyph.Width * scale;
         }
@@ -184,6 +189,11 @@ public static class UIBatch
     // Draws a quad (as two triangles) using UIBatch
     private static void DrawQuad(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color color)
     {
+        if (_currentTexture != null && _currentTexture != _whitePixel)
+            Flush();
+        
+        _currentTexture = _whitePixel;
+        
         short baseIndex = (short)_vertices.Count;
         Vector2 uv = Vector2.Zero; // White pixel
 
@@ -200,12 +210,16 @@ public static class UIBatch
         _indices.Add((short)(baseIndex + 0));
         _indices.Add((short)(baseIndex + 2));
         _indices.Add((short)(baseIndex + 3));
-        _currentTexture = _whitePixel;
     }
 
     // Draws a quarter-circle as a triangle fan using UIBatch
     private static void DrawQuarterCircleFan(Vector2 center, float radius, float angleStart, float angleEnd, int segments, Color color)
     {
+        if (_currentTexture != null && _currentTexture != _whitePixel)
+            Flush();
+        
+        _currentTexture = _whitePixel;
+        
         // Precompute points along the arc
         double angleStep = (angleEnd - angleStart) / segments;
         List<Vector2> arc = new List<Vector2>();
@@ -232,8 +246,6 @@ public static class UIBatch
             _indices.Add((short)(baseIndex + i));
             _indices.Add((short)(baseIndex + i + 1));
         }
-        
-        _currentTexture = _whitePixel;
     }
 
     /// <summary>

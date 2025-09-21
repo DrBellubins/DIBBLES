@@ -197,7 +197,6 @@ public class Chat
                 var pos = new Vector2(0f, heightPos + (index * FontSize));
             
                 UIBatch.DrawString(Engine.MainFont, msg.Message, pos, color);
-                //sprites.DrawString(Engine.MainFont, msg.Message, pos, color);
             
                 index++;
             }

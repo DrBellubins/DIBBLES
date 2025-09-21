@@ -137,7 +137,7 @@ public class Hotbar
                     (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
                 // TODO: Temporary until 3d icons can be fixed
-                //Engine.Sprites.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
+                //UIBatch.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
                 
                 /*if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
