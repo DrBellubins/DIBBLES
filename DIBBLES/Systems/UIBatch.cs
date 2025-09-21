@@ -44,12 +44,10 @@ public static class UIBatch
             View = Matrix.Identity,
             World = Matrix.Identity
         };
-
-        _whitePixel = BlockData.Textures[BlockType.Dirt];
         
         // White pixel for solid color rectangles
-        //_whitePixel = new Texture2D(_graphics, 1, 1, false, SurfaceFormat.Color);
-        //_whitePixel.SetData(new[] { Color.White });
+        _whitePixel = new Texture2D(_graphics, 1, 1, false, SurfaceFormat.Color);
+        _whitePixel.SetData(new[] { Color.White });
     }
 
     public static void Begin()
@@ -280,14 +278,18 @@ public static class UIBatch
         {
             pass.Apply();
             
-            var flatTriangleVerts = new VertexPositionColorTexture[_indices.Count];
+            Console.WriteLine($"Vertex count: {_vertices.Count}");
+            Console.WriteLine($"vertex color: {_vertices[0].Color}, Vertex TexCoord: {_vertices[0].TexCoord}, Vertex Position: {_vertices[0].Position}");
+            Console.WriteLine($"vertex color: {_vertices[1].Color}, Vertex TexCoord: {_vertices[1].TexCoord}, Vertex Position: {_vertices[1].Position}");
+            Console.WriteLine($"vertex color: {_vertices[2].Color}, Vertex TexCoord: {_vertices[2].TexCoord}, Vertex Position: {_vertices[2].Position}");
+            Console.WriteLine($"vertex color: {_vertices[3].Color}, Vertex TexCoord: {_vertices[3].TexCoord}, Vertex Position: {_vertices[3].Position}");
             
-            for (int i = 0; i < _indices.Count; i++)
-                flatTriangleVerts[i] = vertexArray[_indices[i]];
-            
-            _graphics.DrawUserPrimitives<VertexPositionColorTexture>(
+            _graphics.DrawUserIndexedPrimitives<VertexPositionColorTexture>(
                 PrimitiveType.TriangleList,
-                flatTriangleVerts,
+                vertexArray,
+                0,
+                vertexArray.Length,
+                _indices.ToArray(),
                 0,
                 _indices.Count / 3
             );
