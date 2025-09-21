@@ -49,7 +49,7 @@ public class Debug
         
             foreach (var text in textBuffer2d)
             {
-                sprites.DrawString(Engine.MainFont, text.Key, new Vector2(0f, index), Color.White);
+                UIBatch.DrawString(Engine.MainFont, text.Key, new Vector2(0f, index), Color.White);
                 
                 // TODO: Monogame
                 //Raylib.DrawTextEx(MonoEngine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);

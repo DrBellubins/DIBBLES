@@ -112,7 +112,7 @@ public class Hotbar
 
     public void Draw(int health)
     {
-        //Primatives2D.DrawRectangleRec(hotbarRect, UI.MainColor);
+        UIBatch.DrawRect(hotbarRect, UI.MainColor);
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -123,7 +123,7 @@ public class Hotbar
             //    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
         }
 
-        //Primatives2D.DrawRectangleRounded(hotbarSelectionRect, 0.5f, 4, UI.SecondaryAccentColor);
+        UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, UI.SecondaryAccentColor);
 
         // Hotbar items
         for (int i = 0; i < hotbarSlots.Length; i++)
@@ -137,7 +137,7 @@ public class Hotbar
                     (int)(hotbarRect.Height * 0.8f), (int)(hotbarRect.Height * 0.8f));
 
                 // TODO: Temporary until 3d icons can be fixed
-                //UIBatch.Draw(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
+                UIBatch.DrawRect(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
                 
                 /*if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
@@ -150,8 +150,8 @@ public class Hotbar
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
         
-        //Primatives2D.DrawRectangleRec(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
-        //Primatives2D.DrawRectangleRec(healthBarRect, Color.Red);
+        UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        UIBatch.DrawRect(healthBarRect, Color.Red);
     }
 
     // Draw each block type as a cube, then render out to a texture

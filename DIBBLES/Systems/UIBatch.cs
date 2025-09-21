@@ -293,6 +293,44 @@ public static class UIBatch
         _indices.Add((short)(baseIndex + 3));
     }
     
+    /// <summary>
+    /// Draw a texture with rectangle
+    /// </summary>
+    public static void DrawRect(Texture2D texture, Rectangle destinationRectangle, Color color)
+    {
+        if (!_inBatch) throw new InvalidOperationException("Call Begin() before Draw()");
+
+        // If texture switches, flush the batch
+        if (_currentTexture != null && _currentTexture != texture)
+            Flush();
+
+        _currentTexture = texture;
+
+        // Use the full texture (uv = 0,0 to 1,1)
+        Vector2 uvTL = Vector2.Zero;
+        Vector2 uvBR = Vector2.One;
+
+        short baseIndex = (short)_vertices.Count;
+
+        float x = destinationRectangle.X;
+        float y = destinationRectangle.Y;
+        float w = destinationRectangle.Width;
+        float h = destinationRectangle.Height;
+
+        _vertices.Add(new UIVertex { Position = new Vector3(x, y, 0f), Color = color, TexCoord = new Vector2(uvTL.X, uvTL.Y) });             // TL
+        _vertices.Add(new UIVertex { Position = new Vector3(x + w, y, 0f), Color = color, TexCoord = new Vector2(uvBR.X, uvTL.Y) });         // TR
+        _vertices.Add(new UIVertex { Position = new Vector3(x + w, y + h, 0f), Color = color, TexCoord = new Vector2(uvBR.X, uvBR.Y) });     // BR
+        _vertices.Add(new UIVertex { Position = new Vector3(x, y + h, 0f), Color = color, TexCoord = new Vector2(uvTL.X, uvBR.Y) });         // BL
+
+        // Two triangles: 0,1,2 and 0,2,3
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 1));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 0));
+        _indices.Add((short)(baseIndex + 2));
+        _indices.Add((short)(baseIndex + 3));
+    }
+    
     public static void End()
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() first!");
