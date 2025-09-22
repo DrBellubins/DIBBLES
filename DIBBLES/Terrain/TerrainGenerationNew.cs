@@ -190,14 +190,8 @@ public class TerrainGenerationNew
                     // If chunk doesn't exist at pos, create and add empty chunk to buffer.
                     if (!ChunkBuffer.TryGetValue(pos, out var chunk))
                     {
-                        
-                        Console.WriteLine($"[ChunkGen] Creating new chunk at {pos} (DoneLoading={DoneLoading}, addAfterInitial={addAfterInitial})");
-                        
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
-                        
-                        if (DoneLoading && addAfterInitial)
-                            Console.WriteLine($"[ChunkGen] Advancing new chunk {pos} from stage {chunk.GenerationStage} to {terrainGenerationStage}");
                         
                         // Add new chunk after init and get its stage up to date
                         if (DoneLoading && addAfterInitial)
