@@ -241,12 +241,11 @@ public class TerrainGenerationNew
             {
                 generateMesh(chunk);
                 Console.WriteLine("Meshing chunk");
+                chunksLoaded++;
                 chunk.GenerationStage++;
                 break;
             }
         }
-        
-        chunksLoaded++;
     }
     
     private void generateChunkData(Chunk chunk)
