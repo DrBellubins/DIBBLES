@@ -30,7 +30,7 @@ public class TerrainGameplay
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
             
             // Draw block selection overlay
-            Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+            Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 0.5f, 0.5f, 0.5f, Color.Black);
         }
     }
     

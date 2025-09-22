@@ -14,11 +14,6 @@ public static class Primatives3D
     // Cached quad vertex/index buffers for thick line and plane rendering
     private static BasicEffect _effect;
 
-    static Primatives3D()
-    {
-        // Effect is created in Initialize()
-    }
-
     public static void Initialize()
     {
         _effect = new BasicEffect(Engine.Graphics)
@@ -74,16 +69,11 @@ public static class Primatives3D
         {
             pass.Apply();
 
-            // Get camera up and forward (for thick line facing)
-            Vector3 camPos = v.Translation;
-            Vector3 camUp = v.Up;
-            Vector3 camForward = -v.Forward;
-
             for (int i = 0; i < 12; i++)
             {
                 Vector3 start = corners[edges[i, 0]];
                 Vector3 end = corners[edges[i, 1]];
-                DrawThickLine3D(start, end, color, thickness, camPos, camUp, camForward);
+                DrawThickLine3D(start, end, color, thickness);
             }
         }
     }
@@ -92,33 +82,53 @@ public static class Primatives3D
     /// Draws a 3D line with thickness as a quad facing the camera.
     /// </summary>
     public static void DrawThickLine3D(
-        Vector3 start, Vector3 end, Color color, float thickness,
-        Vector3 camPos, Vector3 camUp, Vector3 camForward)
+    Vector3 start, Vector3 end, Color color, float thickness)
     {
-        GraphicsDevice gd = Engine.Graphics;
-
-        Vector3 dir = Vector3.Normalize(end - start);
-        Vector3 side = Vector3.Cross(dir, camForward);
-        if (side.Length() < 0.001f)
-            side = Vector3.Cross(dir, camUp);
-
-        side = Vector3.Normalize(side) * (thickness * 0.5f);
-
-        Vector3 v1 = start + side;
-        Vector3 v2 = start - side;
-        Vector3 v3 = end - side;
-        Vector3 v4 = end + side;
-
+        var gd = Engine.Graphics;
+    
+        // Project start/end to screen space (viewport)
+        var view = GameScene.PlayerCharacter.Camera.View;
+        var proj = GameScene.PlayerCharacter.Camera.Projection;
+        var viewport = gd.Viewport;
+    
+        // Project to screen
+        Vector3 startScreen = viewport.Project(start, proj, view, Matrix.Identity);
+        Vector3 endScreen = viewport.Project(end, proj, view, Matrix.Identity);
+    
+        // Compute perpendicular in screen space
+        Vector2 screenDir = new Vector2(endScreen.X - startScreen.X, endScreen.Y - startScreen.Y);
+    
+        if (screenDir.LengthSquared() < 0.01f)
+            return; // Points overlap on screen
+    
+        screenDir.Normalize();
+        Vector2 perp = new Vector2(-screenDir.Y, screenDir.X); // 2D perpendicular
+    
+        // Offset by half thickness (in pixels)
+        perp *= (thickness * 0.5f * viewport.Height); // Use height for pixel scale, or tweak as needed
+    
+        // Build quad in screen space
+        Vector3 ssA1 = startScreen + new Vector3(perp.X, perp.Y, 0);
+        Vector3 ssA2 = startScreen - new Vector3(perp.X, perp.Y, 0);
+        Vector3 ssB1 = endScreen + new Vector3(perp.X, perp.Y, 0);
+        Vector3 ssB2 = endScreen - new Vector3(perp.X, perp.Y, 0);
+    
+        // Unproject back to world space
+        Vector3 wsA1 = viewport.Unproject(ssA1, proj, view, Matrix.Identity);
+        Vector3 wsA2 = viewport.Unproject(ssA2, proj, view, Matrix.Identity);
+        Vector3 wsB1 = viewport.Unproject(ssB1, proj, view, Matrix.Identity);
+        Vector3 wsB2 = viewport.Unproject(ssB2, proj, view, Matrix.Identity);
+    
         VertexPositionColor[] quadVerts = new[]
         {
-            new VertexPositionColor(v1, color),
-            new VertexPositionColor(v2, color),
-            new VertexPositionColor(v3, color),
-            new VertexPositionColor(v4, color)
+            new VertexPositionColor(wsA1, color),
+            new VertexPositionColor(wsA2, color),
+            new VertexPositionColor(wsB2, color),
+            new VertexPositionColor(wsB1, color),
         };
-
+        
         short[] quadIdx = { 0, 1, 2, 0, 2, 3 };
-
+    
         gd.DrawUserIndexedPrimitives(
             PrimitiveType.TriangleList,
             quadVerts, 0, 4,
