@@ -69,6 +69,10 @@ public class TerrainGenerationNew
             // Start chunk staging
             terrainGenerationThreaded(centerChunk);
         }
+
+        updateStageIfReady(centerChunk);
+        
+        Console.WriteLine($"Chunks count: {ChunkBuffer.Count}");
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
@@ -167,31 +171,73 @@ public class TerrainGenerationNew
                 else
                     generateChunkData(chunk);
 
+                //Console.WriteLine("Uninitialized chunk");
+                
                 chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.ChunkData:
             {
                 generateChunkDecorations(chunk);
+                //Console.WriteLine("ChunkData chunk");
                 chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Decorations:
             {
                 generateLighting(chunk);
+                //Console.WriteLine("Decorations chunk");
                 chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Lighting:
             {
                 generateMesh(chunk);
+                //Console.WriteLine("Lighting chunk");
                 chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Meshing:
             {
+                //Console.WriteLine("Meshing chunk");
                 break;
             }
+        }
+    }
+    
+    private void updateStageIfReady(Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        bool allReady = true;
+
+        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        {
+            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+            
+            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            {
+                if (chunk.GenerationState != terrainGenerationState)
+                {
+                    allReady = false;
+                    break;
+                }
+                
+                Console.WriteLine($"This is a chunk.");
+            }
+            else
+            {
+                allReady = false;
+                break;
+            }
+        }
+
+        if (allReady)
+        {
+            Console.WriteLine($"terrainGenerationState: {terrainGenerationState}");
+            terrainGenerationState++;
+            // Optionally: trigger the next stage for all chunks here
         }
     }
     
