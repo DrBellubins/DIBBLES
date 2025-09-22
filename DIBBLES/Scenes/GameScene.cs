@@ -24,6 +24,7 @@ public class GameScene : Scene
     public override void Start()
     {
         UIBatch.Initialize();
+        Primatives3D.Initialize();
         
         TerrainGen.Start(); // Initial terrain generation
         PlayerCharacter.Start(); // Must be started after terrain
