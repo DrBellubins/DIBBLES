@@ -78,7 +78,7 @@ public class TerrainGenerationNew
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             playerCharacter.NeedsToSpawn = true;
-            playerCharacter.FreeCamEnabled = false;
+            playerCharacter.FreeCamEnabled = true;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
@@ -106,8 +106,6 @@ public class TerrainGenerationNew
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
             
             unloadDistantChunks(centerChunk);
-            
-            chunksLoaded++;
         }
     }
 
@@ -142,7 +140,7 @@ public class TerrainGenerationNew
             terrainGenerationStage++;
             terrainGenerationThreaded(centerChunk);
             
-            //Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
+            Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
         }
     }
     
@@ -159,6 +157,7 @@ public class TerrainGenerationNew
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
+            // Process all chunks needing this stage
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
                 if (chunk.GenerationStage == terrainGenerationStage)
@@ -169,6 +168,9 @@ public class TerrainGenerationNew
                 // New chunk: add at Uninitialized
                 chunksToGenerate.Add(chunkPos);
             }
+            
+            //if (!ChunkBuffer.ContainsKey(chunkPos))
+            //    chunksToGenerate.Add(chunkPos);
         }
 
         // Sort by distance to centerChunk
@@ -182,7 +184,7 @@ public class TerrainGenerationNew
             ThreadPool.QueueUserWorkItem(x =>
             {
                 semaphore.Wait();
-
+                
                 try
                 {
                     Chunk chunk = new Chunk(pos);
@@ -191,23 +193,18 @@ public class TerrainGenerationNew
                     
                     ChunkBuffer.TryAdd(pos, chunk);
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    throw;
-                }
-                finally{ semaphore.Release(); }
+                finally { semaphore.Release(); }
             });
         }
     }
 
     private void proccesTerrainStage(Chunk chunk)
     {
-        switch (terrainGenerationStage)
+        switch (chunk.GenerationStage)
         {
             case ChunkGenerationStage.Uninitialized:
             {
-                Console.WriteLine("Uninitialized chunk");
+                //Console.WriteLine("Uninitialized chunk");
                 chunk.GenerationStage++;
                 break;
             }
@@ -244,6 +241,8 @@ public class TerrainGenerationNew
                 break;
             }
         }
+        
+        chunksLoaded++;
     }
     
     private void generateChunkData(Chunk chunk)
