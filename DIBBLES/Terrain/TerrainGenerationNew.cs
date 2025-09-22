@@ -164,6 +164,7 @@ public class TerrainGenerationNew
         {
             case ChunkGenerationStage.Uninitialized:
             {
+                Console.WriteLine("Uninitialized chunk");
                 chunk.GenerationStage++;
                 break;
             }
