@@ -194,15 +194,20 @@ public class TerrainGenerationNew
                     {
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
-                        proccesTerrainStage(chunk);
+                        
+                        // Add new chunk after init and get its stage up to date
+                        if (DoneLoading && addAfterInitial)
+                        {
+                            while (chunk.GenerationStage < terrainGenerationStage)
+                                proccesTerrainStage(chunk);
+                        }
+                        else // Generate initial stage from Uninitialized > ChunkData
+                            proccesTerrainStage(chunk);
                     }
                     else
                     {
-                        if (!DoneLoading)
-                            proccesTerrainStage(chunk);
-                        
-                        // If new chunk after initial generation, make sure to get stages up to date for it.
-                        while (DoneLoading && addAfterInitial && chunk.GenerationStage < terrainGenerationStage)
+                        // Update pre-existing chunk to next stage
+                        if (!addAfterInitial)
                             proccesTerrainStage(chunk);
                     }
                 }
