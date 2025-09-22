@@ -59,16 +59,6 @@ public class TerrainGenerationNew
             (int)Math.Floor(playerCharacter.Position.Y / ChunkSize),
             (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
-        
-        // Only update if the camera has moved to a new chunk
-        if (centerChunk != lastCameraChunk)
-        {
-            lastCameraChunk = centerChunk;
-            chunksLoaded = 0;
-
-            // Start chunk staging
-            terrainGenerationThreaded(centerChunk, true);
-        }
 
         updateStageIfReady(centerChunk);
         Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
@@ -79,9 +69,19 @@ public class TerrainGenerationNew
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             playerCharacter.NeedsToSpawn = true;
-            playerCharacter.FreeCamEnabled = false;
+            playerCharacter.FreeCamEnabled = true;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
+        }
+        
+        // Only update if the camera has moved to a new chunk
+        if (centerChunk != lastCameraChunk)
+        {
+            lastCameraChunk = centerChunk;
+            chunksLoaded = 0;
+
+            // Start chunk staging
+            terrainGenerationThreaded(centerChunk, true);
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -192,14 +192,20 @@ public class TerrainGenerationNew
                     // If chunk doesn't exist at pos, create and add empty chunk to buffer.
                     if (!ChunkBuffer.TryGetValue(pos, out var chunk))
                     {
+                        
+                        Console.WriteLine($"[ChunkGen] Creating new chunk at {pos} (DoneLoading={DoneLoading}, addAfterInitial={addAfterInitial})");
+                        
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
+                        
+                        if (DoneLoading && addAfterInitial)
+                            Console.WriteLine($"[ChunkGen] Advancing new chunk {pos} from stage {chunk.GenerationStage} to {terrainGenerationStage}");
                         
                         // Add new chunk after init and get its stage up to date
                         if (DoneLoading && addAfterInitial)
                         {
                             while (chunk.GenerationStage < terrainGenerationStage)
-                                proccesTerrainStage(chunk);
+                                proccesTerrainStage(chunk, true);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
                             proccesTerrainStage(chunk);
@@ -207,7 +213,7 @@ public class TerrainGenerationNew
                     else
                     {
                         // Update pre-existing chunk to next stage
-                        if (!addAfterInitial)
+                        if (!DoneLoading)
                             proccesTerrainStage(chunk);
                     }
                 }
@@ -216,7 +222,7 @@ public class TerrainGenerationNew
         }
     }
 
-    private void proccesTerrainStage(Chunk chunk)
+    private void proccesTerrainStage(Chunk chunk, bool testChek = false)
     {
         switch (chunk.GenerationStage)
         {
@@ -255,6 +261,9 @@ public class TerrainGenerationNew
                 break;
             }
         }
+        
+        //if (testChek)
+        //    Console.WriteLine($"ChunkGenerationStage {chunk.GenerationStage} finished");
     }
     
     private void generateChunkData(Chunk chunk)
