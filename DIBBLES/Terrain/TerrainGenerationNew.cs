@@ -111,6 +111,41 @@ public class TerrainGenerationNew
         }
     }
 
+    private void updateStageIfReady(Vector3Int centerChunk)
+    {
+        int halfRenderDistance = RenderDistance / 2;
+        bool allReady = true;
+
+        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
+        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
+        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        {
+            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+            
+            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            {
+                if (chunk.GenerationStage < terrainGenerationStage)
+                {
+                    allReady = false;
+                    break;
+                }
+            }
+            else
+            {
+                allReady = false;
+                break;
+            }
+        }
+
+        if (allReady)
+        {
+            terrainGenerationStage++;
+            terrainGenerationThreaded(centerChunk);
+            
+            //Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
+        }
+    }
+    
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
     private void terrainGenerationThreaded(Vector3Int centerChunk)
@@ -211,46 +246,8 @@ public class TerrainGenerationNew
         }
     }
     
-    private void updateStageIfReady(Vector3Int centerChunk)
-    {
-        int halfRenderDistance = RenderDistance / 2;
-        bool allReady = true;
-
-        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
-        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
-        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
-        {
-            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            
-            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
-            {
-                if (chunk.GenerationStage < terrainGenerationStage)
-                {
-                    allReady = false;
-                    break;
-                }
-            }
-            else
-            {
-                allReady = false;
-                break;
-            }
-        }
-
-        if (allReady)
-        {
-            terrainGenerationStage++;
-            terrainGenerationThreaded(centerChunk);
-            
-            //Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
-        }
-    }
-    
     private void generateChunkData(Chunk chunk)
     {
-        if (chunk.GenerationStage != ChunkGenerationStage.Uninitialized)
-            return;
-        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -319,9 +316,6 @@ public class TerrainGenerationNew
     
     private void generateChunkDecorations(Chunk chunk)
     {
-        if (chunk.GenerationStage != ChunkGenerationStage.ChunkData)
-            return;
-        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -351,19 +345,11 @@ public class TerrainGenerationNew
 
     private void generateLighting(Chunk chunk)
     {
-        // Can be generate either after decorations for natural terrain,
-        // Or after ChunkData in the case of modified chunks.
-        if (chunk.GenerationStage != ChunkGenerationStage.Decorations)
-            return;
-        
         Lighting.Generate(chunk);
     }
 
     public void generateMesh(Chunk chunk)
     {
-        if (chunk.GenerationStage != ChunkGenerationStage.Lighting)
-            return;
-        
         var meshData = Mesh.GenerateMeshData(chunk, false);
         var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
