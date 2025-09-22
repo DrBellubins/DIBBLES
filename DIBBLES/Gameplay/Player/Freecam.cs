@@ -23,21 +23,13 @@ public class Freecam
 
         playerCharacter.CameraPitch = Math.Clamp(playerCharacter.CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
-        // Build quaternion from yaw and pitch (yaw first, then pitch)
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, playerCharacter.CameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, playerCharacter.CameraPitch);
-
-        playerCharacter.CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-
-        // Calculate camera direction
-        playerCharacter.CameraForward = Vector3.Transform(Vector3.UnitZ, playerCharacter.CameraRotation); // Forward
-        playerCharacter.CameraUp = Vector3.Transform(Vector3.UnitY, playerCharacter.CameraRotation);
-        playerCharacter.CameraRight = Vector3.Transform(-Vector3.UnitX, playerCharacter.CameraRotation); // This has to be flipped for some reason...
-
-        // Camera position
-        playerCharacter.Camera.Position = playerCharacter.Position + new Vector3(0.0f, PlayerCharacter.PlayerHeight * 0.5f, 0.0f);
-        playerCharacter.Camera.Target = playerCharacter.Camera.Position + playerCharacter.CameraForward;
-        playerCharacter.Camera.Up = playerCharacter.CameraUp;
+        Vector3 lookDirection = new Vector3(
+            MathF.Sin(playerCharacter.CameraYaw) * MathF.Cos(playerCharacter.CameraPitch),
+            -MathF.Sin(playerCharacter.CameraPitch),
+            MathF.Cos(playerCharacter.CameraYaw) * MathF.Cos(playerCharacter.CameraPitch)
+        );
+        
+        playerCharacter.SetCameraDirection(lookDirection);
         
         // Input
         Vector3 inputDir = Vector3.Zero;

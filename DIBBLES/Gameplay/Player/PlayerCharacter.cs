@@ -248,16 +248,13 @@ public class PlayerCharacter
 
         CameraPitch = Math.Clamp(CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
 
-        // Build quaternion from yaw and pitch (yaw first, then pitch)
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
-
-        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-
-        // Calculate camera direction
-        CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
-        CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
-        CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
+        Vector3 lookDirection = new Vector3(
+            MathF.Sin(CameraYaw) * MathF.Cos(CameraPitch),
+            -MathF.Sin(CameraPitch),
+            MathF.Cos(CameraYaw) * MathF.Cos(CameraPitch)
+        );
+        
+        SetCameraDirection(lookDirection);
 
         // Camera position
         Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.49f, 0.0f);
@@ -420,6 +417,11 @@ public class PlayerCharacter
         Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
 
         CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+        
+        // Calculate camera direction
+        CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
+        CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
+        CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
     }
     
     public void Draw()
