@@ -93,8 +93,6 @@ public class TerrainGenerationNew
             
             // Upload mesh on main thread
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
-            
-            unloadDistantChunks(centerChunk);
         }
         
         // Transparent pass
@@ -105,9 +103,9 @@ public class TerrainGenerationNew
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
-            
-            unloadDistantChunks(centerChunk);
         }
+        
+        unloadDistantChunks(centerChunk);
     }
 
     private void updateStageIfReady(Vector3Int centerChunk)
