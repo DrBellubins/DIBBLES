@@ -187,7 +187,11 @@ public class TerrainGenerationNew
                 
                 try
                 {
-                    Chunk chunk = new Chunk(pos);
+                    if (!ChunkBuffer.TryGetValue(pos, out var chunk))
+                    {
+                        chunk = new Chunk(pos);
+                        ChunkBuffer.TryAdd(pos, chunk);
+                    }
                     
                     proccesTerrainStage(chunk);
                     
@@ -204,7 +208,7 @@ public class TerrainGenerationNew
         {
             case ChunkGenerationStage.Uninitialized:
             {
-                //Console.WriteLine("Uninitialized chunk");
+                Console.WriteLine("Uninitialized chunk");
                 chunk.GenerationStage++;
                 break;
             }
