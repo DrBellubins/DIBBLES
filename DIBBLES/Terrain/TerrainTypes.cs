@@ -2,7 +2,7 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Terrain;
 
-// Only run-time modified data (NO BlockInfo stuff, that is for block prefabs!)
+// Only run-time data (NO BlockInfo stuff, that is for block prefabs!)
 public struct Block
 {
     public BlockType Type;
@@ -25,6 +25,22 @@ public struct Block
     }
 }
 
+public struct BlockNew
+{
+    public byte Type;
+    public byte Biome;
+    public byte LightLevel;
+    
+    public BlockNew(byte type)
+    {
+        var info = BlockData.Prefabs[(BlockType)type];
+        
+        Type = type;
+        Biome = 0; // Plains
+        LightLevel = info.LightEmission;
+    }
+}
+
 public enum ChunkGenerationStage
 {
     Uninitialized,
@@ -38,7 +54,7 @@ public class Chunk
 {
     public Vector3Int Position;
     public Block[] Blocks; // Flat array for locality.
-
+    
     public bool IsModified = false;
     
     public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
@@ -46,7 +62,7 @@ public class Chunk
     public Chunk(Vector3Int pos)
     {
         Position = pos;
-        Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        //Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
     }
 
     // Helper for flat indexing
