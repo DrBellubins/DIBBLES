@@ -25,7 +25,7 @@ public struct Block
     }
 }
 
-public enum ChunkGenerationState
+public enum ChunkGenerationStage
 {
     Uninitialized,
     ChunkData,
@@ -41,7 +41,7 @@ public class Chunk
 
     public bool IsModified = false;
     
-    public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
+    public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
     
     public Chunk(Vector3Int pos)
     {
