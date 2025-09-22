@@ -43,6 +43,9 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
+        foreach (var kv in WorldSave.Data.ModifiedChunks)
+            ChunkBuffer[kv.Key] = kv.Value;
+        
         if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else

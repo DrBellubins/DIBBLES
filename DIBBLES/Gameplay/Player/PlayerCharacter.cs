@@ -109,8 +109,8 @@ public class PlayerCharacter
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
         //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
         
-        if (!ShouldUpdate)
-            return;
+        //if (!ShouldUpdate)
+        //    return;
 
         hotbar.Update(IsDead, IsFrozen);
         
