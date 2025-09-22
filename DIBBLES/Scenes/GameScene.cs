@@ -12,7 +12,7 @@ namespace DIBBLES.Scenes;
 public class GameScene : Scene
 {
     //public static TerrainGeneration TerrainGen = new();
-    public static TerrainGenerationNew TerrainGen = new();
+    public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
 
     public static List<BlockLogic> BlockLogicList = new();
@@ -39,12 +39,12 @@ public class GameScene : Scene
         Input.Update();
         
         Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
-        Debug.Draw2DText($"Seed: {TerrainGenerationNew.Seed}", Color.White);
+        Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
         
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);
-        TerrainGenerationNew.Gameplay.Update(PlayerCharacter.Camera);
+        TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
         
         gameChat.Update();
         

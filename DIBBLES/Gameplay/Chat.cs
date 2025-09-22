@@ -163,7 +163,7 @@ public class Chat
             prevMsgTraversalIndex++;
         }*/
         
-        if (TerrainGenerationNew.DoneLoading)
+        if (TerrainGeneration.DoneLoading)
             GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
 

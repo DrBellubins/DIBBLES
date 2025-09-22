@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Terrain;
 
-public class TerrainGenerationNew
+public class TerrainGeneration
 {
     public const int RenderDistance = 12;
     public const int ChunkSize = 16;

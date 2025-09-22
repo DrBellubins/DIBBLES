@@ -208,9 +208,9 @@ public static class FaceUtils
             
             byte lightLevel;
             
-            if (nx >= 0 && nx < TerrainGenerationNew.ChunkSize &&
-                ny >= 0 && ny < TerrainGenerationNew.ChunkSize &&
-                nz >= 0 && nz < TerrainGenerationNew.ChunkSize)
+            if (nx >= 0 && nx < TerrainGeneration.ChunkSize &&
+                ny >= 0 && ny < TerrainGeneration.ChunkSize &&
+                nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
                 lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
             }
@@ -247,9 +247,9 @@ public static class FaceUtils
 
             byte lightLevel;
             
-            if (nx >= 0 && nx < TerrainGenerationNew.ChunkSize &&
-                ny >= 0 && ny < TerrainGenerationNew.ChunkSize &&
-                nz >= 0 && nz < TerrainGenerationNew.ChunkSize)
+            if (nx >= 0 && nx < TerrainGeneration.ChunkSize &&
+                ny >= 0 && ny < TerrainGeneration.ChunkSize &&
+                nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
                 lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
             }
@@ -274,21 +274,21 @@ public static class FaceUtils
     
     public static Block GetBlockAtWorldPos(Vector3Int worldPos)
     {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
+        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
         
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (TerrainGenerationNew.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        if (TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
         {
             int localX = worldPos.X - chunkX;
             int localY = worldPos.Y - chunkY;
             int localZ = worldPos.Z - chunkZ;
             
-            if (localX >= 0 && localX < TerrainGenerationNew.ChunkSize &&
-                localY >= 0 && localY < TerrainGenerationNew.ChunkSize &&
-                localZ >= 0 && localZ < TerrainGenerationNew.ChunkSize)
+            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
+                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
+                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
             {
                 return chunk.GetBlock(localX, localY, localZ);
             }

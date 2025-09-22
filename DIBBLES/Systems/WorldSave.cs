@@ -4,7 +4,7 @@ using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using DIBBLES.Terrain;
 
-using static DIBBLES.Terrain.TerrainGenerationNew;
+using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
@@ -61,7 +61,7 @@ public class WorldSave
         {
             writer.Write("W_DIBBLES");
             
-            writer.Write(TerrainGenerationNew.Seed);
+            writer.Write(TerrainGeneration.Seed);
         }
         
         // Player data

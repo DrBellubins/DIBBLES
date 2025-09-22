@@ -46,27 +46,27 @@ public class Chunk
     public Chunk(Vector3Int pos)
     {
         Position = pos;
-        Blocks = new Block[TerrainGenerationNew.ChunkSize * TerrainGenerationNew.ChunkSize * TerrainGenerationNew.ChunkSize];
+        Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
     }
 
     // Helper for flat indexing
     public Block GetBlock(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGenerationNew.ChunkSize ||
-            y < 0 || y >= TerrainGenerationNew.ChunkSize ||
-            z < 0 || z >= TerrainGenerationNew.ChunkSize)
+        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
+            y < 0 || y >= TerrainGeneration.ChunkSize ||
+            z < 0 || z >= TerrainGeneration.ChunkSize)
         {
             // Return Air block if out of bounds
             return new Block(new Vector3Int(x, y, z), BlockType.Air);
         }
 
-        int index = x + TerrainGenerationNew.ChunkSize * (y + TerrainGenerationNew.ChunkSize * z);
+        int index = x + TerrainGeneration.ChunkSize * (y + TerrainGeneration.ChunkSize * z);
         return Blocks[index];
     }
 
     public void SetBlock(int x, int y, int z, Block data)
     {
-        int index = x + TerrainGenerationNew.ChunkSize * (y + TerrainGenerationNew.ChunkSize * z);
+        int index = x + TerrainGeneration.ChunkSize * (y + TerrainGeneration.ChunkSize * z);
         Blocks[index] = data;
     }
 }

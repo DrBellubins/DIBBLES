@@ -5,7 +5,7 @@ using DIBBLES.Systems;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 
-using static DIBBLES.Terrain.TerrainGenerationNew;
+using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
 
@@ -80,7 +80,7 @@ public class TerrainMesh
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
         
-                long chunkSeed = TerrainGenerationNew.Seed 
+                long chunkSeed = TerrainGeneration.Seed 
                                  ^ (block.Position.X * 73428767L)
                                  ^ (block.Position.Y * 9127841L)
                                  ^ (block.Position.Z * 192837465L);

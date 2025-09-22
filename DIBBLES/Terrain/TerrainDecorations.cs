@@ -30,21 +30,21 @@ public class TerrainDecorations
         {
             Vector3Int pos = surfacePos + new Vector3Int(0, 1 + dy, 0);
 
-            int chunkX = (int)Math.Floor((float)pos.X / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
+            int chunkX = (int)Math.Floor((float)pos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGenerationNew.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
             int localX = pos.X - chunkX;
             int localY = pos.Y - chunkY;
             int localZ = pos.Z - chunkZ;
 
-            if (localX < 0 || localX >= TerrainGenerationNew.ChunkSize ||
-                localY < 0 || localY >= TerrainGenerationNew.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGenerationNew.ChunkSize)
+            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
+                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
+                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 continue;
 
             chunk.SetBlock(localX, localY, localZ, new Block(pos, BlockType.WoodLog));
@@ -57,21 +57,21 @@ public class TerrainDecorations
         {
             Vector3Int pos = surfacePos + new Vector3Int(dx, trunkHeight + dy, dz);
 
-            int chunkX = (int)Math.Floor((float)pos.X / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
+            int chunkX = (int)Math.Floor((float)pos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGenerationNew.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
                 continue;
 
             int localX = pos.X - chunkX;
             int localY = pos.Y - chunkY;
             int localZ = pos.Z - chunkZ;
 
-            if (localX < 0 || localX >= TerrainGenerationNew.ChunkSize ||
-                localY < 0 || localY >= TerrainGenerationNew.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGenerationNew.ChunkSize)
+            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
+                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
+                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 continue;
 
             // Only place leaves if position is Air (don't overwrite trunk)
@@ -94,13 +94,13 @@ public class TerrainDecorations
             );
 
             // Find the chunk containing this block
-            int chunkX = (int)Math.Floor((float)checkPos.X / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkY = (int)Math.Floor((float)checkPos.Y / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)checkPos.Z / TerrainGenerationNew.ChunkSize) * TerrainGenerationNew.ChunkSize;
+            int chunkX = (int)Math.Floor((float)checkPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkY = (int)Math.Floor((float)checkPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkZ = (int)Math.Floor((float)checkPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
 
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGenerationNew.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
                 return false; // Out of loaded world bounds or chunk missing
 
             int localX = checkPos.X - chunkX;
@@ -108,9 +108,9 @@ public class TerrainDecorations
             int localZ = checkPos.Z - chunkZ;
 
             // Bounds check (should always be safe due to chunk math, but just in case)
-            if (localX < 0 || localX >= TerrainGenerationNew.ChunkSize ||
-                localY < 0 || localY >= TerrainGenerationNew.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGenerationNew.ChunkSize)
+            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
+                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
+                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 return false; // Out of chunk bounds
 
             var block = chunk.GetBlock(localX, localY, localZ);

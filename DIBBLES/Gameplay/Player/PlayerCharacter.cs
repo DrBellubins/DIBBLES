@@ -4,7 +4,7 @@ using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-using static DIBBLES.Terrain.TerrainGenerationNew;
+using static DIBBLES.Terrain.TerrainGeneration;
 //using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Gameplay.Player;
@@ -121,7 +121,7 @@ public class PlayerCharacter
             
             if (Input.StartedBreaking) // Break immediately
             {
-                TerrainGenerationNew.Gameplay.BreakBlock();
+                TerrainGeneration.Gameplay.BreakBlock();
                 placeBreakTimer = 0f;
             }
         
@@ -129,14 +129,14 @@ public class PlayerCharacter
             {
                 if (placeBreakTimer >= 0.3f)
                 {
-                    TerrainGenerationNew.Gameplay.BreakBlock();
+                    TerrainGeneration.Gameplay.BreakBlock();
                     placeBreakTimer = 0f;
                 }
             }
 
             if (Input.StartedInteracting && hotbar.SelectedItem != null) // Place immediately
             {
-                TerrainGenerationNew.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                 placeBreakTimer = 0f;
             }
         
@@ -144,7 +144,7 @@ public class PlayerCharacter
             {
                 if (placeBreakTimer >= 0.3f)
                 {
-                    TerrainGenerationNew.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
+                    TerrainGeneration.Gameplay.PlaceBlock(this, hotbar.SelectedItem.Type);
                     placeBreakTimer = 0f;
                 }
             }
