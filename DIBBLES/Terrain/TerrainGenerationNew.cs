@@ -124,8 +124,16 @@ public class TerrainGenerationNew
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            if (!ChunkBuffer.ContainsKey(chunkPos))
+            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            {
+                if (chunk.GenerationStage == terrainGenerationStage)
+                    chunksToGenerate.Add(chunkPos);
+            }
+            else
+            {
+                // New chunk: add at Uninitialized
                 chunksToGenerate.Add(chunkPos);
+            }
         }
 
         // Sort by distance to centerChunk
@@ -234,7 +242,7 @@ public class TerrainGenerationNew
             terrainGenerationStage++;
             terrainGenerationThreaded(centerChunk);
             
-            Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
+            //Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
         }
     }
     
