@@ -25,22 +25,6 @@ public struct Block
     }
 }
 
-public struct BlockNew
-{
-    public byte Type;
-    public byte Biome;
-    public byte LightLevel;
-    
-    public BlockNew(byte type)
-    {
-        var info = BlockData.Prefabs[(BlockType)type];
-        
-        Type = type;
-        Biome = 0; // Plains
-        LightLevel = info.LightEmission;
-    }
-}
-
 public enum ChunkGenerationStage
 {
     Uninitialized,
@@ -54,6 +38,10 @@ public class Chunk
 {
     public Vector3Int Position;
     public Block[] Blocks; // Flat array for locality.
+
+    public byte[] BlockTypes;
+    public byte[] LightLevels;
+    public byte[] Biomes;
     
     public bool IsModified = false;
     
@@ -63,6 +51,10 @@ public class Chunk
     {
         Position = pos;
         //Blocks = new Block[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        
+        BlockTypes =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        LightLevels =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        Biomes =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
     }
 
     // Helper for flat indexing
