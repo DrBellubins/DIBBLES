@@ -24,9 +24,13 @@ public class Debug
     public static void Update(Camera3D camera)
     {
         debugCamera = camera;
-        textBuffer2d.Clear();
     }
 
+    public static void Clear2D()
+    {
+        textBuffer2d.Clear();
+    }
+    
     public static void ToggleDebug(string[] args)
     {
         ShowDebug = !ShowDebug;
@@ -53,9 +57,6 @@ public class Debug
                 var color = bufferText.Item2;
                 
                 UIBatch.DrawString(Engine.MainFont, text, new Vector2(0f, index), color);
-                
-                // TODO: Monogame
-                //Raylib.DrawTextEx(MonoEngine.MainFont, text.Key, new Vector2(0f, index), 24f, 1f, text.Value);
                 index += 24;
             }
         }

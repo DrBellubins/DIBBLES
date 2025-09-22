@@ -38,6 +38,9 @@ public class GameScene : Scene
     {
         Input.Update();
         
+        Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
+        Debug.Draw2DText($"Seed: {TerrainGenerationNew.Seed}", Color.White);
+        
         PlayerCharacter.Update();
         
         TerrainGen.Update(PlayerCharacter);
@@ -79,10 +82,8 @@ public class GameScene : Scene
         gameChat.DrawBG();
         gameChat.Draw();
         
-        Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
-        Debug.Draw2DText($"Seed: {TerrainGenerationNew.Seed}", Color.White);
-        
         Debug.Draw2D();
+        Debug.Clear2D();
         
         UIBatch.End();
     }

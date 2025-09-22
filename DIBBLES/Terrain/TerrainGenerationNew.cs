@@ -43,10 +43,10 @@ public class TerrainGenerationNew
         WorldSave.Initialize();
         //WorldSave.LoadWorldData("test");
         
-        /*if (WorldSave.Exists)
+        if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
     }
@@ -67,10 +67,11 @@ public class TerrainGenerationNew
             chunksLoaded = 0;
 
             // Start chunk staging
-            terrainGenerationThreaded(centerChunk);
+            terrainGenerationThreaded(centerChunk, true);
         }
 
         updateStageIfReady(centerChunk);
+        Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
@@ -78,7 +79,7 @@ public class TerrainGenerationNew
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             playerCharacter.NeedsToSpawn = true;
-            playerCharacter.FreeCamEnabled = true;
+            playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
         }
@@ -137,8 +138,12 @@ public class TerrainGenerationNew
 
         if (allReady)
         {
-            terrainGenerationStage++;
-            terrainGenerationThreaded(centerChunk);
+            // TODO: Sometimes spams true???
+            if (terrainGenerationStage < ChunkGenerationStage.Meshing)
+            {
+                terrainGenerationStage++;
+                terrainGenerationThreaded(centerChunk);
+            }
             
             Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
         }
@@ -146,7 +151,7 @@ public class TerrainGenerationNew
     
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
-    private void terrainGenerationThreaded(Vector3Int centerChunk)
+    private void terrainGenerationThreaded(Vector3Int centerChunk, bool addAfterInitial = false)
     {
         int halfRenderDistance = RenderDistance / 2;
         List<Vector3Int> chunksToGenerate = new();
@@ -168,9 +173,6 @@ public class TerrainGenerationNew
                 // New chunk: add at Uninitialized
                 chunksToGenerate.Add(chunkPos);
             }
-            
-            //if (!ChunkBuffer.ContainsKey(chunkPos))
-            //    chunksToGenerate.Add(chunkPos);
         }
 
         // Sort by distance to centerChunk
@@ -187,15 +189,22 @@ public class TerrainGenerationNew
                 
                 try
                 {
+                    // If chunk doesn't exist at pos, create and add empty chunk to buffer.
                     if (!ChunkBuffer.TryGetValue(pos, out var chunk))
                     {
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
+                        proccesTerrainStage(chunk);
                     }
-                    
-                    proccesTerrainStage(chunk);
-                    
-                    ChunkBuffer.TryAdd(pos, chunk);
+                    else
+                    {
+                        if (!DoneLoading)
+                            proccesTerrainStage(chunk);
+                        
+                        // If new chunk after initial generation, make sure to get stages up to date for it.
+                        while (DoneLoading && addAfterInitial && chunk.GenerationStage < terrainGenerationStage)
+                            proccesTerrainStage(chunk);
+                    }
                 }
                 finally { semaphore.Release(); }
             });
@@ -208,7 +217,6 @@ public class TerrainGenerationNew
         {
             case ChunkGenerationStage.Uninitialized:
             {
-                Console.WriteLine("Uninitialized chunk");
                 chunk.GenerationStage++;
                 break;
             }
@@ -219,28 +227,24 @@ public class TerrainGenerationNew
                 else
                     generateChunkData(chunk);
 
-                Console.WriteLine("ChunkData chunk");
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Decorations:
             {
                 generateChunkDecorations(chunk);
-                Console.WriteLine("Decorations chunk");
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Lighting:
             {
                 generateLighting(chunk);
-                Console.WriteLine("Lighting chunk");
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Meshing:
             {
                 generateMesh(chunk);
-                Console.WriteLine("Meshing chunk");
                 chunksLoaded++;
                 chunk.GenerationStage++;
                 break;

@@ -89,8 +89,8 @@ public class PlayerCharacter
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
 
-        //hotbar.Start();
-        //handModel.Start();
+        hotbar.Start();
+        handModel.Start();
         
         Commands.RegisterCommand("kill", "Kills the player", killCMD);
         Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
@@ -104,6 +104,11 @@ public class PlayerCharacter
     
     public void Update()
     {
+        Debug.Draw2DText($"Position: {Position.X}, {Position.Y}, {Position.Z}", Color.White);
+        Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
+        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
+        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
+        
         if (!ShouldUpdate)
             return;
 
@@ -402,64 +407,6 @@ public class PlayerCharacter
         
         Velocity = Vector3.Zero;
     }
-
-    // Commands
-    private void killCMD(string[] args)
-    {
-        Kill();
-        Chat.Write(ChatMessageType.Command, "Killed the player");
-    }
-    
-    private void respawnCMD(string[] args)
-    {
-        Position = spawnPosition;
-        SetCameraDirection(WorldSave.Data.CameraDirection);
-
-        Health = 100;
-        Velocity = Vector3.Zero;
-        IsDead = false;
-        IsFrozen = false;
-        
-        Chat.Write(ChatMessageType.Command, $"Spawning at {WorldSave.Data.PlayerPosition}");
-    }
-    
-    private void healCMD(string[] args)
-    {
-        int healAmount = 0;
-
-        if (args.Length != 1)
-        {
-            healAmount = 100;
-            Chat.Write(ChatMessageType.Command, $"Set player health to full health");
-        }
-        else if (int.TryParse(args[0], out var amount))
-        {
-            healAmount = amount;
-            Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
-        }
-        else
-            Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
-            
-        SetHealth(healAmount);
-    }
-
-    private void teleportCMD(string[] args)
-    {
-        if (args.Length == 1 && args[0].Contains(','))
-            args = args[0].Split(',');
-
-        if (args.Length != 3 ||
-            !float.TryParse(args[0], out var x) ||
-            !float.TryParse(args[1], out var y) ||
-            !float.TryParse(args[2], out var z))
-        {
-            Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
-            return;
-        }
-
-        Position = new Vector3(x, y, z);
-        Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
-    }
     
     public void SetCameraDirection(Vector3 direction)
     {
@@ -477,17 +424,12 @@ public class PlayerCharacter
     
     public void Draw()
     {
-        //handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
+        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
     }
 
     public void DrawUI()
     {
-        //hotbar.Draw(Health);
-        
-        Debug.Draw2DText($"Position: {Position}", Color.White);
-        Debug.Draw2DText($"Camera Direction: {CameraForward}", Color.White);
-        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
-        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
+        hotbar.Draw(Health);
         
         // TODO: Temporary death screen
         if (IsDead)
@@ -633,5 +575,63 @@ public class PlayerCharacter
         );
         
         return new BoundingBox(min, max);
+    }
+    
+    // Commands
+    private void killCMD(string[] args)
+    {
+        Kill();
+        Chat.Write(ChatMessageType.Command, "Killed the player");
+    }
+    
+    private void respawnCMD(string[] args)
+    {
+        Position = spawnPosition;
+        SetCameraDirection(WorldSave.Data.CameraDirection);
+
+        Health = 100;
+        Velocity = Vector3.Zero;
+        IsDead = false;
+        IsFrozen = false;
+        
+        Chat.Write(ChatMessageType.Command, $"Spawning at {WorldSave.Data.PlayerPosition}");
+    }
+    
+    private void healCMD(string[] args)
+    {
+        int healAmount = 0;
+
+        if (args.Length != 1)
+        {
+            healAmount = 100;
+            Chat.Write(ChatMessageType.Command, $"Set player health to full health");
+        }
+        else if (int.TryParse(args[0], out var amount))
+        {
+            healAmount = amount;
+            Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
+        }
+        else
+            Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
+            
+        SetHealth(healAmount);
+    }
+
+    private void teleportCMD(string[] args)
+    {
+        if (args.Length == 1 && args[0].Contains(','))
+            args = args[0].Split(',');
+
+        if (args.Length != 3 ||
+            !float.TryParse(args[0], out var x) ||
+            !float.TryParse(args[1], out var y) ||
+            !float.TryParse(args[2], out var z))
+        {
+            Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
+            return;
+        }
+
+        Position = new Vector3(x, y, z);
+        Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
     }
 }

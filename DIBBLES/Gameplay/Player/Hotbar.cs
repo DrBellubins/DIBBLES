@@ -136,9 +136,6 @@ public class Hotbar
                     (hotbarRect.Y + 0.1f * hotbarRect.Height),
                     (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
 
-                // TODO: Temporary until 3d icons can be fixed
-                //UIBatch.DrawTextureRect(BlockData.Textures[hotbarSlots[i].Type], itemDestRect, Color.White);
-                
                 if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
                     var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
@@ -206,21 +203,6 @@ public class Hotbar
             Engine.Graphics.SetRenderTarget(null);
             
             blockIcons[blockType] = renderTexture;
-            
-            /*Raylib.BeginTextureMode(renderTexture);
-            Raylib.ClearBackground(new Color(0,0,0,0)); // Transparent background
-            Raylib.BeginMode3D(cam);
-
-            Raylib.DrawModel(cubeModel, Vector3.Zero, cubeScale, Color.White);
-
-            Raylib.EndMode3D();
-            Raylib.EndTextureMode();
-
-            // Free the model after use
-            Raylib.UnloadModel(cubeModel);
-
-            // Store the icon texture (renderTexture.Texture) in your dictionary
-            blockIcons[blockType] = renderTexture.Texture;*/
         }
     }
     
