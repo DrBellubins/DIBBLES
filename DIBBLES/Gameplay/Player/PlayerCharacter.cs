@@ -434,9 +434,9 @@ public class PlayerCharacter
         // TODO: Temporary death screen
         if (IsDead)
         {
-            var deathScreen = new Rectangle(0, 0, Engine.ScreenWidth, Engine.ScreenHeight);
+            var deathScreen = new RectangleF(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
             
-            Primatives2D.DrawRectangleRec(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+            UIBatch.DrawRect(deathScreen, new Color(1f, 0f, 0f, 0.5f));
         }
         
         UIBatch.DrawCircle(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f, 1f, Color.White);

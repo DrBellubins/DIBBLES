@@ -70,6 +70,8 @@ public class GameScene : Scene
         gd.SamplerStates[0] = SamplerState.PointClamp;
         
         TerrainGen.Draw();
+        TerrainGeneration.Gameplay.Draw();
+        
         PlayerCharacter.Draw();
         
         //Debug.Draw3D();

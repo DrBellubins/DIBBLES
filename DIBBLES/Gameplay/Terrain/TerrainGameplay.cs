@@ -16,6 +16,23 @@ public class TerrainGameplay
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
     }
+
+    public void Draw()
+    {
+        if (!SelectedBlock.IsAir)
+        {
+            Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+            
+            // Offset by half a block in the direction of the normal
+            Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
+            
+            // Face selection overlay
+            //RayEx.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), SelectedNormal.ToVector3());
+            
+            // Draw block selection overlay
+            //RayEx.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 1f, 1f, 1f, Color.Black);
+        }
+    }
     
     private (Block, Vector3Int) selectBlock(Systems.Camera3D camera)
     {
@@ -298,7 +315,7 @@ public class TerrainGameplay
         );
     }
     
-    private Microsoft.Xna.Framework.BoundingBox getBlockBB(Vector3 position)
+    private BoundingBox getBlockBB(Vector3 position)
     {
         Vector3 min = new Vector3(
             position.X - 0.5f,
@@ -311,6 +328,6 @@ public class TerrainGameplay
             position.Z + 0.5f
         );
         
-        return new Microsoft.Xna.Framework.BoundingBox(min + new Vector3(0.5f), max + new Vector3(0.5f));
+        return new BoundingBox(min + new Vector3(0.5f), max + new Vector3(0.5f));
     }
 }

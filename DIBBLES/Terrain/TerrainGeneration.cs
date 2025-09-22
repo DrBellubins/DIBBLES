@@ -136,14 +136,11 @@ public class TerrainGeneration
 
         if (allReady)
         {
-            // TODO: Sometimes spams true???
             if (terrainGenerationStage < ChunkGenerationStage.Meshing)
             {
                 terrainGenerationStage++;
                 terrainGenerationThreaded(centerChunk);
             }
-            
-            Console.WriteLine($"terrainGenerationStage: {terrainGenerationStage}");
         }
     }
     
