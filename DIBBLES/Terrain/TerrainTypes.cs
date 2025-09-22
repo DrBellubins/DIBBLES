@@ -41,8 +41,6 @@ public class Chunk
 
     public bool IsModified = false;
     
-    //public ChunkGenerationState GenerationState = ChunkGenerationState.Uninitialized;
-    
     public Chunk(Vector3Int pos)
     {
         Position = pos;

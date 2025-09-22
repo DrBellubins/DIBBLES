@@ -32,7 +32,7 @@ public class TerrainGenerationNew
     private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> meshUploadQueue = new(); // Opaque
     private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
 
-    private ChunkGenerationState terrainStage = ChunkGenerationState.Uninitialized;
+    private ChunkGenerationState terrainGenerationState = ChunkGenerationState.Uninitialized;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     private int chunksLoaded = 0;
     
@@ -67,7 +67,7 @@ public class TerrainGenerationNew
             chunksLoaded = 0;
 
             // Start chunk staging
-            chunkGenerationStages(centerChunk);
+            terrainGenerationThreaded(centerChunk);
         }
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
@@ -111,7 +111,7 @@ public class TerrainGenerationNew
 
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
-    private void chunkGenerationStages(Vector3Int centerChunk)
+    private void terrainGenerationThreaded(Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
         List<Vector3Int> chunksToGenerate = new();
@@ -122,7 +122,6 @@ public class TerrainGenerationNew
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            // TODO: May need to chunk generation state
             if (!ChunkBuffer.ContainsKey(chunkPos))
                 chunksToGenerate.Add(chunkPos);
         }
@@ -142,46 +141,10 @@ public class TerrainGenerationNew
                 try
                 {
                     Chunk chunk = new Chunk(pos);
+
+                    proccesChunkState(chunk);
                     
-                    switch (terrainStage)
-                    {
-                        case ChunkGenerationState.Uninitialized:
-                        {
-                            if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
-                                chunk = savedChunk;
-                            else
-                                generateChunkData(chunk);
-                            
-                            ChunkBuffer.TryAdd(pos, chunk);
-                            
-                            break;
-                        }
-                        case ChunkGenerationState.ChunkData:
-                        {
-                            generateChunkDecorations(chunk);
-                            
-                            // TODO: MODIFY CHUNKBUFFER!!
-                            break;
-                        }
-                        case ChunkGenerationState.Decorations:
-                        {
-                            generateLighting(chunk);
-                            
-                            // TODO: MODIFY CHUNKBUFFER!!
-                            break;
-                        }
-                        case ChunkGenerationState.Lighting:
-                        {
-                            generateMesh(chunk);
-                            
-                            // TODO: MODIFY CHUNKBUFFER!!
-                            break;
-                        }
-                        case ChunkGenerationState.Meshing:
-                        {
-                            break;
-                        }
-                    }
+                    ChunkBuffer.TryAdd(pos, chunk);
                 }
                 catch (Exception e)
                 {
@@ -193,11 +156,43 @@ public class TerrainGenerationNew
         }
     }
 
+    private void proccesChunkState(Chunk chunk)
+    {
+        switch (terrainGenerationState)
+        {
+            case ChunkGenerationState.Uninitialized:
+            {
+                if (WorldSave.Data.ModifiedChunks.TryGetValue(chunk.Position, out var savedChunk))
+                    chunk = savedChunk;
+                else
+                    generateChunkData(chunk);
+                
+                break;
+            }
+            case ChunkGenerationState.ChunkData:
+            {
+                generateChunkDecorations(chunk);
+                break;
+            }
+            case ChunkGenerationState.Decorations:
+            {
+                generateLighting(chunk);
+                break;
+            }
+            case ChunkGenerationState.Lighting:
+            {
+                generateMesh(chunk);
+                break;
+            }
+            case ChunkGenerationState.Meshing:
+            {
+                break;
+            }
+        }
+    }
+    
     private void generateChunkData(Chunk chunk)
     {
-        if (terrainStage != ChunkGenerationState.Uninitialized)
-            return;
-        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -266,9 +261,6 @@ public class TerrainGenerationNew
     
     private void generateChunkDecorations(Chunk chunk)
     {
-        if (terrainStage != ChunkGenerationState.ChunkData)
-            return;
-        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -298,19 +290,11 @@ public class TerrainGenerationNew
 
     private void generateLighting(Chunk chunk)
     {
-        // Can be generate either after decorations for natural terrain,
-        // Or after ChunkData in the case of modified chunks.
-        if (terrainStage != ChunkGenerationState.Decorations)
-            return;
-        
         Lighting.Generate(chunk);
     }
 
     public void generateMesh(Chunk chunk)
     {
-        if (terrainStage != ChunkGenerationState.Lighting)
-            return;
-        
         var meshData = Mesh.GenerateMeshData(chunk, false);
         var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
