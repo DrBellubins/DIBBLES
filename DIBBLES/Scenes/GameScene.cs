@@ -6,6 +6,7 @@ using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace DIBBLES.Scenes;
 
@@ -49,8 +50,8 @@ public class GameScene : Scene
         
         gameChat.Update();
         
-        //if (!Chat.IsOpen && Raylib.IsKeyPressed(KeyboardKey.L))
-        //    WorldSave.SaveWorldData("test");
+        if (!Chat.IsOpen && Input.IsKeyPressed(Keys.L))
+            WorldSave.SaveWorldData("test");
         
         //if (Raylib.IsKeyPressed(KeyboardKey.F2))
         //    Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");

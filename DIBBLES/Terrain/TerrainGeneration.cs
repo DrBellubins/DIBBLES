@@ -41,12 +41,12 @@ public class TerrainGeneration
         BlockData.InitializeBlockPrefabs();
         
         WorldSave.Initialize();
-        //WorldSave.LoadWorldData("test");
+        WorldSave.LoadWorldData("test");
         
-        /*if (WorldSave.Exists)
+        if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
     }

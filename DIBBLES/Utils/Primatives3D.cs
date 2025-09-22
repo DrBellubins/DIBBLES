@@ -28,8 +28,7 @@ public static class Primatives3D
     /// Draws a cube wireframe with customizable line thickness.
     /// </summary>
     public static void DrawCubeWiresThick(
-        Vector3 position, float width, float height, float length, Color color, float thickness = 0.02f,
-        Matrix? view = null, Matrix? projection = null)
+        Vector3 position, float width, float height, float length, Color color, float thickness = 0.02f)
     {
         var padding = 0.01f; // To prevent z fighting
 
@@ -58,8 +57,8 @@ public static class Primatives3D
             {0,4},{1,5},{2,6},{3,7}
         };
 
-        Matrix v = view ?? GameScene.PlayerCharacter.Camera.View;
-        Matrix p = projection ?? GameScene.PlayerCharacter.Camera.Projection;
+        Matrix v = GameScene.PlayerCharacter.Camera.View;
+        Matrix p = GameScene.PlayerCharacter.Camera.Projection;
 
         _effect.World = Matrix.Identity;
         _effect.View = v;
@@ -144,11 +143,10 @@ public static class Primatives3D
     /// <param name="color">Color of the plane.</param>
     /// <param name="up">Up direction of the plane (default: Vector3.UnitY).</param>
     public static void DrawPlane(
-        Vector3 centerPos, Vector2 size, Color color, Vector3? up = null,
-        Matrix? view = null, Matrix? projection = null)
+        Vector3 centerPos, Vector2 size, Color color, Vector3? up = null)
     {
-        Matrix v = view ?? GameScene.PlayerCharacter.Camera.View;
-        Matrix p = projection ?? GameScene.PlayerCharacter.Camera.Projection;
+        Matrix v = GameScene.PlayerCharacter.Camera.View;
+        Matrix p = GameScene.PlayerCharacter.Camera.Projection;
 
         _effect.World = Matrix.Identity;
         _effect.View = v;

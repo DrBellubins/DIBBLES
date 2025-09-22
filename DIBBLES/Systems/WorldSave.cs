@@ -115,6 +115,8 @@ public class WorldSave
                 }
             }
         }
+        
+        Console.WriteLine($"Saved world `{worldName}`");
     }
     
     public static void LoadWorldData(string worldName)
