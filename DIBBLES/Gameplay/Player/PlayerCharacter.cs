@@ -89,6 +89,8 @@ public class PlayerCharacter
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
 
+        Position = WorldSave.Data.PlayerPosition;
+        
         hotbar.Start();
         handModel.Start();
         
@@ -150,7 +152,7 @@ public class PlayerCharacter
             }
         }
         
-        if (Input.FlyToggle())
+        if (Input.FlyToggle() && !IsFrozen)
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
@@ -246,7 +248,7 @@ public class PlayerCharacter
         CameraYaw += GMath.ToRadians(-lookDeltaX); // Yaw: left and right
         CameraPitch += GMath.ToRadians(lookDeltaY); // Pitch: up and down
 
-        CameraPitch = Math.Clamp(CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
+        CameraPitch = Math.Clamp(CameraPitch, GMath.ToRadians(-89.9f), GMath.ToRadians(89.9f));
 
         Vector3 lookDirection = new Vector3(
             MathF.Sin(CameraYaw) * MathF.Cos(CameraPitch),
@@ -395,7 +397,7 @@ public class PlayerCharacter
         if (WorldSave.Exists)
         {
             Position = WorldSave.Data.PlayerPosition;
-            SetCameraDirection(WorldSave.Data.CameraDirection);
+            //SetCameraDirection(WorldSave.Data.CameraDirection);
 
             spawnPosition = Position;
         }

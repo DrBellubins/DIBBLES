@@ -21,7 +21,7 @@ public class Freecam
         playerCharacter.CameraYaw += GMath.ToRadians(-lookDeltaX); // Yaw: left and right
         playerCharacter.CameraPitch += GMath.ToRadians(lookDeltaY); // Pitch: up and down
 
-        playerCharacter.CameraPitch = Math.Clamp(playerCharacter.CameraPitch, GMath.ToRadians(-90f), GMath.ToRadians(90f));
+        playerCharacter.CameraPitch = Math.Clamp(playerCharacter.CameraPitch, GMath.ToRadians(-89.9f), GMath.ToRadians(89.9f));
 
         Vector3 lookDirection = new Vector3(
             MathF.Sin(playerCharacter.CameraYaw) * MathF.Cos(playerCharacter.CameraPitch),
@@ -30,6 +30,11 @@ public class Freecam
         );
         
         playerCharacter.SetCameraDirection(lookDirection);
+        
+        // Camera position
+        playerCharacter.Camera.Position = playerCharacter.Position + new Vector3(0.0f, PlayerCharacter.PlayerHeight * 0.49f, 0.0f);
+        playerCharacter.Camera.Target = playerCharacter.Camera.Position + playerCharacter.CameraForward;
+        playerCharacter.Camera.Up = playerCharacter.CameraUp;
         
         // Input
         Vector3 inputDir = Vector3.Zero;
@@ -74,6 +79,7 @@ public class Freecam
         if (wishDir.Length() > 0)
             wishDir = Vector3.Normalize(wishDir);
         
-        playerCharacter.Position += wishDir * moveSpeed;
+        if (!playerCharacter.IsFrozen)
+            playerCharacter.Position += wishDir * moveSpeed;
     }
 }
