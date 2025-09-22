@@ -142,7 +142,7 @@ public class TerrainGenerationNew
                 {
                     Chunk chunk = new Chunk(pos);
 
-                    proccesChunkState(chunk);
+                    proccesTerrainState(chunk);
                     
                     ChunkBuffer.TryAdd(pos, chunk);
                 }
@@ -156,7 +156,7 @@ public class TerrainGenerationNew
         }
     }
 
-    private void proccesChunkState(Chunk chunk)
+    private void proccesTerrainState(Chunk chunk)
     {
         switch (terrainGenerationState)
         {
@@ -166,22 +166,26 @@ public class TerrainGenerationNew
                     chunk = savedChunk;
                 else
                     generateChunkData(chunk);
-                
+
+                chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.ChunkData:
             {
                 generateChunkDecorations(chunk);
+                chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Decorations:
             {
                 generateLighting(chunk);
+                chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Lighting:
             {
                 generateMesh(chunk);
+                chunk.GenerationState++;
                 break;
             }
             case ChunkGenerationState.Meshing:
@@ -193,6 +197,9 @@ public class TerrainGenerationNew
     
     private void generateChunkData(Chunk chunk)
     {
+        if (chunk.GenerationState != ChunkGenerationState.Uninitialized)
+            return;
+        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -261,6 +268,9 @@ public class TerrainGenerationNew
     
     private void generateChunkDecorations(Chunk chunk)
     {
+        if (chunk.GenerationState != ChunkGenerationState.ChunkData)
+            return;
+        
         long chunkSeed = Seed 
                          ^ (chunk.Position.X * 73428767L)
                          ^ (chunk.Position.Y * 9127841L)
@@ -290,11 +300,19 @@ public class TerrainGenerationNew
 
     private void generateLighting(Chunk chunk)
     {
+        // Can be generate either after decorations for natural terrain,
+        // Or after ChunkData in the case of modified chunks.
+        if (chunk.GenerationState != ChunkGenerationState.Decorations)
+            return;
+        
         Lighting.Generate(chunk);
     }
 
     public void generateMesh(Chunk chunk)
     {
+        if (chunk.GenerationState != ChunkGenerationState.Lighting)
+            return;
+        
         var meshData = Mesh.GenerateMeshData(chunk, false);
         var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
 
