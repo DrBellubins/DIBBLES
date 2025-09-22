@@ -122,7 +122,7 @@ public class TerrainGenerationNew
             
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                if (chunk.GenerationStage < terrainGenerationStage)
+                if (chunk.GenerationStage <= terrainGenerationStage)
                 {
                     allReady = false;
                     break;
