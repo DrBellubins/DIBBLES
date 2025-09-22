@@ -29,6 +29,9 @@ public class Engine : Game
 
     private static GraphicsDeviceManager GraphicsManager;
     
+    private Stopwatch timer = new();
+    private long previousTicks;
+    
     public Engine()
     {
         Instance = this;
@@ -43,6 +46,11 @@ public class Engine : Game
         
         IsMouseVisible = true;
         IsFixedTimeStep = false;
+
+        timer.Start();
+        previousTicks = timer.ElapsedTicks;
+        
+        //TargetElapsedTime = TimeSpan.FromSeconds(FrameTimestep);
     }
 
     protected override void Initialize()
@@ -77,11 +85,29 @@ public class Engine : Game
         if ((!Chat.IsOpen && Input.Quit()))
             Exit();
         
-        Time.DeltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-        Time.time += Time.DeltaTime;
-        
         foreach (var scene in Scenes)
             scene.Update();
+        
+        // Cap frame rate with optimized spin-wait
+        long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
+        long beforeWait = timer.ElapsedTicks;
+        long elapsedTicks = beforeWait - previousTicks;
+        int spinCount = 0;
+        
+        while (elapsedTicks < targetTicks)
+        {
+            Thread.SpinWait(100); // Brief spin-wait to reduce CPU usage
+            elapsedTicks = timer.ElapsedTicks - previousTicks;
+            spinCount++;
+        }
+        
+        long afterWait = timer.ElapsedTicks;
+        
+        // Calculate DeltaTime after spin-wait to include wait time
+        Time.DeltaTime = (afterWait - previousTicks) / (float)Stopwatch.Frequency;
+        Time.time += Time.DeltaTime;
+
+        previousTicks = afterWait; // Update to the end of the frame
 
         base.Update(gameTime);
     }
