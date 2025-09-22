@@ -43,7 +43,7 @@ public class GameScene : Scene
         
         PlayerCharacter.Update();
         
-        TerrainGen.Update(PlayerCharacter);
+        //TerrainGen.Update(PlayerCharacter);
         TerrainGenerationNew.Gameplay.Update(PlayerCharacter.Camera);
         
         gameChat.Update();

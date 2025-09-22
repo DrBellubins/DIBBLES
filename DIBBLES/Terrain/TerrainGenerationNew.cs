@@ -59,6 +59,16 @@ public class TerrainGenerationNew
             (int)Math.Floor(playerCharacter.Position.Y / ChunkSize),
             (int)Math.Floor(playerCharacter.Position.Z / ChunkSize)
         );
+        
+        // Only update if the camera has moved to a new chunk
+        if (centerChunk != lastCameraChunk)
+        {
+            lastCameraChunk = centerChunk;
+            chunksLoaded = 0;
+
+            // Start chunk staging
+            terrainGenerationThreaded(centerChunk, true);
+        }
 
         updateStageIfReady(centerChunk);
         Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
@@ -69,19 +79,9 @@ public class TerrainGenerationNew
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
             playerCharacter.NeedsToSpawn = true;
-            playerCharacter.FreeCamEnabled = true;
+            playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
             DoneLoading = true;
-        }
-        
-        // Only update if the camera has moved to a new chunk
-        if (centerChunk != lastCameraChunk)
-        {
-            lastCameraChunk = centerChunk;
-            chunksLoaded = 0;
-
-            // Start chunk staging
-            terrainGenerationThreaded(centerChunk, true);
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -202,7 +202,7 @@ public class TerrainGenerationNew
                         // Add new chunk after init and get its stage up to date
                         if (DoneLoading && addAfterInitial)
                         {
-                            while (chunk.GenerationStage < terrainGenerationStage)
+                            while (chunk.GenerationStage <= terrainGenerationStage)
                                 proccesTerrainStage(chunk, true);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
@@ -259,9 +259,6 @@ public class TerrainGenerationNew
                 break;
             }
         }
-        
-        //if (testChek)
-        //    Console.WriteLine($"ChunkGenerationStage {chunk.GenerationStage} finished");
     }
     
     private void generateChunkData(Chunk chunk)
