@@ -1,0 +1,23 @@
+--- Generation stages ---
+
+~ Initailization ~
+Uninitialized - Set chunk positions.
+Islands - Set initial island stone
+
+~ Cross-Chunk ~
+Surface - Set biome dependent surface blocks (based on if air is above)
+Decorations - Lay terrain decorations such as trees, grass blades, flowers
+Lighting - Set light blocks according to probe-based algorithm
+Meshing - Mesh all chunks optimized with neighbor checks
+
+--- Lighting algorithm ---
+
+~ Sky light placement ~
+All lights start at 0. A grid probe-based approach where probes expand
+outwards in all 6 directions (including diagonally) 3 blocks from probe.
+If probe is inside solid block, immediately terminate. Otherwise extend
+into air blocks until a solid is hit, or until probe edge is hit.
+Set all air blocks that don't hit anything to 15 (full bright).
+
+~ Light propagation ~
+Using BFS algorithm.
