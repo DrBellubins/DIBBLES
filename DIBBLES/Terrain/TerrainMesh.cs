@@ -65,9 +65,6 @@ public class TerrainMesh
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
             
-            //if (blockType != BlockType.Air)
-            //    Console.WriteLine($"Mesh gen: {x},{y},{z} type {blockType}");
-            
             // Opaque mesh pass: skip transparent and air blocks
             if (!isTransparencyPass && (blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
 

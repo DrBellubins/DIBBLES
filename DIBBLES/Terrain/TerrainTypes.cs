@@ -1,5 +1,7 @@
 using DIBBLES.Utils;
 
+using static DIBBLES.Terrain.TerrainGeneration;
+
 namespace DIBBLES.Terrain;
 
 // Only run-time data (NO BlockInfo stuff, that is for block prefabs!)
@@ -48,15 +50,15 @@ public class Chunk
     {
         Position = pos;
         
-        BlockTypes =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
-        LightLevels =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
-        Biomes =  new byte[TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize * TerrainGeneration.ChunkSize];
+        BlockTypes =  new byte[ChunkSize * ChunkSize * ChunkSize];
+        LightLevels =  new byte[ChunkSize * ChunkSize * ChunkSize];
+        Biomes =  new byte[ChunkSize * ChunkSize * ChunkSize];
     }
 
     // Helper for flat indexing
     private int ToIndex(int x, int y, int z)
     {
-        return x + TerrainGeneration.ChunkSize * (y + TerrainGeneration.ChunkSize * z);
+        return x + ChunkSize * (y + ChunkSize * z);
     }
     
     /// <summary>
@@ -64,9 +66,9 @@ public class Chunk
     /// </summary>
     public Block GetBlock(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
         {
             // Return Air block if out of bounds
             return new Block(new Vector3Int(Position.X + x, Position.Y + y, Position.Z + z), BlockType.Air);
@@ -95,9 +97,9 @@ public class Chunk
     /// </summary>
     public void SetBlock(int x, int y, int z, Block block)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
         {
             // Out of bounds, do nothing or throw exception
             return;
@@ -112,9 +114,9 @@ public class Chunk
     
     public BlockType GetTypeAt(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return BlockType.Air;
         
         return (BlockType)BlockTypes[ToIndex(x, y, z)];
@@ -122,9 +124,9 @@ public class Chunk
 
     public byte GetLightLevelAt(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return 0;
         
         return LightLevels[ToIndex(x, y, z)];
@@ -132,9 +134,9 @@ public class Chunk
 
     public TerrainBiome GetBiomeAt(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return TerrainBiome.Plains;
         
         return (TerrainBiome)Biomes[ToIndex(x, y, z)];
@@ -142,9 +144,9 @@ public class Chunk
     
     public BlockInfo GetInfoAt(int x, int y, int z)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return BlockData.Prefabs[BlockType.Air];
         
         var index = ToIndex(x, y, z);
@@ -154,9 +156,9 @@ public class Chunk
     
     public void SetTypeAt(int x, int y, int z, BlockType type)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return;
         
         var  index = ToIndex(x, y, z);
@@ -165,9 +167,9 @@ public class Chunk
 
     public void SetLightLevelAt(int x, int y, int z, byte lightLevel)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return;
         
         var index = ToIndex(x, y, z);
@@ -176,9 +178,9 @@ public class Chunk
 
     public void SetBiomeAt(int x, int y, int z, TerrainBiome biome)
     {
-        if (x < 0 || x >= TerrainGeneration.ChunkSize ||
-            y < 0 || y >= TerrainGeneration.ChunkSize ||
-            z < 0 || z >= TerrainGeneration.ChunkSize)
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
             return;
         
         var index = ToIndex(x, y, z);
@@ -188,21 +190,21 @@ public class Chunk
     // Globals
     public static BlockType GetBlockTypeGlobal(Vector3Int worldPos)
     {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             return BlockType.Air;
 
         int localX = worldPos.X - chunkX;
         int localY = worldPos.Y - chunkY;
         int localZ = worldPos.Z - chunkZ;
 
-        if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-            localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-            localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
             return BlockType.Air;
 
         return chunk.GetTypeAt(localX, localY, localZ);
@@ -210,21 +212,21 @@ public class Chunk
     
     public static byte GetLightLevelGlobal(Vector3Int worldPos)
     {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             return 0;
 
         int localX = worldPos.X - chunkX;
         int localY = worldPos.Y - chunkY;
         int localZ = worldPos.Z - chunkZ;
 
-        if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-            localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-            localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
             return 0;
 
         return chunk.GetLightLevelAt(localX, localY, localZ);
@@ -254,9 +256,9 @@ public class Chunk
     
     public static void SetLightLevelGlobal(Vector3Int worldPos, byte lightLevel)
     {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
         if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
@@ -266,9 +268,9 @@ public class Chunk
         int localY = worldPos.Y - chunkY;
         int localZ = worldPos.Z - chunkZ;
 
-        if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-            localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-            localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
             return;
 
         chunk.SetLightLevelAt(localX, localY, localZ, lightLevel);

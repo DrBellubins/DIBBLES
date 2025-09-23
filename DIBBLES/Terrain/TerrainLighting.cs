@@ -7,8 +7,22 @@ public class TerrainLighting
 {
     public void GenerateNew(Chunk chunk)
     {
-        placeLights(chunk);
+        //placeLights(chunk);
+        placeLightsTest(chunk);
         floodFill(chunk);
+    }
+
+    public void placeLightsTest(Chunk chunk)
+    {
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkSize; y++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            var blockType = chunk.GetTypeAt(x, y, z);
+            
+            if (blockType == BlockType.Air)
+                chunk.SetLightLevelAt(x, y, z, 15);
+        }
     }
 
     private void placeLights(Chunk chunk)
@@ -128,35 +142,23 @@ public class TerrainLighting
         int maxSteps = RenderDistance * ChunkSize;
         Vector3Int pos = start;
 
+        // --- NEW: Check initial block at edge ---
+        var initialBlockType = Chunk.GetBlockTypeGlobal(pos);
+        
+        if (initialBlockType != BlockType.Air)
+            return; // Terminate immediately if not air
+
         for (int step = 0; step < maxSteps; step++)
         {
-            // Get chunk coordinates
-            int chunkX = (int)Math.Floor((float)pos.X / ChunkSize) * ChunkSize;
-            int chunkY = (int)Math.Floor((float)pos.Y / ChunkSize) * ChunkSize;
-            int chunkZ = (int)Math.Floor((float)pos.Z / ChunkSize) * ChunkSize;
-            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-            if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-                break; // Treat missing chunk as solid
-
-            int localX = pos.X - chunkX;
-            int localY = pos.Y - chunkY;
-            int localZ = pos.Z - chunkZ;
-
-            if (localX < 0 || localX >= ChunkSize ||
-                localY < 0 || localY >= ChunkSize ||
-                localZ < 0 || localZ >= ChunkSize)
+            var blockType = Chunk.GetBlockTypeGlobal(pos);
+            
+            if (blockType != BlockType.Air)
                 break;
 
-            var blockType = chunk.GetTypeAt(localX, localY, localZ);
+            // --- NEW: Use cross-chunk SetLightLevelGlobal ---
+            Chunk.SetLightLevelGlobal(pos, 15);
 
-            if (blockType == BlockType.Air)
-            {
-                chunk.SetLightLevelAt(localX, localY, localZ, 15);
-                pos += direction;
-            }
-            else
-                break;
+            pos += direction;
         }
     }
 }
