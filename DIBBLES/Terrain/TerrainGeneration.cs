@@ -142,6 +142,13 @@ public class TerrainGeneration
             if (terrainGenerationStage < ChunkGenerationStage.Meshing)
             {
                 terrainGenerationStage++;
+                
+                if (terrainGenerationStage == ChunkGenerationStage.Lighting)
+                {
+                    // Now all chunks in render distance are ready for lighting!
+                    Lighting.GenerateAllLighting(centerChunk); // This runs global lighting flood-fill on main thread
+                }
+                
                 terrainGenerationThreaded(centerChunk);
             }
         }
@@ -353,7 +360,7 @@ public class TerrainGeneration
 
     private void generateLighting(Chunk chunk, Vector3Int centerChunk)
     {
-        Lighting.GenerateAllLighting(centerChunk);
+        //Lighting.GenerateAllLighting(centerChunk);
         //Lighting.GenerateNew(chunk);
     }
 

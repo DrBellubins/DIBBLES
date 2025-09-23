@@ -5,6 +5,8 @@ namespace DIBBLES.Terrain;
 
 public class TerrainLighting
 {
+    private const int BatchSize = 4;
+    
     public void GenerateNew(Chunk chunk)
     {
         placeLights(chunk);
@@ -21,92 +23,119 @@ public class TerrainLighting
     
     public void GenerateAllLighting(Vector3Int centerChunk)
     {
-        // 1. Enqueue all light sources from all loaded chunks in render distance
-        Queue<(Chunk chunk, Vector3Int pos)> queue = new();
-        HashSet<(Chunk, Vector3Int)> visited = new(); // Optional: avoid redundant BFS
-    
+        // 1. Collect chunk positions in render distance
         int halfRD = RenderDistance / 2;
+        List<Vector3Int> chunkPositions = new();
+
         for (int cx = centerChunk.X - halfRD; cx <= centerChunk.X + halfRD; cx++)
         for (int cy = centerChunk.Y - halfRD; cy <= centerChunk.Y + halfRD; cy++)
         for (int cz = centerChunk.Z - halfRD; cz <= centerChunk.Z + halfRD; cz++)
         {
             var chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            
-            if (!ChunkBuffer.TryGetValue(chunkPos, out var chunk))
-                continue;
-            
-            // Reset light levels (optional, if needed)
-            placeLights(chunk);
-    
-            for (int x = 0; x < ChunkSize; x++)
-            for (int y = 0; y < ChunkSize; y++)
-            for (int z = 0; z < ChunkSize; z++)
-            {
-                byte blockLight = chunk.GetLightLevelAt(x, y, z);
-                
-                if (blockLight > 0)
-                    queue.Enqueue((chunk, new Vector3Int(x, y, z)));
-            }
+            if (ChunkBuffer.ContainsKey(chunkPos))
+                chunkPositions.Add(chunkPos);
         }
-    
-        // 2. Flood-fill BFS over all loaded chunks
-        while (queue.Count > 0)
+
+        // 2. Divide into batches
+        int batchCount = (chunkPositions.Count + BatchSize - 1) / BatchSize;
+        ManualResetEvent[] batchEvents = new ManualResetEvent[batchCount];
+
+        for (int batchIdx = 0; batchIdx < batchCount; batchIdx++)
         {
-            var (curChunk, pos) = queue.Dequeue();
-            var lightLevel = curChunk.GetLightLevelAt(pos.X, pos.Y, pos.Z);
-    
-            if (lightLevel <= 1) continue;
-    
-            Vector3Int[] directions = {
-                new Vector3Int(1, 0, 0),
-                new Vector3Int(-1, 0, 0),
-                new Vector3Int(0, 1, 0),
-                new Vector3Int(0, -1, 0),
-                new Vector3Int(0, 0, 1),
-                new Vector3Int(0, 0, -1)
-            };
-    
-            foreach (var dir in directions)
+            batchEvents[batchIdx] = new ManualResetEvent(false);
+            int startIdx = batchIdx * BatchSize;
+            int endIdx = Math.Min(startIdx + BatchSize, chunkPositions.Count);
+
+            // Capture batchIdx for closure
+            var batchEvent = batchEvents[batchIdx];
+
+            ThreadPool.QueueUserWorkItem(_ =>
             {
-                Vector3Int neighborPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
-    
-                Chunk neighborChunk = curChunk;
-                Vector3Int localPos = neighborPos;
-    
-                // Cross chunk border if needed
-                if (localPos.X < 0 || localPos.X >= ChunkSize ||
-                    localPos.Y < 0 || localPos.Y >= ChunkSize ||
-                    localPos.Z < 0 || localPos.Z >= ChunkSize)
+                // Each batch processes its chunk group
+                Queue<(Chunk chunk, Vector3Int pos)> queue = new();
+
+                for (int i = startIdx; i < endIdx; i++)
                 {
-                    Vector3Int worldPos = curChunk.Position + neighborPos;
-                    int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
-                    int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
-                    int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
-                    var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-    
-                    if (!ChunkBuffer.TryGetValue(chunkCoord, out neighborChunk))
-                        continue; // Only propagate to loaded chunks
-    
-                    localPos = new Vector3Int(worldPos.X - chunkX, worldPos.Y - chunkY, worldPos.Z - chunkZ);
-                }
-    
-                // Propagate
-                var neighborBlockType = neighborChunk.GetTypeAt(localPos.X, localPos.Y, localPos.Z);
-                var neighborBlockInfo = neighborChunk.GetInfoAt(localPos.X, localPos.Y, localPos.Z);
-                var neighborBlockLightLevel = neighborChunk.GetLightLevelAt(localPos.X, localPos.Y, localPos.Z);
-    
-                if (neighborBlockType == BlockType.Air ||
-                    (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
-                {
-                    byte newLight = (byte)(lightLevel - 1);
-                    if (newLight > neighborBlockLightLevel)
+                    var chunkPos = chunkPositions[i];
+                    var chunk = ChunkBuffer[chunkPos];
+
+                    placeLights(chunk);
+
+                    for (int x = 0; x < ChunkSize; x++)
+                    for (int y = 0; y < ChunkSize; y++)
+                    for (int z = 0; z < ChunkSize; z++)
                     {
-                        neighborChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
-                        queue.Enqueue((neighborChunk, localPos));
+                        byte blockLight = chunk.GetLightLevelAt(x, y, z);
+                        if (blockLight > 0)
+                            queue.Enqueue((chunk, new Vector3Int(x, y, z)));
                     }
                 }
-            }
+
+                // Flood-fill lighting for this batch
+                while (queue.Count > 0)
+                {
+                    var (curChunk, pos) = queue.Dequeue();
+                    var lightLevel = curChunk.GetLightLevelAt(pos.X, pos.Y, pos.Z);
+
+                    if (lightLevel <= 1) continue;
+
+                    Vector3Int[] directions = {
+                        new Vector3Int(1, 0, 0),
+                        new Vector3Int(-1, 0, 0),
+                        new Vector3Int(0, 1, 0),
+                        new Vector3Int(0, -1, 0),
+                        new Vector3Int(0, 0, 1),
+                        new Vector3Int(0, 0, -1)
+                    };
+
+                    foreach (var dir in directions)
+                    {
+                        Vector3Int neighborPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
+
+                        Chunk neighborChunk = curChunk;
+                        Vector3Int localPos = neighborPos;
+
+                        // Cross chunk border if needed
+                        if (localPos.X < 0 || localPos.X >= ChunkSize ||
+                            localPos.Y < 0 || localPos.Y >= ChunkSize ||
+                            localPos.Z < 0 || localPos.Z >= ChunkSize)
+                        {
+                            Vector3Int worldPos = curChunk.Position + neighborPos;
+                            int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+                            int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+                            int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+                            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+                            if (!ChunkBuffer.TryGetValue(chunkCoord, out neighborChunk))
+                                continue; // Only propagate to loaded chunks
+
+                            localPos = new Vector3Int(worldPos.X - chunkX, worldPos.Y - chunkY, worldPos.Z - chunkZ);
+                        }
+
+                        var neighborBlockType = neighborChunk.GetTypeAt(localPos.X, localPos.Y, localPos.Z);
+                        var neighborBlockInfo = neighborChunk.GetInfoAt(localPos.X, localPos.Y, localPos.Z);
+                        var neighborBlockLightLevel = neighborChunk.GetLightLevelAt(localPos.X, localPos.Y, localPos.Z);
+
+                        if (neighborBlockType == BlockType.Air ||
+                            (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
+                        {
+                            byte newLight = (byte)(lightLevel - 1);
+                            if (newLight > neighborBlockLightLevel)
+                            {
+                                neighborChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
+                                queue.Enqueue((neighborChunk, localPos));
+                            }
+                        }
+                    }
+                }
+
+                // Signal batch complete
+                batchEvent.Set();
+            });
         }
+
+        // Wait for all batches to complete
+        WaitHandle.WaitAll(batchEvents);
     }
 
     // TODO: Needs to be cross-chunk based on SetLightLevelGlobal
