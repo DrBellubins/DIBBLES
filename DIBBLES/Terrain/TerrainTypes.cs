@@ -210,6 +210,28 @@ public class Chunk
         return chunk.GetTypeAt(localX, localY, localZ);
     }
     
+    public static BlockInfo GetBlockInfoGlobal(Vector3Int worldPos)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            return BlockData.Prefabs[BlockType.Air];
+
+        int localX = worldPos.X - chunkX;
+        int localY = worldPos.Y - chunkY;
+        int localZ = worldPos.Z - chunkZ;
+
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
+            return BlockData.Prefabs[BlockType.Air];
+
+        return chunk.GetInfoAt(localX, localY, localZ);
+    }
+    
     public static byte GetLightLevelGlobal(Vector3Int worldPos)
     {
         int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
