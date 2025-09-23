@@ -21,38 +21,36 @@ public class TerrainLighting
             chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
         
         // Step 2: Place skylights
-        Vector3Int[] directions = new Vector3Int[]
+        int halfRD = RenderDistance / 2;
+        int minChunk = -halfRD;
+        int maxChunk = halfRD;
+
+        // Directions: (dir, edge selector)
+        var directions = new[]
         {
-            new Vector3Int(1, 0, 0),   // +X
-            new Vector3Int(-1, 0, 0),  // -X
-            new Vector3Int(0, 1, 0),   // +Y
-            new Vector3Int(0, -1, 0),  // -Y
-            new Vector3Int(0, 0, 1),   // +Z
-            new Vector3Int(0, 0, -1)   // -Z
+            (dir: new Vector3Int(1, 0, 0), axis: 0, edge: maxChunk * ChunkSize),    // +X
+            (dir: new Vector3Int(-1, 0, 0), axis: 0, edge: minChunk * ChunkSize),   // -X
+            (dir: new Vector3Int(0, 1, 0), axis: 1, edge: maxChunk * ChunkSize),    // +Y
+            (dir: new Vector3Int(0, -1, 0), axis: 1, edge: minChunk * ChunkSize),   // -Y
+            (dir: new Vector3Int(0, 0, 1), axis: 2, edge: maxChunk * ChunkSize),    // +Z
+            (dir: new Vector3Int(0, 0, -1), axis: 2, edge: minChunk * ChunkSize),   // -Z
         };
 
         // For each direction, process the corresponding edge
-        foreach (var dir in directions)
+        foreach (var (dir, axis, edge) in directions)
         {
-            // Get edge ranges
-            int edgeX = dir.X > 0 ? ChunkSize - 1 : (dir.X < 0 ? 0 : -1);
-            int edgeY = dir.Y > 0 ? ChunkSize - 1 : (dir.Y < 0 ? 0 : -1);
-            int edgeZ = dir.Z > 0 ? ChunkSize - 1 : (dir.Z < 0 ? 0 : -1);
-
-            // Iterate over edge blocks
-            for (int x = 0; x < ChunkSize; x++)
-            for (int y = 0; y < ChunkSize; y++)
-            for (int z = 0; z < ChunkSize; z++)
+            // For every block in the plane at the edge of the render distance
+            for (int c0 = minChunk * ChunkSize; c0 <= maxChunk * ChunkSize; c0 += ChunkSize)
+            for (int c1 = minChunk * ChunkSize; c1 <= maxChunk * ChunkSize; c1 += ChunkSize)
+            for (int i0 = 0; i0 < ChunkSize; i0++)
+            for (int i1 = 0; i1 < ChunkSize; i1++)
             {
-                // Only process blocks on the edge for this direction
-                if ((edgeX != -1 && x != edgeX) ||
-                    (edgeY != -1 && y != edgeY) ||
-                    (edgeZ != -1 && z != edgeZ))
-                    continue;
+                int[] coords = new int[3];
+                coords[axis] = edge;
+                coords[(axis + 1) % 3] = c0 + i0;
+                coords[(axis + 2) % 3] = c1 + i1;
 
-                // Cast a ray inward from this edge block
-                Vector3Int start = new Vector3Int(chunk.Position.X + x, chunk.Position.Y + y, chunk.Position.Z + z);
-                
+                Vector3Int start = new Vector3Int(coords[0], coords[1], coords[2]);
                 castSkylightRay(start, dir);
             }
         }

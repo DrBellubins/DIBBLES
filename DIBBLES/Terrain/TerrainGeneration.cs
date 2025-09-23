@@ -214,7 +214,7 @@ public class TerrainGeneration
         }
     }
 
-    private void proccesTerrainStage(Chunk chunk, bool testChek = false)
+    private void proccesTerrainStage(Chunk chunk)
     {
         switch (chunk.GenerationStage)
         {
