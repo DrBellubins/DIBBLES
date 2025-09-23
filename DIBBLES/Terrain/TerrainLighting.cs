@@ -8,52 +8,15 @@ public class TerrainLighting
     public void GenerateNew(Chunk chunk)
     {
         placeLights(chunk);
-        //placeLightsTest(chunk);
         floodFill(chunk);
     }
 
     private void placeLights(Chunk chunk)
     {
-        // Step 1: Set block light for emissives
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
             chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
-        
-        // Step 2: Place skylights
-        int halfRD = RenderDistance / 2;
-        int minChunk = -halfRD;
-        int maxChunk = halfRD;
-
-        // Directions: (dir, edge selector)
-        var directions = new[]
-        {
-            (dir: new Vector3Int(1, 0, 0), axis: 0, edge: maxChunk * ChunkSize),    // +X
-            (dir: new Vector3Int(-1, 0, 0), axis: 0, edge: minChunk * ChunkSize),   // -X
-            (dir: new Vector3Int(0, 1, 0), axis: 1, edge: maxChunk * ChunkSize),    // +Y
-            (dir: new Vector3Int(0, -1, 0), axis: 1, edge: minChunk * ChunkSize),   // -Y
-            (dir: new Vector3Int(0, 0, 1), axis: 2, edge: maxChunk * ChunkSize),    // +Z
-            (dir: new Vector3Int(0, 0, -1), axis: 2, edge: minChunk * ChunkSize),   // -Z
-        };
-
-        // For each direction, process the corresponding edge
-        foreach (var (dir, axis, edge) in directions)
-        {
-            // For every block in the plane at the edge of the render distance
-            for (int c0 = minChunk * ChunkSize; c0 <= maxChunk * ChunkSize; c0 += ChunkSize)
-            for (int c1 = minChunk * ChunkSize; c1 <= maxChunk * ChunkSize; c1 += ChunkSize)
-            for (int i0 = 0; i0 < ChunkSize; i0++)
-            for (int i1 = 0; i1 < ChunkSize; i1++)
-            {
-                int[] coords = new int[3];
-                coords[axis] = edge;
-                coords[(axis + 1) % 3] = c0 + i0;
-                coords[(axis + 2) % 3] = c1 + i1;
-
-                Vector3Int start = new Vector3Int(coords[0], coords[1], coords[2]);
-                castSkylightRay(start, dir);
-            }
-        }
     }
 
     // TODO: Needs to be cross-chunk based on SetLightLevelGlobal

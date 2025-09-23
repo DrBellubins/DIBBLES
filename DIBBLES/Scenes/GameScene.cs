@@ -26,6 +26,12 @@ public class GameScene : Scene
     {
         UIBatch.Initialize();
         Primatives3D.Initialize();
+
+        var skyColorVec = SkyColor.ToVector3();
+
+        skyColorVec *= 0.2f;
+        
+        SkyColor = Color.FromNonPremultiplied(new Vector4(skyColorVec.X, skyColorVec.Y, skyColorVec.Z, 1.0f));
         
         TerrainGen.Start(); // Initial terrain generation
         PlayerCharacter.Start(); // Must be started after terrain
