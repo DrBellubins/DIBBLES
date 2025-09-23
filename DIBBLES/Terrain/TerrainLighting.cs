@@ -53,60 +53,68 @@ public class TerrainLighting
                 new Vector3Int(0, 0, -1)
             };
     
-            // Check all six neighbors
             foreach (var dir in directions)
             {
-                Vector3Int newPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
-        
-                // Skip if out of bounds
-                if (newPos.X < 0 || newPos.X >= ChunkSize || 
-                    newPos.Y < 0 || newPos.Y >= ChunkSize || 
-                    newPos.Z < 0 || newPos.Z >= ChunkSize)
-                    continue;
-                
-                var neighborBlockType = curChunk.GetTypeAt(newPos.X, newPos.Y, newPos.Z);
-                var neighborBlockInfo = curChunk.GetInfoAt(newPos.X, newPos.Y, newPos.Z);
-                var neighborBlockLightLevel = curChunk.GetLightLevelAt(newPos.X, newPos.Y, newPos.Z);
-                
-                // Only propagate to transparent (except leaves for thicker look) or air blocks
+                Vector3Int neighborPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
+
+                Chunk neighborChunk = curChunk;
+                Vector3Int localPos = neighborPos;
+
+                // Check if neighbor is out of bounds
+                if (localPos.X < 0 || localPos.X >= ChunkSize ||
+                    localPos.Y < 0 || localPos.Y >= ChunkSize ||
+                    localPos.Z < 0 || localPos.Z >= ChunkSize)
+                {
+                    // Convert to world position
+                    Vector3Int worldPos = curChunk.Position + neighborPos;
+                    // Find neighbor chunk
+                    int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+                    int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+                    int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+                    var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+                    if (!ChunkBuffer.TryGetValue(chunkCoord, out neighborChunk))
+                        continue; // If chunk isn't loaded, skip
+
+                    // Local position in neighbor chunk
+                    localPos = new Vector3Int(worldPos.X - chunkX, worldPos.Y - chunkY, worldPos.Z - chunkZ);
+                }
+
+                // Now propagate light to neighborChunk at localPos
+                // (Same code as before)
+                var neighborBlockType = neighborChunk.GetTypeAt(localPos.X, localPos.Y, localPos.Z);
+                var neighborBlockInfo = neighborChunk.GetInfoAt(localPos.X, localPos.Y, localPos.Z);
+                var neighborBlockLightLevel = neighborChunk.GetLightLevelAt(localPos.X, localPos.Y, localPos.Z);
+
                 if (neighborBlockType == BlockType.Air ||
                     (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
                 {
                     byte newLight = (byte)(lightLevel - 2);
-            
-                    // Only update if the new light is brighter
                     if (newLight > neighborBlockLightLevel)
                     {
-                        curChunk.SetLightLevelAt(newPos.X, newPos.Y, newPos.Z, newLight);
-                        queue.Enqueue((curChunk, newPos)); // Add to queue for further propagation
+                        neighborChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
+                        queue.Enqueue((neighborChunk, localPos));
                     }
                 }
             }
         }
     }
     
-    private void castSkylightRay(Vector3Int start, Vector3Int direction)
+    public void RelightNeighborsIfBorderBlock(Vector3Int chunkPos, Vector3Int localPos)
     {
-        int maxSteps = RenderDistance * ChunkSize;
-        Vector3Int pos = start;
-
-        // --- NEW: Check initial block at edge ---
-        var initialBlockType = Chunk.GetBlockTypeGlobal(pos);
-        
-        if (initialBlockType != BlockType.Air)
-            return; // Terminate immediately if not air
-
-        for (int step = 0; step < maxSteps; step++)
+        for (int axis = 0; axis < 3; axis++)
         {
-            var blockType = Chunk.GetBlockTypeGlobal(pos);
-            
-            if (blockType != BlockType.Air)
-                break;
+            if (localPos[axis] == 0 || localPos[axis] == ChunkSize - 1)
+            {
+                Vector3Int neighborOffset = Vector3Int.Zero;
+                neighborOffset[axis] = (localPos[axis] == 0) ? -ChunkSize : ChunkSize;
+                Vector3Int neighborChunkPos = chunkPos + neighborOffset;
 
-            // --- NEW: Use cross-chunk SetLightLevelGlobal ---
-            Chunk.SetLightLevelGlobal(pos, 15);
-
-            pos += direction;
+                if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
+                {
+                    Lighting.GenerateNew(neighborChunk);
+                }
+            }
         }
     }
 }
