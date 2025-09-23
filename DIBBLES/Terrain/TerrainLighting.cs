@@ -20,7 +20,41 @@ public class TerrainLighting
             chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
         
         // Step 2: Place skylights
-        
+        Vector3Int[] directions = new Vector3Int[]
+        {
+            new Vector3Int(1, 0, 0),   // +X
+            new Vector3Int(-1, 0, 0),  // -X
+            new Vector3Int(0, 1, 0),   // +Y
+            new Vector3Int(0, -1, 0),  // -Y
+            new Vector3Int(0, 0, 1),   // +Z
+            new Vector3Int(0, 0, -1)   // -Z
+        };
+
+        // For each direction, process the corresponding edge
+        foreach (var dir in directions)
+        {
+            // Get edge ranges
+            int edgeX = dir.X > 0 ? ChunkSize - 1 : (dir.X < 0 ? 0 : -1);
+            int edgeY = dir.Y > 0 ? ChunkSize - 1 : (dir.Y < 0 ? 0 : -1);
+            int edgeZ = dir.Z > 0 ? ChunkSize - 1 : (dir.Z < 0 ? 0 : -1);
+
+            // Iterate over edge blocks
+            for (int x = 0; x < ChunkSize; x++)
+            for (int y = 0; y < ChunkSize; y++)
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                // Only process blocks on the edge for this direction
+                if ((edgeX != -1 && x != edgeX) ||
+                    (edgeY != -1 && y != edgeY) ||
+                    (edgeZ != -1 && z != edgeZ))
+                    continue;
+
+                // Cast a ray inward from this edge block
+                Vector3Int start = new Vector3Int(chunk.Position.X + x, chunk.Position.Y + y, chunk.Position.Z + z);
+                
+                castSkylightRay(start, dir);
+            }
+        }
     }
 
     // TODO: Needs to be cross-chunk based on SetLightLevelGlobal
@@ -67,7 +101,6 @@ public class TerrainLighting
                     newPos.Y < 0 || newPos.Y >= ChunkSize || 
                     newPos.Z < 0 || newPos.Z >= ChunkSize)
                     continue;
-        
                 
                 var neighborBlockType = curChunk.GetTypeAt(newPos.X, newPos.Y, newPos.Z);
                 var neighborBlockInfo = curChunk.GetInfoAt(newPos.X, newPos.Y, newPos.Z);
@@ -87,6 +120,26 @@ public class TerrainLighting
                     }
                 }
             }
+        }
+    }
+    
+    private void castSkylightRay(Vector3Int start, Vector3Int direction)
+    {
+        // Render distance as block count
+        int maxSteps = RenderDistance * ChunkSize;
+
+        Vector3Int pos = start;
+
+        for (int step = 0; step < maxSteps; step++)
+        {
+            var blockType = Chunk.GetBlockTypeGlobal(pos);
+            
+            if (blockType != BlockType.Air)
+                break;
+
+            Chunk.SetLightLevelGlobal(pos, 15); // Set skylight level to 15
+
+            pos += direction;
         }
     }
     

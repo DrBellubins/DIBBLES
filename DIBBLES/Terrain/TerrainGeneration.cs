@@ -353,7 +353,7 @@ public class TerrainGeneration
 
     private void generateLighting(Chunk chunk)
     {
-        Lighting.Generate(chunk);
+        Lighting.GenerateNew(chunk);
     }
 
     public void generateMesh(Chunk chunk)
