@@ -64,6 +64,7 @@ public class TerrainMesh
             var pos = new Vector3Int(x, y, z);
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
+            var blockLight = chunk.GetLightLevelAt(x, y, z);
             
             // Opaque mesh pass: skip transparent and air blocks
             if (!isTransparencyPass && (blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
@@ -90,7 +91,12 @@ public class TerrainMesh
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
-                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos.ToVector3()), faceIdx);
+                    
+                    Color flatColor = FaceUtils.ToColor(FaceUtils.GetVertexLight(chunk, x, y, z));
+
+                    Color[] faceColors = SmoothLighting
+                        ? FaceUtils.GetFaceColors(chunk, pos, faceIdx)
+                        : new[] { flatColor, flatColor, flatColor, flatColor };
 
                     var rndOffset = (int)(rng.NextFloat() * ChunkSize);
                     var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);

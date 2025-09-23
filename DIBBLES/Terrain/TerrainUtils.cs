@@ -178,6 +178,7 @@ public static class FaceUtils
                 l0 = l1 = l2 = l3 = 1f;
                 break;
         }
+        
         // ToColor is from TerrainMesh.cs
         return new[] { ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3) };
     }
@@ -191,7 +192,7 @@ public static class FaceUtils
         
         return new Color(color, color, color, (byte)255);
     }
-
+    
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
     public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz)
     {
