@@ -207,7 +207,8 @@ public class TerrainGameplay
             chunk.IsModified = true;
 
             // Update lighting if the broken block was opaque or emissive
-            Lighting.RelightNeighborsIfBorderBlock(chunkCoord, localPos);
+            Lighting.GenerateNew(chunk);
+            Lighting.RelightCurrentAndNeighbors(chunkCoord, localPos);
             
             // Regenerate mesh
             var meshData = Mesh.GenerateMeshData(chunk, false);
@@ -281,7 +282,8 @@ public class TerrainGameplay
         chunk.IsModified = true;
         
         // Update lighting for the placed block
-        Lighting.RelightNeighborsIfBorderBlock(chunkCoord, localPos);
+        Lighting.GenerateNew(chunk);
+        Lighting.RelightCurrentAndNeighbors(chunkCoord, localPos);
         
         // Regenerate mesh
         var meshData = Mesh.GenerateMeshData(chunk, false);

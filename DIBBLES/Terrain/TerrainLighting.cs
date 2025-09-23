@@ -89,7 +89,7 @@ public class TerrainLighting
                 if (neighborBlockType == BlockType.Air ||
                     (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
                 {
-                    byte newLight = (byte)(lightLevel - 2);
+                    byte newLight = (byte)(lightLevel - 1);
                     if (newLight > neighborBlockLightLevel)
                     {
                         neighborChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
@@ -100,20 +100,25 @@ public class TerrainLighting
         }
     }
     
-    public void RelightNeighborsIfBorderBlock(Vector3Int chunkPos, Vector3Int localPos)
+    public void RelightCurrentAndNeighbors(Vector3Int chunkPos, Vector3Int localPos)
     {
-        for (int axis = 0; axis < 3; axis++)
-        {
-            if (localPos[axis] == 0 || localPos[axis] == ChunkSize - 1)
-            {
-                Vector3Int neighborOffset = Vector3Int.Zero;
-                neighborOffset[axis] = (localPos[axis] == 0) ? -ChunkSize : ChunkSize;
-                Vector3Int neighborChunkPos = chunkPos + neighborOffset;
+        // Always relight all 6 neighboring chunks
+        Vector3Int[] directions = {
+            new Vector3Int(ChunkSize, 0, 0),
+            new Vector3Int(-ChunkSize, 0, 0),
+            new Vector3Int(0, ChunkSize, 0),
+            new Vector3Int(0, -ChunkSize, 0),
+            new Vector3Int(0, 0, ChunkSize),
+            new Vector3Int(0, 0, -ChunkSize)
+        };
 
-                if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
-                {
-                    Lighting.GenerateNew(neighborChunk);
-                }
+        foreach (var offset in directions)
+        {
+            Vector3Int neighborChunkPos = chunkPos + offset;
+            
+            if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
+            {
+                Lighting.GenerateNew(neighborChunk);
             }
         }
     }

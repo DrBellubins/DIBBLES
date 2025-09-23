@@ -43,7 +43,7 @@ public class BlockData
         Prefabs.Add(BlockType.Snow, new BlockInfo(1, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.Wood, new BlockInfo(3, 0.0f, 64, false, 0));
         Prefabs.Add(BlockType.WoodLog, new BlockInfo(3, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 0));
+        Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 15));
         Prefabs.Add(BlockType.Glass, new BlockInfo(2, 0.0f, 64, true, 0));
         Prefabs.Add(BlockType.Feeb, new BlockInfo(2, 0.0f, 64, false, 15));
         
