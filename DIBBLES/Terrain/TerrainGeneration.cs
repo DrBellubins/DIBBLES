@@ -200,13 +200,13 @@ public class TerrainGeneration
                             //    proccesTerrainStage(chunk, true);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
-                            proccesTerrainStage(chunk);
+                            proccesTerrainStage(chunk, centerChunk);
                     }
                     else
                     {
                         // Update pre-existing chunk to next stage
                         if (!DoneLoading)
-                            proccesTerrainStage(chunk);
+                            proccesTerrainStage(chunk, centerChunk);
                     }
                 }
                 finally { semaphore.Release(); }
@@ -214,7 +214,7 @@ public class TerrainGeneration
         }
     }
 
-    private void proccesTerrainStage(Chunk chunk)
+    private void proccesTerrainStage(Chunk chunk, Vector3Int centerChunk)
     {
         switch (chunk.GenerationStage)
         {
@@ -241,7 +241,7 @@ public class TerrainGeneration
             }
             case ChunkGenerationStage.Lighting:
             {
-                generateLighting(chunk);
+                generateLighting(chunk, centerChunk);
                 chunk.GenerationStage++;
                 break;
             }
@@ -351,9 +351,10 @@ public class TerrainGeneration
         }
     }
 
-    private void generateLighting(Chunk chunk)
+    private void generateLighting(Chunk chunk, Vector3Int centerChunk)
     {
-        Lighting.GenerateNew(chunk);
+        Lighting.GenerateAllLighting(centerChunk);
+        //Lighting.GenerateNew(chunk);
     }
 
     public void generateMesh(Chunk chunk)
