@@ -110,6 +110,9 @@ public class WorldSave
                 for (int z = 0; z < ChunkSize; z++)
                 {
                     var blockType = chunk.Value.GetTypeAt(x, y, z);
+                    
+                    if (blockType == BlockType.Air) continue;
+                    
                     var blockBiome = chunk.Value.GetBiomeAt(x, y, z);
                     
                     writer.Write(x);
