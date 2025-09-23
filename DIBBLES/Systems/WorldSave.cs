@@ -202,6 +202,13 @@ public class WorldSave
                 );
     
                 var chunk = new Chunk(chunkPos);
+    
+                // Fill chunk blocks with air
+                for (int x = 0; x < ChunkSize; x++)
+                for (int y = 0; y < ChunkSize; y++)
+                for (int z = 0; z < ChunkSize; z++)
+                    chunk.SetTypeAt(x, y, z, BlockType.Air);
+                
                 var header = reader.ReadString();
                 
                 if (header != "R_DIBBLES")
