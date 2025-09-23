@@ -5,7 +5,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainLighting
 {
-    private const int BatchSize = 4;
+    private const int BatchSize = 16;
     
     public void GenerateNew(Chunk chunk)
     {
