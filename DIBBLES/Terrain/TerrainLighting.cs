@@ -133,13 +133,14 @@ public class TerrainLighting
         for (int step = 0; step < maxSteps; step++)
         {
             var blockType = Chunk.GetBlockTypeGlobal(pos);
-            
-            if (blockType != BlockType.Air)
+
+            if (blockType == BlockType.Air)
+            {
+                Chunk.SetLightLevelGlobal(pos, 15); // Set skylight level to 15
+                pos += direction;
+            }
+            else
                 break;
-
-            Chunk.SetLightLevelGlobal(pos, 15); // Set skylight level to 15
-
-            pos += direction;
         }
     }
     
