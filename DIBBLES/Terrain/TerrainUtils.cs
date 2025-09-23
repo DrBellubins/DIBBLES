@@ -212,7 +212,7 @@ public static class FaceUtils
                 ny >= 0 && ny < TerrainGeneration.ChunkSize &&
                 nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
-                lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+                lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
             }
             else
             {
@@ -223,7 +223,7 @@ public static class FaceUtils
                     chunk.Position.Z + nz
                 );
                 
-                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+                lightLevel = GetLightLevelAtWorldPos(worldPos);
             }
 
             total += lightLevel;
@@ -251,7 +251,7 @@ public static class FaceUtils
                 ny >= 0 && ny < TerrainGeneration.ChunkSize &&
                 nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
-                lightLevel = chunk.GetBlock(nx, ny, nz).LightLevel;
+                lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
             }
             else
             {
@@ -262,7 +262,7 @@ public static class FaceUtils
                     chunk.Position.Z + nz
                 );
                 
-                lightLevel = GetBlockAtWorldPos(worldPos).LightLevel;
+                lightLevel = GetLightLevelAtWorldPos(worldPos);
             }
 
             total += lightLevel;
@@ -272,7 +272,7 @@ public static class FaceUtils
         return total / (count * 15f); // Normalize to [0,1]
     }
     
-    public static Block GetBlockAtWorldPos(Vector3Int worldPos)
+    public static byte GetLightLevelAtWorldPos(Vector3Int worldPos)
     {
         int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
         int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
@@ -290,10 +290,10 @@ public static class FaceUtils
                 localY >= 0 && localY < TerrainGeneration.ChunkSize &&
                 localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
             {
-                return chunk.GetBlock(localX, localY, localZ);
+                return chunk.GetLightLevelAt(localX, localY, localZ);
             }
         }
         
-        return new Block(worldPos, BlockType.Air); // Treat out-of-bounds as air
+        return 0; // Treat as out-of-bounds
     }
 }

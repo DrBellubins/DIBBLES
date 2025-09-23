@@ -61,16 +61,15 @@ public class TerrainMesh
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var pos = new Vector3(x, y, z);
-            var block = chunk.GetBlock(x, y, z);
-            var blockType = block.Type;
-            var isTransparent = block.Info.IsTransparent;
+            var pos = new Vector3Int(x, y, z);
+            var blockType = chunk.GetTypeAt(x, y, z);
+            var blockInfo = chunk.GetInfoAt(x, y, z);
             
             // Opaque mesh pass: skip transparent and air blocks
-            if (!isTransparencyPass && (isTransparent || blockType == BlockType.Air)) continue;
+            if (!isTransparencyPass && (blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
 
             // Transparent mesh pass: skip opaque and air blocks
-            if (isTransparencyPass && (!isTransparent || blockType == BlockType.Air)) continue;
+            if (isTransparencyPass && (!blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
             
             int vertexOffset = vertices.Count;
 
@@ -80,27 +79,27 @@ public class TerrainMesh
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
         
-                long chunkSeed = TerrainGeneration.Seed 
-                                 ^ (block.Position.X * 73428767L)
-                                 ^ (block.Position.Y * 9127841L)
-                                 ^ (block.Position.Z * 192837465L);
+                long chunkSeed = Seed 
+                                 ^ (pos.X * 73428767L)
+                                 ^ (pos.Y * 9127841L)
+                                 ^ (pos.Z * 192837465L);
         
                 var rng = new SeededRandom(chunkSeed);
                 
                 if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
                 {
-                    var faceVerts = FaceUtils.GetFaceVertices(pos, faceIdx);
+                    var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
-                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos), faceIdx);
+                    var faceColors = FaceUtils.GetFaceColors(chunk, Vector3Int.FromVector3(pos.ToVector3()), faceIdx);
 
                     var rndOffset = (int)(rng.NextFloat() * ChunkSize);
-                    var worldBlockPos = new Vector3Int(block.Position.X + rndOffset, block.Position.Y + rndOffset, block.Position.Z + rndOffset);
+                    var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
                     
                     // Deterministic random rotation for this block face
                     //int rotation = ((worldBlockPos.X) ^ (worldBlockPos.Y) ^ (worldBlockPos.Z) ^ faceIdx) & 3;
                     //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
                     
-                    int flip = ((worldBlockPos.X) ^ (worldBlockPos.Y) ^ (worldBlockPos.Z) ^ faceIdx) & 3;
+                    int flip = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
                     faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, flip);
                     
                     if (isTransparencyPass && cameraPosition.HasValue)
@@ -311,12 +310,12 @@ public class TerrainMesh
             // Look up the neighboring chunk
             if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
-                info = neighborChunk.GetBlock(nx, ny, nz).Info;
+                info = neighborChunk.GetInfoAt(nx, ny, nz);
             }
         }
         else
         {
-            info = chunk.GetBlock(x, y, z).Info;
+            info = chunk.GetInfoAt(x, y, z);
         }
 
         // Air blocks are NOT solid
@@ -324,9 +323,9 @@ public class TerrainMesh
         //    return false;
         
         if (!isTransparentPass) // Opaque pass: treat transparent blocks as non-solid
-            return chunk.GetBlock(x, y, z).Type != BlockType.Air && !info.IsTransparent;
+            return chunk.GetTypeAt(x, y, z) != BlockType.Air && !info.IsTransparent;
         else // Transparent pass: treat only transparent blocks as solid
-            return chunk.GetBlock(x, y, z).Type != BlockType.Air && info.IsTransparent;
+            return chunk.GetTypeAt(x, y, z) != BlockType.Air && info.IsTransparent;
     }
 
     public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)

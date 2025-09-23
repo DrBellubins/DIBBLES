@@ -47,7 +47,7 @@ public class TerrainDecorations
                 localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 continue;
 
-            chunk.SetBlock(localX, localY, localZ, new Block(pos, BlockType.WoodLog));
+            chunk.SetTypeAt(localX, localY, localZ, BlockType.WoodLog);
         }
 
         // Place leaves as a 3x3x3 cube centered at trunk top
@@ -75,8 +75,8 @@ public class TerrainDecorations
                 continue;
 
             // Only place leaves if position is Air (don't overwrite trunk)
-            if (chunk.GetBlock(localX, localY, localZ).Type == BlockType.Air)
-                chunk.SetBlock(localX, localY, localZ, new Block(pos, BlockType.Leaves));
+            if (chunk.GetTypeAt(localX, localY, localZ) == BlockType.Air)
+                chunk.SetTypeAt(localX, localY, localZ, BlockType.Leaves);
         }
     }
 
@@ -113,9 +113,9 @@ public class TerrainDecorations
                 localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
                 return false; // Out of chunk bounds
 
-            var block = chunk.GetBlock(localX, localY, localZ);
+            var block = chunk.GetTypeAt(localX, localY, localZ);
             
-            if (block.Type != BlockType.Air)
+            if (block != BlockType.Air)
                 return false; // Space is not empty
         }
         

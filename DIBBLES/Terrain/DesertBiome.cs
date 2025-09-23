@@ -4,29 +4,30 @@ namespace DIBBLES.Terrain;
 
 public class DesertBiome
 {
-    public void Generate(ref BlockReturnData bRetData)
+    public void Generate(Chunk chunk, ref BlockReturnData bRetData)
     {
         var returnData = bRetData;
         
         if (!returnData.FoundSurface)
         {
             // This is the surface
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Sand);
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Sand);
+            
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
         }
-        else if (returnData.IslandDepth < 3) // sand thickness = 4
+        else if (returnData.IslandDepth < 3) // dirt thickness = 3
         {
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Sand);
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Sand);
             returnData.IslandDepth++;
         }
         else
         {
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Stone);
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Stone);
             returnData.IslandDepth++;
         }
-
-        returnData.CurrentBlock.Biome = TerrainBiome.Desert;
+        
+        chunk.SetBiomeAt(returnData.WorldPos.X, returnData.WorldPos.Y, returnData.WorldPos.Z, TerrainBiome.Desert);
         
         bRetData = returnData;
     }

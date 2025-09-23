@@ -86,16 +86,16 @@ public class WorldSave
         // Regions
         foreach (var chunk in Data.ModifiedChunks)
         {
-            var nonAirBlocks = new List<Block>();
+            var nonAirBlocks = 0;
             
             for (int x = 0; x < ChunkSize; x++)
             for (int y = 0; y < ChunkSize; y++)
             for (int z = 0; z < ChunkSize; z++)
             {
-                var block = chunk.Value.GetBlock(x, y, z);
-                
-                if (block.Type != BlockType.Air)
-                    nonAirBlocks.Add(block);
+                var blockType = chunk.Value.GetTypeAt(x, y, z);
+
+                if (blockType != BlockType.Air)
+                    nonAirBlocks++;
             }
             
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
@@ -103,15 +103,20 @@ public class WorldSave
             {
                 writer.Write("R_DIBBLES");
                 
-                writer.Write(nonAirBlocks.Count);
-                    
-                foreach (var block in nonAirBlocks)
+                writer.Write(nonAirBlocks);
+                
+                for (int x = 0; x < ChunkSize; x++)
+                for (int y = 0; y < ChunkSize; y++)
+                for (int z = 0; z < ChunkSize; z++)
                 {
-                    writer.Write(block.Position.X);
-                    writer.Write(block.Position.Y);
-                    writer.Write(block.Position.Z);
-                    writer.Write((int)block.Type);
-                    writer.Write((int)block.Biome);
+                    var blockType = chunk.Value.GetTypeAt(x, y, z);
+                    var blockBiome = chunk.Value.GetBiomeAt(x, y, z);
+                    
+                    writer.Write(x);
+                    writer.Write(y);
+                    writer.Write(z);
+                    writer.Write((int)blockType);
+                    writer.Write((int)blockBiome);
                 }
             }
         }
@@ -149,7 +154,7 @@ public class WorldSave
                 var header = reader.ReadString();
 
                 if (header != "W_DIBBLES")
-                    Console.WriteLine("World data format is incorrect exist");
+                    Console.WriteLine("World data format is incorrect");
                 
                 Data.WorldName = worldName;
                 Data.Seed = reader.ReadInt32();
@@ -165,7 +170,7 @@ public class WorldSave
                 var header = reader.ReadString();
 
                 if (header != "P_DIBBLES")
-                    Console.WriteLine("Player data format is incorrect exist");
+                    Console.WriteLine("Player data format is incorrect");
                 
                 Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                 Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
@@ -202,16 +207,12 @@ public class WorldSave
                 for (int x = 0; x < ChunkSize; x++)
                 for (int y = 0; y < ChunkSize; y++)
                 for (int z = 0; z < ChunkSize; z++)
-                {
-                    var airBlock = new Block(new Vector3Int(chunkPos.X + x, chunkPos.Y + y, chunkPos.Z + z), BlockType.Air);
-                    chunk.SetBlock(x, y, z, airBlock);
-                }
-    
+                    chunk.SetTypeAt(x, y, z, BlockType.Air);
                 
                 var header = reader.ReadString();
                 
                 if (header != "R_DIBBLES")
-                    Console.WriteLine("Region data format is incorrect exist");
+                    Console.WriteLine("Region data format is incorrect!");
                 
                 int nonAirCount = reader.ReadInt32();
     
@@ -223,16 +224,8 @@ public class WorldSave
                     var type = (BlockType)reader.ReadInt32();
                     var biome = (TerrainBiome)reader.ReadInt32();
     
-                    var blockPos = new Vector3Int(x, y, z);
-                    var block = new Block(blockPos, type);
-                    block.Biome = biome;
-    
-                    // Convert world pos to local pos
-                    int localX = x - chunkPos.X;
-                    int localY = y - chunkPos.Y;
-                    int localZ = z - chunkPos.Z;
-    
-                    chunk.SetBlock(localX, localY, localZ, block);
+                    chunk.SetTypeAt(x, y, z, type);
+                    chunk.SetBiomeAt(x, y, z, biome);
                 }
 
                 chunk.IsModified = true;

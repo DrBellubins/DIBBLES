@@ -12,15 +12,13 @@ public class TerrainLighting
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var block = chunk.GetBlock(x, y, z);
+            var blockType = chunk.GetTypeAt(x, y, z);
+            var blockLightLevel = chunk.GetLightLevelAt(x, y, z);
 
-            if (block.Type == BlockType.Air)
-                block.LightLevel = 15; // TEMP
+            if (blockType == BlockType.Air)
+                chunk.SetLightLevelAt(x, y, z, 15); // TEMP
             else
-                block.LightLevel = block.Info.LightEmission;
-                
-            
-            chunk.SetBlock(x, y, z, block);
+                chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
         }
 
         // Step 2: Propagate block light using BFS
@@ -31,17 +29,16 @@ public class TerrainLighting
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var block = chunk.GetBlock(x, y, z);
+            var blockLightLevel = chunk.GetLightLevelAt(x, y, z);
             
-            if (block.LightLevel > 0)
+            if (blockLightLevel > 0)
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
         }
 
         while (queue.Count > 0)
         {
             var (curChunk, pos) = queue.Dequeue();
-            var block = curChunk.GetBlock(pos.X, pos.Y, pos.Z);
-            var lightLevel = block.LightLevel;
+            var lightLevel = curChunk.GetLightLevelAt(pos.X, pos.Y, pos.Z);
     
             // Skip if no light to propagate
             if (lightLevel <= 1) continue;
@@ -67,20 +64,21 @@ public class TerrainLighting
                     newPos.Z < 0 || newPos.Z >= ChunkSize)
                     continue;
         
-                var neighborBlock = curChunk.GetBlock(newPos.X, newPos.Y, newPos.Z);
+                
+                var neighborBlockType = curChunk.GetTypeAt(newPos.X, newPos.Y, newPos.Z);
+                var neighborBlockInfo = curChunk.GetInfoAt(newPos.X, newPos.Y, newPos.Z);
+                var neighborBlockLightLevel = curChunk.GetLightLevelAt(newPos.X, newPos.Y, newPos.Z);
                 
                 // Only propagate to transparent (except leaves for thicker look) or air blocks
-                if (neighborBlock.Type == BlockType.Air ||
-                    (neighborBlock.Type != BlockType.Leaves && neighborBlock.Info.IsTransparent))
+                if (neighborBlockType == BlockType.Air ||
+                    (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
                 {
                     byte newLight = (byte)(lightLevel - 1);
             
                     // Only update if the new light is brighter
-                    if (newLight > neighborBlock.LightLevel)
+                    if (newLight > neighborBlockLightLevel)
                     {
-                        neighborBlock.LightLevel = newLight;
-                        chunk.SetBlock(newPos.X, newPos.Y, newPos.Z, neighborBlock);
-                        
+                        curChunk.SetLightLevelAt(newPos.X, newPos.Y, newPos.Z, newLight);
                         queue.Enqueue((curChunk, newPos)); // Add to queue for further propagation
                     }
                 }

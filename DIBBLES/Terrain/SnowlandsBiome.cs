@@ -4,29 +4,30 @@ namespace DIBBLES.Terrain;
 
 public class SnowlandsBiome
 {
-    public void Generate(ref BlockReturnData bRetData)
+    public void Generate(Chunk chunk, ref BlockReturnData bRetData)
     {
         var returnData = bRetData;
         
         if (!returnData.FoundSurface)
         {
             // This is the surface
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Snow);
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Snow);
+            
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
         }
-        else if (returnData.IslandDepth < 3) // snow thickness = 4
+        else if (returnData.IslandDepth < 3) // dirt thickness = 3
         {
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Snow); // TODO: Should be ice
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Snow); // TODO: Should be ice
             returnData.IslandDepth++;
         }
         else
         {
-            returnData.CurrentBlock = new Block(returnData.WorldPos, BlockType.Stone);
+            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Stone);
             returnData.IslandDepth++;
         }
-
-        returnData.CurrentBlock.Biome = TerrainBiome.Snowlands;
+        
+        chunk.SetBiomeAt(returnData.WorldPos.X, returnData.WorldPos.Y, returnData.WorldPos.Z, TerrainBiome.Snowlands);
         
         bRetData = returnData;
     }

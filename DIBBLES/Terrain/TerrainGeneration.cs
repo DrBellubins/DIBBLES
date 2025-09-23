@@ -306,18 +306,16 @@ public class TerrainGeneration
                         var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
                         if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
-                            desertBiome.Generate(ref blockReturnData);
+                            desertBiome.Generate(chunk, ref blockReturnData);
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
-                            plainsBiome.Generate(ref blockReturnData);
+                            plainsBiome.Generate(chunk, ref blockReturnData);
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
-                            plainsBiome.Generate(ref blockReturnData);
+                            plainsBiome.Generate(chunk, ref blockReturnData);
                         else // Fallback
-                            snowlandsBiome.Generate(ref blockReturnData);
+                            snowlandsBiome.Generate(chunk, ref blockReturnData);
                     }
                     else // Not islands
-                        blockReturnData.CurrentBlock = new Block(new Vector3Int(worldX, worldY, worldZ), BlockType.Air);
-                    
-                    chunk.SetBlock(x, y, z, blockReturnData.CurrentBlock);
+                        chunk.SetTypeAt(x, y, z, BlockType.Air);
                 }
             }
         }
@@ -341,12 +339,13 @@ public class TerrainGeneration
         {
             for (int y = ChunkSize - 1; y >= 0; y--)
             {
-                var currentBlock =  chunk.GetBlock(x, y, z);
+                var currentBlockType =  chunk.GetTypeAt(x, y, z);
+                var pos = new Vector3Int(x, y, z);
 
-                if (currentBlock.Type == BlockType.Grass)
+                if (currentBlockType == BlockType.Grass)
                 {
                     if (rng.NextChance(2f))
-                        decorations.GenerateTrees(currentBlock.Position);
+                        decorations.GenerateTrees(pos);
                 }
             }
         }

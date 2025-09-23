@@ -93,10 +93,10 @@ public class TerrainTick
         for (int y = 0; y < TerrainGeneration.ChunkSize; y++)
         for (int z = 0; z < TerrainGeneration.ChunkSize; z++)
         {
-            var block = chunk.GetBlock(x, y, z);
+            var blockType = chunk.GetTypeAt(x, y, z);
 
             // Call registered updater if available
-            if (blockTickHandlers.TryGetValue(block.Type, out var updater))
+            if (blockTickHandlers.TryGetValue(blockType, out var updater))
             {
                 updater(chunk, x, y, z, this);
 
