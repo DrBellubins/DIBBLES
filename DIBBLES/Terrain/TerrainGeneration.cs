@@ -345,7 +345,7 @@ public class TerrainGeneration
                 if (currentBlockType == BlockType.Grass)
                 {
                     if (rng.NextChance(2f))
-                        decorations.GenerateTrees(pos);
+                        decorations.GenerateTrees(pos, chunk);
                 }
             }
         }

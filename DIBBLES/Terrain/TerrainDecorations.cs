@@ -8,17 +8,18 @@ namespace DIBBLES.Terrain;
 /// </summary>
 public class TerrainDecorations
 {
-    public void GenerateTrees(Vector3Int surfacePos)
+    public void GenerateTrees(Vector3Int localSurfacePos, Chunk chunk)
     {
-        // Trunk: 1x4x1, Leaves: 3x3x3 centered at trunk top
+        // Convert local chunk pos to world pos
+        Vector3Int worldSurfacePos = chunk.Position + localSurfacePos;
+
         int trunkHeight = 4;
         Vector3Int trunkSize = new Vector3Int(1, trunkHeight, 1);
         Vector3Int leavesSize = new Vector3Int(3, 3, 3);
 
-        Vector3Int trunkStart = surfacePos + new Vector3Int(0, 1, 0); // start at one above surface
-        Vector3Int leavesStart = surfacePos + new Vector3Int(-1, trunkHeight, -1); // center leaves on trunk top
+        Vector3Int trunkStart = worldSurfacePos + new Vector3Int(0, 1, 0); // start at one above surface
+        Vector3Int leavesStart = worldSurfacePos + new Vector3Int(-1, trunkHeight, -1); // center leaves on trunk top
 
-        // Check space for trunk and leaves
         bool spaceForTrunk = CheckSpace(trunkStart, trunkSize);
         bool spaceForLeaves = CheckSpace(leavesStart, leavesSize);
 
@@ -28,55 +29,19 @@ public class TerrainDecorations
         // Place trunk
         for (int dy = 0; dy < trunkHeight; dy++)
         {
-            Vector3Int pos = surfacePos + new Vector3Int(0, 1 + dy, 0);
-
-            int chunkX = (int)Math.Floor((float)pos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-                continue;
-
-            int localX = pos.X - chunkX;
-            int localY = pos.Y - chunkY;
-            int localZ = pos.Z - chunkZ;
-
-            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
-                continue;
-
-            chunk.SetTypeAt(localX, localY, localZ, BlockType.WoodLog);
+            Vector3Int pos = worldSurfacePos + new Vector3Int(0, 1 + dy, 0);
+            Chunk.SetBlockTypeGlobal(pos, BlockType.WoodLog);
         }
 
-        // Place leaves as a 3x3x3 cube centered at trunk top
+        // Place leaves
         for (int dx = -1; dx <= 1; dx++)
         for (int dy = 0; dy <= 2; dy++)
         for (int dz = -1; dz <= 1; dz++)
         {
-            Vector3Int pos = surfacePos + new Vector3Int(dx, trunkHeight + dy, dz);
-
-            int chunkX = (int)Math.Floor((float)pos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkY = (int)Math.Floor((float)pos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)pos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-                continue;
-
-            int localX = pos.X - chunkX;
-            int localY = pos.Y - chunkY;
-            int localZ = pos.Z - chunkZ;
-
-            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
-                continue;
-
+            Vector3Int pos = worldSurfacePos + new Vector3Int(dx, trunkHeight + dy, dz);
             // Only place leaves if position is Air (don't overwrite trunk)
-            if (chunk.GetTypeAt(localX, localY, localZ) == BlockType.Air)
-                chunk.SetTypeAt(localX, localY, localZ, BlockType.Leaves);
+            if (Chunk.GetBlockTypeGlobal(pos) == BlockType.Air)
+                Chunk.SetBlockTypeGlobal(pos, BlockType.Leaves);
         }
     }
 
