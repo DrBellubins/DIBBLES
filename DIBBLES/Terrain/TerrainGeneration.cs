@@ -360,9 +360,6 @@ public class TerrainGeneration
     {
         var meshData = Mesh.GenerateMeshData(chunk, false);
         var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
-
-        Mesh.RemeshNeighbors(chunk, false);
-        Mesh.RemeshNeighbors(chunk, true);
         
         // Enqueue for main thread mesh upload
         meshUploadQueue.Enqueue((chunk.Position, meshData));

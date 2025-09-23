@@ -86,7 +86,7 @@ public class TerrainMesh
         
                 var rng = new SeededRandom(chunkSeed);
                 
-                if (!isVoxelSolid(chunk, isTransparencyPass, nx, ny, nz))
+                if (!isVoxelSolid(chunk, nx, ny, nz))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
@@ -273,99 +273,42 @@ public class TerrainMesh
         };
     }
     
-    private bool isVoxelSolid(Chunk chunk, bool isTransparentPass, int x, int y, int z)
+    // Helper to check if neighbor block is solid, including across chunk boundaries
+    private static bool isVoxelSolid(Chunk currentChunk, int x, int y, int z)
     {
-        if (isTransparentPass)
-            return false;
-        
-        BlockInfo info = new BlockInfo();
-        
-        if (x < 0 || x >= ChunkSize || y < 0 || y >= ChunkSize || z < 0 || z >= ChunkSize)
+        // Fast check: within current chunk bounds
+        if (x >= 0 && x < ChunkSize &&
+            y >= 0 && y < ChunkSize &&
+            z >= 0 && z < ChunkSize)
         {
-            // Compute which chunk to check in all axes
-            Vector3Int chunkCoord = new Vector3Int(
-                chunk.Position.X / ChunkSize,
-                chunk.Position.Y / ChunkSize,
-                chunk.Position.Z / ChunkSize
-            );
-
-            Vector3Int neighborCoord = chunkCoord;
-            int nx = x, ny = y, nz = z;
-
-            if (x < 0) { nx = ChunkSize - 1; neighborCoord.X -= 1; }
-            else if (x >= ChunkSize) { nx = 0; neighborCoord.X += 1; }
-
-            if (y < 0) { ny = ChunkSize - 1; neighborCoord.Y -= 1; }
-            else if (y >= ChunkSize) { ny = 0; neighborCoord.Y += 1; }
-
-            if (z < 0) { nz = ChunkSize - 1; neighborCoord.Z -= 1; }
-            else if (z >= ChunkSize) { nz = 0; neighborCoord.Z += 1; }
-
-            Vector3Int neighborChunkPos = new Vector3Int(
-                neighborCoord.X * ChunkSize,
-                neighborCoord.Y * ChunkSize,
-                neighborCoord.Z * ChunkSize
-            );
-
-            // Look up the neighboring chunk
-            if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
-            {
-                info = neighborChunk.GetInfoAt(nx, ny, nz);
-            }
-        }
-        else
-        {
-            info = chunk.GetInfoAt(x, y, z);
+            var info = currentChunk.GetInfoAt(x, y, z);
+            return currentChunk.GetTypeAt(x, y, z) != BlockType.Air && !info.IsTransparent;
         }
 
-        // Air blocks are NOT solid
-        //if (info == null)
-        //    return false;
-        
-        if (!isTransparentPass) // Opaque pass: treat transparent blocks as non-solid
-            return chunk.GetTypeAt(x, y, z) != BlockType.Air && !info.IsTransparent;
-        else // Transparent pass: treat only transparent blocks as solid
-            return chunk.GetTypeAt(x, y, z) != BlockType.Air && info.IsTransparent;
-    }
+        // Otherwise, need to look up neighbor chunk
+        int worldX = currentChunk.Position.X + x;
+        int worldY = currentChunk.Position.Y + y;
+        int worldZ = currentChunk.Position.Z + z;
 
-    public void RemeshNeighbors(Chunk chunk, bool isTransparentPass)
-    {
-        int[] offsets = { -ChunkSize, ChunkSize };
-        
-        foreach (var axis in new[] { 0, 1, 2 })
+        // Find the neighbor chunk's base position
+        int neighborChunkX = (int)Math.Floor((float)worldX / ChunkSize) * ChunkSize;
+        int neighborChunkY = (int)Math.Floor((float)worldY / ChunkSize) * ChunkSize;
+        int neighborChunkZ = (int)Math.Floor((float)worldZ / ChunkSize) * ChunkSize;
+
+        var neighborChunkPos = new Vector3Int(neighborChunkX, neighborChunkY, neighborChunkZ);
+
+        if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
         {
-            foreach (int offset in offsets)
-            {
-                Vector3Int neighborPos = chunk.Position;
-                
-                if (axis == 0) neighborPos.X += offset;
-                if (axis == 1) neighborPos.Y += offset;
-                if (axis == 2) neighborPos.Z += offset;
+            int localX = worldX - neighborChunkX;
+            int localY = worldY - neighborChunkY;
+            int localZ = worldZ - neighborChunkZ;
 
-                if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk))
-                    RemeshNeighborPos(neighborChunk.Position, isTransparentPass);
-            }
+            var info = neighborChunk.GetInfoAt(localX, localY, localZ);
+            
+            return neighborChunk.GetTypeAt(localX, localY, localZ) != BlockType.Air && !info.IsTransparent;
         }
-    }
-    
-    public void RemeshNeighborPos(Vector3Int neighborPos, bool isTransparentPass)
-    {
-        if (RecentlyRemeshedNeighbors.Contains(neighborPos))
-            return; // Already remeshed this frame
 
-        if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk))
-        {
-            // Opaque or transparent model dictionary
-            var modelDict = isTransparentPass ? TransparentModels : OpaqueModels;
-
-            // Generate new mesh
-            var meshData = GenerateMeshData(neighborChunk, isTransparentPass);
-            var newModel = UploadMesh(meshData);
-
-            // Store new model
-            modelDict[neighborPos] = newModel;
-
-            RecentlyRemeshedNeighbors.Add(neighborPos);
-        }
+        // If neighbor chunk not loaded, treat as air (or optionally skip meshing)
+        return false;
     }
 }

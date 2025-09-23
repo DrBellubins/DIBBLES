@@ -215,9 +215,6 @@ public class TerrainGameplay
             
             Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
             Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
-            
-            Mesh.RemeshNeighbors(chunk, false);
-            Mesh.RemeshNeighbors(chunk, true);
         
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -292,9 +289,6 @@ public class TerrainGameplay
             
         Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
-            
-        Mesh.RemeshNeighbors(chunk, false);
-        Mesh.RemeshNeighbors(chunk, true);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
