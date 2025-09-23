@@ -36,6 +36,30 @@ public struct Vector3Int
         return new Vector3Int((int)input.X, (int)input.Y, (int)input.Z);
     }
     
+    public int this[int axis]
+    {
+        get
+        {
+            return axis switch
+            {
+                0 => X,
+                1 => Y,
+                2 => Z,
+                _ => throw new IndexOutOfRangeException()
+            };
+        }
+        set
+        {
+            switch (axis)
+            {
+                case 0: X = value; break;
+                case 1: Y = value; break;
+                case 2: Z = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
+    
     // Addition
     public static Vector3Int operator +(Vector3Int a, Vector3Int b)
         => new Vector3Int(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
