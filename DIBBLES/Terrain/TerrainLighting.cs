@@ -72,7 +72,7 @@ public class TerrainLighting
                 if (neighborBlockType == BlockType.Air ||
                     (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
                 {
-                    byte newLight = (byte)(lightLevel - 1);
+                    byte newLight = (byte)(lightLevel - 2);
             
                     // Only update if the new light is brighter
                     if (newLight > neighborBlockLightLevel)

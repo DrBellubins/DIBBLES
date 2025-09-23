@@ -9,38 +9,10 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
 
-// Define a custom vertex struct with Position, Normal, Texcoord, Color
-[StructLayout(LayoutKind.Sequential)]
-public struct VertexPositionNormalTextureColor : IVertexType
-{
-    public Vector3 Position;
-    public Vector3 Normal;
-    public Vector2 TexCoord;
-    public Color Color;
-
-    public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
-    (
-        new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
-        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
-        new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
-        new VertexElement(32, VertexElementFormat.Color, VertexElementUsage.Color, 0)
-    );
-
-    VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
-
-    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color)
-    {
-        Position = pos;
-        Normal = norm;
-        TexCoord = tex;
-        Color = color;
-    }
-}
-
 public class TerrainMesh
 {
     public const bool Fullbright = false;
-    public const bool SmoothLighting = false;
+    public const bool SmoothLighting = true; // Flat lighting doesn't work, don't care to fix it
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
 
@@ -316,5 +288,33 @@ public class TerrainMesh
 
         // If neighbor chunk not loaded, treat as air (or optionally skip meshing)
         return false;
+    }
+}
+
+// Define a custom vertex struct with Position, Normal, Texcoord, Color
+[StructLayout(LayoutKind.Sequential)]
+public struct VertexPositionNormalTextureColor : IVertexType
+{
+    public Vector3 Position;
+    public Vector3 Normal;
+    public Vector2 TexCoord;
+    public Color Color;
+
+    public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
+    (
+        new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
+        new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
+        new VertexElement(32, VertexElementFormat.Color, VertexElementUsage.Color, 0)
+    );
+
+    VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
+
+    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color)
+    {
+        Position = pos;
+        Normal = norm;
+        TexCoord = tex;
+        Color = color;
     }
 }
