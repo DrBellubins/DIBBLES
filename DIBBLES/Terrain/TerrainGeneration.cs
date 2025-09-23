@@ -108,7 +108,7 @@ public class TerrainGeneration
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
         }
         
-        unloadDistantChunks(centerChunk);
+        //unloadDistantChunks(centerChunk);
     }
 
     private void updateStageIfReady(Vector3Int centerChunk)
@@ -196,8 +196,8 @@ public class TerrainGeneration
                         // Add new chunk after init and get its stage up to date
                         if (DoneLoading && addAfterInitial)
                         {
-                            while (chunk.GenerationStage <= terrainGenerationStage)
-                                proccesTerrainStage(chunk, true);
+                            //while (chunk.GenerationStage <= terrainGenerationStage)
+                            //    proccesTerrainStage(chunk, true);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
                             proccesTerrainStage(chunk);
