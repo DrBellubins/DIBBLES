@@ -125,18 +125,34 @@ public class TerrainLighting
     
     private void castSkylightRay(Vector3Int start, Vector3Int direction)
     {
-        // Render distance as block count
         int maxSteps = RenderDistance * ChunkSize;
-
         Vector3Int pos = start;
 
         for (int step = 0; step < maxSteps; step++)
         {
-            var blockType = Chunk.GetBlockTypeGlobal(pos);
+            // Get chunk coordinates
+            int chunkX = (int)Math.Floor((float)pos.X / ChunkSize) * ChunkSize;
+            int chunkY = (int)Math.Floor((float)pos.Y / ChunkSize) * ChunkSize;
+            int chunkZ = (int)Math.Floor((float)pos.Z / ChunkSize) * ChunkSize;
+            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+            if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+                break; // Treat missing chunk as solid
+
+            int localX = pos.X - chunkX;
+            int localY = pos.Y - chunkY;
+            int localZ = pos.Z - chunkZ;
+
+            if (localX < 0 || localX >= ChunkSize ||
+                localY < 0 || localY >= ChunkSize ||
+                localZ < 0 || localZ >= ChunkSize)
+                break;
+
+            var blockType = chunk.GetTypeAt(localX, localY, localZ);
 
             if (blockType == BlockType.Air)
             {
-                Chunk.SetLightLevelGlobal(pos, 15); // Set skylight level to 15
+                chunk.SetLightLevelAt(localX, localY, localZ, 15);
                 pos += direction;
             }
             else
