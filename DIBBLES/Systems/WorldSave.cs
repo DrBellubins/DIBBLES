@@ -202,13 +202,6 @@ public class WorldSave
                 );
     
                 var chunk = new Chunk(chunkPos);
-    
-                // Fill chunk blocks with air
-                for (int x = 0; x < ChunkSize; x++)
-                for (int y = 0; y < ChunkSize; y++)
-                for (int z = 0; z < ChunkSize; z++)
-                    chunk.SetTypeAt(x, y, z, BlockType.Air);
-                
                 var header = reader.ReadString();
                 
                 if (header != "R_DIBBLES")
@@ -221,6 +214,7 @@ public class WorldSave
                     int x = reader.ReadInt32();
                     int y = reader.ReadInt32();
                     int z = reader.ReadInt32();
+                    
                     var type = (BlockType)reader.ReadInt32();
                     var biome = (TerrainBiome)reader.ReadInt32();
     

@@ -284,7 +284,7 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
                     
-                    blockReturnData.WorldPos = new Vector3Int(worldX, worldY, worldZ);
+                    blockReturnData.WorldPos = new Vector3Int(x, y, z);
                     
                     // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
