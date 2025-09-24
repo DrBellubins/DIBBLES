@@ -9,6 +9,7 @@ float3 CameraPos;
 float FogNear;
 float FogFar;
 float4 FogColor;
+float2 TexelSize;
 
 texture Texture0;
 
@@ -55,6 +56,7 @@ float4 PS(PixelInput input) : COLOR0
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
+
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
 

@@ -82,6 +82,9 @@ public class GameScene : Scene
         
         PlayerCharacter.Draw();
         
+        if (Input.IsKeyPressed(Keys.F2))
+            takeScreenshot(gd);
+        
         //Debug.Draw3D();
         
         // Draw UI (UI Batch)
@@ -96,5 +99,27 @@ public class GameScene : Scene
         Debug.Clear2D();
         
         UIBatch.End();
+    }
+    
+    private void takeScreenshot(GraphicsDevice gd)
+    {
+        // Create a texture to store the backbuffer
+        var width = gd.PresentationParameters.BackBufferWidth;
+        var height = gd.PresentationParameters.BackBufferHeight;
+        var screenshot = new Texture2D(gd, width, height, false, SurfaceFormat.Color);
+
+        // Copy backbuffer data
+        int[] pixelData = new int[width * height];
+        gd.GetBackBufferData(pixelData);
+        screenshot.SetData(pixelData);
+
+        // Save to PNG
+        string path = $"Screenshot-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.png";
+        
+        using (var fs = new FileStream(path, FileMode.Create))
+            screenshot.SaveAsPng(fs, width, height);
+
+        screenshot.Dispose();
+        Console.WriteLine($"Saved screenshot: {path}");
     }
 }
