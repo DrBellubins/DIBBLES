@@ -222,10 +222,10 @@ public class TerrainGameplay
                 WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
 
             // Play break sound
-            //var sound = BlockData.Sounds[SelectedBlock.Type].RND;
+            var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
-            //if (sound != null)
-            //    sound.Play();
+            if (!sound.IsDisposed)
+                sound.Play();
         }
     }
     
@@ -297,10 +297,10 @@ public class TerrainGameplay
             WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
         
         // Play place sound
-        //var sound = BlockData.Sounds[blockType].RND;
+        var sound = BlockData.Sounds[blockType].RND;
         
-        //if (sound != null)
-        //    sound.Play();
+        if (!sound.IsDisposed)
+            sound.Play();
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
+using NVorbis;
 
 namespace DIBBLES.Utils;
 
@@ -63,8 +64,8 @@ public static class Resource
         else if (typeof(T) == typeof(SoundEffect))
         {
             string file = FindSound(fileName, isItem);
-            
-            var sound = SoundEffect.FromFile(file);
+
+            var sound = LoadOggSound(file);
             sounds.Add(sound);
             
             return (T)(object)sound;
@@ -79,16 +80,36 @@ public static class Resource
         }
     }
 
-    public static SoundEffect LoadSoundSpecial(string fileName)
+    public static SoundEffect LoadOggSound(string filePath)
     {
-        string path = Path.Combine(assetsPath, "Sounds", fileName);
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"Sound file '{path}' not found.");
-        var sound = SoundEffect.FromFile(path);
-        sounds.Add(sound);
-        return sound;
-    }
+        using (var vorbis = new VorbisReader(File.OpenRead(filePath), false))
+        {
+            int channels = vorbis.Channels;
+            int sampleRate = vorbis.SampleRate;
+            
+            List<float> samples = new List<float>();
+            
+            float[] readBuffer = new float[4096];
+            int read;
 
+            while ((read = vorbis.ReadSamples(readBuffer, 0, readBuffer.Length)) > 0)
+                samples.AddRange(readBuffer.Take(read));
+
+            // Convert float samples [-1,1] to 16-bit PCM
+            var pcm = new byte[samples.Count * 2];
+            
+            for (int i = 0; i < samples.Count; i++)
+            {
+                short value = (short)Math.Clamp(samples[i] * short.MaxValue, short.MinValue, short.MaxValue);
+                pcm[i * 2] = (byte)(value & 0xff);
+                pcm[i * 2 + 1] = (byte)((value >> 8) & 0xff);
+            }
+
+            // Create SoundEffect
+            return new SoundEffect(pcm, sampleRate, (AudioChannels)channels);
+        }
+    }
+    
     //public static Effect LoadShader(string? vsName, string fsName)
     //{
     //    // Comment out for now, will use Content Pipeline later
