@@ -82,17 +82,11 @@ public class BlockData
             maxHeight = Math.Max(maxHeight, texture.Height);
         }
 
-        // Load textures and sounds for remaining block types (Air, Water)
-        /*foreach (BlockType blockType in Enum.GetValues<BlockType>())
+        // Load sounds
+        foreach (BlockType blockType in Enum.GetValues<BlockType>())
         {
             if (blockType != BlockType.Air && blockType != BlockType.Water)
             {
-                if (!atlasBlockTypes.Contains(blockType))
-                {
-                    var texture = loadBlockTexture(blockType);
-                    Textures.Add(blockType, texture);
-                }
-
                 var blockSounds = new BlockSounds();
 
                 for (int i = 0; i < 4; i++)
@@ -100,7 +94,7 @@ public class BlockData
 
                 Sounds.Add(blockType, blockSounds);
             }
-        }*/
+        }
 
         // Create texture atlas in a 5x1 layout
         // 1. Get your block types (skip air/water)
