@@ -181,19 +181,15 @@ public class TerrainMesh
         return meshData;
     }
     
-    public void RemeshBorderingChunks(Vector3Int blockWorldPos)
+    public void RemeshBorderingChunks(Vector3Int chunkPos, Vector3Int localPos)
     {
-        // Find the chunk this block is in
-        int chunkX = (int)Math.Floor((float)blockWorldPos.X / ChunkSize) * ChunkSize;
-        int chunkY = (int)Math.Floor((float)blockWorldPos.Y / ChunkSize) * ChunkSize;
-        int chunkZ = (int)Math.Floor((float)blockWorldPos.Z / ChunkSize) * ChunkSize;
-        
-        var chunkPos = new Vector3Int(chunkX, chunkY, chunkZ);
+        // Reconstruct world-space block coordinates
+        Vector3Int blockWorldPos = chunkPos + localPos;
 
         // Local block coordinates within the chunk
-        int localX = blockWorldPos.X - chunkX;
-        int localY = blockWorldPos.Y - chunkY;
-        int localZ = blockWorldPos.Z - chunkZ;
+        int localX = localPos.X;
+        int localY = localPos.Y;
+        int localZ = localPos.Z;
 
         // Possible neighbor chunk directions if at border
         var directions = new List<Vector3Int>();
@@ -204,11 +200,10 @@ public class TerrainMesh
         if (localY == ChunkSize - 1) directions.Add(new Vector3Int(0, ChunkSize, 0));
         if (localZ == 0) directions.Add(new Vector3Int(0, 0, -ChunkSize));
         if (localZ == ChunkSize - 1) directions.Add(new Vector3Int(0, 0, ChunkSize));
-
+    
         foreach (var dir in directions)
         {
             var neighborChunkPos = chunkPos + dir;
-            
             if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
             {
                 // Remesh opaque

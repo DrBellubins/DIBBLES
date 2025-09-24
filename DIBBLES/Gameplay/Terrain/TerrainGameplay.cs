@@ -215,7 +215,7 @@ public class TerrainGameplay
             Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
         
             // Regenerate neighboring mesh
-            Mesh.RemeshBorderingChunks(localPos);
+            Mesh.RemeshBorderingChunks(chunkCoord, localPos);
             
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
@@ -290,7 +290,7 @@ public class TerrainGameplay
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
         
         // Regenerate neighboring mesh
-        Mesh.RemeshBorderingChunks(localPos);
+        Mesh.RemeshBorderingChunks(chunkCoord, localPos);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
