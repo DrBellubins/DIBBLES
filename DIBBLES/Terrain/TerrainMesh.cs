@@ -181,6 +181,47 @@ public class TerrainMesh
         return meshData;
     }
     
+    public void RemeshBorderingChunks(Vector3Int blockWorldPos)
+    {
+        // Find the chunk this block is in
+        int chunkX = (int)Math.Floor((float)blockWorldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)blockWorldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)blockWorldPos.Z / ChunkSize) * ChunkSize;
+        
+        var chunkPos = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        // Local block coordinates within the chunk
+        int localX = blockWorldPos.X - chunkX;
+        int localY = blockWorldPos.Y - chunkY;
+        int localZ = blockWorldPos.Z - chunkZ;
+
+        // Possible neighbor chunk directions if at border
+        var directions = new List<Vector3Int>();
+        
+        if (localX == 0) directions.Add(new Vector3Int(-ChunkSize, 0, 0));
+        if (localX == ChunkSize - 1) directions.Add(new Vector3Int(ChunkSize, 0, 0));
+        if (localY == 0) directions.Add(new Vector3Int(0, -ChunkSize, 0));
+        if (localY == ChunkSize - 1) directions.Add(new Vector3Int(0, ChunkSize, 0));
+        if (localZ == 0) directions.Add(new Vector3Int(0, 0, -ChunkSize));
+        if (localZ == ChunkSize - 1) directions.Add(new Vector3Int(0, 0, ChunkSize));
+
+        foreach (var dir in directions)
+        {
+            var neighborChunkPos = chunkPos + dir;
+            
+            if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
+            {
+                // Remesh opaque
+                var meshData = GenerateMeshData(neighborChunk, false);
+                OpaqueModels[neighborChunkPos] = UploadMesh(meshData);
+
+                // Remesh transparent
+                var tMeshData = GenerateMeshData(neighborChunk, true, GameScene.PlayerCharacter.Camera.Position);
+                TransparentModels[neighborChunkPos] = UploadMesh(tMeshData);
+            }
+        }
+    }
+    
     public void RemeshAllTransparentChunks(Vector3 cameraPos)
     {
         foreach (var chunk in ChunkBuffer.Values)

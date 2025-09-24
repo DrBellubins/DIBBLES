@@ -78,6 +78,7 @@ public class TerrainGeneration
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
+        // TODO: Sometimes doesn't run???
         // After all chunk data in render distance has loaded in
         if (chunksLoaded >= expectedChunkCount && !DoneLoading)
         {
@@ -108,7 +109,7 @@ public class TerrainGeneration
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
         }
         
-        //unloadDistantChunks(centerChunk);
+        unloadDistantChunks(centerChunk);
     }
 
     private void updateStageIfReady(Vector3Int centerChunk)
@@ -142,13 +143,6 @@ public class TerrainGeneration
             if (terrainGenerationStage < ChunkGenerationStage.Meshing)
             {
                 terrainGenerationStage++;
-                
-                if (terrainGenerationStage == ChunkGenerationStage.Lighting)
-                {
-                    // Now all chunks in render distance are ready for lighting!
-                    Lighting.GenerateAllLighting(centerChunk); // This runs global lighting flood-fill on main thread
-                }
-                
                 terrainGenerationThreaded(centerChunk);
             }
         }
@@ -203,17 +197,17 @@ public class TerrainGeneration
                         // Add new chunk after init and get its stage up to date
                         if (DoneLoading && addAfterInitial)
                         {
-                            //while (chunk.GenerationStage <= terrainGenerationStage)
-                            //    proccesTerrainStage(chunk, true);
+                            while (chunk.GenerationStage <= terrainGenerationStage)
+                                proccesTerrainStage(chunk);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
-                            proccesTerrainStage(chunk, centerChunk);
+                            proccesTerrainStage(chunk);
                     }
                     else
                     {
                         // Update pre-existing chunk to next stage
                         if (!DoneLoading)
-                            proccesTerrainStage(chunk, centerChunk);
+                            proccesTerrainStage(chunk);
                     }
                 }
                 finally { semaphore.Release(); }
@@ -221,7 +215,7 @@ public class TerrainGeneration
         }
     }
 
-    private void proccesTerrainStage(Chunk chunk, Vector3Int centerChunk)
+    private void proccesTerrainStage(Chunk chunk)
     {
         switch (chunk.GenerationStage)
         {
@@ -248,7 +242,7 @@ public class TerrainGeneration
             }
             case ChunkGenerationStage.Lighting:
             {
-                generateLighting(chunk, centerChunk);
+                generateLighting(chunk);
                 chunk.GenerationStage++;
                 break;
             }
@@ -358,10 +352,22 @@ public class TerrainGeneration
         }
     }
 
-    private void generateLighting(Chunk chunk, Vector3Int centerChunk)
+    private void generateLighting(Chunk chunk)
     {
-        //Lighting.GenerateAllLighting(centerChunk);
-        //Lighting.GenerateNew(chunk);
+        Lighting.Generate(chunk);
+        
+        // Re-propagate existing neighbors to handle cross-chunk
+        var faceInfos = FaceUtils.VoxelFaceInfos();
+        foreach (var (_, _, neighborOffset) in faceInfos)
+        {
+            var neighborPos = chunk.Position + neighborOffset * new Vector3Int(ChunkSize, ChunkSize, ChunkSize);
+            
+            if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk) &&
+                neighborChunk.GenerationStage >= ChunkGenerationStage.Lighting) // Only if neighbor already lit
+            {
+                Lighting.PropagateLight(neighborChunk); // Re-runs BFS from its current >0 blocks, propagating cross-chunk if needed
+            }
+        }
     }
 
     public void generateMesh(Chunk chunk)

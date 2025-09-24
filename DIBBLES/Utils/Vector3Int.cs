@@ -87,6 +87,10 @@ public struct Vector3Int
     public static Vector3Int operator /(Vector3Int a, Vector3Int b)
         => new Vector3Int(a.X / b.X, a.Y / b.Y, a.Z / b.Z);
     
+    // Inversion
+    public static Vector3Int operator -(Vector3Int a)
+        => new Vector3Int(-a.X, -a.Y, -a.Z);
+    
     public static bool operator ==(Vector3Int a, Vector3Int b) => a.X == b.X && a.Y == b.Y &&  a.Z == b.Z;
     public static bool operator !=(Vector3Int a, Vector3Int b) => !(a == b);
     

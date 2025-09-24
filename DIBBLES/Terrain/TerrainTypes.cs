@@ -43,8 +43,9 @@ public class Chunk
     public byte[] Biomes;
     
     public bool IsModified = false;
-    
     public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
+    
+    private readonly object _lightLock = new object();
     
     public Chunk(Vector3Int pos)
     {
@@ -107,7 +108,7 @@ public class Chunk
 
         int index = ToIndex(x, y, z);
         BlockTypes[index] = (byte)block.Type;
-        Biomes[index] = (byte)block.Biome;
+        //Biomes[index] = (byte)block.Biome; // Don't set biomes, these should only change with procedural gen!
         LightLevels[index] = block.LightLevel;
         // Note: Info is not stored per-block, it's static in BlockData.Prefabs
     }
@@ -129,7 +130,10 @@ public class Chunk
             z < 0 || z >= ChunkSize)
             return 0;
         
-        return LightLevels[ToIndex(x, y, z)];
+        lock (_lightLock)
+        {
+            return LightLevels[ToIndex(x, y, z)];
+        }
     }
 
     public TerrainBiome GetBiomeAt(int x, int y, int z)
@@ -172,8 +176,10 @@ public class Chunk
             z < 0 || z >= ChunkSize)
             return;
         
-        var index = ToIndex(x, y, z);
-        LightLevels[index] = lightLevel;
+        lock (_lightLock)
+        {
+            LightLevels[ToIndex(x, y, z)] = lightLevel;
+        }
     }
 
     public void SetBiomeAt(int x, int y, int z, TerrainBiome biome)

@@ -202,12 +202,10 @@ public class TerrainGameplay
             var newBlock = new Block(blockPos, BlockType.Air);
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
-
-            //chunk.GenerationState = ChunkGenerationState.Modified;
             chunk.IsModified = true;
 
             // Update lighting if the broken block was opaque or emissive
-            //Lighting.GenerateNew(chunk);
+            Lighting.PropagateLight(chunk);
             
             // Regenerate mesh
             var meshData = Mesh.GenerateMeshData(chunk, false);
@@ -216,6 +214,9 @@ public class TerrainGameplay
             Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
             Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
         
+            // Regenerate neighboring mesh
+            Mesh.RemeshBorderingChunks(localPos);
+            
             // Add to modified chunks for saving
             if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
                 WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
@@ -268,20 +269,18 @@ public class TerrainGameplay
         var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());
 
         // Don't place if collides with player
-        // TODO: Update to monogame
-        //if (Raylib.CheckCollisionBoxes(player.CollisionBox, newBlockBoundingBox))
-        //    return;
+        if (newBlockBoundingBox.Intersects(player.CollisionBox))
+            return;
         
         // Place the new block
         var newBlock = new Block(newBlockPos, blockType);
             
         chunk.SetBlock(localX, localY, localZ, newBlock);
 
-        //chunk.GenerationState = ChunkGenerationState.Modified;
         chunk.IsModified = true;
         
         // Update lighting for the placed block
-        //Lighting.GenerateNew(chunk);
+        Lighting.PropagateLight(chunk);
         
         // Regenerate mesh
         var meshData = Mesh.GenerateMeshData(chunk, false);
@@ -289,6 +288,9 @@ public class TerrainGameplay
             
         Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
+        
+        // Regenerate neighboring mesh
+        Mesh.RemeshBorderingChunks(localPos);
         
         // Add to modified chunks for saving
         if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
