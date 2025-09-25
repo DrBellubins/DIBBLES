@@ -230,7 +230,7 @@ public class TerrainGameplay
             if (!sound.IsDisposed)
             {
                 audioPlayer.Sound =  sound;
-                audioPlayer.Position = blockPos.ToVector3();
+                audioPlayer.Position = blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
                 audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
             }
         }
@@ -309,7 +309,7 @@ public class TerrainGameplay
         if (!sound.IsDisposed)
         {
             audioPlayer.Sound =  sound;
-            audioPlayer.Position = newBlockPos.ToVector3();
+            audioPlayer.Position = newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
         }
     }

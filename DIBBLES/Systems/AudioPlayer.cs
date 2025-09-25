@@ -57,7 +57,6 @@ public class AudioPlayer
         Vector3 listenerRightXZ = Vector3.Cross(Vector3.Up, listenerForwardXZ);
         if (listenerRightXZ.LengthSquared() > 0) listenerRightXZ.Normalize();
 
-        // TODO: Panning is not correct (doesn't play nicely with camera direction?
         float pan = Vector3.Dot(toSourceXZ, listenerRightXZ);
         pan = MathHelper.Clamp(pan, -1.0f, 1.0f);
         instance.Pan = -pan; // MonoGame: -1=left, 0=center, 1=right
