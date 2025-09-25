@@ -326,7 +326,7 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
                     
-                    blockReturnData.WorldPos = new Vector3Int(x, y, z);
+                    blockReturnData.LocalPos = new Vector3Int(x, y, z);
 
                     var currentBlockType = chunk.GetTypeAt(x, y, z);
                     

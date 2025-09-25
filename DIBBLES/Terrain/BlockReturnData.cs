@@ -5,7 +5,7 @@ namespace DIBBLES.Terrain;
 
 public struct BlockReturnData()
 {
-    public Vector3Int WorldPos;
+    public Vector3Int LocalPos;
     public bool FoundSurface;   // Default false
     public int IslandDepth;     // Default 0
     public SeededRandom RNG;
