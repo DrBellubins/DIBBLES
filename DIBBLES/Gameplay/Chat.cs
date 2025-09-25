@@ -252,6 +252,8 @@ public class Chat
     
     public static void Write(string message, ChatMessageType type)
     {
+        IsClosedButShown = true;
+        
         var msg = new ChatMessage(message, type);
         ChatMessages.Add(msg);
     }

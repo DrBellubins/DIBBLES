@@ -250,6 +250,23 @@ public class FastNoiseLite
     /// </remarks>
     public void SetDomainWarpAmp(float domainWarpAmp) { mDomainWarpAmp = domainWarpAmp; }
 
+    /// <summary>
+    /// 2D noise at given position using current settings
+    /// </summary>
+    /// <returns>
+    /// Noise output bounded between -1...1
+    /// </returns>
+    [MethodImpl(OPTIMISE)]
+    public float GetNoise(FNLfloat x)
+    {
+        TransformNoiseCoordinate(ref x);
+
+        switch (mFractalType)
+        {
+            default:
+                return GenNoiseSingle(mSeed, x);
+        }
+    }
 
     /// <summary>
     /// 2D noise at given position using current settings
@@ -648,6 +665,17 @@ public class FastNoiseLite
     }
 
     // Generic noise gen
+    private float GenNoiseSingle(long seed, FNLfloat x)
+    {
+        switch (mNoiseType)
+        {
+            case NoiseType.OpenSimplex2:
+                return SingleSimplex(seed, x);
+            default:
+                return 0;
+        }
+    }
+    
     private float GenNoiseSingle(long seed, FNLfloat x, FNLfloat y)
     {
         switch (mNoiseType)
@@ -691,7 +719,23 @@ public class FastNoiseLite
     }
 
     // Noise Coordinate Transforms (frequency, and possible skew or rotation)
+    [MethodImpl(INLINE)]
+    private void TransformNoiseCoordinate(ref FNLfloat x)
+    {
+        x *= mFrequency;
 
+        // No skew in 1D simplex. If you want to match 2D structure:
+        switch (mNoiseType)
+        {
+            case NoiseType.OpenSimplex2:
+            case NoiseType.OpenSimplex2S:
+                // No skewing needed in 1D
+                break;
+            default:
+                break;
+        }
+    }
+    
     [MethodImpl(INLINE)]
     private void TransformNoiseCoordinate(ref FNLfloat x, ref FNLfloat y)
     {
@@ -999,9 +1043,42 @@ public class FastNoiseLite
         return sum;
     }
 
+    private float SingleSimplex(long seed, FNLfloat x)
+    {
+        // 1D Simplex noise: only two contributions per segment.
+        int i0 = FastFloor(x);
+        int i1 = i0 + 1;
+
+        float x0 = x - i0;
+        float x1 = x0 - 1.0f;
+
+        // Gradients: using 2D gradients but only x component is used.
+        i0 *= PrimeX;
+        i1 *= PrimeX;
+
+        // Contribution from i0
+        float t0 = 1.0f - x0 * x0;
+        float n0 = 0.0f;
+        if (t0 > 0)
+        {
+            t0 *= t0;
+            n0 = t0 * t0 * GradCoord(seed, i0, 0, x0, 0.0f);
+        }
+
+        // Contribution from i1
+        float t1 = 1.0f - x1 * x1;
+        float n1 = 0.0f;
+        if (t1 > 0)
+        {
+            t1 *= t1;
+            n1 = t1 * t1 * GradCoord(seed, i1, 0, x1, 0.0f);
+        }
+
+        // Scale to output range similar to 2D version, adjust as needed
+        return (n0 + n1) * 2.3f; // Empirical scale for [-1,1] output, tune as needed!
+    }
 
     // Simplex/OpenSimplex2 Noise
-
     private float SingleSimplex(long seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2 case uses the same algorithm as ordinary Simplex.

@@ -326,7 +326,7 @@ public class TerrainGeneration
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
 
-                    noise.GetNoise((float)worldZ);
+                    //noise.GetNoise((float)worldZ);
                     
                     blockReturnData.LocalPos = new Vector3Int(x, y, z);
 

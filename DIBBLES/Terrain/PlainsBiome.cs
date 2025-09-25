@@ -10,9 +10,9 @@ public class PlainsBiome
         var returnData = bRetData;
 
         var worldPos = chunk.Position + returnData.LocalPos;
-        var blockAboveType = Chunk.GetBlockTypeGlobal(new Vector3Int(worldPos.X, worldPos.Y + 1, worldPos.Z));
+        var noiseCheck = returnData.Noise.GetNoise(worldPos.Y);
         
-        if (blockAboveType == BlockType.Air)
+        if (noiseCheck < 0f)
         {
             // This is the surface
             chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Grass);
@@ -20,7 +20,7 @@ public class PlainsBiome
             returnData.FoundSurface = true;
             returnData.IslandDepth = 0;
         }
-        else if (returnData.IslandDepth < 3) // dirt thickness = 3
+        /*else if (returnData.IslandDepth < 3) // dirt thickness = 3
         {
             chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Dirt);
             returnData.IslandDepth++;
@@ -28,7 +28,7 @@ public class PlainsBiome
         else
         {
             returnData.IslandDepth++;
-        }
+        }*/
         
         chunk.SetBiomeAt(returnData.LocalPos.X, returnData.LocalPos.Y, returnData.LocalPos.Z, TerrainBiome.Plains);
         
