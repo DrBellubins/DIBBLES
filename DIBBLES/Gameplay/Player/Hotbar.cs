@@ -211,7 +211,7 @@ public class Hotbar
     {
         if (args.Length != 1)
         {
-            Chat.Write(ChatMessageType.Error, "Usage: /give blocktype");
+            Chat.Write("Usage: /give blocktype", ChatMessageType.Error);
             return;
         }
 
@@ -222,11 +222,11 @@ public class Hotbar
             // Give block logic (e.g., add to hotbar or inventory)
             hotbarSlots[hotBarSelectionIndex] = new ItemSlot(1, blockType);
                 
-            Chat.Write(ChatMessageType.Command, $"Gave yourself '{blockType}'");
+            Chat.Write($"Gave yourself '{blockType}'", ChatMessageType.Command);
         }
         else
         {
-            Chat.Write(ChatMessageType.Error, $"Unknown block type: '{blockName}'");
+            Chat.Write($"Unknown block type: '{blockName}'", ChatMessageType.Error);
         }
     }
     

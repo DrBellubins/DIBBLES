@@ -34,13 +34,13 @@ public class Debug
     public static void ToggleDebug(string[] args)
     {
         ShowDebug = !ShowDebug;
-        Chat.Write(ChatMessageType.Command, "Toggled debug information");
+        Chat.Write("Toggled debug information", ChatMessageType.Command);
     }
     
     public static void ToggleDebugExtended(string[] args)
     {
         ShowDebugExtended = !ShowDebugExtended;
-        Chat.Write(ChatMessageType.Command, "Toggled extended debug information");
+        Chat.Write("Toggled extended debug information", ChatMessageType.Command);
     }
     
     public static void Draw2D()

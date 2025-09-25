@@ -107,6 +107,7 @@ public class TerrainGeneration
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
+            chunksLoaded++;
         }
         
         unloadDistantChunks(centerChunk);
@@ -224,13 +225,19 @@ public class TerrainGeneration
                 chunk.GenerationStage++;
                 break;
             }
-            case ChunkGenerationStage.ChunkData:
+            case ChunkGenerationStage.Islands:
             {
                 if (WorldSave.Data.ModifiedChunks.TryGetValue(chunk.Position, out var savedChunk))
                     chunk = savedChunk;
                 else
-                    generateChunkData(chunk);
+                    generateIslands(chunk);
 
+                chunk.GenerationStage++;
+                break;
+            }
+            case ChunkGenerationStage.Surface:
+            {
+                generateSurface(chunk);
                 chunk.GenerationStage++;
                 break;
             }
@@ -249,21 +256,14 @@ public class TerrainGeneration
             case ChunkGenerationStage.Meshing:
             {
                 generateMesh(chunk);
-                chunksLoaded++;
                 chunk.GenerationStage++;
                 break;
             }
         }
     }
     
-    private void generateChunkData(Chunk chunk)
+    private void generateIslands(Chunk chunk)
     {
-        long chunkSeed = Seed 
-                         ^ (chunk.Position.X * 73428767L)
-                         ^ (chunk.Position.Y * 9127841L)
-                         ^ (chunk.Position.Z * 192837465L);
-        
-        var rng = new SeededRandom(chunkSeed);
         var noise = new FastNoiseLite();
         noise.SetSeed(Seed);
         
@@ -271,21 +271,11 @@ public class TerrainGeneration
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                var blockReturnData = new BlockReturnData();
-                blockReturnData.RNG = rng;
-                blockReturnData.Noise = noise;
-                
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
-                    var plainsBiome = new PlainsBiome();
-                    var desertBiome = new DesertBiome();
-                    var snowlandsBiome = new SnowlandsBiome();
-                    
                     var worldX = chunk.Position.X + x;
                     var worldY = chunk.Position.Y + y;
                     var worldZ = chunk.Position.Z + z;
-                    
-                    blockReturnData.WorldPos = new Vector3Int(x, y, z);
                     
                     // Island noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
@@ -299,24 +289,71 @@ public class TerrainGeneration
                     
                     // Loop downward
                     if (islandNoise > 0.6f) // Islands
-                    {
-                        // TODO: Biomes other than Plains are really rare
-                        // Biome noise
-                        noise.SetFrequency(0.001f);
-                        
-                        var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                        chunk.SetTypeAt(x, y, z, BlockType.Stone);
+                    else // Not islands
+                        chunk.SetTypeAt(x, y, z, BlockType.Air);
+                }
+            }
+        }
+    }
 
-                        if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
+    private void generateSurface(Chunk chunk)
+    {
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
+        var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
+        
+        var plainsBiome = new PlainsBiome();
+        var desertBiome = new DesertBiome();
+        var snowlandsBiome = new SnowlandsBiome();
+        
+        for (int x = 0; x < ChunkSize; x++)
+        {
+            for (int z = 0; z < ChunkSize; z++)
+            {
+                var blockReturnData = new BlockReturnData();
+                blockReturnData.RNG = rng;
+                blockReturnData.Noise = noise;
+                
+                for (int y = ChunkSize - 1; y >= 0; y--)
+                {
+                    var worldX = chunk.Position.X + x;
+                    var worldY = chunk.Position.Y + y;
+                    var worldZ = chunk.Position.Z + z;
+                    
+                    blockReturnData.WorldPos = new Vector3Int(x, y, z);
+
+                    var currentBlockType = chunk.GetTypeAt(x, y, z);
+                    
+                    // TODO: Biomes other than Plains are really rare
+                    // Biome noise
+                    noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+                    noise.SetFrequency(0.001f);
+                    noise.SetFractalType(FastNoiseLite.FractalType.FBm);
+                    noise.SetFractalOctaves(4);
+                    noise.SetFractalLacunarity(2.0f);
+                    noise.SetFractalGain(0.5f);
+
+                    if (currentBlockType == BlockType.Stone)
+                    {
+                        var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                    
+                        plainsBiome.Generate(chunk, ref blockReturnData);
+                        
+                        /*if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
                             desertBiome.Generate(chunk, ref blockReturnData);
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
                             plainsBiome.Generate(chunk, ref blockReturnData);
                         else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
                             plainsBiome.Generate(chunk, ref blockReturnData);
                         else // Fallback
-                            snowlandsBiome.Generate(chunk, ref blockReturnData);
+                            snowlandsBiome.Generate(chunk, ref blockReturnData);*/
                     }
-                    else // Not islands
-                        chunk.SetTypeAt(x, y, z, BlockType.Air);
                 }
             }
         }
@@ -365,7 +402,7 @@ public class TerrainGeneration
             if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk) &&
                 neighborChunk.GenerationStage >= ChunkGenerationStage.Lighting) // Only if neighbor already lit
             {
-                Lighting.PropagateLight(neighborChunk); // Re-runs BFS from its current >0 blocks, propagating cross-chunk if needed
+                //Lighting.PropagateLight(neighborChunk); // Re-runs BFS from its current >0 blocks, propagating cross-chunk if needed
             }
         }
     }

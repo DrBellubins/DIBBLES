@@ -8,8 +8,10 @@ public class PlainsBiome
     public void Generate(Chunk chunk, ref BlockReturnData bRetData)
     {
         var returnData = bRetData;
+
+        var blockAboveType = Chunk.GetBlockTypeGlobal(new Vector3Int(returnData.WorldPos.X, returnData.WorldPos.Y + 1, returnData.WorldPos.Z));
         
-        if (!returnData.FoundSurface)
+        if (blockAboveType == BlockType.Air)
         {
             // This is the surface
             chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Grass);
@@ -24,7 +26,6 @@ public class PlainsBiome
         }
         else
         {
-            chunk.SetTypeAt(returnData.WorldPos.X,  returnData.WorldPos.Y, returnData.WorldPos.Z, BlockType.Stone);
             returnData.IslandDepth++;
         }
         

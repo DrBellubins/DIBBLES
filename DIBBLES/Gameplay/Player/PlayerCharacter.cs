@@ -585,7 +585,7 @@ public class PlayerCharacter
     private void killCMD(string[] args)
     {
         Kill();
-        Chat.Write(ChatMessageType.Command, "Killed the player");
+        Chat.Write("Killed the player", ChatMessageType.Command);
     }
     
     private void respawnCMD(string[] args)
@@ -598,7 +598,7 @@ public class PlayerCharacter
         IsDead = false;
         IsFrozen = false;
         
-        Chat.Write(ChatMessageType.Command, $"Spawning at {WorldSave.Data.PlayerPosition}");
+        Chat.Write($"Spawning at {WorldSave.Data.PlayerPosition}", ChatMessageType.Command);
     }
     
     private void healCMD(string[] args)
@@ -608,15 +608,15 @@ public class PlayerCharacter
         if (args.Length != 1)
         {
             healAmount = 100;
-            Chat.Write(ChatMessageType.Command, $"Set player health to full health");
+            Chat.Write("Set player health to full health", ChatMessageType.Command);
         }
         else if (int.TryParse(args[0], out var amount))
         {
             healAmount = amount;
-            Chat.Write(ChatMessageType.Command, $"Set player health to: {amount}");
+            Chat.Write($"Set player health to: {amount}", ChatMessageType.Command);
         }
         else
-            Chat.Write(ChatMessageType.Error, "Usage: /heal amount");
+            Chat.Write("Usage: /heal amount", ChatMessageType.Error);
             
         SetHealth(healAmount);
     }
@@ -631,11 +631,11 @@ public class PlayerCharacter
             !float.TryParse(args[1], out var y) ||
             !float.TryParse(args[2], out var z))
         {
-            Chat.Write(ChatMessageType.Error, "Usage: /teleport x y z");
+            Chat.Write("Usage: /teleport x y z", ChatMessageType.Error);
             return;
         }
 
         Position = new Vector3(x, y, z);
-        Chat.Write(ChatMessageType.Command, $"Teleported to ({x}, {y}, {z})");
+        Chat.Write($"Teleported to ({x}, {y}, {z})", ChatMessageType.Command);
     }
 }

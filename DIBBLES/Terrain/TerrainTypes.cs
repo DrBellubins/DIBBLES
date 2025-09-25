@@ -28,7 +28,8 @@ public struct Block
 public enum ChunkGenerationStage
 {
     Uninitialized,
-    ChunkData,
+    Islands,
+    Surface,
     Decorations,
     Lighting,
     Meshing

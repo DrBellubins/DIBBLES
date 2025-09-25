@@ -120,6 +120,9 @@ public class GameScene : Scene
             screenshot.SaveAsPng(fs, width, height);
 
         screenshot.Dispose();
-        Console.WriteLine($"Saved screenshot: {path}");
+
+        var outputString = $"Saved screenshot: {path}";
+        Console.WriteLine(outputString);
+        Chat.Write(outputString, ChatMessageType.Command);
     }
 }

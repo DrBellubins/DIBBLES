@@ -16,7 +16,7 @@ public enum ChatMessageType
     Error
 }
 
-public struct ChatMessage(ChatMessageType type, string message)
+public struct ChatMessage(string message, ChatMessageType type)
 {
     public ChatMessageType Type = type;
     public string Message = message;
@@ -120,13 +120,13 @@ public class Chat
                 }
                 else
                 {
-                    Write(ChatMessageType.Error, $"Unknown command: {cmdName}");
+                    Write($"Unknown command: {cmdName}", ChatMessageType.Error);
                     Console.WriteLine($"[ERROR] Player attempted to execute nonexistent command '{textBox.Text}'");
                 }
             }
             else
             {
-                Write(ChatMessageType.Message, textBox.Text);
+                Write(textBox.Text, ChatMessageType.Message);
                 Console.WriteLine($"[INFO] Player typed: '{textBox.Text}'");
                 
                 if (!isUserScrolling)
@@ -250,15 +250,15 @@ public class Chat
         IsOpen = false;
     }
     
-    public static void Write(ChatMessageType type, string message)
+    public static void Write(string message, ChatMessageType type)
     {
-        var msg = new ChatMessage(type, message);
+        var msg = new ChatMessage(message, type);
         ChatMessages.Add(msg);
     }
 
     public static void WriteHelp(string[] args)
     {
         foreach (var cmd in Commands.Registry)
-            ChatMessages.Add(new ChatMessage(ChatMessageType.Command, $"/{cmd.Value.Name}: {cmd.Value.Description}"));
+            ChatMessages.Add(new ChatMessage($"/{cmd.Value.Name}: {cmd.Value.Description}", ChatMessageType.Command));
     }
 }
