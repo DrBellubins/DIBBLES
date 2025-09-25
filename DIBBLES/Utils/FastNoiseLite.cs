@@ -1167,7 +1167,6 @@ public class FastNoiseLite
 
 
     // OpenSimplex2S Noise
-
     private float SingleOpenSimplex2S(long seed, FNLfloat x, FNLfloat y)
     {
         // 2D OpenSimplex2S case is a modified 2D simplex noise.
