@@ -71,9 +71,10 @@ public class TextBox
         // Draw caret if focused
         if (IsFocused && showCaret)
         {
-            Vector2 textSize = Engine.MainFont.MeasureString(Text);
+            // TODO: This offset is a hack, for some reason MeasureString is inaccurate.
+            Vector2 textSize = Engine.MainFont.MeasureString(Text) * 0.93f; 
             
-            float caretX = textPos.X + textSize.X + 2f;
+            float caretX = textPos.X + textSize.X;
             float caretY = textPos.Y;
             float caretH = Engine.MainFont.LineSpacing;
 

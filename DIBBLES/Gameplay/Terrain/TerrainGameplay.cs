@@ -11,12 +11,15 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    public void Update(Systems.Camera3D camera)
+    private AudioPlayer audioPlayer =  new AudioPlayer();
+    
+    public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
     }
 
+    // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
     public void Draw()
     {
         if (SelectedBlock.Type != BlockType.Air)
@@ -225,7 +228,11 @@ public class TerrainGameplay
             var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
             if (!sound.IsDisposed)
-                sound.Play();
+            {
+                audioPlayer.Sound =  sound;
+                audioPlayer.Position = blockPos.ToVector3();
+                audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
+            }
         }
     }
     
@@ -298,9 +305,13 @@ public class TerrainGameplay
         
         // Play place sound
         var sound = BlockData.Sounds[blockType].RND;
-        
+
         if (!sound.IsDisposed)
-            sound.Play();
+        {
+            audioPlayer.Sound =  sound;
+            audioPlayer.Position = newBlockPos.ToVector3();
+            audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
+        }
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

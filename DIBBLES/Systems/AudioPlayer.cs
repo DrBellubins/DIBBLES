@@ -1,3 +1,112 @@
+using DIBBLES.Utils;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
+
+public class AudioPlayer
+{
+    public Vector3 Position = Vector3.Zero;
+    public SoundEffect Sound;
+    private SoundEffectInstance instance;
+
+    public float Volume = 1.0f;
+    public float Pitch = 0.0f; // MonoGame: -1.0f (down 1 octave) to +1.0f (up 1 octave)
+    public bool IsPlaying => instance != null && instance.State == SoundState.Playing;
+
+    public float MaxDistance = 5.0f;
+    public float MinDistance = 1.0f;
+    public float DopplerFactor = 0.0f;
+    public float MinPitch = -1.0f; // MonoGame pitch range
+    public float MaxPitch = 1.0f;
+    public float RandomPitchRange = 0.2f;
+
+    public void Play(Vector3 listenerPosition, Vector3 listenerForward, Vector3 listenerVelocity = default)
+    {
+        if (Sound == null)
+            return;
+
+        // Dispose previous instance if needed
+        instance?.Dispose();
+        instance = Sound.CreateInstance();
+
+        // --- Distance-based volume ---
+        float distance = Vector3.Distance(Position, listenerPosition);
+        float norm = (MaxDistance - distance) / (MaxDistance - MinDistance);
+        
+        norm = MathHelper.Clamp(norm, 0.0f, 1.0f);
+        instance.Volume = Volume * norm;
+
+        // --- Stereo panning based on listener orientation ---
+        Vector3 toSource = Vector3.Normalize(Position - listenerPosition);
+        Vector3 listenerRight = Vector3.Normalize(Vector3.Cross(Vector3.Up, listenerForward));
+        
+        float pan = Vector3.Dot(toSource, listenerRight);
+        pan = MathHelper.Clamp(pan, -1.0f, 1.0f);
+        
+        instance.Pan = pan; // MonoGame: -1=left, 0=center, 1=right
+
+        // --- Pitch (with Doppler if desired) ---
+        Vector3 toListener = Position - listenerPosition;
+        float pitch = Pitch;
+        
+        if (DopplerFactor > 0f)
+        {
+            Vector3 relativeVelocity = listenerVelocity; // Assuming source is static, add source velocity if needed
+        
+            float speedTowardsListener = Vector3.Dot(relativeVelocity, Vector3.Normalize(toListener));
+            float dopplerPitch = Pitch + (speedTowardsListener * DopplerFactor);
+        
+            pitch = Math.Clamp(dopplerPitch, MinPitch, MaxPitch);
+        }
+
+        // --- Random pitch variation ---
+        if (RandomPitchRange > 0f)
+        {
+            float randomPitch = GMath.NextFloat(-RandomPitchRange, RandomPitchRange);
+            pitch += randomPitch;
+        }
+        
+        pitch = MathHelper.Clamp(pitch, MinPitch, MaxPitch);
+        instance.Pitch = pitch;
+
+        // Play
+        instance.Play();
+    }
+
+    public void Play2D()
+    {
+        if (Sound == null)
+            return;
+
+        instance?.Dispose();
+        instance = Sound.CreateInstance();
+
+        float pitch = Pitch;
+        
+        if (RandomPitchRange > 0f)
+            pitch += GMath.NextFloat(-RandomPitchRange, RandomPitchRange);
+        
+        pitch = MathHelper.Clamp(pitch, MinPitch, MaxPitch);
+        instance.Pitch = pitch;
+        instance.Volume = Volume;
+        instance.Pan = 0f;
+
+        instance.Play();
+    }
+
+    public void Stop()
+    {
+        instance?.Stop();
+    }
+
+    public void Unload()
+    {
+        instance?.Dispose();
+        instance = null;
+        Sound?.Dispose();
+        Sound = null;
+    }
+}
+
 /*using Raylib_cs;
 using System.Numerics;
 using DIBBLES.Utils;

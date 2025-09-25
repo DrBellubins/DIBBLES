@@ -174,18 +174,12 @@ public static class TextureUtils
             defaultchar = (char)(sf.DefaultCharacter.Value);
             defaultglyph = dgyphs[defaultchar];
         }
-        else
-        {
-            // we could create a default value from like a pixel in the sprite font and add the glyph.
-        }
         
         var altered = dgyphs[chartoalter];
         altered.Width = altered.Width + width_amount_to_add;  // ect 
         dgyphs.Remove(chartoalter);
         dgyphs.Add(chartoalter, altered);
-
-        //sf.Glyphs = _glyphs;  // cant do it as its readonly private that sucks hard we would of been done
-
+        
         List<Rectangle> glyphBounds = new List<Rectangle>();
         List<Rectangle> cropping = new List<Rectangle>();
         List<char> characters = new List<char>();
@@ -201,6 +195,7 @@ public static class TextureUtils
         
         List<Rectangle> b = new List<Rectangle>();
         sf = new SpriteFont(sf.Texture, glyphBounds, cropping, characters, sf.LineSpacing, sf.Spacing, kerning, defaultchar);
+        
         return sf;
     }
 }
