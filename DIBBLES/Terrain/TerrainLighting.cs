@@ -10,7 +10,7 @@ public class TerrainLighting
     public void Generate(Chunk chunk)
     {
         placeLights(chunk);
-        //PropagateLight(chunk);
+        PropagateLight(chunk);
     }
     
     private void placeLights(Chunk chunk)
@@ -18,8 +18,7 @@ public class TerrainLighting
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
-            chunk.SetLightLevelAt(x, y, z, 15);
-            //chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
+            chunk.SetLightLevelAt(x, y, z, chunk.GetInfoAt(x, y, z).LightEmission);
     }
     
     public void PropagateLight(Chunk chunk)

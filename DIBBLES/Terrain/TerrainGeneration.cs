@@ -334,7 +334,7 @@ public class TerrainGeneration
                         continue;
                     
                     // TODO: Biomes other than Plains are really rare
-                    noise.SetFrequency(0.001f);
+                    /*noise.SetFrequency(0.001f);
                     var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
 
                     if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
@@ -344,7 +344,9 @@ public class TerrainGeneration
                     else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
                         plainsBiome.Generate(chunk, ref blockReturnData);
                     else // Fallback
-                        snowlandsBiome.Generate(chunk, ref blockReturnData);
+                        snowlandsBiome.Generate(chunk, ref blockReturnData);*/
+                    
+                    plainsBiome.Generate(chunk, ref blockReturnData);
                 }
             }
         }
