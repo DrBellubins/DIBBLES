@@ -193,9 +193,29 @@ public class Chunk
         var index = ToIndex(x, y, z);
         Biomes[index] = (byte)biome;
     }
+
+    public bool IsInBounds(int x, int y, int z)
+    {
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
+            return false;
+        
+        return true;
+    }
+    
+    public bool IsInBounds(Vector3Int localPos)
+    {
+        if (localPos.X < 0 || localPos.X >= ChunkSize ||
+            localPos.Y < 0 || localPos.Y >= ChunkSize ||
+            localPos.Z < 0 || localPos.Z >= ChunkSize)
+            return false;
+        
+        return true;
+    }
     
     // Globals
-    public static BlockType GetBlockTypeGlobal(Vector3Int worldPos)
+    public static (BlockType, bool) GetBlockTypeGlobal(Vector3Int worldPos)
     {
         int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
         int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
@@ -203,7 +223,7 @@ public class Chunk
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
         if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-            return BlockType.Air;
+            return (BlockType.Air, false);
 
         int localX = worldPos.X - chunkX;
         int localY = worldPos.Y - chunkY;
@@ -212,9 +232,9 @@ public class Chunk
         if (localX < 0 || localX >= ChunkSize ||
             localY < 0 || localY >= ChunkSize ||
             localZ < 0 || localZ >= ChunkSize)
-            return BlockType.Air;
+            return (BlockType.Air, false);
 
-        return chunk.GetTypeAt(localX, localY, localZ);
+        return (chunk.GetTypeAt(localX, localY, localZ), true);
     }
     
     public static BlockInfo GetBlockInfoGlobal(Vector3Int worldPos)

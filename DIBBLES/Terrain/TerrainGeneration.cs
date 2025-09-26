@@ -329,33 +329,22 @@ public class TerrainGeneration
                     //noise.GetNoise((float)worldZ);
                     
                     blockReturnData.LocalPos = new Vector3Int(x, y, z);
-
-                    var currentBlockType = chunk.GetTypeAt(x, y, z);
                     
                     // TODO: Biomes other than Plains are really rare
                     // Biome noise
                     noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                    noise.SetFrequency(0.001f);
+                    noise.SetFrequency(0.01f);
                     noise.SetFractalType(FastNoiseLite.FractalType.FBm);
                     noise.SetFractalOctaves(4);
                     noise.SetFractalLacunarity(2.0f);
                     noise.SetFractalGain(0.5f);
 
-                    if (currentBlockType == BlockType.Stone)
-                    {
-                        var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
+                    /*var type = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY + 1, worldZ));
                     
-                        plainsBiome.Generate(chunk, ref blockReturnData);
-                        
-                        /*if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
-                            desertBiome.Generate(chunk, ref blockReturnData);
-                        else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
-                            plainsBiome.Generate(chunk, ref blockReturnData);
-                        else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
-                            plainsBiome.Generate(chunk, ref blockReturnData);
-                        else // Fallback
-                            snowlandsBiome.Generate(chunk, ref blockReturnData);*/
-                    }
+                    if (!type.Item2)
+                        break;*/
+
+                    plainsBiome.Generate(chunk, ref blockReturnData);
                 }
             }
         }

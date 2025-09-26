@@ -39,8 +39,11 @@ public class TerrainDecorations
         for (int dz = -1; dz <= 1; dz++)
         {
             Vector3Int pos = worldSurfacePos + new Vector3Int(dx, trunkHeight + dy, dz);
+
+            var gType = Chunk.GetBlockTypeGlobal(pos);
+            
             // Only place leaves if position is Air (don't overwrite trunk)
-            if (Chunk.GetBlockTypeGlobal(pos) == BlockType.Air)
+            if (gType.Item1 == BlockType.Air)
                 Chunk.SetBlockTypeGlobal(pos, BlockType.Leaves);
         }
     }
