@@ -237,13 +237,17 @@ public class TerrainGeneration
             }
             case ChunkGenerationStage.Surface:
             {
-                generateSurface(chunk);
+                if (!chunk.IsModified)
+                    generateSurface(chunk);
+                
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Decorations:
             {
-                generateChunkDecorations(chunk);
+                if (!chunk.IsModified)
+                    generateChunkDecorations(chunk);
+                
                 chunk.GenerationStage++;
                 break;
             }
