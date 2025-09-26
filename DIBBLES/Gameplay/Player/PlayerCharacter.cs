@@ -32,7 +32,8 @@ public class PlayerCharacter
     private Vector3 spawnPosition = new Vector3(0f, 0f, 0f);
     
     // Systems
-    public Vector3 Position = Vector3.Zero;
+    public GVec3 Position = GVec3.Zero;
+    //public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
     
     public Camera3D Camera;
@@ -83,13 +84,13 @@ public class PlayerCharacter
         //fallSound = Resource.LoadSoundSpecial("pain.ogg");
         
         Camera = new Camera3D();
-        Camera.Position = new Vector3(0.0f, PlayerHeight * 0.5f, 0.0f);
+        Camera.Position = new GVec3(0.0d, PlayerHeight * 0.5d, 0.0d);
         Camera.Target = new Vector3(0.0f, PlayerHeight * 0.5f, 1.0f);
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
 
-        Position = WorldSave.Data.PlayerPosition;
+        Position = WorldSave.Data.PlayerPosition.ToGVec3();
         
         hotbar.Start();
         handModel.Start();
@@ -259,8 +260,8 @@ public class PlayerCharacter
         SetCameraDirection(lookDirection);
 
         // Camera position
-        Camera.Position = Position + new Vector3(0.0f, PlayerHeight * 0.49f, 0.0f);
-        Camera.Target = Camera.Position + CameraForward;
+        Camera.Position = Position + new GVec3(0.0f, PlayerHeight * 0.49f, 0.0f);
+        Camera.Target = Camera.Position.ToVector3() + CameraForward;
         Camera.Up = CameraUp;
         
         // Forward on XZ plane ignoring pitch
@@ -396,13 +397,13 @@ public class PlayerCharacter
         
         if (WorldSave.Exists)
         {
-            Position = WorldSave.Data.PlayerPosition;
+            Position = WorldSave.Data.PlayerPosition.ToGVec3();
             //SetCameraDirection(WorldSave.Data.CameraDirection);
 
-            spawnPosition = Position;
+            spawnPosition = Position.ToVector3();
         }
         else
-            Position = spawnPosition;
+            Position = spawnPosition.ToGVec3();
         
         Velocity = Vector3.Zero;
     }
@@ -458,7 +459,7 @@ public class PlayerCharacter
         var newPosition = Position;
 
         // Call once per frame before axis checks!
-        var blockBoxes = getBlockBoxes(Position, 10f);
+        var blockBoxes = getBlockBoxes(Position.ToVector3(), 10f);
 
         // X axis
         newPosition.X += moveDelta.X;
@@ -565,20 +566,20 @@ public class PlayerCharacter
     }
     
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
-    private BoundingBox getBoundingBox(Vector3 position, float height)
+    private BoundingBox getBoundingBox(GVec3 position, float height)
     {
-        Vector3 min = new Vector3(
-            position.X - 0.25f,
-            position.Y - height * 0.5f,
-            position.Z - 0.25f
+        GVec3 min = new GVec3(
+            position.X - 0.25d,
+            position.Y - height * 0.5d,
+            position.Z - 0.25d
         );
-        Vector3 max = new Vector3(
-            position.X + 0.25f,
-            position.Y + height * 0.5f,
-            position.Z + 0.25f
+        GVec3 max = new GVec3(
+            position.X + 0.25d,
+            position.Y + height * 0.5d,
+            position.Z + 0.25d
         );
         
-        return new BoundingBox(min, max);
+        return new BoundingBox(min.ToVector3(), max.ToVector3());
     }
     
     // Commands
@@ -590,7 +591,7 @@ public class PlayerCharacter
     
     private void respawnCMD(string[] args)
     {
-        Position = spawnPosition;
+        Position = spawnPosition.ToGVec3();
         SetCameraDirection(WorldSave.Data.CameraDirection);
 
         Health = 100;
@@ -627,15 +628,15 @@ public class PlayerCharacter
             args = args[0].Split(',');
 
         if (args.Length != 3 ||
-            !float.TryParse(args[0], out var x) ||
-            !float.TryParse(args[1], out var y) ||
-            !float.TryParse(args[2], out var z))
+            !double.TryParse(args[0], out var x) ||
+            !double.TryParse(args[1], out var y) ||
+            !double.TryParse(args[2], out var z))
         {
             Chat.Write("Usage: /teleport x y z", ChatMessageType.Error);
             return;
         }
 
-        Position = new Vector3(x, y, z);
+        Position = new GVec3(x, y, z);
         Chat.Write($"Teleported to ({x}, {y}, {z})", ChatMessageType.Command);
     }
 }

@@ -40,8 +40,8 @@ public class TerrainGameplay
     
     private (Block, Vector3Int) selectBlock(Camera3D camera)
     {
-        var rayPosition = camera.Position;
-        var rayDirection = Vector3.Normalize(camera.Target - camera.Position);
+        var rayPosition = camera.Position.ToVector3();
+        var rayDirection = Vector3.Normalize(camera.Target - camera.Position.ToVector3());
     
         var mapPos = new Vector3Int(
             (int)MathF.Floor(rayPosition.X),
@@ -231,7 +231,7 @@ public class TerrainGameplay
             {
                 audioPlayer.Sound =  sound;
                 audioPlayer.Position = blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-                audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
+                audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position.ToVector3(), GameScene.PlayerCharacter.CameraForward);
             }
         }
     }
@@ -291,7 +291,7 @@ public class TerrainGameplay
         
         // Regenerate mesh
         var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
             
         Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
@@ -310,7 +310,7 @@ public class TerrainGameplay
         {
             audioPlayer.Sound =  sound;
             audioPlayer.Position = newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-            audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position, GameScene.PlayerCharacter.CameraForward);
+            audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position.ToVector3(), GameScene.PlayerCharacter.CameraForward);
         }
     }
 

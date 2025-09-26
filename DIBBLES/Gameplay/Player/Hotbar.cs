@@ -172,7 +172,7 @@ public class Hotbar
 
             // Set up the isometric orthographic camera
             var cam = new Camera3D();
-            cam.Position = new Vector3(2, 2, 2);
+            cam.Position = new GVec3(2, 2, 2);
             cam.Target = Vector3.Zero;
             cam.Up = Vector3.UnitY;
             cam.AspectRatio = (float)iconSize / iconSize; // which is 1.0f for a square

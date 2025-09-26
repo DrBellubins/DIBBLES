@@ -403,7 +403,7 @@ public class TerrainGeneration
     public void generateMesh(Chunk chunk)
     {
         var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position);
+        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
         
         // Enqueue for main thread mesh upload
         meshUploadQueue.Enqueue((chunk.Position, meshData));
@@ -472,7 +472,7 @@ public class TerrainGeneration
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
                 shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
@@ -501,7 +501,7 @@ public class TerrainGeneration
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
                 shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());

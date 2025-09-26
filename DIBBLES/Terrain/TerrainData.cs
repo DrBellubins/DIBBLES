@@ -27,9 +27,9 @@ public struct BlockInfo
 
 public class BlockData
 {
-    public static Dictionary<BlockType, BlockInfo> Prefabs = new();
-    public static Dictionary<BlockType, Texture2D> Textures = new();
-    public static Dictionary<BlockType, BlockSounds> Sounds = new();
+    public static readonly Dictionary<BlockType, BlockInfo> Prefabs = new();
+    public static readonly Dictionary<BlockType, Texture2D> Textures = new();
+    public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
     public static Texture2D TextureAtlas; // Store the atlas
     public static Dictionary<BlockType, SixLabors.ImageSharp.RectangleF> AtlasUVs = new(); // Store UV mappings
@@ -72,9 +72,6 @@ public class BlockData
         foreach (BlockType blockType in atlasBlockTypes)
         {
             var texture = loadBlockTexture(blockType);
-
-            if (texture == null) // Check if texture failed to load
-                texture = Resource.Load<Texture2D>("Error.png");
 
             tempTextures.Add(texture);
             Textures.Add(blockType, texture); // Also store in Textures for reference
@@ -126,7 +123,9 @@ public class BlockData
     {
         var i = index + 1; // Sounds start at 1
         var blockName = blockType.ToString();
-        return Resource.Load<SoundEffect>(Path.Combine(blockName, $"{blockName}{i}.ogg"));
+        var blockSoundPath = Path.Combine(blockName, $"{blockName}{i}.ogg");
+        
+        return Resource.Load<SoundEffect>(blockSoundPath);
     }
 }
 

@@ -32,8 +32,8 @@ public class Freecam
         playerCharacter.SetCameraDirection(lookDirection);
         
         // Camera position
-        playerCharacter.Camera.Position = playerCharacter.Position + new Vector3(0.0f, PlayerCharacter.PlayerHeight * 0.49f, 0.0f);
-        playerCharacter.Camera.Target = playerCharacter.Camera.Position + playerCharacter.CameraForward;
+        playerCharacter.Camera.Position = playerCharacter.Position + new GVec3(0.0d, PlayerCharacter.PlayerHeight * 0.49d, 0.0d);
+        playerCharacter.Camera.Target = playerCharacter.Camera.Position.ToVector3() + playerCharacter.CameraForward;
         playerCharacter.Camera.Up = playerCharacter.CameraUp;
         
         // Input
@@ -80,6 +80,6 @@ public class Freecam
             wishDir = Vector3.Normalize(wishDir);
         
         if (!playerCharacter.IsFrozen)
-            playerCharacter.Position += wishDir * moveSpeed;
+            playerCharacter.Position += wishDir.ToGVec3() * moveSpeed;
     }
 }

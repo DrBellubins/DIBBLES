@@ -211,7 +211,7 @@ public class TerrainMesh
                 OpaqueModels[neighborChunkPos] = UploadMesh(meshData);
 
                 // Remesh transparent
-                var tMeshData = GenerateMeshData(neighborChunk, true, GameScene.PlayerCharacter.Camera.Position);
+                var tMeshData = GenerateMeshData(neighborChunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 TransparentModels[neighborChunkPos] = UploadMesh(tMeshData);
             }
         }

@@ -35,9 +35,9 @@ public static class AtlasGenerator
             int row = idx / atlasCols;
             
             string path = Path.Combine(blockTexturesDir, $"{type}.png");
-            
+
             if (!File.Exists(path))
-                throw new FileNotFoundException(path);
+                path = Path.Combine(blockTexturesDir, "Error.png");
 
             using var blockImg = Image.Load<Rgba32>(path);
             blockImg.Mutate(x => x.Resize(tileSize, tileSize));

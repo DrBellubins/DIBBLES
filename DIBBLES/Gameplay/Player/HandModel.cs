@@ -42,7 +42,8 @@ public class HandModel
         float rightDistance = 0.5f;
         float upDistance = -0.3f;
 
-        Vector3 handPos = camera.Position
+        //TODO: Single floating point precision issues
+        Vector3 handPos = camera.Position.ToVector3()
                           + cameraForward * forwardDistance
                           + cameraRight * rightDistance
                           + cameraUp * upDistance;
