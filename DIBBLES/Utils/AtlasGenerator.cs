@@ -1,9 +1,6 @@
 using DIBBLES.Terrain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 
 namespace DIBBLES.Utils;
 
@@ -15,58 +12,85 @@ public static class AtlasGenerator
         public Dictionary<BlockType, SixLabors.ImageSharp.RectangleF> BlockUVs; // [0,1] UV rectangles for each block
     }
 
-    // Generates an atlas from all block textures (expects square PNGs of same size)
-    public static AtlasResult GenerateBlockAtlas(GraphicsDevice graphicsDevice, string blockTexturesDir, BlockType[] blockTypes, int tileSize = 16)
+    // Generates an atlas from a dictionary of block textures (already loaded, tile size must be consistent)
+    public static AtlasResult GenerateBlockAtlas(GraphicsDevice graphicsDevice, BlockType[] blockTypes, Dictionary<BlockType, Texture2D> textures, int tileSize = 16)
     {
+        if (blockTypes.Length == 0)
+            throw new ArgumentException("blockTypes must not be empty.");
+
+        // Find atlas grid size (square-ish, minimal wasted space)
         int atlasCols = (int)Math.Ceiling(Math.Sqrt(blockTypes.Length));
         int atlasRows = (int)Math.Ceiling(blockTypes.Length / (float)atlasCols);
 
         int atlasWidth = atlasCols * tileSize;
         int atlasHeight = atlasRows * tileSize;
 
-        using var atlasImage = new Image<Rgba32>(atlasWidth, atlasHeight);
+        // Prepare the atlas pixel data (RGBA, row-major)
+        Color[] atlasPixels = new Color[atlasWidth * atlasHeight];
+        for (int i = 0; i < atlasPixels.Length; i++)
+            atlasPixels[i] = Color.Transparent;
+
         var blockUVs = new Dictionary<BlockType, SixLabors.ImageSharp.RectangleF>();
 
         int idx = 0;
-        
         foreach (var type in blockTypes)
         {
             int col = idx % atlasCols;
             int row = idx / atlasCols;
+
+            Texture2D blockTex;
             
-            string path = Path.Combine(blockTexturesDir, $"{type}.png");
+            if (!textures.TryGetValue(type, out blockTex) || blockTex == null)
+            {
+                // Fallback to Error block if missing
+                if (!textures.TryGetValue(BlockType.Dirt, out blockTex)) // use Dirt as a fallback, or replace with your Error texture
+                    throw new Exception("Missing fallback texture for atlas.");
+            }
 
-            if (!File.Exists(path))
-                path = Path.Combine(blockTexturesDir, "Error.png");
+            // Read block texture data (ensure correct tile size)
+            Color[] blockPixels = new Color[tileSize * tileSize];
+            if (blockTex.Width != tileSize || blockTex.Height != tileSize)
+            {
+                // Downscale or upscale in memory (bruteforce nearest neighbor)
+                // If you want bilinear, you can do that, but for blocks nearest is fine
+                Color[] srcPixels = new Color[blockTex.Width * blockTex.Height];
+                blockTex.GetData(srcPixels);
+                for (int dy = 0; dy < tileSize; dy++)
+                for (int dx = 0; dx < tileSize; dx++)
+                {
+                    int srcX = dx * blockTex.Width / tileSize;
+                    int srcY = dy * blockTex.Height / tileSize;
+                    blockPixels[dy * tileSize + dx] = srcPixels[srcY * blockTex.Width + srcX];
+                }
+            }
+            else
+            {
+                blockTex.GetData(blockPixels);
+            }
 
-            using var blockImg = Image.Load<Rgba32>(path);
-            blockImg.Mutate(x => x.Resize(tileSize, tileSize));
-            atlasImage.Mutate<Rgba32>(x => x.DrawImage(blockImg, new SixLabors.ImageSharp.Point(col * tileSize, row * tileSize), 1f));
+            // Blit into atlas
+            for (int y = 0; y < tileSize; y++)
+            for (int x = 0; x < tileSize; x++)
+            {
+                int atlasX = col * tileSize + x;
+                int atlasY = row * tileSize + y;
+                atlasPixels[atlasY * atlasWidth + atlasX] = blockPixels[y * tileSize + x];
+            }
 
             // Store UVs as normalized [0,1]
             float u = (float)(col * tileSize) / atlasWidth;
             float v = (float)(row * tileSize) / atlasHeight;
             float uSize = (float)tileSize / atlasWidth;
             float vSize = (float)tileSize / atlasHeight;
-            
+
             blockUVs[type] = new SixLabors.ImageSharp.RectangleF(u, v, uSize, vSize);
 
             idx++;
         }
 
-        // Copy ImageSharp pixel data to a MonoGame Texture2D
+        // Copy pixel data to MonoGame Texture2D
         Texture2D atlasTex = new Texture2D(graphicsDevice, atlasWidth, atlasHeight, false, SurfaceFormat.Color);
-        
-        var pixelData = new Rgba32[atlasWidth * atlasHeight];
-        atlasImage.CopyPixelDataTo(pixelData);
-
-        // Convert Rgba32[] to Color[]
-        var colorData = new Microsoft.Xna.Framework.Color[pixelData.Length];
-        
-        for (int i = 0; i < pixelData.Length; i++)
-            colorData[i] = new Microsoft.Xna.Framework.Color(pixelData[i].R, pixelData[i].G, pixelData[i].B, pixelData[i].A);
-
-        atlasTex.SetData(colorData);
+        atlasTex.SetData(atlasPixels);
 
         return new AtlasResult
         {
