@@ -15,11 +15,12 @@ public class HandModel
     }
 
     public void Draw(
-        Camera3D camera, 
-        Vector3 cameraForward, 
-        Vector3 cameraRight, 
-        Vector3 cameraUp, 
-        Quaternion cameraRotation, 
+        Camera3D camera,
+        Vector3 cameraForward,
+        Vector3 cameraRight,
+        Vector3 cameraUp,
+        Quaternion cameraRotation,
+        byte lightLevel,
         ItemSlot? selectedItem = null)
     {
         if (selectedItem == null)
@@ -32,6 +33,8 @@ public class HandModel
         handBlockModel.Effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, -1.0f));
         handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
         handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
+
+        handBlockModel.Effect.DiffuseColor = new Vector3(lightLevel * 0.06f, lightLevel * 0.06f, lightLevel * 0.06f);
         
         // Set the hand model texture
         Texture2D texture = BlockData.Textures[selectedItem.Type];

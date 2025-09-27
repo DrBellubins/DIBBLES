@@ -413,10 +413,11 @@ public class PlayerCharacter
         CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
         CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
     }
-    
+
+    private static byte closestLightLevel = 0;
     public void Draw()
     {
-        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, hotbar.SelectedItem);
+        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
     }
 
     public void DrawUI()
