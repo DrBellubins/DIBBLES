@@ -36,7 +36,6 @@ public class TerrainMesh
             var pos = new Vector3Int(x, y, z);
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
-            var blockLight = chunk.GetLightLevelAt(x, y, z);
             
             // Opaque mesh pass: skip transparent and air blocks
             if (!isTransparencyPass && (blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
@@ -183,9 +182,6 @@ public class TerrainMesh
     
     public void RemeshBorderingChunks(Vector3Int chunkPos, Vector3Int localPos)
     {
-        // Reconstruct world-space block coordinates
-        Vector3Int blockWorldPos = chunkPos + localPos;
-
         // Local block coordinates within the chunk
         int localX = localPos.X;
         int localY = localPos.Y;

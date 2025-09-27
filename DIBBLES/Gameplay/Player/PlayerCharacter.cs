@@ -417,6 +417,7 @@ public class PlayerCharacter
     private static byte closestLightLevel = 0;
     public void Draw()
     {
+        UpdateClosestLightLevel();
         handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
     }
 
@@ -551,6 +552,20 @@ public class PlayerCharacter
         }
         
         return result;
+    }
+    
+    private void UpdateClosestLightLevel()
+    {
+        var blockPos = new Vector3Int(
+            (int)MathF.Floor((float)Position.X),
+            (int)MathF.Floor((float)Position.Y),
+            (int)MathF.Floor((float)Position.Z)
+        );
+
+        // Get the light level at this block (use global helper)
+        byte lightLevel = Chunk.GetLightLevelGlobal(blockPos);
+
+        closestLightLevel = lightLevel;
     }
     
     // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
