@@ -42,7 +42,7 @@ public class Engine : Game
         GraphicsManager.PreferredBackBufferHeight = ScreenHeight;
         GraphicsManager.SynchronizeWithVerticalRetrace = false; // We'll do custom frame cap
         
-        Content.RootDirectory = "Content";
+        Content.RootDirectory = "Assets/MG";
         
         IsMouseVisible = true;
         IsFixedTimeStep = false;

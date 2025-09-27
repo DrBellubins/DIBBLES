@@ -33,7 +33,6 @@ public class PlayerCharacter
     
     // Systems
     public GVec3 Position = GVec3.Zero;
-    //public Vector3 Position = Vector3.Zero;
     public Vector3 Velocity = Vector3.Zero;
     
     public Camera3D Camera;
@@ -107,10 +106,10 @@ public class PlayerCharacter
     
     public void Update()
     {
-        Debug.Draw2DText($"Position: {Position.X}, {Position.Y}, {Position.Z}", Color.White);
+        var vec3Position = Position.ToVector3();
+        Debug.Draw2DText($"Position: {vec3Position.X}, {vec3Position.Y}, {vec3Position.Z}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
-        //Debug.Draw2DText($"Velocity: {Velocity}", Color.White);
         
         //if (!ShouldUpdate)
         //    return;
@@ -171,17 +170,6 @@ public class PlayerCharacter
         
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
-
-        // Allow tabbing out and back into game
-        //if (Input.Pause()) CursorManager.ReleaseCursor();
-        
-        var mousePosition = Input.CursorPosition();
-        
-        var isCursorInWindow = mousePosition.X >= 0 && mousePosition.X <= Engine.ScreenWidth &&
-                                mousePosition.Y >= 0 && mousePosition.Y <= Engine.ScreenHeight;
-        
-        //if (isCursorInWindow && Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsFrozen)
-        //    CursorManager.LockCursor();
         
         if (Input.MoveForward()) inputDir.Z += 1.0f;
         if (Input.MoveBackward()) inputDir.Z -= 1.0f;
@@ -398,7 +386,6 @@ public class PlayerCharacter
         if (WorldSave.Exists)
         {
             Position = WorldSave.Data.PlayerPosition.ToGVec3();
-            //SetCameraDirection(WorldSave.Data.CameraDirection);
 
             spawnPosition = Position.ToVector3();
         }

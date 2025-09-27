@@ -23,7 +23,6 @@
     <ItemGroup>
       <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
 
     <ItemGroup>
@@ -31,35 +30,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="Assets/**">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+      <MonoGameContentReference Include="Assets/MG/Content.mgcb">
+        <ContentFolder>Assets/MG</ContentFolder>
+      </MonoGameContentReference>
     </ItemGroup>
 
-    <PropertyGroup>
-      <!-- Remove extra /Content path for MonoGame content output -->
-      <MonoGameContentOutputDir>$(MSBuildProjectDirectory)/Content/bin/</MonoGameContentOutputDir>
-    </PropertyGroup>
-
-    <!-- <Target Name="BuildContent" BeforeTargets="Build">
-      <Exec Command="mgcb -c" />
-      <Exec Command="mgcb -b -@=Content/Content.mgcb" ContinueOnError="true" />
-    </Target>
-
-    <Target Name="CopyContent" AfterTargets="Build">
-      <ItemGroup>
-        <BinContent Include="Content/bin/**" />
-      </ItemGroup>
-      <Copy
-        SourceFiles="@(BinContent)"
-        DestinationFolder="$(OutDir)Content\%(RecursiveDir)"
-        SkipUnchangedFiles="true"
-      />
-    </Target> -->
-
     <ItemGroup>
-      <Folder Include="Assets\Shaders\" />
-      <Folder Include="Assets\Sounds\" />
+      <Content Include="Assets/Sounds/**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+
+      <Content Include="Assets/Textures/**">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
     <ItemGroup>

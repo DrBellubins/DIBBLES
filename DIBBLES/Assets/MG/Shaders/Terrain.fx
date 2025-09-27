@@ -9,7 +9,6 @@ float3 CameraPos;
 float FogNear;
 float FogFar;
 float4 FogColor;
-float2 TexelSize;
 
 texture Texture0;
 

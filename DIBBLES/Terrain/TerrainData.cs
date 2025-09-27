@@ -32,7 +32,7 @@ public class BlockData
     public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
     public static Texture2D TextureAtlas; // Store the atlas
-    public static Dictionary<BlockType, SixLabors.ImageSharp.RectangleF> AtlasUVs = new(); // Store UV mappings
+    public static Dictionary<BlockType, RectangleF> AtlasUVs = new(); // Store UV mappings
     
     public static void InitializeBlockPrefabs()
     {

@@ -9,7 +9,7 @@ public static class AtlasGenerator
     public struct AtlasResult
     {
         public Texture2D AtlasTexture;
-        public Dictionary<BlockType, SixLabors.ImageSharp.RectangleF> BlockUVs; // [0,1] UV rectangles for each block
+        public Dictionary<BlockType, RectangleF> BlockUVs; // [0,1] UV rectangles for each block
     }
 
     // Generates an atlas from a dictionary of block textures (already loaded, tile size must be consistent)
@@ -27,10 +27,11 @@ public static class AtlasGenerator
 
         // Prepare the atlas pixel data (RGBA, row-major)
         Color[] atlasPixels = new Color[atlasWidth * atlasHeight];
+        
         for (int i = 0; i < atlasPixels.Length; i++)
             atlasPixels[i] = Color.Transparent;
 
-        var blockUVs = new Dictionary<BlockType, SixLabors.ImageSharp.RectangleF>();
+        var blockUVs = new Dictionary<BlockType, RectangleF>();
 
         int idx = 0;
         foreach (var type in blockTypes)
@@ -49,17 +50,20 @@ public static class AtlasGenerator
 
             // Read block texture data (ensure correct tile size)
             Color[] blockPixels = new Color[tileSize * tileSize];
+            
             if (blockTex.Width != tileSize || blockTex.Height != tileSize)
             {
                 // Downscale or upscale in memory (bruteforce nearest neighbor)
                 // If you want bilinear, you can do that, but for blocks nearest is fine
                 Color[] srcPixels = new Color[blockTex.Width * blockTex.Height];
                 blockTex.GetData(srcPixels);
+                
                 for (int dy = 0; dy < tileSize; dy++)
                 for (int dx = 0; dx < tileSize; dx++)
                 {
                     int srcX = dx * blockTex.Width / tileSize;
                     int srcY = dy * blockTex.Height / tileSize;
+                    
                     blockPixels[dy * tileSize + dx] = srcPixels[srcY * blockTex.Width + srcX];
                 }
             }
@@ -74,6 +78,7 @@ public static class AtlasGenerator
             {
                 int atlasX = col * tileSize + x;
                 int atlasY = row * tileSize + y;
+                
                 atlasPixels[atlasY * atlasWidth + atlasX] = blockPixels[y * tileSize + x];
             }
 
@@ -83,7 +88,7 @@ public static class AtlasGenerator
             float uSize = (float)tileSize / atlasWidth;
             float vSize = (float)tileSize / atlasHeight;
 
-            blockUVs[type] = new SixLabors.ImageSharp.RectangleF(u, v, uSize, vSize);
+            blockUVs[type] = new RectangleF(u, v, uSize, vSize);
 
             idx++;
         }
