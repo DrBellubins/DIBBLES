@@ -1,5 +1,4 @@
 #----------------------------- Global Properties ----------------------------#
-
 /outputDir:bin
 /intermediateDir:obj
 /platform:DesktopGL

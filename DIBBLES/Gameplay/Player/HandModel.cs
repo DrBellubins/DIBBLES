@@ -9,9 +9,18 @@ public class HandModel
 {
     private CubeMesh handBlockModel;
     
+    private Camera3D handCamera;
+    
     public void Start()
     {
         handBlockModel = MeshUtils.GenTexturedCube(Engine.Graphics, BlockData.Textures[BlockType.Dirt]);
+        
+        handCamera = new Camera3D();
+        handCamera.Position = GVec3.Zero;
+        handCamera.Target = Vector3.Zero;
+        handCamera.Up = new Vector3(0.0f, 1.0f, 0.0f);
+        handCamera.Fov = 60.0f;
+        handCamera.SetPerspective();
     }
 
     public void Draw(
@@ -26,13 +35,17 @@ public class HandModel
         if (selectedItem == null)
             return;
 
-        /*handBlockModel.Effect.LightingEnabled = true;
-        handBlockModel.Effect.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
+        handCamera.Position = camera.Position;
+        handCamera.Target = camera.Target;
+        handCamera.Up = camera.Up;
+        
+        handBlockModel.Effect.LightingEnabled = true;
+        handBlockModel.Effect.AmbientLightColor = new Vector3(0.9f, 0.9f, 0.9f);
         
         handBlockModel.Effect.DirectionalLight0.Enabled = true;
         handBlockModel.Effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, -1.0f));
         handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
-        handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
+        handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);
 
         var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
         handBlockModel.Effect.DiffuseColor = new Vector3(lightLevelFixed, lightLevelFixed, lightLevelFixed);
@@ -42,18 +55,19 @@ public class HandModel
         MeshUtils.SetCubeMeshTexture(handBlockModel, texture);
 
         // Position relative to camera
-        float forwardDistance = 0.5f;
+        float forwardDistance = 0.7f;
         float rightDistance = 0.5f;
         float upDistance = -0.3f;
 
         //TODO: Single floating point precision issues
-        Vector3 handPos = camera.Position.ToVector3()
+        Vector3 handPos = handCamera.Position.ToVector3()
                           + cameraForward * forwardDistance
                           + cameraRight * rightDistance
                           + cameraUp * upDistance;
 
         // Rotation
-        Quaternion rotation = cameraRotation;
+        var rotOffset = Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(-45f));
+        Quaternion rotation = cameraRotation * rotOffset;
 
         // Scale (adjust as desired)
         Vector3 scale = new Vector3(0.5f);
@@ -65,8 +79,8 @@ public class HandModel
             * Matrix.CreateTranslation(handPos);
 
         // Set camera matrices
-        Matrix view = camera.View;
-        Matrix projection = camera.Projection;
+        Matrix view = handCamera.View;
+        Matrix projection = handCamera.Projection;
 
         // Draw the model
         handBlockModel.Draw(world, view, projection);

@@ -58,7 +58,7 @@ public class TextBox
     public void Draw()
     {
         // Draw box (different color if focused)
-        Color boxColor = IsFocused ? Color.Gray : Color.DarkGray;
+        Color boxColor = IsFocused ? UI.FocusColor : UI.AccentColor;
         
         UIBatch.DrawRect(Bounds, boxColor);
 

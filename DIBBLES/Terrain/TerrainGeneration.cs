@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Net;
 using DIBBLES.Effects;
+using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
@@ -16,7 +18,7 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     
-    public static int Seed = -1413840509;
+    public static int Seed = -1888248476;
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ChunkBuffer = new();
     public static TerrainMesh Mesh = new();
     public static TerrainLighting Lighting = new();
@@ -46,12 +48,14 @@ public class TerrainGeneration
         foreach (var kv in WorldSave.Data.ModifiedChunks)
             ChunkBuffer[kv.Key] = kv.Value;
         
-        if (WorldSave.Exists)
-            Seed = WorldSave.Data.Seed;
-        else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        //if (WorldSave.Exists)
+        //    Seed = WorldSave.Data.Seed;
+        //else
+        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
+        
+        Commands.RegisterCommand("seed", "Displays seed in chat, and saves to txt file.", seedCmd);
     }
 
     public void Update(PlayerCharacter playerCharacter)
@@ -519,5 +523,20 @@ public class TerrainGeneration
                 );
             }
         }
+    }
+
+    private void seedCmd(string[] args)
+    {
+        Chat.Write($"Current seed: {Seed}", ChatMessageType.Command);
+
+        var filename = Path.Combine(AppContext.BaseDirectory, $"Seed_{Seed}.txt");
+
+        if (!File.Exists(filename))
+        {
+            File.Create(filename);
+            Chat.Write($"Wrote to file: Seed_{Seed}.txt", ChatMessageType.Command);
+        }
+        else
+            Chat.Write($"Seed file 'Seed_{Seed}.txt' already exists.", ChatMessageType.Warning);
     }
 }

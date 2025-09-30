@@ -23,7 +23,6 @@ public static class Resource
 
         if (!File.Exists(fullPath))
             return Path.Combine(path, "Error.png");
-            //throw new FileNotFoundException($"Texture file '{fullPath}' not found.");
 
         return fullPath;
     }
@@ -35,7 +34,6 @@ public static class Resource
 
         if (!File.Exists(fullPath))
             return Path.Combine(path, "Error.ogg");
-            //throw new FileNotFoundException($"Sound file '{fullPath}' not found.");
 
         return fullPath;
     }

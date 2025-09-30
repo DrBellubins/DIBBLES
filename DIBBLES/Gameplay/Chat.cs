@@ -169,8 +169,6 @@ public class Chat
 
     public void DrawBG()
     {
-        var sprites = Engine.Sprites;
-        
         chatBox.X = (int)UI.LeftCenterPivot.X;
         chatBox.Y = (int)heightPos;
         
@@ -180,8 +178,6 @@ public class Chat
     
     public void Draw()
     {
-        var sprites = Engine.Sprites;
-        
         if (IsOpen || IsClosedButShown)
         {
             // Draw messages
@@ -201,8 +197,7 @@ public class Chat
                 index++;
             }
             
-            if (!IsClosedButShown)
-                textBox.Draw();
+            textBox.Draw();
         }
     }
 

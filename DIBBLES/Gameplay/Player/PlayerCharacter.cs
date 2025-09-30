@@ -89,7 +89,7 @@ public class PlayerCharacter
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
 
-        Position = WorldSave.Data.PlayerPosition.ToGVec3();
+        Position = WorldSave.Data.PlayerPosition;
         
         hotbar.Start();
         handModel.Start();
@@ -385,7 +385,7 @@ public class PlayerCharacter
         
         if (WorldSave.Exists)
         {
-            Position = WorldSave.Data.PlayerPosition.ToGVec3();
+            Position = WorldSave.Data.PlayerPosition;
 
             spawnPosition = Position.ToVector3();
         }

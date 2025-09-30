@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <MonoGameContentReference Include="Assets/MG/Content.mgcb">
+      <MonoGameContentReference Include="Assets/MG/MG.mgcb">
         <ContentFolder>Assets/MG</ContentFolder>
       </MonoGameContentReference>
     </ItemGroup>

@@ -7,13 +7,14 @@ using DIBBLES.Utils;
 namespace DIBBLES.Terrain;
 
 // Only set for block prefabs once at start!
+[Serializable]
 public struct BlockInfo
 {
-    public int Hardness; // 0 to 10 (10 being unbreakable)
-    public float Thickness; // 0 to 1 (Used for slowling player down)
-    public int MaxStack;
-    public bool IsTransparent; // True if light can pass through
-    public byte LightEmission; // Light level emitted by this block (0-15)
+    public int Hardness { get; set; } // 0 to 10 (10 being unbreakable)
+    public float Thickness { get; set; } // 0 to 1 (Used for slowing player down)
+    public int MaxStack { get; set; }
+    public bool IsTransparent { get; set; } // True if light can pass through
+    public byte LightEmission { get; set; } // Light level emitted by this block (0-15)
     
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
@@ -126,6 +127,25 @@ public class BlockData
         var blockSoundPath = Path.Combine(blockName, $"{blockName}{i}.ogg");
         
         return Resource.Load<SoundEffect>(blockSoundPath);
+    }
+    
+    private static void LoadBlockDefinitions()
+    {
+        string jsonPath = Path.Combine(AppContext.BaseDirectory, "Assets/Blocks.json");
+        
+        if (File.Exists(jsonPath))
+        {
+            string json = File.ReadAllText(jsonPath);
+            var defs = JsonConvert.DeserializeObject<List<BlockDefinition>>(json);
+            
+            foreach (var def in defs)
+            {
+                Definitions[def.Type] = def;
+            }
+        }
+        else
+        {
+        }
     }
 }
 

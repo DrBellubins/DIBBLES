@@ -8,11 +8,13 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Systems;
 
+// TODO: Saves were corrupted when shifting player pos to doubles, seems fixed.
+// But not certain yet.
 public struct SaveData
 {
     public int Seed;
     public string? WorldName;
-    public Vector3 PlayerPosition;
+    public GVec3 PlayerPosition;
     public Vector3 CameraDirection;
     public int HotbarPosition;
 
@@ -22,7 +24,7 @@ public struct SaveData
     {
         Seed = 0;
         WorldName = "";
-        PlayerPosition = Vector3.Zero;
+        PlayerPosition = GVec3.Zero;
         CameraDirection = Vector3.Zero;
         HotbarPosition = 0;
     }
@@ -61,7 +63,7 @@ public class WorldSave
         {
             writer.Write("W_DIBBLES");
             
-            writer.Write(TerrainGeneration.Seed);
+            writer.Write(Seed);
         }
         
         // Player data
@@ -175,7 +177,7 @@ public class WorldSave
                 if (header != "P_DIBBLES")
                     Console.WriteLine("Player data format is incorrect");
                 
-                Data.PlayerPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                Data.PlayerPosition = new GVec3(reader.ReadDouble(), reader.ReadDouble(), reader.ReadDouble());
                 Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                 Data.HotbarPosition = reader.ReadInt32();
             }
