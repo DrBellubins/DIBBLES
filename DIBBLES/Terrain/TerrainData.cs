@@ -1,13 +1,15 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using NVorbis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Utils;
+using Tommy;
 
 namespace DIBBLES.Terrain;
 
 // Only set for block prefabs once at start!
-[Serializable]
 public struct BlockInfo
 {
     public int Hardness { get; set; } // 0 to 10 (10 being unbreakable)
@@ -37,22 +39,8 @@ public class BlockData
     
     public static void InitializeBlockPrefabs()
     {
-        // Initialize block prefabs with transparency and light emission
-        Prefabs.Add(BlockType.Dirt, new BlockInfo(2, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Grass, new BlockInfo(2, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Stone, new BlockInfo(4, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Sand, new BlockInfo(1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Snow, new BlockInfo(1, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Wood, new BlockInfo(3, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.WoodLog, new BlockInfo(3, 0.0f, 64, false, 0));
-        Prefabs.Add(BlockType.Leaves, new BlockInfo(1, 0.0f, 64, true, 15));
-        Prefabs.Add(BlockType.Glass, new BlockInfo(2, 0.0f, 64, true, 0));
-        Prefabs.Add(BlockType.Feeb, new BlockInfo(2, 0.0f, 64, false, 15));
-        
-        // Special blocks (No logic
-        Prefabs.Add(BlockType.Air, new BlockInfo(0, 0.0f, 0, true, 0));
-        Prefabs.Add(BlockType.Water, new BlockInfo(10, 0.5f, 64, true, 0));
-        Prefabs.Add(BlockType.Wisp, new BlockInfo(10, 0.5f, 64, true, 15));
+        // Initialize block prefabs
+        loadBlockPrefabsFromToml(Path.Combine(AppContext.BaseDirectory, "Assets", "Blocks.toml"));
         
         // Define block types in the exact order for the atlas
         var atlasBlockTypes = new List<BlockType>();
@@ -129,22 +117,33 @@ public class BlockData
         return Resource.Load<SoundEffect>(blockSoundPath);
     }
     
-    private static void LoadBlockDefinitions()
+    public static void loadBlockPrefabsFromToml(string tomlPath)
     {
-        string jsonPath = Path.Combine(AppContext.BaseDirectory, "Assets/Blocks.json");
-        
-        if (File.Exists(jsonPath))
+        if (!File.Exists(tomlPath))
+            throw new FileNotFoundException($"TOML file '{tomlPath}' not found.");
+
+        using var reader = new StreamReader(tomlPath);
+        var toml = TOML.Parse(reader);
+
+        Prefabs.Clear();
+
+        foreach (BlockType type in Enum.GetValues(typeof(BlockType)))
         {
-            string json = File.ReadAllText(jsonPath);
-            var defs = JsonConvert.DeserializeObject<List<BlockDefinition>>(json);
+            if (!toml.HasKey(type.ToString()))
+                continue; // Skip missing blocks
+
+            var table = toml[type.ToString()].AsTable;
             
-            foreach (var def in defs)
-            {
-                Definitions[def.Type] = def;
-            }
-        }
-        else
-        {
+            if (table == null)
+                continue; // Not a table
+
+            int hardness = table.HasKey("Hardness") ? (int)table["Hardness"].AsInteger.Value : 0;
+            float thickness = table.HasKey("Thickness") ? (float)table["Thickness"].AsFloat.Value : 0f;
+            int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 0;
+            bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
+            byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
+
+            Prefabs[type] = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
         }
     }
 }

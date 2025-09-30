@@ -1,0 +1,90 @@
+[Air]
+Hardness = 0
+Thickness = 0.0
+MaxStack = 0
+IsTransparent = true
+LightEmission = 0
+
+[Dirt]
+Hardness = 2
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Grass]
+Hardness = 2
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Stone]
+Hardness = 4
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Sand]
+Hardness = 1
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Snow]
+Hardness = 1
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Wood]
+Hardness = 3
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Water]
+Hardness = 10
+Thickness = 0.5
+MaxStack = 64
+IsTransparent = true
+LightEmission = 0
+
+[Wisp]
+Hardness = 10
+Thickness = 0.5
+MaxStack = 64
+IsTransparent = true
+LightEmission = 15
+
+[WoodLog]
+Hardness = 3
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Leaves]
+Hardness = 1
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = true
+LightEmission = 15
+
+[Glass]
+Hardness = 2
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = true
+LightEmission = 0
+
+[Feeb]
+Hardness = 2
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 15
