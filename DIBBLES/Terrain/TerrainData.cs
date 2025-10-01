@@ -34,7 +34,7 @@ public struct BlockInfo
 public class BlockData
 {
     public static readonly Dictionary<BlockType, BlockInfo> Prefabs = new();
-    public static readonly Dictionary<BlockType, Texture2D> Textures = new();
+    public static readonly Dictionary<(BlockType, int), Texture2D> Textures = new();
     public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
     public static Texture2D TextureAtlas; // Store the atlas
