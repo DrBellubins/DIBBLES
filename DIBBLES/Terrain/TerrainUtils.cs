@@ -115,9 +115,6 @@ public static class FaceUtils
 
         // Copy original
         for (int i = 0; i < 4; i++) result[i] = uvs[i];
-
-        //Console.WriteLine($"FlipUVsAtlas: flip={flip} flipH={flipHorizontal} flipV={flipVertical}");
-        //Console.WriteLine($"Before: {string.Join(" | ", uvs.Select(u => $"{u.X},{u.Y}"))}");
         
         if ((flip & 1) != 0 && flipHorizontal)
         {
@@ -134,8 +131,6 @@ public static class FaceUtils
             (result[0], result[3]) = (result[3], result[0]);
             (result[1], result[2]) = (result[2], result[1]);
         }
-        
-        //Console.WriteLine($"After: {string.Join(" | ", result.Select(u => $"{u.X},{u.Y}"))}");
         
         return result;
     }
