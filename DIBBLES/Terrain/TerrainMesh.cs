@@ -93,7 +93,7 @@ public class TerrainMesh
                         flip = flipRandom;
                     }
 
-                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, flip);
+                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
                     
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {
