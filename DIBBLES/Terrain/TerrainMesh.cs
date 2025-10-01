@@ -77,8 +77,17 @@ public class TerrainMesh
                     //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
                     
                     // Deterministic random flipping for this block face
+                    bool flipH = blockInfo.FlipUVsHorizontally;
+                    bool flipV = blockInfo.FlipUVsVertically;
+                    
+                    if (faceIdx >= 4) // Top/bottom faces
+                    {
+                        flipH = true;
+                        flipV = true;
+                    }
+                    
                     int flip = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
-                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip, blockInfo.FlipUVsHorizontally, blockInfo.FlipUVsVertically);
+                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip, flipH, flipV);
                     
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {
