@@ -92,7 +92,7 @@ public static class FaceUtils
 
         // Only rotate for side faces (0..3)
         if (faceIdx >= 0 && faceIdx <= 3)
-            return new[] { uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0] };
+            return new[] { uvCoords[3], uvCoords[0], uvCoords[1], uvCoords[2] };
         else // top/bottom: use unrotated
             return uvCoords;
     }
@@ -111,7 +111,6 @@ public static class FaceUtils
     public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int faceIdx, int flip, bool flipHorizontal, bool flipVertical)
     {
         Vector2[] result = new Vector2[4];
-        
         for (int i = 0; i < 4; i++) result[i] = uvs[i];
 
         bool doH = (flip & 1) != 0 && flipHorizontal;
@@ -119,21 +118,25 @@ public static class FaceUtils
 
         if (faceIdx >= 0 && faceIdx <= 3)
         {
-            // Sides
+            // Sides: your UV order is [1,2,3,0] = [TopR, BottomR, BottomL, TopL]
+            // So horizontal flip (left/right) is visually a vertical flip (top/bottom in UVs)
             if (doH)
             {
-                (result[0], result[1]) = (result[1], result[0]);
-                (result[3], result[2]) = (result[2], result[3]);
+                // Swap top/bottom (swap [1]<->[2], [0]<->[3])
+                (result[1], result[2]) = (result[2], result[1]);
+                (result[0], result[3]) = (result[3], result[0]);
             }
+            // Vertical flip (top/bottom) is visually a horizontal flip (left/right in UVs)
             if (doV)
             {
-                (result[0], result[3]) = (result[3], result[0]);
-                (result[1], result[2]) = (result[2], result[1]);
+                // Swap left/right (swap [0]<->[1], [2]<->[3])
+                (result[0], result[1]) = (result[1], result[0]);
+                (result[2], result[3]) = (result[3], result[2]);
             }
         }
         else
         {
-            // Top/bottom
+            // Top/bottom faces: normal mapping
             if (doH)
             {
                 (result[0], result[3]) = (result[3], result[0]);
@@ -145,7 +148,6 @@ public static class FaceUtils
                 (result[3], result[2]) = (result[2], result[3]);
             }
         }
-        
         return result;
     }
     
