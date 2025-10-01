@@ -90,11 +90,7 @@ public static class FaceUtils
             new Vector2(uvRect.X, uvRect.Y) // Bottom-left
         };
 
-        // Only rotate for side faces (0..3)
-        if (faceIdx >= 0 && faceIdx <= 3)
-            return new[] { uvCoords[3], uvCoords[0], uvCoords[1], uvCoords[2] };
-        else // top/bottom: use unrotated
-            return uvCoords;
+        return new[] { uvCoords[0], uvCoords[3], uvCoords[2], uvCoords[1] };
     }
     
     public static Vector2[] RotateUVs(Vector2[] uvs, int rotation)
@@ -111,21 +107,20 @@ public static class FaceUtils
     public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int faceIdx, int flip)
     {
         Vector2[] result = new Vector2[4];
+        
         for (int i = 0; i < 4; i++) result[i] = uvs[i];
 
-        // For sides: swap meaning of horizontal/vertical
+        // For sides
         if (faceIdx >= 0 && faceIdx <= 3)
         {
-            if ((flip & 1) != 0) // Horizontal flip in TOML
+            if ((flip & 1) != 0) // Horizontal: mirror left-right
             {
-                // Actually do vertical flip in UVs!
                 (result[0], result[3]) = (result[3], result[0]);
                 (result[1], result[2]) = (result[2], result[1]);
             }
             
-            if ((flip & 2) != 0) // Vertical flip in TOML
+            if ((flip & 2) != 0) // Vertical: invert top-bottom
             {
-                // Actually do horizontal flip in UVs!
                 (result[0], result[1]) = (result[1], result[0]);
                 (result[2], result[3]) = (result[3], result[2]);
             }
@@ -138,7 +133,7 @@ public static class FaceUtils
                 (result[0], result[1]) = (result[1], result[0]);
                 (result[3], result[2]) = (result[2], result[3]);
             }
-            
+        
             if ((flip & 2) != 0)
             {
                 (result[0], result[3]) = (result[3], result[0]);

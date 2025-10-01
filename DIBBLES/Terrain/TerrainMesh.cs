@@ -76,22 +76,20 @@ public class TerrainMesh
                     //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
                     
                     // Deterministic random flipping for this block face
-                    // Calculate random flip bits
                     int flipRandom = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
 
                     // For side faces, only allow axes enabled by TOML
                     int flip = 0;
+                    
                     if (faceIdx >= 0 && faceIdx <= 3) // Sides
                     {
-                        if (blockInfo.FlipUVsHorizontally && (flipRandom & 1) != 0)
+                        if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
                             flip |= 1; // horizontal
-                        if (blockInfo.FlipUVsVertically && (flipRandom & 2) != 0)
+                        if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
                             flip |= 2; // vertical
                     }
                     else // Top/bottom faces: always allow random flip
-                    {
                         flip = flipRandom;
-                    }
 
                     faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
                     

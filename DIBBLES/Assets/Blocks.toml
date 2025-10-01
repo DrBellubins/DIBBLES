@@ -18,8 +18,8 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = false
 LightEmission = 0
-FlipUVsHorizontally = false
-FlipUVsVertically = true
+AntiTileUVsHorizontally = true
+AntiTileUVsVertically = false
 FaceTextures = [
     "Grass_Side.png", # 0 - Front (-Z)
     "Grass_Side.png", # 1 - Back (+Z)

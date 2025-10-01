@@ -20,8 +20,8 @@ public struct BlockInfo
     
     // Key = FaceIdx
     public Dictionary<int, RectangleF>? FaceUVs; // Used for per-face texturing, if null, use same texture for all faces.
-    public bool FlipUVsHorizontally;
-    public bool FlipUVsVertically;
+    public bool AntiTileUVsHorizontally;
+    public bool AntiTileUVsVertically;
     
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
@@ -227,12 +227,12 @@ public class BlockData
             int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 0;
             bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
-            bool flipUVsHorizontally = table.HasKey("FlipUVsHorizontally") ? (bool)table["FlipUVsHorizontally"].AsBoolean.Value : true;
-            bool flipUVsVertically = table.HasKey("FlipUVsVertically") ? (bool)table["FlipUVsVertically"].AsBoolean.Value : true;
+            bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? (bool)table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
+            bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? (bool)table["AntiTileUVsVertically"].AsBoolean.Value : true;
             
             var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
-            blockInfo.FlipUVsHorizontally =  flipUVsHorizontally;
-            blockInfo.FlipUVsVertically = flipUVsVertically;
+            blockInfo.AntiTileUVsHorizontally =  antiTileUVsHorizontally;
+            blockInfo.AntiTileUVsVertically = antiTileUVsVertically;
             
             Prefabs[type] = blockInfo;
         }
