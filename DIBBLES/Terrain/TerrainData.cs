@@ -63,13 +63,10 @@ public class BlockData
         // Load textures for atlas in specified order and calculate max dimensions
         foreach (BlockType blockType in atlasBlockTypes)
         {
-            var blockInfo = Prefabs[blockType];
             var faceTextureNames = getFaceTextureNamesForBlock(blockType); // returns string[6] or null
 
             if (faceTextureNames != null)
             {
-                var faceUVs = new Dictionary<int, RectangleF>();
-                
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++)
                 {
                     var texture = Resource.Load<Texture2D>(faceTextureNames[faceIdx]);
@@ -77,14 +74,7 @@ public class BlockData
                     tempTextures.Add(texture);
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
-                    
-                    if (AtlasUVs.TryGetValue((blockType, faceIdx), out var rect))
-                        faceUVs[faceIdx] = rect;
-                    else if (AtlasUVs.TryGetValue((blockType, 0), out var fallback))
-                        faceUVs[faceIdx] = fallback;
                 }
-
-                blockInfo.FaceUVs = faceUVs;
             }
             else
             {
@@ -97,20 +87,7 @@ public class BlockData
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
                 }
-                
-                // All faces use the same UV
-                if (AtlasUVs.TryGetValue((blockType, 0), out var rect))
-                {
-                    var faceUVs = new Dictionary<int, RectangleF>();
-                    
-                    for (int faceIdx = 0; faceIdx < 6; faceIdx++)
-                        faceUVs[faceIdx] = rect;
-                    
-                    blockInfo.FaceUVs = faceUVs;
-                }
             }
-            
-            Prefabs[blockType] = blockInfo;
         }
 
         // Load sounds
@@ -145,6 +122,25 @@ public class BlockData
         // 3. Assign in BlockData
         TextureAtlas = result.AtlasTexture;
         AtlasUVs = result.BlockUVs;
+        
+        foreach (BlockType blockType in atlasBlockTypes)
+        {
+            var blockInfo = Prefabs[blockType];
+            var faceUVs = new Dictionary<int, RectangleF>();
+
+            for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+            {
+                // Assign correct rect from AtlasUVs (now populated)
+                if (AtlasUVs.TryGetValue((blockType, faceIdx), out var rect))
+                    faceUVs[faceIdx] = rect;
+                else if (AtlasUVs.TryGetValue((blockType, 0), out var fallback))
+                    faceUVs[faceIdx] = fallback;
+            }
+            
+            blockInfo.FaceUVs = faceUVs;
+            Prefabs[blockType] = blockInfo;
+        }
+
     }
     
     private static Texture2D loadBlockTexture(BlockType blockType)
