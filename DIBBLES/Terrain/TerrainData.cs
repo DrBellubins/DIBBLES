@@ -18,6 +18,9 @@ public struct BlockInfo
     public bool IsTransparent { get; set; } // True if light can pass through
     public byte LightEmission { get; set; } // Light level emitted by this block (0-15)
     
+    // Key = FaceIdx
+    public Dictionary<int, RectangleF>? FaceUVs; // Used for per-face texturing, if null, use same texture for all faces.
+    
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
         Hardness = hardness;
