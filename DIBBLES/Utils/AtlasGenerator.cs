@@ -9,7 +9,7 @@ public static class AtlasGenerator
     public struct AtlasResult
     {
         public Texture2D AtlasTexture;
-        public Dictionary<BlockType, RectangleF> BlockUVs; // [0,1] UV rectangles for each block
+        public Dictionary<(BlockType, int), RectangleF> BlockUVs; // [0,1] UV rectangles for each block
     }
 
     // Generates an atlas from a dictionary of block textures (already loaded, tile size must be consistent)
@@ -31,7 +31,7 @@ public static class AtlasGenerator
         for (int i = 0; i < atlasPixels.Length; i++)
             atlasPixels[i] = Color.Transparent;
 
-        var blockUVs = new Dictionary<BlockType, RectangleF>();
+        var blockUVs = new Dictionary<(BlockType, int), RectangleF>();
 
         int idx = 0;
         foreach (var type in blockTypes)

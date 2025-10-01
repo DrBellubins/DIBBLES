@@ -38,7 +38,7 @@ public class BlockData
     public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
     public static Texture2D TextureAtlas; // Store the atlas
-    public static Dictionary<BlockType, RectangleF> AtlasUVs = new(); // Store UV mappings
+    public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new(); // Store UV mappings
     
     public static void InitializeBlockPrefabs()
     {
@@ -63,11 +63,13 @@ public class BlockData
         // Load textures for atlas in specified order and calculate max dimensions
         foreach (BlockType blockType in atlasBlockTypes)
         {
-            // Example: check if you have per-face textures defined in your config/TOML
-            string[] faceTextureNames = getFaceTextureNamesForBlock(blockType); // returns string[6] or null
+            var blockInfo = Prefabs[blockType];
+            var faceTextureNames = getFaceTextureNamesForBlock(blockType); // returns string[6] or null
 
             if (faceTextureNames != null)
             {
+                var faceUVs = new Dictionary<int, RectangleF>();
+                
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++)
                 {
                     var texture = Resource.Load<Texture2D>(faceTextureNames[faceIdx]);
@@ -75,7 +77,14 @@ public class BlockData
                     tempTextures.Add(texture);
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
+                    
+                    if (AtlasUVs.TryGetValue((blockType, faceIdx), out var rect))
+                        faceUVs[faceIdx] = rect;
+                    else if (AtlasUVs.TryGetValue((blockType, 0), out var fallback))
+                        faceUVs[faceIdx] = fallback;
                 }
+
+                blockInfo.FaceUVs = faceUVs;
             }
             else
             {

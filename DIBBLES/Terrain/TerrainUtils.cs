@@ -67,14 +67,21 @@ public static class FaceUtils
     public static Vector2[] GetFaceUVs(BlockType type, int faceIdx)
     {
         // Use BlockData.AtlasUVs to get the correct rectangle
-        if (!BlockData.AtlasUVs.TryGetValue(type, out var uvRect))
+        var blockInfo = BlockData.Prefabs[type];
+        RectangleF uvRect;
+
+        if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect))
         {
-            // Default UVs if missing
-            return new[]
-            {
-                new Vector2(0, 1), new Vector2(1, 1),
-                new Vector2(1, 0), new Vector2(0, 0)
-            };
+            // Use per-face UV
+        }
+        else if (BlockData.AtlasUVs.TryGetValue((type, 0), out uvRect))
+        {
+            // Use default (all faces same)
+        }
+        else
+        {
+            // fallback default
+            uvRect = new RectangleF(0, 0, 1, 1);
         }
 
         // Map UVs based on face orientation
