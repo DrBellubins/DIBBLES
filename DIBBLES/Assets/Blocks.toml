@@ -67,6 +67,7 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = false
 LightEmission = 0
+FaceTextures = ["WoodLog_Side.png", "WoodLog_Side.png", "WoodLog_Side.png", "WoodLog_Side.png", "WoodLog_Top.png", "WoodLog_Top.png"]
 
 [Leaves]
 Hardness = 1

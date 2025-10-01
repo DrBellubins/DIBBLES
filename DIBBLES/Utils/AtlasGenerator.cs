@@ -13,7 +13,7 @@ public static class AtlasGenerator
     }
 
     // Generates an atlas from a dictionary of block textures (already loaded, tile size must be consistent)
-    public static AtlasResult GenerateBlockAtlas(GraphicsDevice graphicsDevice, BlockType[] blockTypes, Dictionary<BlockType, Texture2D> textures, int tileSize = 16)
+    public static AtlasResult GenerateBlockAtlas(GraphicsDevice graphicsDevice, BlockType[] blockTypes, Dictionary<(BlockType, int), Texture2D> textures, int tileSize = 16)
     {
         if (blockTypes.Length == 0)
             throw new ArgumentException("blockTypes must not be empty.");

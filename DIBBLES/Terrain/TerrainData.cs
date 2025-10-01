@@ -63,13 +63,32 @@ public class BlockData
         // Load textures for atlas in specified order and calculate max dimensions
         foreach (BlockType blockType in atlasBlockTypes)
         {
-            var texture = loadBlockTexture(blockType);
+            // Example: check if you have per-face textures defined in your config/TOML
+            string[] faceTextureNames = getFaceTextureNamesForBlock(blockType); // returns string[6] or null
 
-            tempTextures.Add(texture);
-            Textures.Add(blockType, texture); // Also store in Textures for reference
-            
-            maxWidth = Math.Max(maxWidth, texture.Width);
-            maxHeight = Math.Max(maxHeight, texture.Height);
+            if (faceTextureNames != null)
+            {
+                for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+                {
+                    var texture = Resource.Load<Texture2D>(faceTextureNames[faceIdx]);
+                    Textures.Add((blockType, faceIdx), texture);
+                    tempTextures.Add(texture);
+                    maxWidth = Math.Max(maxWidth, texture.Width);
+                    maxHeight = Math.Max(maxHeight, texture.Height);
+                }
+            }
+            else
+            {
+                var texture = loadBlockTexture(blockType);
+                
+                for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+                {
+                    Textures.Add((blockType, faceIdx), texture);
+                    tempTextures.Add(texture);
+                    maxWidth = Math.Max(maxWidth, texture.Width);
+                    maxHeight = Math.Max(maxHeight, texture.Height);
+                }
+            }
         }
 
         // Load sounds
@@ -109,6 +128,49 @@ public class BlockData
     private static Texture2D loadBlockTexture(BlockType blockType)
     {
         return Resource.Load<Texture2D>($"{blockType.ToString()}.png");
+    }
+    
+    private static string[] getFaceTextureNamesForBlock(BlockType blockType)
+    {
+        // Path to your TOML config
+        string tomlPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Blocks.toml");
+        
+        if (!File.Exists(tomlPath))
+            throw new FileNotFoundException($"TOML file '{tomlPath}' not found.");
+
+        using var reader = new StreamReader(tomlPath);
+        
+        var toml = Tommy.TOML.Parse(reader);
+
+        if (!toml.HasKey(blockType.ToString()))
+            return null;
+
+        var table = toml[blockType.ToString()].AsTable;
+        
+        if (table == null)
+            return null;
+
+        // Check for a per-face texture array
+        if (table.HasKey("FaceTextures"))
+        {
+            var arr = table["FaceTextures"].AsArray;
+            var result = new string[6];
+            int i = 0;
+
+            foreach (var item in arr)
+            {
+                if (i >= 6) break;
+                result[i++] = item.ToString();
+            }
+
+            // If less than 6 entries, fill remaining with the first (or fallback)
+            for (; i < 6; i++)
+                result[i] = result[0];
+
+            return result;
+        }
+
+        return null;
     }
     
     private static SoundEffect loadBlockSounds(BlockType blockType, int index)
