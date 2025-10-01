@@ -229,7 +229,7 @@ public class BlockData
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
             bool flipUVsHorizontally = table.HasKey("FlipUVsHorizontally") ? (bool)table["FlipUVsHorizontally"].AsBoolean.Value : true;
             bool flipUVsVertically = table.HasKey("FlipUVsVertically") ? (bool)table["FlipUVsVertically"].AsBoolean.Value : true;
-
+            
             var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
             blockInfo.FlipUVsHorizontally =  flipUVsHorizontally;
             blockInfo.FlipUVsVertically = flipUVsVertically;

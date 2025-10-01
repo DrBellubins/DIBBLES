@@ -80,6 +80,8 @@ public class TerrainMesh
                     int flip = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
                     faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, flip, blockInfo.FlipUVsHorizontally, blockInfo.FlipUVsVertically);
                     
+                    Console.WriteLine($"Block {blockType} face {faceIdx}: FlipH={blockInfo.FlipUVsHorizontally} FlipV={blockInfo.FlipUVsVertically}");
+                    
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {
                         // For transparent faces, store for sorting

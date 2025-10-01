@@ -66,7 +66,6 @@ public static class FaceUtils
     
     public static Vector2[] GetFaceUVs(BlockType type, int faceIdx)
     {
-        // Use BlockData.AtlasUVs to get the correct rectangle
         var blockInfo = BlockData.Prefabs[type];
         RectangleF uvRect;
 
@@ -80,11 +79,9 @@ public static class FaceUtils
         }
         else
         {
-            // fallback default
             uvRect = new RectangleF(0, 0, 1, 1);
         }
 
-        // Map UVs based on face orientation
         Vector2[] uvCoords =
         {
             new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
@@ -93,13 +90,11 @@ public static class FaceUtils
             new Vector2(uvRect.X, uvRect.Y) // Bottom-left
         };
 
-        Vector2[] rotatedUvCoords = new[]
-        {
-            uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0]
-        };
-
-        // You may want to use a different rotation for each face for best results
-        return rotatedUvCoords;
+        // Only rotate for side faces (0..3)
+        if (faceIdx >= 0 && faceIdx <= 3)
+            return new[] { uvCoords[1], uvCoords[2], uvCoords[3], uvCoords[0] };
+        else // top/bottom: use unrotated
+            return uvCoords;
     }
     
     public static Vector2[] RotateUVs(Vector2[] uvs, int rotation)
@@ -121,6 +116,9 @@ public static class FaceUtils
         // Copy original
         for (int i = 0; i < 4; i++) result[i] = uvs[i];
 
+        //Console.WriteLine($"FlipUVsAtlas: flip={flip} flipH={flipHorizontal} flipV={flipVertical}");
+        //Console.WriteLine($"Before: {string.Join(" | ", uvs.Select(u => $"{u.X},{u.Y}"))}");
+        
         if ((flip & 1) != 0 && flipHorizontal)
         {
             // Horizontal flip: swap left/right
@@ -136,6 +134,8 @@ public static class FaceUtils
             (result[0], result[3]) = (result[3], result[0]);
             (result[1], result[2]) = (result[2], result[1]);
         }
+        
+        //Console.WriteLine($"After: {string.Join(" | ", result.Select(u => $"{u.X},{u.Y}"))}");
         
         return result;
     }
