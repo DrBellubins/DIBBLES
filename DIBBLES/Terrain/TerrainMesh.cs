@@ -91,7 +91,9 @@ public class TerrainMesh
                     else // Top/bottom faces: always allow random flip
                         flip = flipRandom;
 
-                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
+                    // treat horizontal and vertical being false as disabling uv flipping for entire block
+                    if (!blockInfo.AntiTileUVsHorizontally && !blockInfo.AntiTileUVsVertically)
+                        faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
                     
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {
