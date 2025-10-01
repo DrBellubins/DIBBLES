@@ -18,6 +18,16 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = false
 LightEmission = 0
+FlipUVsHorizontally = true
+FlipUVsVertically = false
+FaceTextures = [
+    "Grass_Side.png", # 0 - Front (-Z)
+    "Grass_Side.png", # 1 - Back (+Z)
+    "Grass_Side.png", # 2 - Left (-X)
+    "Grass_Side.png", # 3 - Right (+X)
+    "Dirt.png",  # 4 - Bottom (-Y)
+    "Grass_Top.png"   # 5 - Top (+Y)
+]
 
 [Stone]
 Hardness = 4

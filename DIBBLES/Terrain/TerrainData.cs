@@ -12,14 +12,16 @@ namespace DIBBLES.Terrain;
 // Only set for block prefabs once at start!
 public struct BlockInfo
 {
-    public int Hardness { get; set; } // 0 to 10 (10 being unbreakable)
-    public float Thickness { get; set; } // 0 to 1 (Used for slowing player down)
-    public int MaxStack { get; set; }
-    public bool IsTransparent { get; set; } // True if light can pass through
-    public byte LightEmission { get; set; } // Light level emitted by this block (0-15)
+    public int Hardness;         // 0 to 10 (10 being unbreakable)
+    public float Thickness;      // 0 to 1 (Used for slowing player down)
+    public int MaxStack;
+    public bool IsTransparent;   // True if light can pass through
+    public byte LightEmission;   // Light level emitted by this block (0-15)
     
     // Key = FaceIdx
     public Dictionary<int, RectangleF>? FaceUVs; // Used for per-face texturing, if null, use same texture for all faces.
+    public bool FlipUVsHorizontally;
+    public bool FlipUVsVertically;
     
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
     {
@@ -225,8 +227,14 @@ public class BlockData
             int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 0;
             bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
+            bool flipUVsHorizontally = table.HasKey("FlipUVsHorizontally") ? (bool)table["FlipUVsHorizontally"].AsBoolean.Value : true;
+            bool flipUVsVertically = table.HasKey("FlipUVsVertically") ? (bool)table["FlipUVsVertically"].AsBoolean.Value : true;
 
-            Prefabs[type] = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
+            var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
+            blockInfo.FlipUVsHorizontally =  flipUVsHorizontally;
+            blockInfo.FlipUVsVertically = flipUVsVertically;
+            
+            Prefabs[type] = blockInfo;
         }
     }
 }
