@@ -19,8 +19,10 @@ public static class AtlasGenerator
             throw new ArgumentException("blockTypes must not be empty.");
 
         // Find atlas grid size (square-ish, minimal wasted space)
-        int atlasCols = (int)Math.Ceiling(Math.Sqrt(blockTypes.Length));
-        int atlasRows = (int)Math.Ceiling(blockTypes.Length / (float)atlasCols);
+        int totalTiles = textures.Count;
+
+        int atlasCols = (int)Math.Ceiling(Math.Sqrt(totalTiles));
+        int atlasRows = (int)Math.Ceiling(totalTiles / (float)atlasCols);
 
         int atlasWidth = atlasCols * tileSize;
         int atlasHeight = atlasRows * tileSize;
