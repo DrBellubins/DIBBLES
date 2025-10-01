@@ -97,7 +97,20 @@ public class BlockData
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
                 }
+                
+                // All faces use the same UV
+                if (AtlasUVs.TryGetValue((blockType, 0), out var rect))
+                {
+                    var faceUVs = new Dictionary<int, RectangleF>();
+                    
+                    for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+                        faceUVs[faceIdx] = rect;
+                    
+                    blockInfo.FaceUVs = faceUVs;
+                }
             }
+            
+            Prefabs[blockType] = blockInfo;
         }
 
         // Load sounds

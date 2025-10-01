@@ -34,17 +34,19 @@ public static class AtlasGenerator
         var blockUVs = new Dictionary<(BlockType, int), RectangleF>();
 
         int idx = 0;
-        foreach (var type in blockTypes)
+        foreach (var key in textures.Keys)
         {
+            var (blockType, faceIdx) = key;
+            
             int col = idx % atlasCols;
             int row = idx / atlasCols;
 
             Texture2D blockTex;
             
-            if (!textures.TryGetValue(type, out blockTex) || blockTex == null)
+            if (!textures.TryGetValue(key, out blockTex) || blockTex == null)
             {
                 // Fallback to Error block if missing
-                if (!textures.TryGetValue(BlockType.Dirt, out blockTex)) // use Dirt as a fallback, or replace with your Error texture
+                if (!textures.TryGetValue((BlockType.Dirt, 0), out blockTex)) // use Dirt as a fallback, or replace with your Error texture
                     throw new Exception("Missing fallback texture for atlas.");
             }
 
@@ -88,7 +90,7 @@ public static class AtlasGenerator
             float uSize = (float)tileSize / atlasWidth;
             float vSize = (float)tileSize / atlasHeight;
 
-            blockUVs[type] = new RectangleF(u, v, uSize, vSize);
+            blockUVs[key] = new RectangleF(u, v, uSize, vSize);
 
             idx++;
         }

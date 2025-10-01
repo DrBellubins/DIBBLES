@@ -13,7 +13,7 @@ public class HandModel
     
     public void Start()
     {
-        handBlockModel = MeshUtils.GenTexturedCube(Engine.Graphics, BlockData.Textures[BlockType.Dirt]);
+        handBlockModel = MeshUtils.GenTexturedCube(Engine.Graphics, BlockData.Textures[(BlockType.Dirt, 0)]);
         
         handCamera = new Camera3D();
         handCamera.Position = GVec3.Zero;
@@ -51,7 +51,7 @@ public class HandModel
         handBlockModel.Effect.DiffuseColor = new Vector3(lightLevelFixed, lightLevelFixed, lightLevelFixed);
         
         // Set the hand model texture
-        Texture2D texture = BlockData.Textures[selectedItem.Type];
+        Texture2D texture = BlockData.Textures[(selectedItem.Type, 0)];
         MeshUtils.SetCubeMeshTexture(handBlockModel, texture);
 
         // Position relative to camera

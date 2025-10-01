@@ -180,7 +180,7 @@ public class Hotbar
             cam.SetOrthographic();
 
             // Create the cube model with correct texture
-            RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[blockType]);
+            RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[(blockType, 0)]);
             
             var world = Matrix.CreateTranslation(Vector3.Zero);
             var shader = (BasicEffect)cubeModel.Shader;
