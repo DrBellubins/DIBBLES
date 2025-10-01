@@ -11,7 +11,6 @@ namespace DIBBLES.Terrain;
 
 public class TerrainMesh
 {
-    public const bool Fullbright = false;
     public const bool SmoothLighting = true; // Flat lighting doesn't work, don't care to fix it
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
@@ -77,17 +76,23 @@ public class TerrainMesh
                     //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
                     
                     // Deterministic random flipping for this block face
-                    bool flipH = blockInfo.FlipUVsHorizontally;
-                    bool flipV = blockInfo.FlipUVsVertically;
-                    
-                    if (faceIdx >= 4) // Top/bottom faces
-                    {
-                        flipH = true;
-                        flipV = true;
-                    }
-                    
                     int flip = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
-                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip, flipH, flipV);
+
+                    bool flipH = false;
+                    bool flipV = false;
+
+                    if (faceIdx >= 0 && faceIdx <= 3) // Side faces
+                    {
+                        flipH = blockInfo.FlipUVsHorizontally && ((flip & 1) != 0);
+                        flipV = blockInfo.FlipUVsVertically && ((flip & 2) != 0);
+                    }
+                    else // Top/bottom faces
+                    {
+                        flipH = (flip & 1) != 0;
+                        flipV = (flip & 2) != 0;
+                    }
+
+                    faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, (flipH ? 1 : 0) | (flipV ? 2 : 0));
                     
                     if (isTransparencyPass && cameraPosition.HasValue)
                     {

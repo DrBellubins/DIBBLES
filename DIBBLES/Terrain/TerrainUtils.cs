@@ -108,46 +108,30 @@ public static class FaceUtils
         return result;
     }
     
-    public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int faceIdx, int flip, bool flipHorizontal, bool flipVertical)
+    public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int flip)
     {
+        // flip: 0 = none, 1 = horizontal, 2 = vertical, 3 = both
         Vector2[] result = new Vector2[4];
+
+        // Copy original
         for (int i = 0; i < 4; i++) result[i] = uvs[i];
 
-        bool doH = (flip & 1) != 0 && flipHorizontal;
-        bool doV = (flip & 2) != 0 && flipVertical;
+        if ((flip & 1) != 0)
+        {
+            // Horizontal flip: swap left/right
+            // 0<->1, 3<->2
+            (result[0], result[1]) = (result[1], result[0]);
+            (result[3], result[2]) = (result[2], result[3]);
+        }
+        if ((flip & 2) != 0)
 
-        if (faceIdx >= 0 && faceIdx <= 3)
         {
-            // Sides: your UV order is [1,2,3,0] = [TopR, BottomR, BottomL, TopL]
-            // So horizontal flip (left/right) is visually a vertical flip (top/bottom in UVs)
-            if (doH)
-            {
-                // Swap top/bottom (swap [1]<->[2], [0]<->[3])
-                (result[1], result[2]) = (result[2], result[1]);
-                (result[0], result[3]) = (result[3], result[0]);
-            }
-            // Vertical flip (top/bottom) is visually a horizontal flip (left/right in UVs)
-            if (doV)
-            {
-                // Swap left/right (swap [0]<->[1], [2]<->[3])
-                (result[0], result[1]) = (result[1], result[0]);
-                (result[2], result[3]) = (result[3], result[2]);
-            }
+            // Vertical flip: swap top/bottom
+            // 0<->3, 1<->2
+            (result[0], result[3]) = (result[3], result[0]);
+            (result[1], result[2]) = (result[2], result[1]);
         }
-        else
-        {
-            // Top/bottom faces: normal mapping
-            if (doH)
-            {
-                (result[0], result[3]) = (result[3], result[0]);
-                (result[1], result[2]) = (result[2], result[1]);
-            }
-            if (doV)
-            {
-                (result[0], result[1]) = (result[1], result[0]);
-                (result[3], result[2]) = (result[2], result[3]);
-            }
-        }
+
         return result;
     }
     
