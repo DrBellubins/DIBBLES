@@ -155,7 +155,8 @@ public class TerrainGeneration
     
     private static bool chunkHasMeshes(Vector3Int pos)
     {
-        return Mesh.OpaqueModels.TryGetValue(pos, out var o) && o != null && Mesh.TransparentModels.TryGetValue(pos, out var t) && t != null;
+        return Mesh.OpaqueModels.TryGetValue(pos, out var o) && o != null
+               && Mesh.TransparentModels.TryGetValue(pos, out var t) && t != null;
     }
     
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -264,7 +265,7 @@ public class TerrainGeneration
                         }
                         else if (!DoneLoading)
                         {
-                            // Initial load: one stage per pass
+                            // Initial load: one stage per passv
                             proccesTerrainStage(chunk);
                         }
                     }
