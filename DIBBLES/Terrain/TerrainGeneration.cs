@@ -168,16 +168,20 @@ public class TerrainGeneration
 
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                // After initial load, also process any existing chunk that's behind the current stage
-                if ((DoneLoading && addAfterInitial && chunk.GenerationStage <= terrainGenerationStage) ||
-                    (!DoneLoading && chunk.GenerationStage == terrainGenerationStage))
+                // Initial pass: only advance chunks at the current stage
+                if (!DoneLoading && chunk.GenerationStage == terrainGenerationStage)
+                {
+                    chunksToGenerate.Add(chunkPos);
+                }
+                // After initial: catch up any chunk that is behind the current global stage
+                else if (DoneLoading && addAfterInitial && chunk.GenerationStage <= terrainGenerationStage)
                 {
                     chunksToGenerate.Add(chunkPos);
                 }
             }
             else
             {
-                // New chunk
+                // New/missing chunk in buffer: must be generated or restored from save
                 chunksToGenerate.Add(chunkPos);
             }
         }
@@ -190,41 +194,56 @@ public class TerrainGeneration
         
         foreach (var pos in chunksToGenerate)
         {
-            ThreadPool.QueueUserWorkItem(x =>
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 semaphore.Wait();
                 
                 try
                 {
-                    // If chunk doesn't exist at pos, create and add empty chunk to buffer.
+                    // Ensure ChunkBuffer has the right instance (prefer saved modified chunk)
                     if (!ChunkBuffer.TryGetValue(pos, out var chunk))
                     {
-                        chunk = new Chunk(pos);
-                        ChunkBuffer.TryAdd(pos, chunk);
-                        
-                        // Add new chunk after init and get its stage up to date
-                        if (DoneLoading && addAfterInitial)
+                        if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                         {
-                            while (chunk.GenerationStage <= terrainGenerationStage)
-                                proccesTerrainStage(chunk);
+                            // Use saved modified chunk as the authoritative instance
+                            ChunkBuffer[pos] = savedChunk;
+                            chunk = savedChunk;
                         }
-                        else // Generate initial stage from Uninitialized > ChunkData
-                            proccesTerrainStage(chunk);
-                    }
-                    else
-                    {
-                        // EXISTING chunk
+                        else
+                        {
+                            chunk = new Chunk(pos);
+                            ChunkBuffer[pos] = chunk;
+                        }
+
+                        // Advance new/adopted chunk
                         if (DoneLoading && addAfterInitial)
                         {
-                            // Catch up existing saved/modified chunks that are behind
                             while (chunk.GenerationStage <= terrainGenerationStage)
                                 proccesTerrainStage(chunk);
                         }
                         else
                         {
-                            // Initial load path
-                            if (!DoneLoading)
+                            proccesTerrainStage(chunk);
+                        }
+                    }
+                    else
+                    {
+                        // If there is a saved modified chunk and the buffer holds a different instance, swap it in
+                        if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                        {
+                            ChunkBuffer[pos] = savedChunk;
+                            chunk = savedChunk;
+                        }
+
+                        // Advance existing chunk appropriately
+                        if (DoneLoading && addAfterInitial)
+                        {
+                            while (chunk.GenerationStage <= terrainGenerationStage)
                                 proccesTerrainStage(chunk);
+                        }
+                        else if (!DoneLoading)
+                        {
+                            proccesTerrainStage(chunk);
                         }
                     }
                 }
