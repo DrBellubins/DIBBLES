@@ -203,25 +203,21 @@ public class TerrainGeneration
                 {
                     Chunk chunk;
                     
-                    // Load from either modified chunks or chunk buffer
-                    if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var modifiedChunk))
-                        chunk = modifiedChunk;
-                    else if (ChunkBuffer.TryGetValue(pos, out var bufferChunk))
-                        chunk = bufferChunk;
-                    else
-                        chunk = new Chunk(pos);
-                    
-                    if (DoneLoading && addAfterInitial)
+                    // Load from chunk buffer
+                    if (ChunkBuffer.TryGetValue(pos, out var bufferChunk))
                     {
-                        // Catch up to Meshing on demand post-initial
+                        chunk = bufferChunk;
+
                         while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
                             proccesTerrainStage(chunk);
                     }
+
                     else
                     {
-                        // Initial pass advances one stage per wave
-                        proccesTerrainStage(chunk);
-                        ChunkBuffer.TryAdd(pos, chunk);
+                        chunk = new Chunk(pos);
+                        
+                        while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
+                            proccesTerrainStage(chunk);
                     }
                 }
                 finally { semaphore.Release(); }
@@ -283,6 +279,7 @@ public class TerrainGeneration
                 break;
             case ChunkGenerationStage.Islands:
                 generateIslands(chunk);
+                ChunkBuffer.TryAdd(chunk.Position, chunk);
                 chunk.GenerationStage++;
                 break;
             case ChunkGenerationStage.Surface:
@@ -482,6 +479,11 @@ public class TerrainGeneration
             // Opaque model
             if (Mesh.OpaqueModels.TryGetValue(coord, out var oModel) && oModel != null)
             {
+                if (ChunkBuffer.ContainsKey(coord))
+                {
+                    ChunkBuffer[coord].GenerationStage = ChunkGenerationStage.Decorations; // Just below lighting
+                }
+                
                 oModel.Dispose();
                 Mesh.OpaqueModels.Remove(coord);
             }
