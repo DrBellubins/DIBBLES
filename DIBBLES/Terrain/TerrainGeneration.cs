@@ -184,17 +184,7 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
-            {
-                // Initial pass: only advance chunks at the current stage
-                if (chunk.GenerationStage == terrainGenerationStage)
-                    chunksToGenerate.Add(chunkPos);
-            }
-            else
-            {
-                // New/missing chunk in buffer: must be generated or restored from save
-                chunksToGenerate.Add(chunkPos);
-            }
+            chunksToGenerate.Add(chunkPos);
         }
 
         // Sort by distance to centerChunk
@@ -211,30 +201,27 @@ public class TerrainGeneration
                 
                 try
                 {
-                    // Ensure ChunkBuffer has the right instance (prefer saved modified chunk)
-                    if (!ChunkBuffer.TryGetValue(pos, out var chunk))
+                    Chunk chunk;
+                    
+                    // Load from either modified chunks or chunk buffer
+                    if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var modifiedChunk))
+                        chunk = modifiedChunk;
+                    else if (ChunkBuffer.TryGetValue(pos, out var bufferChunk))
+                        chunk = bufferChunk;
+                    else
+                        chunk = new Chunk(pos);
+                    
+                    if (DoneLoading && addAfterInitial)
                     {
-                        ChunkBuffer.TryAdd(pos, chunk);
-                        
-                        if (DoneLoading && addAfterInitial)
-                        {
-                            // Catch up to Meshing on demand post-initial
-                            while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
-                                proccesTerrainStage(chunk);
-                        }
-                        else
-                        {
-                            // Initial pass advances one stage per wave
+                        // Catch up to Meshing on demand post-initial
+                        while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
                             proccesTerrainStage(chunk);
-                        }
                     }
                     else
                     {
-                        if (!DoneLoading)
-                        {
-                            // Initial load: one stage per pass
-                            proccesTerrainStage(chunk);
-                        }
+                        // Initial pass advances one stage per wave
+                        proccesTerrainStage(chunk);
+                        ChunkBuffer.TryAdd(pos, chunk);
                     }
                 }
                 finally { semaphore.Release(); }
@@ -246,6 +233,28 @@ public class TerrainGeneration
     {
         // If chunk is modified, skip to lighting and meshing
         if (WorldSave.Data.ModifiedChunks.ContainsKey(chunk.Position))
+        {
+            // Only progress if at or before Lighting
+            if (chunk.GenerationStage < ChunkGenerationStage.Lighting)
+                chunk.GenerationStage = ChunkGenerationStage.Lighting;
+        
+            switch (chunk.GenerationStage)
+            {
+                case ChunkGenerationStage.Lighting:
+                    generateLighting(chunk);
+                    chunk.GenerationStage++;
+                    break;
+                case ChunkGenerationStage.Meshing:
+                    generateMesh(chunk);
+                    chunk.GenerationStage++;
+                    break;
+            }
+            
+            return;
+        }
+        
+        // If chunk is already in buffer, skip to lighting and meshing
+        if (ChunkBuffer.ContainsKey(chunk.Position))
         {
             // Only progress if at or before Lighting
             if (chunk.GenerationStage < ChunkGenerationStage.Lighting)
