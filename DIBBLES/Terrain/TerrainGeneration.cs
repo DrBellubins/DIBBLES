@@ -153,6 +153,11 @@ public class TerrainGeneration
         }
     }
     
+    private static bool chunkHasMeshes(Vector3Int pos)
+    {
+        return Mesh.OpaqueModels.TryGetValue(pos, out var o) && o != null && Mesh.TransparentModels.TryGetValue(pos, out var t) && t != null;
+    }
+    
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
     private void terrainGenerationThreaded(Vector3Int centerChunk, bool addAfterInitial = false)
@@ -166,6 +171,8 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
+            bool hasMesh = chunkHasMeshes(chunkPos);
+
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
                 // Initial pass: only advance chunks at the current stage
@@ -173,8 +180,10 @@ public class TerrainGeneration
                 {
                     chunksToGenerate.Add(chunkPos);
                 }
-                // After initial: catch up any chunk that is behind the current global stage
-                else if (DoneLoading && addAfterInitial && chunk.GenerationStage <= terrainGenerationStage)
+                // After initial:
+                // - catch up any chunk that is behind the current global stage
+                // - OR rebuild mesh if meshes were disposed on unload (even if stage > Meshing)
+                else if (DoneLoading && addAfterInitial && (chunk.GenerationStage <= terrainGenerationStage || !hasMesh))
                 {
                     chunksToGenerate.Add(chunkPos);
                 }
@@ -215,34 +224,47 @@ public class TerrainGeneration
                             ChunkBuffer[pos] = chunk;
                         }
 
-                        // Advance new/adopted chunk
                         if (DoneLoading && addAfterInitial)
                         {
-                            while (chunk.GenerationStage <= terrainGenerationStage)
+                            // Catch up to Meshing on demand post-initial
+                            while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
                                 proccesTerrainStage(chunk);
                         }
                         else
                         {
+                            // Initial pass advances one stage per wave
                             proccesTerrainStage(chunk);
                         }
                     }
                     else
                     {
                         // If there is a saved modified chunk and the buffer holds a different instance, swap it in
-                        if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
+                        if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk) && !ReferenceEquals(chunk, savedChunk))
                         {
                             ChunkBuffer[pos] = savedChunk;
                             chunk = savedChunk;
                         }
 
-                        // Advance existing chunk appropriately
+                        bool hasMesh = chunkHasMeshes(pos);
+
                         if (DoneLoading && addAfterInitial)
                         {
-                            while (chunk.GenerationStage <= terrainGenerationStage)
-                                proccesTerrainStage(chunk);
+                            // Post-initial behavior:
+                            if (chunk.GenerationStage < ChunkGenerationStage.Meshing)
+                            {
+                                // Fully catch up through Meshing so the chunk is usable/visible
+                                while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
+                                    proccesTerrainStage(chunk);
+                            }
+                            else if (!hasMesh)
+                            {
+                                // Already beyond Meshing, but meshes were disposed -> just rebuild meshes
+                                generateMesh(chunk);
+                            }
                         }
                         else if (!DoneLoading)
                         {
+                            // Initial load: one stage per pass
                             proccesTerrainStage(chunk);
                         }
                     }
