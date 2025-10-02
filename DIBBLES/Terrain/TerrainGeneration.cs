@@ -45,13 +45,14 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
-        foreach (var kv in WorldSave.Data.ModifiedChunks)
-            ChunkBuffer[kv.Key] = kv.Value;
-        
         //if (WorldSave.Exists)
         //    Seed = WorldSave.Data.Seed;
         //else
         //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        
+        // Load modified chunks into chunk buffer
+        foreach (var kv in WorldSave.Data.ModifiedChunks)
+            ChunkBuffer[kv.Key] = kv.Value;
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
         
@@ -216,15 +217,15 @@ public class TerrainGeneration
                         if (WorldSave.Data.ModifiedChunks.TryGetValue(pos, out var savedChunk))
                         {
                             // Use saved modified chunk as the authoritative instance
-                            ChunkBuffer[pos] = savedChunk;
                             chunk = savedChunk;
                         }
                         else
                         {
                             chunk = new Chunk(pos);
-                            ChunkBuffer[pos] = chunk;
                         }
 
+                        ChunkBuffer.TryAdd(pos, chunk);
+                        
                         if (DoneLoading && addAfterInitial)
                         {
                             // Catch up to Meshing on demand post-initial
@@ -277,51 +278,54 @@ public class TerrainGeneration
 
     private void proccesTerrainStage(Chunk chunk)
     {
+        // If chunk is modified, skip to lighting and meshing
+        if (WorldSave.Data.ModifiedChunks.ContainsKey(chunk.Position))
+        {
+            // Only progress if at or before Lighting
+            if (chunk.GenerationStage < ChunkGenerationStage.Lighting)
+                chunk.GenerationStage = ChunkGenerationStage.Lighting;
+        
+            switch (chunk.GenerationStage)
+            {
+                case ChunkGenerationStage.Lighting:
+                    generateLighting(chunk);
+                    chunk.GenerationStage++;
+                    break;
+                case ChunkGenerationStage.Meshing:
+                    generateMesh(chunk);
+                    chunk.GenerationStage++;
+                    break;
+            }
+            
+            return;
+        }
+
+        // Unmodified: normal pipeline
         switch (chunk.GenerationStage)
         {
             case ChunkGenerationStage.Uninitialized:
-            {
                 chunk.GenerationStage++;
                 break;
-            }
             case ChunkGenerationStage.Islands:
-            {
-                if (WorldSave.Data.ModifiedChunks.TryGetValue(chunk.Position, out var savedChunk))
-                    chunk = savedChunk;
-                else
-                    generateIslands(chunk);
-
+                generateIslands(chunk);
                 chunk.GenerationStage++;
                 break;
-            }
             case ChunkGenerationStage.Surface:
-            {
-                if (!chunk.IsModified)
-                    generateSurface(chunk);
-                
+                generateSurface(chunk);
                 chunk.GenerationStage++;
                 break;
-            }
             case ChunkGenerationStage.Decorations:
-            {
-                if (!chunk.IsModified)
-                    generateChunkDecorations(chunk);
-                
+                generateChunkDecorations(chunk);
                 chunk.GenerationStage++;
                 break;
-            }
             case ChunkGenerationStage.Lighting:
-            {
                 generateLighting(chunk);
                 chunk.GenerationStage++;
                 break;
-            }
             case ChunkGenerationStage.Meshing:
-            {
                 generateMesh(chunk);
                 chunk.GenerationStage++;
                 break;
-            }
         }
     }
     
@@ -513,9 +517,6 @@ public class TerrainGeneration
                 tModel.Dispose();
                 Mesh.TransparentModels.Remove(coord);
             }
-
-            // TODO: This should be preserved as a buffer
-            ChunkBuffer.TryRemove(coord, out var cchunk);
         }
     }
     
