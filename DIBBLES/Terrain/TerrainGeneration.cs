@@ -166,15 +166,18 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            // Process all chunks needing this stage
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                if (chunk.GenerationStage == terrainGenerationStage)
+                // After initial load, also process any existing chunk that's behind the current stage
+                if ((DoneLoading && addAfterInitial && chunk.GenerationStage <= terrainGenerationStage) ||
+                    (!DoneLoading && chunk.GenerationStage == terrainGenerationStage))
+                {
                     chunksToGenerate.Add(chunkPos);
+                }
             }
             else
             {
-                // New chunk: add at Uninitialized
+                // New chunk
                 chunksToGenerate.Add(chunkPos);
             }
         }
@@ -210,9 +213,19 @@ public class TerrainGeneration
                     }
                     else
                     {
-                        // Update pre-existing chunk to next stage
-                        if (!DoneLoading)
-                            proccesTerrainStage(chunk);
+                        // EXISTING chunk
+                        if (DoneLoading && addAfterInitial)
+                        {
+                            // Catch up existing saved/modified chunks that are behind
+                            while (chunk.GenerationStage <= terrainGenerationStage)
+                                proccesTerrainStage(chunk);
+                        }
+                        else
+                        {
+                            // Initial load path
+                            if (!DoneLoading)
+                                proccesTerrainStage(chunk);
+                        }
                     }
                 }
                 finally { semaphore.Release(); }

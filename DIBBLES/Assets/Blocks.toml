@@ -106,3 +106,5 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = false
 LightEmission = 15
+AntiTileUVsHorizontally = false
+AntiTileUVsVertically = false

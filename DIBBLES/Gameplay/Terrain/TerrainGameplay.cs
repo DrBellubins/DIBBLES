@@ -276,7 +276,7 @@ public class TerrainGameplay
         var newBlockBoundingBox = getBlockBB(newBlockPos.ToVector3());
 
         // Don't place if collides with player
-        if (newBlockBoundingBox.Intersects(player.CollisionBox))
+        if (!player.FreeCamEnabled && newBlockBoundingBox.Intersects(player.CollisionBox))
             return;
         
         // Place the new block

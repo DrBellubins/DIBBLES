@@ -205,9 +205,12 @@ public class PlayerCharacter
         justLanded = false;
         
         // Collision detection
-        checkCollisions();
+        if (!FreeCamEnabled)
+        {
+            checkCollisions();
         
-        CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
+            CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
+        }
         
         // Update falling state
         isFalling = !isGrounded && Velocity.Y < 0f;
