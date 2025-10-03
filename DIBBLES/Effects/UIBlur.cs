@@ -50,7 +50,7 @@ public class UIBlur
         uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["Downsample"];
         uiBlurEffect.Parameters["Texture0"].SetValue(GameScene.BackBuffer);
         uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / blurBufferWidth, 1f / blurBufferHeight));
-        uiBlurEffect.Parameters["radius"].SetValue(1f); // Not used in downsample
+        uiBlurEffect.Parameters["radius"].SetValue(40f); // Not used in downsample
 
         DrawFullscreenQuad();
 
@@ -62,7 +62,6 @@ public class UIBlur
         uiBlurEffect.Parameters["Texture0"].SetValue(BlurBuffer);
         uiBlurEffect.Parameters["MaskTexture"].SetValue(GameScene.UIBuffer);
         uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / Engine.ScreenWidth, 1f / Engine.ScreenHeight));
-        uiBlurEffect.Parameters["radius"].SetValue(4f); // Or tweak for softness
 
         DrawFullscreenQuad();
 

@@ -26,6 +26,28 @@ sampler MaskSampler = sampler_state
     AddressV = Clamp;
 };
 
+// Vertex shader structs
+struct VSInput
+{
+    float4 Position : POSITION;
+    float2 TexCoord : TEXCOORD0;
+};
+
+struct VSOutput
+{
+    float4 Position : SV_Position;
+    float2 TexCoord : TEXCOORD0;
+};
+
+// Vertex shader: passthrough
+VSOutput VSMain(VSInput input)
+{
+    VSOutput output;
+    output.Position = input.Position;
+    output.TexCoord = input.TexCoord;
+    return output;
+}
+
 float4 Box4(float4 p0, float4 p1, float4 p2, float4 p3)
 {
     return (p0 + p1 + p2 + p3) * 0.25f;
@@ -103,8 +125,8 @@ technique Downsample
 {
     pass P0
     {
-        VertexShader = compile vs_4_0_level_9_1 VSMain();
-        PixelShader  = compile vs_4_0_level_9_1 PSDownsample();
+        VertexShader = compile vs_3_0 VSMain();
+        PixelShader  = compile ps_3_0 PSDownsample();
     }
 }
 
@@ -112,7 +134,7 @@ technique UpsampleMasked
 {
     pass P0
     {
-        VertexShader = compile vs_4_0_level_9_1 VSMain();
-        PixelShader  = compile vs_4_0_level_9_1 PSUpsampleMasked();
+        VertexShader = compile vs_3_0 VSMain();
+        PixelShader  = compile ps_3_0 PSUpsampleMasked();
     }
 }
