@@ -4,6 +4,7 @@ using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace DIBBLES.Gameplay;
 
@@ -134,7 +135,7 @@ public class Chat
             }
             
             prevChatMessages.Add(textBox.Text);
-            prevMsgTraversalIndex = prevChatMessages.Count;
+            prevMsgTraversalIndex = 0;
             
             CloseChat();
             
@@ -151,17 +152,15 @@ public class Chat
         if (Input.Pause())
             CloseChat();
         
-        /*if (Input.PreviousMessage() && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)
+        // Previous message/command
+        if (Input.IsKeyPressed(Keys.Up) && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)
         {
-            textBox.Text = prevChatMessages[prevMsgTraversalIndex];
-            prevMsgTraversalIndex--;
+            if (prevMsgTraversalIndex < prevChatMessages.Count)
+            {
+                prevMsgTraversalIndex++;
+                textBox.Text = prevChatMessages[prevMsgTraversalIndex];
+            }
         }
-        
-        if (Input.NewerMessage() && prevMsgTraversalIndex < prevChatMessages.Count)
-        {
-            textBox.Text = prevChatMessages[prevMsgTraversalIndex];
-            prevMsgTraversalIndex++;
-        }*/
         
         if (TerrainGeneration.InitialLoadDone)
             GameScene.PlayerCharacter.IsFrozen = IsOpen;
