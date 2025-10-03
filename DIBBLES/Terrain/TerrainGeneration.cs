@@ -193,8 +193,7 @@ public class TerrainGeneration
                 
                 try
                 {
-                    // If chunk doesn't exist at pos, create and add empty chunk to buffer.
-                    if (!ChunkBuffer.TryGetValue(pos, out var chunk))
+                    if (!ChunkBuffer.TryGetValue(pos, out var chunk)) // Not in buffer
                     {
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
@@ -208,10 +207,11 @@ public class TerrainGeneration
                         else // Generate initial stage from Uninitialized > ChunkData
                             proccesChunkStage(chunk);
                     }
-                    else
+                    else // In buffer
                     {
                         // Update pre-existing chunk to next stage
-                        proccesChunkStage(chunk);
+                        while (chunk.GenerationStage <= terrainGenerationStage)
+                            proccesChunkStage(chunk);
                     }
                 }
                 finally { semaphore.Release(); }
