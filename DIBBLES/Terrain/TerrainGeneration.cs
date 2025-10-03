@@ -457,9 +457,7 @@ public class TerrainGeneration
             }
             
             if (ChunkBuffer.TryGetValue(coord, out var chunk))
-            {
-                chunk.GenerationStage = ChunkGenerationStage.Lighting; // Before lighting and meshing
-            }
+                chunk.GenerationStage = ChunkGenerationStage.Lighting;
         }
     }
     
