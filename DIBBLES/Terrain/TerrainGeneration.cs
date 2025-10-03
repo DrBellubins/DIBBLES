@@ -203,16 +203,15 @@ public class TerrainGeneration
                         if (DoneLoading && addAfterInitial)
                         {
                             while (chunk.GenerationStage <= terrainGenerationStage)
-                                proccesTerrainStage(chunk);
+                                proccesChunkStage(chunk);
                         }
                         else // Generate initial stage from Uninitialized > ChunkData
-                            proccesTerrainStage(chunk);
+                            proccesChunkStage(chunk);
                     }
                     else
                     {
                         // Update pre-existing chunk to next stage
-                        if (!DoneLoading)
-                            proccesTerrainStage(chunk);
+                        proccesChunkStage(chunk);
                     }
                 }
                 finally { semaphore.Release(); }
@@ -220,7 +219,7 @@ public class TerrainGeneration
         }
     }
 
-    private void proccesTerrainStage(Chunk chunk)
+    private void proccesChunkStage(Chunk chunk)
     {
         switch (chunk.GenerationStage)
         {
@@ -458,9 +457,11 @@ public class TerrainGeneration
                 tModel.Dispose();
                 Mesh.TransparentModels.Remove(coord);
             }
-
-            // TODO: This should be preserved as a buffer
-            ChunkBuffer.TryRemove(coord, out var cchunk);
+            
+            if (ChunkBuffer.TryGetValue(coord, out var chunk))
+            {
+                chunk.GenerationStage = ChunkGenerationStage.Lighting; // Before lighting and meshing
+            }
         }
     }
     
