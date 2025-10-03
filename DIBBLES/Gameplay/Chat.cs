@@ -135,7 +135,7 @@ public class Chat
             }
             
             prevChatMessages.Add(textBox.Text);
-            prevMsgTraversalIndex = 0;
+            prevMsgTraversalIndex = prevChatMessages.Count;
             
             CloseChat();
             
@@ -152,13 +152,27 @@ public class Chat
         if (Input.Pause())
             CloseChat();
         
-        // Previous message/command
-        if (Input.IsKeyPressed(Keys.Up) && prevMsgTraversalIndex > 0 && prevChatMessages.Count > 0)
+        // Up key: go to previous message
+        if (Input.IsKeyPressed(Keys.Up) && prevChatMessages.Count > 0)
         {
-            if (prevMsgTraversalIndex < prevChatMessages.Count)
+            if (prevMsgTraversalIndex > 0)
+                prevMsgTraversalIndex--;
+            
+            textBox.Text = prevChatMessages[prevMsgTraversalIndex];
+        }
+
+        // Down key: go to next message (or empty if at end)
+        if (Input.IsKeyPressed(Keys.Down) && prevChatMessages.Count > 0)
+        {
+            if (prevMsgTraversalIndex < prevChatMessages.Count - 1)
             {
                 prevMsgTraversalIndex++;
                 textBox.Text = prevChatMessages[prevMsgTraversalIndex];
+            }
+            else
+            {
+                prevMsgTraversalIndex = prevChatMessages.Count;
+                textBox.Text = "";
             }
         }
         
