@@ -223,6 +223,11 @@ public class TerrainGeneration
     {
         switch (chunk.GenerationStage)
         {
+            case ChunkGenerationStage.Uninitialized:
+            {
+                chunk.GenerationStage++;
+                break;
+            }
             case ChunkGenerationStage.Islands:
             {
                 if (!chunk.IsModified)
