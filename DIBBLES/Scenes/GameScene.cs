@@ -19,12 +19,16 @@ public class GameScene : Scene
     public static List<BlockLogic> BlockLogicList = new();
 
     public static Color SkyColor = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+    
+    // Buffers
+    public static RenderTarget2D BackBuffer;
     public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
     
     public override void Start()
     {
+        BackBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
         UIBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
         
         UIBatch.Initialize();
@@ -72,6 +76,7 @@ public class GameScene : Scene
     {
         var gd = Engine.Graphics;
         
+        gd.SetRenderTarget(BackBuffer);
         gd.Clear(SkyColor);
         
         gd.BlendState = BlendState.NonPremultiplied;
@@ -103,9 +108,12 @@ public class GameScene : Scene
         Debug.Draw2D();
         Debug.Clear2D();
         
-        UIBatch.End();
-        
         gd.SetRenderTarget(null);
+        
+        UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        //UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        
+        UIBatch.End();
     }
     
     private void takeScreenshot(GraphicsDevice gd)
