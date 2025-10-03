@@ -1,3 +1,4 @@
+using DIBBLES.Effects;
 using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
 using DIBBLES.Gameplay;
@@ -24,6 +25,7 @@ public class GameScene : Scene
     public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
+    private UIBlur uiBlur = new();
     
     public override void Start()
     {
@@ -44,6 +46,8 @@ public class GameScene : Scene
         TerrainGen.Start(); // Initial terrain generation
         PlayerCharacter.Start(); // Must be started after terrain
         gameChat.Start();
+        
+        uiBlur.Start();
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
         Commands.RegisterCommand("debug", "Toggle debug information", Debug.ToggleDebug);
@@ -94,7 +98,7 @@ public class GameScene : Scene
         
         // Draw UI (UI Batch)
         gd.SetRenderTarget(UIBuffer);
-        gd.Clear(new Color());
+        gd.Clear(Color.Transparent);
         
         UIBatch.Begin();
         
@@ -110,10 +114,13 @@ public class GameScene : Scene
         
         gd.SetRenderTarget(null);
         
+        uiBlur.Apply();
+        
         UIBatch.Begin();
         
         // Draw buffers
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        uiBlur.Draw();
         UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         UIBatch.End();

@@ -13,3 +13,6 @@
 
 # Build the terrain shader
 /build:Shaders/Terrain.fx
+
+# Build the UI blur shader
+/build:Shaders/UIBlur.fx

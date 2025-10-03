@@ -1,5 +1,5 @@
 Buffers:
-GameScene.BackBuffer - the 3d game Buffers
+GameScene.BackBuffer - the 3d game buffer
 GameScene.UIBuffer - All of the UI elements
 
 UIBlurEffect.BlurBuffer - A buffer scaled to 128, 72 that is downsampled to (using BackBuffer)

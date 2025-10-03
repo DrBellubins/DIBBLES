@@ -6,38 +6,49 @@ Texture2D Texture0      : register(t0);
 Texture2D MaskTexture   : register(t1);
 
 // Samplers
-SamplerState Sampler : register(s0)
+sampler Sampler = sampler_state
 {
-    Filter = MIN_MAG_MIP_LINEAR;
+    Texture = <Texture0>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
     AddressU = Clamp;
     AddressV = Clamp;
 };
 
-SamplerState MaskSampler : register(s1)
+sampler MaskSampler = sampler_state
 {
-    Filter = MIN_MAG_MIP_LINEAR;
+    Texture = <MaskTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
     AddressU = Clamp;
     AddressV = Clamp;
 };
+
+float4 Box4(float4 p0, float4 p1, float4 p2, float4 p3)
+{
+    return (p0 + p1 + p2 + p3) * 0.25f;
+}
 
 // Downsample pass (weighted 5-group mix from original)
 float4 DownsamplePS(float2 texCoord)
 {
     float2 offset = texelSize * 0.5;
 
-    float4 c0  = tex2d(Sampler, texCoord + float2(-2, -2) * offset);
-    float4 c1  = tex2d(Sampler, texCoord + float2( 0, -2) * offset);
-    float4 c2  = tex2d(Sampler, texCoord + float2( 2, -2) * offset);
-    float4 c3  = tex2d(Sampler, texCoord + float2(-1, -1) * offset);
-    float4 c4  = tex2d(Sampler, texCoord + float2( 1, -1) * offset);
-    float4 c5  = tex2d(Sampler, texCoord + float2(-2,  0) * offset);
-    float4 c6  = tex2d(Sampler, texCoord + float2( 0,  0) * offset);
-    float4 c7  = tex2d(Sampler, texCoord + float2( 2,  0) * offset);
-    float4 c8  = tex2d(Sampler, texCoord + float2(-1,  1) * offset);
-    float4 c9  = tex2d(Sampler, texCoord + float2( 1,  1) * offset);
-    float4 c10 = tex2d(Sampler, texCoord + float2(-2,  2) * offset);
-    float4 c11 = tex2d(Sampler, texCoord + float2( 0,  2) * offset);
-    float4 c12 = tex2d(Sampler, texCoord + float2( 2,  2) * offset);
+    float4 c0  = tex2D(Sampler, texCoord + float2(-2, -2) * offset);
+    float4 c1  = tex2D(Sampler, texCoord + float2( 0, -2) * offset);
+    float4 c2  = tex2D(Sampler, texCoord + float2( 2, -2) * offset);
+    float4 c3  = tex2D(Sampler, texCoord + float2(-1, -1) * offset);
+    float4 c4  = tex2D(Sampler, texCoord + float2( 1, -1) * offset);
+    float4 c5  = tex2D(Sampler, texCoord + float2(-2,  0) * offset);
+    float4 c6  = tex2D(Sampler, texCoord + float2( 0,  0) * offset);
+    float4 c7  = tex2D(Sampler, texCoord + float2( 2,  0) * offset);
+    float4 c8  = tex2D(Sampler, texCoord + float2(-1,  1) * offset);
+    float4 c9  = tex2D(Sampler, texCoord + float2( 1,  1) * offset);
+    float4 c10 = tex2D(Sampler, texCoord + float2(-2,  2) * offset);
+    float4 c11 = tex2D(Sampler, texCoord + float2( 0,  2) * offset);
+    float4 c12 = tex2D(Sampler, texCoord + float2( 2,  2) * offset);
 
     float4 result =
           Box4(c0,  c1,  c5,  c6)  * 0.125
@@ -54,15 +65,15 @@ float4 UpsamplePS(float2 texCoord)
 {
     float2 offset = texelSize * radius * 0.5;
 
-    float4 c0 = tex2d(Sampler, texCoord + float2(-1, -1) * offset);
-    float4 c1 = tex2d(Sampler, texCoord + float2( 0, -1) * offset);
-    float4 c2 = tex2d(Sampler, texCoord + float2( 1, -1) * offset);
-    float4 c3 = tex2d(Sampler, texCoord + float2(-1,  0) * offset);
-    float4 c4 = tex2d(Sampler, texCoord + float2( 0,  0) * offset);
-    float4 c5 = tex2d(Sampler, texCoord + float2( 1,  0) * offset);
-    float4 c6 = tex2d(Sampler, texCoord + float2(-1,  1) * offset);
-    float4 c7 = tex2d(Sampler, texCoord + float2( 0,  1) * offset);
-    float4 c8 = tex2d(Sampler, texCoord + float2( 1,  1) * offset);
+    float4 c0 = tex2D(Sampler, texCoord + float2(-1, -1) * offset);
+    float4 c1 = tex2D(Sampler, texCoord + float2( 0, -1) * offset);
+    float4 c2 = tex2D(Sampler, texCoord + float2( 1, -1) * offset);
+    float4 c3 = tex2D(Sampler, texCoord + float2(-1,  0) * offset);
+    float4 c4 = tex2D(Sampler, texCoord + float2( 0,  0) * offset);
+    float4 c5 = tex2D(Sampler, texCoord + float2( 1,  0) * offset);
+    float4 c6 = tex2D(Sampler, texCoord + float2(-1,  1) * offset);
+    float4 c7 = tex2D(Sampler, texCoord + float2( 0,  1) * offset);
+    float4 c8 = tex2D(Sampler, texCoord + float2( 1,  1) * offset);
 
     float4 result = 0.0625f * (c0 + 2.0 * c1 + c2 + 2.0 * c3 + 4.0 * c4 + 2.0 * c5 + c6 + 2.0 * c7 + c8);
     return result;
@@ -78,7 +89,7 @@ float4 PSDownsample(VSOutput input) : SV_Target
 float4 PSUpsampleMasked(VSOutput input) : SV_Target
 {
     float4 blurUpscaled = UpsamplePS(input.TexCoord);
-    float maskA = tex2d(MaskSampler, input.TexCoord).a;
+    float maskA = tex2D(MaskSampler, input.TexCoord).a;
 
     // Only output blurred color where mask alpha > 0.5
     if (maskA > 0.5)
@@ -92,8 +103,8 @@ technique Downsample
 {
     pass P0
     {
-        VertexShader = compile VS_SHADERMODEL VSMain();
-        PixelShader  = compile PS_SHADERMODEL PSDownsample();
+        VertexShader = compile vs_4_0_level_9_1 VSMain();
+        PixelShader  = compile vs_4_0_level_9_1 PSDownsample();
     }
 }
 
@@ -101,7 +112,7 @@ technique UpsampleMasked
 {
     pass P0
     {
-        VertexShader = compile VS_SHADERMODEL VSMain();
-        PixelShader  = compile PS_SHADERMODEL PSUpsampleMasked();
+        VertexShader = compile vs_4_0_level_9_1 VSMain();
+        PixelShader  = compile vs_4_0_level_9_1 PSUpsampleMasked();
     }
 }
