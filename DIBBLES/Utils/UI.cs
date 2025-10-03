@@ -55,7 +55,7 @@ public class UI
 
     public static void DrawText(string text, Vector2 position)
     {
-        Engine.Sprites.DrawString(Engine.MainFont, text, position, Color.White);
+        //Engine.Sprites.DrawString(Engine.MainFont, text, position, Color.White);
         //Raylib.DrawTextEx(MonoEngine.MainFont, text, position, 28, 0.0f, Color.White);
     }
 

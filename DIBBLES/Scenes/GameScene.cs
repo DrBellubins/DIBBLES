@@ -19,11 +19,14 @@ public class GameScene : Scene
     public static List<BlockLogic> BlockLogicList = new();
 
     public static Color SkyColor = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+    public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
     
     public override void Start()
     {
+        UIBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
+        
         UIBatch.Initialize();
         Primatives3D.Initialize();
 
@@ -68,7 +71,6 @@ public class GameScene : Scene
     public override void Draw()
     {
         var gd = Engine.Graphics;
-        var sprites = Engine.Sprites;
         
         gd.Clear(SkyColor);
         
@@ -88,6 +90,9 @@ public class GameScene : Scene
         //Debug.Draw3D();
         
         // Draw UI (UI Batch)
+        gd.SetRenderTarget(UIBuffer);
+        gd.Clear(new Color());
+        
         UIBatch.Begin();
         
         PlayerCharacter.DrawUI();
@@ -99,6 +104,8 @@ public class GameScene : Scene
         Debug.Clear2D();
         
         UIBatch.End();
+        
+        gd.SetRenderTarget(null);
     }
     
     private void takeScreenshot(GraphicsDevice gd)

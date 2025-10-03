@@ -22,7 +22,6 @@ public class Engine : Game
     public static bool IsPaused;
     
     public static GraphicsDevice Graphics;
-    public static SpriteBatch Sprites;
     
     public static SpriteFont MainFont;
     public static List<Scene> Scenes = new();
@@ -63,7 +62,6 @@ public class Engine : Game
     protected override void LoadContent()
     {
         Graphics = GraphicsManager.GraphicsDevice;
-        Sprites = new SpriteBatch(GraphicsDevice);
         
         MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         MainFont = TextureUtils.AlterSpriteFont(MainFont, ' ', 8f);

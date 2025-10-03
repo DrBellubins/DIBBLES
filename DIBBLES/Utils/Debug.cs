@@ -45,8 +45,6 @@ public class Debug
     
     public static void Draw2D()
     {
-        var sprites = Engine.Sprites;
-        
         if (ShowDebug)
         {
             int index = 0;
