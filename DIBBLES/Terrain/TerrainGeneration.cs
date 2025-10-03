@@ -24,7 +24,7 @@ public class TerrainGeneration
     public static TerrainLighting Lighting = new();
     public static TerrainGameplay Gameplay = new();
     public static Effect terrainShader;
-    public static bool DoneLoading = false;
+    public static bool InitialLoadDone = false;
     
     // Gameplay
     public static Block SelectedBlock;
@@ -84,12 +84,12 @@ public class TerrainGeneration
         
         // TODO: Sometimes doesn't run???
         // After all chunk data in render distance has loaded in
-        if (chunksLoaded >= expectedChunkCount && !DoneLoading)
+        if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
         {
             playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
             playerCharacter.ShouldUpdate = true;
-            DoneLoading = true;
+            InitialLoadDone = true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -166,15 +166,15 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            // Process all chunks needing this stage
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                if (chunk.GenerationStage == terrainGenerationStage)
+                // Process any chunk that needs to catch up to current stage
+                if (chunk.GenerationStage < terrainGenerationStage)
                     chunksToGenerate.Add(chunkPos);
             }
             else
             {
-                // New chunk: add at Uninitialized
+                // New chunk: always add
                 chunksToGenerate.Add(chunkPos);
             }
         }
@@ -199,7 +199,7 @@ public class TerrainGeneration
                         ChunkBuffer.TryAdd(pos, chunk);
                         
                         // Add new chunk after init and get its stage up to date
-                        if (DoneLoading && addAfterInitial)
+                        if (InitialLoadDone && addAfterInitial)
                         {
                             while (chunk.GenerationStage <= terrainGenerationStage)
                                 proccesChunkStage(chunk);
@@ -221,15 +221,8 @@ public class TerrainGeneration
 
     private void proccesChunkStage(Chunk chunk)
     {
-        Console.WriteLine(object.ReferenceEquals(ChunkBuffer[chunk.Position], chunk));
-        
         switch (chunk.GenerationStage)
         {
-            case ChunkGenerationStage.Uninitialized:
-            {
-                chunk.GenerationStage++;
-                break;
-            }
             case ChunkGenerationStage.Islands:
             {
                 if (!chunk.IsModified)
