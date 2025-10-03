@@ -233,7 +233,8 @@ public class WorldSave
                     chunk.SetTypeAt(x, y, z, type);
                     chunk.SetBiomeAt(x, y, z, biome);
                 }
-
+                
+                chunk.GenerationStage = ChunkGenerationStage.Lighting;
                 chunk.IsModified = true;
     
                 Data.ModifiedChunks.Add(chunk.Position, chunk);

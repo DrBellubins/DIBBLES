@@ -159,17 +159,17 @@ public class TerrainGeneration
     {
         int halfRenderDistance = RenderDistance / 2;
         List<Vector3Int> chunksToGenerate = new();
-
+    
         for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
         for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
         for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-
+    
             if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
-                // Process any chunk that needs to catch up to current stage
-                if (chunk.GenerationStage < terrainGenerationStage)
+                // Process any chunk that needs to catch up to (or is at) current stage
+                if (chunk.GenerationStage <= terrainGenerationStage)
                     chunksToGenerate.Add(chunkPos);
             }
             else
@@ -178,7 +178,7 @@ public class TerrainGeneration
                 chunksToGenerate.Add(chunkPos);
             }
         }
-
+    
         // Sort by distance to centerChunk
         chunksToGenerate.Sort((a, b) => 
             (a - centerChunk * ChunkSize).ToVector3().LengthSquared()
@@ -204,12 +204,12 @@ public class TerrainGeneration
                             while (chunk.GenerationStage <= terrainGenerationStage)
                                 proccesChunkStage(chunk);
                         }
-                        else // Generate initial stage from Uninitialized > ChunkData
+                        else // Generate initial stage from Uninitialized > Islands (increment only)
                             proccesChunkStage(chunk);
                     }
                     else // In buffer
                     {
-                        // Update pre-existing chunk to next stage
+                        // Update pre-existing chunk to next stage(s)
                         while (chunk.GenerationStage <= terrainGenerationStage)
                             proccesChunkStage(chunk);
                     }
