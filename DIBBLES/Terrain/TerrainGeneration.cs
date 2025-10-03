@@ -207,14 +207,14 @@ public class TerrainGeneration
                     if (ChunkBuffer.TryGetValue(pos, out var bufferChunk))
                     {
                         chunk = bufferChunk;
-
+                        
                         while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
                             proccesTerrainStage(chunk);
                     }
-
                     else
                     {
                         chunk = new Chunk(pos);
+                        ChunkBuffer.TryAdd(pos, chunk);
                         
                         while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
                             proccesTerrainStage(chunk);
@@ -469,9 +469,7 @@ public class TerrainGeneration
             int dz = Math.Abs(chunkZ - centerZ);
         
             if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
-            {
                 chunksToRemove.Add(chunk.Key);
-            }
         }
 
         foreach (var coord in chunksToRemove)
@@ -479,11 +477,6 @@ public class TerrainGeneration
             // Opaque model
             if (Mesh.OpaqueModels.TryGetValue(coord, out var oModel) && oModel != null)
             {
-                if (ChunkBuffer.ContainsKey(coord))
-                {
-                    ChunkBuffer[coord].GenerationStage = ChunkGenerationStage.Decorations; // Just below lighting
-                }
-                
                 oModel.Dispose();
                 Mesh.OpaqueModels.Remove(coord);
             }
