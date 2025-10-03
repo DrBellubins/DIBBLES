@@ -45,14 +45,13 @@ public class TerrainGeneration
         WorldSave.Initialize();
         WorldSave.LoadWorldData("test");
         
+        foreach (var kv in WorldSave.Data.ModifiedChunks)
+            ChunkBuffer[kv.Key] = kv.Value;
+        
         //if (WorldSave.Exists)
         //    Seed = WorldSave.Data.Seed;
         //else
         //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
-        
-        // Load modified chunks into chunk buffer
-        foreach (var kv in WorldSave.Data.ModifiedChunks)
-            ChunkBuffer[kv.Key] = kv.Value;
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
         
@@ -118,23 +117,6 @@ public class TerrainGeneration
         unloadDistantChunks(centerChunk);
     }
 
-    public static bool InRenderDistance(Vector3Int chunkPos, Vector3Int centerChunk)
-    {
-        int chunkX = chunkPos.X / ChunkSize;
-        int chunkY = chunkPos.Y / ChunkSize;
-        int chunkZ = chunkPos.Z / ChunkSize;
-
-        int centerX = centerChunk.X;
-        int centerY = centerChunk.Y;
-        int centerZ = centerChunk.Z;
-
-        int dx = Math.Abs(chunkX - centerX);
-        int dy = Math.Abs(chunkY - centerY);
-        int dz = Math.Abs(chunkZ - centerZ);
-
-        return dx <= RenderDistance / 2 && dy <= RenderDistance / 2 && dz <= RenderDistance / 2;
-    }
-    
     private void updateStageIfReady(Vector3Int centerChunk)
     {
         int halfRenderDistance = RenderDistance / 2;
@@ -184,7 +166,17 @@ public class TerrainGeneration
         {
             Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
 
-            chunksToGenerate.Add(chunkPos);
+            // Process all chunks needing this stage
+            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            {
+                if (chunk.GenerationStage == terrainGenerationStage)
+                    chunksToGenerate.Add(chunkPos);
+            }
+            else
+            {
+                // New chunk: add at Uninitialized
+                chunksToGenerate.Add(chunkPos);
+            }
         }
 
         // Sort by distance to centerChunk
@@ -195,28 +187,31 @@ public class TerrainGeneration
         
         foreach (var pos in chunksToGenerate)
         {
-            ThreadPool.QueueUserWorkItem(_ =>
+            ThreadPool.QueueUserWorkItem(x =>
             {
                 semaphore.Wait();
                 
                 try
                 {
-                    Chunk chunk;
-                    
-                    // Load from chunk buffer
-                    if (ChunkBuffer.TryGetValue(pos, out var bufferChunk))
-                    {
-                        chunk = bufferChunk;
-                        
-                        while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
-                            proccesTerrainStage(chunk);
-                    }
-                    else
+                    // If chunk doesn't exist at pos, create and add empty chunk to buffer.
+                    if (!ChunkBuffer.TryGetValue(pos, out var chunk))
                     {
                         chunk = new Chunk(pos);
                         ChunkBuffer.TryAdd(pos, chunk);
                         
-                        while (chunk.GenerationStage <= ChunkGenerationStage.Meshing)
+                        // Add new chunk after init and get its stage up to date
+                        if (DoneLoading && addAfterInitial)
+                        {
+                            while (chunk.GenerationStage <= terrainGenerationStage)
+                                proccesTerrainStage(chunk);
+                        }
+                        else // Generate initial stage from Uninitialized > ChunkData
+                            proccesTerrainStage(chunk);
+                    }
+                    else
+                    {
+                        // Update pre-existing chunk to next stage
+                        if (!DoneLoading)
                             proccesTerrainStage(chunk);
                     }
                 }
@@ -227,77 +222,51 @@ public class TerrainGeneration
 
     private void proccesTerrainStage(Chunk chunk)
     {
-        // If chunk is modified, skip to lighting and meshing
-        if (WorldSave.Data.ModifiedChunks.ContainsKey(chunk.Position))
-        {
-            // Only progress if at or before Lighting
-            if (chunk.GenerationStage < ChunkGenerationStage.Lighting)
-                chunk.GenerationStage = ChunkGenerationStage.Lighting;
-        
-            switch (chunk.GenerationStage)
-            {
-                case ChunkGenerationStage.Lighting:
-                    generateLighting(chunk);
-                    chunk.GenerationStage++;
-                    break;
-                case ChunkGenerationStage.Meshing:
-                    generateMesh(chunk);
-                    chunk.GenerationStage++;
-                    break;
-            }
-            
-            return;
-        }
-        
-        // If chunk is already in buffer, skip to lighting and meshing
-        if (ChunkBuffer.ContainsKey(chunk.Position))
-        {
-            // Only progress if at or before Lighting
-            if (chunk.GenerationStage < ChunkGenerationStage.Lighting)
-                chunk.GenerationStage = ChunkGenerationStage.Lighting;
-        
-            switch (chunk.GenerationStage)
-            {
-                case ChunkGenerationStage.Lighting:
-                    generateLighting(chunk);
-                    chunk.GenerationStage++;
-                    break;
-                case ChunkGenerationStage.Meshing:
-                    generateMesh(chunk);
-                    chunk.GenerationStage++;
-                    break;
-            }
-            
-            return;
-        }
-
-        // Unmodified: normal pipeline
         switch (chunk.GenerationStage)
         {
             case ChunkGenerationStage.Uninitialized:
+            {
                 chunk.GenerationStage++;
                 break;
+            }
             case ChunkGenerationStage.Islands:
-                generateIslands(chunk);
-                ChunkBuffer.TryAdd(chunk.Position, chunk);
+            {
+                if (WorldSave.Data.ModifiedChunks.TryGetValue(chunk.Position, out var savedChunk))
+                    chunk = savedChunk;
+                else
+                    generateIslands(chunk);
+
                 chunk.GenerationStage++;
                 break;
+            }
             case ChunkGenerationStage.Surface:
-                generateSurface(chunk);
+            {
+                if (!chunk.IsModified)
+                    generateSurface(chunk);
+                
                 chunk.GenerationStage++;
                 break;
+            }
             case ChunkGenerationStage.Decorations:
-                generateChunkDecorations(chunk);
+            {
+                if (!chunk.IsModified)
+                    generateChunkDecorations(chunk);
+                
                 chunk.GenerationStage++;
                 break;
+            }
             case ChunkGenerationStage.Lighting:
+            {
                 generateLighting(chunk);
                 chunk.GenerationStage++;
                 break;
+            }
             case ChunkGenerationStage.Meshing:
+            {
                 generateMesh(chunk);
                 chunk.GenerationStage++;
                 break;
+            }
         }
     }
     
@@ -469,7 +438,9 @@ public class TerrainGeneration
             int dz = Math.Abs(chunkZ - centerZ);
         
             if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
+            {
                 chunksToRemove.Add(chunk.Key);
+            }
         }
 
         foreach (var coord in chunksToRemove)
@@ -487,6 +458,9 @@ public class TerrainGeneration
                 tModel.Dispose();
                 Mesh.TransparentModels.Remove(coord);
             }
+
+            // TODO: This should be preserved as a buffer
+            ChunkBuffer.TryRemove(coord, out var cchunk);
         }
     }
     
