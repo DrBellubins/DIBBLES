@@ -12,7 +12,6 @@ namespace DIBBLES.Scenes;
 
 public class GameScene : Scene
 {
-    //public static TerrainGeneration TerrainGen = new();
     public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
 
@@ -28,7 +27,9 @@ public class GameScene : Scene
     
     public override void Start()
     {
-        BackBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
+        BackBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight, false, 
+            SurfaceFormat.Color, DepthFormat.Depth24);
+        
         UIBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
         
         UIBatch.Initialize();
@@ -65,9 +66,6 @@ public class GameScene : Scene
         
         if (!Chat.IsOpen && Input.IsKeyPressed(Keys.L))
             WorldSave.SaveWorldData("test");
-        
-        //if (Raylib.IsKeyPressed(KeyboardKey.F2))
-        //    Raylib.TakeScreenshot($"Screeenshot-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}.png");
         
         Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }
@@ -108,10 +106,15 @@ public class GameScene : Scene
         Debug.Draw2D();
         Debug.Clear2D();
         
+        UIBatch.End();
+        
         gd.SetRenderTarget(null);
         
+        UIBatch.Begin();
+        
+        // Draw buffers
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
-        //UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         UIBatch.End();
     }
