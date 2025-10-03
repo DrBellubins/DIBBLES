@@ -221,6 +221,8 @@ public class TerrainGeneration
 
     private void proccesChunkStage(Chunk chunk)
     {
+        Console.WriteLine(object.ReferenceEquals(ChunkBuffer[chunk.Position], chunk));
+        
         switch (chunk.GenerationStage)
         {
             case ChunkGenerationStage.Uninitialized:
@@ -230,11 +232,9 @@ public class TerrainGeneration
             }
             case ChunkGenerationStage.Islands:
             {
-                if (WorldSave.Data.ModifiedChunks.TryGetValue(chunk.Position, out var savedChunk))
-                    chunk = savedChunk;
-                else
+                if (!chunk.IsModified)
                     generateIslands(chunk);
-
+                
                 chunk.GenerationStage++;
                 break;
             }
