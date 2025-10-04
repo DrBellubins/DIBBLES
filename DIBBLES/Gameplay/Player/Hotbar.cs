@@ -36,9 +36,6 @@ public class Hotbar
     // Health
     private const float healthBarWidth = 400f;
     private RectangleF healthBarRect = new RectangleF(0f, 0f, healthBarWidth, 10);
-
-    // Icons
-    private Dictionary<BlockType, Texture2D> blockIcons = new();
     
     public void Start()
     {
@@ -51,8 +48,6 @@ public class Hotbar
         hotbarSlots[1] = new ItemSlot(1, BlockType.Stone);
         
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
-
-        renderBlockIcons();
     }
 
     public void Update(bool isPlayerDead, bool isFrozen)
@@ -136,7 +131,7 @@ public class Hotbar
                     (hotbarRect.Y + 0.1f * hotbarRect.Height),
                     (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
 
-                if (blockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
+                if (GameScene.Inventory.BlockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                 {
                     var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
                     
@@ -157,53 +152,6 @@ public class Hotbar
         
         UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
         UIBatch.DrawRect(healthBarRect, Color.Red);
-    }
-
-    // Draw each block type as a cube, then render out to a texture
-    private void renderBlockIcons()
-    {
-        int iconSize = 128; // icon pixel size
-
-        foreach (BlockType blockType in Enum.GetValues(typeof(BlockType)))
-        {
-            if (blockType == BlockType.Air || blockType == BlockType.Water) continue; // Skip air and water
-
-            RenderTarget2D renderTexture = new RenderTarget2D(Engine.Graphics, iconSize, iconSize);
-
-            // Set up the isometric orthographic camera
-            var cam = new Camera3D();
-            cam.Position = new GVec3(2, 2, 2);
-            cam.Target = Vector3.Zero;
-            cam.Up = Vector3.UnitY;
-            cam.AspectRatio = (float)iconSize / iconSize; // which is 1.0f for a square
-            cam.Fov = 1.7f;
-            cam.SetOrthographic();
-
-            // Create the cube model with correct texture
-            RuntimeModel cubeModel = MeshUtils.GenTexturedCubeIcon(BlockData.Textures[(blockType, 0)]);
-            
-            var world = Matrix.CreateTranslation(Vector3.Zero);
-            var shader = (BasicEffect)cubeModel.Shader;
-            
-            shader.World = world;
-            shader.View = cam.View;
-            shader.Projection = cam.Projection;
-            
-            shader.LightingEnabled = true;
-            shader.AmbientLightColor = new Vector3(0.5f, 0.5f, 0.5f);
-            shader.DirectionalLight0.Enabled = true;
-            shader.DirectionalLight0.Direction = new Vector3(0.3f, 1f, 0.7f);
-            shader.DirectionalLight0.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-            
-            Engine.Graphics.SetRenderTarget(renderTexture);
-            Engine.Graphics.Clear(new Color(0f, 0f, 0f, 0f));
-            
-            cubeModel.Draw(world, cam.View, cam.Projection);
-            
-            Engine.Graphics.SetRenderTarget(null);
-            
-            blockIcons[blockType] = renderTexture;
-        }
     }
     
     // Commands

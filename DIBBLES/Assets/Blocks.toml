@@ -56,6 +56,8 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = false
 LightEmission = 0
+AntiTileUVsHorizontally = false
+AntiTileUVsVertically = false
 
 [Water]
 Hardness = 10

@@ -56,7 +56,7 @@ float4 Box4(float4 p0, float4 p1, float4 p2, float4 p3)
 // Downsample pass (weighted 5-group mix from original)
 float4 DownsamplePS(float2 texCoord)
 {
-    float2 offset = texelSize * 0.5;
+    float2 offset = texelSize;
 
     float4 c0  = tex2D(Sampler, texCoord + float2(-2, -2) * offset);
     float4 c1  = tex2D(Sampler, texCoord + float2( 0, -2) * offset);

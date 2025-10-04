@@ -2,6 +2,7 @@ using DIBBLES.Effects;
 using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
@@ -15,6 +16,7 @@ public class GameScene : Scene
 {
     public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
+    public static InventorySystem Inventory = new();
 
     public static List<BlockLogic> BlockLogicList = new();
 
@@ -44,6 +46,7 @@ public class GameScene : Scene
         SkyColor = Color.FromNonPremultiplied(new Vector4(skyColorVec.X, skyColorVec.Y, skyColorVec.Z, 1.0f));
         
         TerrainGen.Start(); // Initial terrain generation
+        Inventory.Start();
         PlayerCharacter.Start(); // Must be started after terrain
         gameChat.Start();
         
@@ -54,11 +57,21 @@ public class GameScene : Scene
         Commands.RegisterCommand("debugEx", "Toggle extended debug information", Debug.ToggleDebugExtended);
     }
 
+    private int fpsCounter;
+    private float fpsElapsed;
     public override void Update()
     {
         Input.Update();
         
-        Debug.Draw2DText($"FPS: {1f / Time.DeltaTime}", Color.White);
+        fpsElapsed += Time.DeltaTime;
+        
+        if (fpsElapsed >= 0.5f)
+        {
+            fpsCounter = (int)(1f / Time.DeltaTime);
+            fpsElapsed -= 0.5f;
+        }
+        
+        Debug.Draw2DText($"FPS: {fpsCounter}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
         
         PlayerCharacter.Update();
