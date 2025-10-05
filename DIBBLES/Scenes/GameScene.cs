@@ -2,7 +2,7 @@ using DIBBLES.Effects;
 using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
 using DIBBLES.Gameplay;
-using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Gameplay.InventoryUI;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
@@ -76,6 +76,8 @@ public class GameScene : Scene
         
         PlayerCharacter.Update();
         
+        Inventory.Update();
+        
         TerrainGen.Update(PlayerCharacter);
         TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
         
@@ -116,6 +118,8 @@ public class GameScene : Scene
         UIBatch.Begin();
         
         PlayerCharacter.DrawUI();
+        
+        Inventory.Draw();
         
         gameChat.DrawBG();
         gameChat.Draw();

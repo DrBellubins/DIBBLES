@@ -4,7 +4,7 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace DIBBLES.Gameplay.Inventory;
+namespace DIBBLES.Gameplay.InventoryUI;
 
 // Monolithic class for everything inventory logic-related.
 // Independent sub-classes are for Hotbar, PlayerInventory, Chests, Furnaces etc.
@@ -12,9 +12,29 @@ public class InventorySystem
 {
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
 
+    public static List<InventoryBase> Inventories = new();
+    
+    // initialize inventory classes here to add them to the Inventories list
+    private PlayerInventory playerInventory = new();
+
     public void Start()
     {
         renderBlockIcons();
+
+        foreach (var inventory in Inventories)
+            inventory.Start();
+    }
+
+    public void Update()
+    {
+        foreach (var inventory in Inventories)
+            inventory.Update();
+    }
+
+    public void Draw()
+    {
+        foreach (var inventory in Inventories)
+            inventory.Draw();
     }
     
     // Draw each block type as a cube, then render out to a texture
@@ -62,5 +82,17 @@ public class InventorySystem
             
             BlockIcons[blockType] = renderTexture;
         }
+    }
+}
+
+public class InventoryEventArgs : EventArgs
+{
+    public string Message { get; }
+    public int Value { get; }
+
+    public InventoryEventArgs(string message, int value)
+    {
+        Message = message;
+        Value = value;
     }
 }

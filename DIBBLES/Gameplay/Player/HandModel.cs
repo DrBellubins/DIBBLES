@@ -1,8 +1,10 @@
+using DIBBLES.Gameplay.InventoryUI;
 using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
+
 namespace DIBBLES.Gameplay.Player;
 
 public class HandModel

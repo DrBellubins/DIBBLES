@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.InventoryUI;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
@@ -7,18 +8,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace DIBBLES.Gameplay.Player;
-
-public class ItemSlot
-{
-    public int StackAmount;
-    public BlockType Type;
-
-    public ItemSlot(int stackAmount, BlockType type)
-    {
-        StackAmount = stackAmount;
-        Type = type;
-    }
-}
 
 public class Hotbar
 {
