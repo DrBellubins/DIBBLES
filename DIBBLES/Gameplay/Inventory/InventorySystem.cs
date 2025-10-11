@@ -4,12 +4,15 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace DIBBLES.Gameplay.InventoryUI;
+namespace DIBBLES.Gameplay.Inventory;
 
 // Monolithic class for everything inventory logic-related.
 // Independent sub-classes are for Hotbar, PlayerInventory, Chests, Furnaces etc.
 public class InventorySystem
 {
+    public const float ItemSlotSize = 56f;
+    public const float ItemSlotPadding = 1.1f; // Multiply by this each item slot
+    
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
 
     public static List<InventoryBase> Inventories = new();

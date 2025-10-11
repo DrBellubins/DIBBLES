@@ -1,4 +1,4 @@
-namespace DIBBLES.Gameplay.InventoryUI;
+namespace DIBBLES.Gameplay.Inventory;
 
 public abstract class InventoryBase
 {

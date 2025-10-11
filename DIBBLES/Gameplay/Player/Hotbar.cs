@@ -1,4 +1,4 @@
-using DIBBLES.Gameplay.InventoryUI;
+using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;

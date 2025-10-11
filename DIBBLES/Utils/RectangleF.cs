@@ -17,6 +17,22 @@ public struct RectangleF
         Height = height;
     }
     
+    public RectangleF(Vector2 pos, float width, float height)
+    {
+        X = pos.X;
+        Y = pos.Y;
+        Width = width;
+        Height = height;
+    }
+    
+    public RectangleF(Vector2 pos, Vector2 size)
+    {
+        X = pos.X;
+        Y = pos.Y;
+        Width = size.X;
+        Height = size.Y;
+    }
+    
     /// <summary>
     /// Returns true if the specified point is contained within this rectangle.
     /// Equivalent to MonoGame's Rectangle.Contains.

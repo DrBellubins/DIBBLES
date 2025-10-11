@@ -176,8 +176,8 @@ public class Chat
             }
         }
         
-        if (TerrainGeneration.InitialLoadDone)
-            GameScene.PlayerCharacter.IsFrozen = IsOpen;
+        //if (TerrainGeneration.InitialLoadDone)
+        //    GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
 
     public void DrawBG()

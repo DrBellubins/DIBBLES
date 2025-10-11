@@ -2,7 +2,7 @@ using DIBBLES.Effects;
 using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
 using DIBBLES.Gameplay;
-using DIBBLES.Gameplay.InventoryUI;
+using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;

@@ -1,6 +1,6 @@
 using DIBBLES.Terrain;
 
-namespace DIBBLES.Gameplay.InventoryUI;
+namespace DIBBLES.Gameplay.Inventory;
 
 public class ItemSlot
 {

@@ -1,4 +1,4 @@
-using DIBBLES.Gameplay.InventoryUI;
+using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using DIBBLES.Terrain;
