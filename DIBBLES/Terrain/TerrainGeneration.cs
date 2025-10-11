@@ -88,7 +88,6 @@ public class TerrainGeneration
         {
             playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
-            playerCharacter.ShouldUpdate = true;
             InitialLoadDone = true;
         }
         

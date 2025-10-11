@@ -15,6 +15,7 @@ public class InventorySystem
     
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
 
+    public static InventoryStateMachine StateMachine = new();
     public static List<InventoryBase> Inventories = new();
     
     // initialize inventory classes here to add them to the Inventories list

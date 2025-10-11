@@ -39,10 +39,11 @@ public class PlayerInventory : InventoryBase
     {
         if (Input.IsKeyPressed(Keys.E))
         {
-            isOpen = !isOpen;
-            GameScene.PlayerCharacter.IsFrozen = isOpen;
+            if (isOpen)
+                close();
+            else
+                open();
         }
-            
     }
 
     public override void Draw()
@@ -60,5 +61,17 @@ public class PlayerInventory : InventoryBase
                 }
             }
         }
+    }
+
+    private void open()
+    {
+        if (StateMachine.Open(UIState.PlayerInventory))
+            isOpen = true;
+    }
+    
+    private void close()
+    {
+        StateMachine.Close(UIState.PlayerInventory);
+        isOpen = false;
     }
 }

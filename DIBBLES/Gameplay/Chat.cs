@@ -6,6 +6,8 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
+using static DIBBLES.Gameplay.Inventory.InventorySystem;
+
 namespace DIBBLES.Gameplay;
 
 public enum ChatMessageType
@@ -79,7 +81,10 @@ public class Chat
     public void Update()
     {
         if (IsClosedButShown)
+        {
+            IsClosedButShown = !StateMachine.IsAnyOtherInventoryOpen(UIState.Chat);
             elapsed += Time.DeltaTime;
+        }
 
         if (elapsed >= disappearTime)
         {
@@ -175,9 +180,6 @@ public class Chat
                 textBox.Text = "";
             }
         }
-        
-        //if (TerrainGeneration.InitialLoadDone)
-        //    GameScene.PlayerCharacter.IsFrozen = IsOpen;
     }
 
     public void DrawBG()
@@ -230,9 +232,8 @@ public class Chat
     
     public void OpenChat()
     {
-        if (!IsOpen)
+        if (!IsOpen && StateMachine.Open(UIState.Chat))
         {
-            CursorManager.ReleaseCursor();
             textBox.Text = string.Empty;
             textBox.IsFocused = true;
             IsOpen = true;
@@ -241,9 +242,8 @@ public class Chat
     
     public void OpenChatCmd()
     {
-        if (!IsOpen)
+        if (!IsOpen && StateMachine.Open(UIState.Chat))
         {
-            CursorManager.ReleaseCursor();
             textBox.Text = "/";
             textBox.IsFocused = true;
             IsOpen = true;
@@ -252,7 +252,7 @@ public class Chat
 
     public void CloseChat()
     {
-        CursorManager.LockCursor();
+        StateMachine.Close(UIState.Chat);
         textBox.Clear();
         textBox.IsFocused = false;
         IsOpen = false;

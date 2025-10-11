@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.Inventory;
 using Microsoft.Xna.Framework;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
@@ -50,7 +51,6 @@ public class PlayerCharacter
 
     public bool IsFrozen = true;
     public bool NeedsToSpawn = false;
-    public bool ShouldUpdate = false;
     public bool IsDead = false;
     
     public float CameraPitch = 0f;
@@ -110,10 +110,9 @@ public class PlayerCharacter
         Debug.Draw2DText($"Position: {vec3Position.X}, {vec3Position.Y}, {vec3Position.Z}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
-        
-        //if (!ShouldUpdate)
-        //    return;
 
+        IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
+        
         hotbar.Update(IsDead, IsFrozen);
         
         // --- Block breaking and placing ---
