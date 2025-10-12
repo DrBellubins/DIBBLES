@@ -26,6 +26,7 @@ public class ItemSlot
     public BlockType Type;
 
     public RectangleF Rect = new RectangleF(0f, 0f, ItemSlotSize, ItemSlotSize);
+    public List<ItemSlot> SlotInteractionQueue = new List<ItemSlot>(); // List of all previous interactions, for dragging.
     
     private Vector2 cursorPos = Vector2.Zero;
 

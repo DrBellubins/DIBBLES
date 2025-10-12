@@ -29,25 +29,27 @@ public class PlayerInventory : InventoryBase
         {
             for (var y = 0; y < itemSlots.GetLength(1); y++)
             {
-                var rect = itemSlots[x, y].Rect;
+                itemSlots[x, y] = new ItemSlot();
+                
                 var invRectY = inventoryRect.Y + (inventoryRect.Height * 0.5f) + 32f;
                 var pos = new Vector2(inventoryRect.X + (x * ItemSlotSize) * ItemSlotPadding,
                     invRectY + (y * ItemSlotSize) * ItemSlotPadding);
                 
-                rect.X = pos.X;
-                rect.Y = invRectY;
+                itemSlots[x, y].Rect.X = pos.X;
+                itemSlots[x, y].Rect.Y = pos.Y;
             }
         }
 
         // Set hotbar slot positions
         for (var i = 0; i < hotBarSlots.Length; i++)
         {
-            var rect = hotBarSlots[i].Rect;
+            hotBarSlots[i] = new ItemSlot();
+            
             var hotRectY = inventoryRect.Y + (inventoryRect.Height - ItemSlotSize) - 32f;
             var pos = new Vector2(inventoryRect.X + (i * ItemSlotSize) * ItemSlotPadding, hotRectY);
 
-            rect.X = pos.X;
-            rect.Y = hotRectY;
+            hotBarSlots[i].Rect.X = pos.X;
+            hotBarSlots[i].Rect.Y = hotRectY;
         }
     }
 
