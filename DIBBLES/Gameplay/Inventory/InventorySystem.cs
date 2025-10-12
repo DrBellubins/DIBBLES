@@ -3,6 +3,7 @@ using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace DIBBLES.Gameplay.Inventory;
 
@@ -15,8 +16,12 @@ public class InventorySystem
     
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
 
+    public static ItemSlot? HeldItem;
     public static UIStateMachine StateMachine = new();
     public static List<InventoryBase> Inventories = new();
+    
+    // List of all previous interactions, for dragging.
+    private List<ItemSlot> slotInteractionQueue = new List<ItemSlot>();
     
     // initialize inventory classes here to add them to the Inventories list
     private PlayerInventory playerInventory = new();

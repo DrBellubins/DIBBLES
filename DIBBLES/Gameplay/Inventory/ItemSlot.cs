@@ -26,8 +26,9 @@ public class ItemSlot
     public int StackAmount;
     public BlockType Type;
 
+    public bool IsGrabbed = false;
+    
     public RectangleF Rect = new RectangleF(0f, 0f, ItemSlotSize, ItemSlotSize);
-    public List<ItemSlot> SlotInteractionQueue = new List<ItemSlot>(); // List of all previous interactions, for dragging.
     
     private Vector2 cursorPos = Vector2.Zero;
 
@@ -46,22 +47,50 @@ public class ItemSlot
 
     public void Update()
     {
-        // Right click place one
+        // Left click grab/place
         cursorPos = Mouse.GetState().Position.ToVector2();
+        var rectContains = Rect.Contains(cursorPos);
+        
+        if (HeldItem != null && Input.StartedBreaking) // Place
+        {
+            IsGrabbed = false;
+        }
+        else if (rectContains && Input.StartedBreaking) // Grab
+        {
+            IsGrabbed = true;
+            HeldItem = this;
+        }
+        
+        // Right click place one
+        /*cursorPos = Mouse.GetState().Position.ToVector2();
         var rectContains = Rect.Contains(cursorPos);
 
         if (rectContains && Input.StartedInteracting)
         {
             
-        }
+        }*/
     }
 
     public void Draw()
     {
-        // Main rect
+        // Main rect (Always draw)
         var currentColor = Rect.Contains(cursorPos) ? UI.AccentColor : UI.MainColor;
         UIBatch.DrawRect(Rect, currentColor);
 
+        var iconStackPos = new Vector2();
+        
+        // TODO: Should be implemented globally in InventorySystem
+        if (IsGrabbed)
+        {
+            iconStackPos.X = cursorPos.X;
+            iconStackPos.Y = cursorPos.Y;
+        }
+        else
+        {
+            iconStackPos.X = Rect.X;
+            iconStackPos.Y = Rect.Y;
+        }
+        
         // Icons
         if (Type != BlockType.Air && StackAmount > 0)
         {
@@ -70,8 +99,8 @@ public class ItemSlot
                 var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
                         
                 var flippedDestRect = new RectangleF(
-                    Rect.X,
-                    Rect.Y + Rect.Height, // move Y down by height
+                    iconStackPos.X,
+                    iconStackPos.Y + Rect.Height, // move Y down by height
                     Rect.Width,
                     -Rect.Height // negative height to flip
                 );
@@ -86,7 +115,7 @@ public class ItemSlot
             var padding = 8f;
             var text = $"{StackAmount}";
             var textSize = Engine.MainFont.MeasureString(text) * 0.93f; 
-            var pos = new Vector2((Rect.X + ItemSlotSize) - textSize.X, (Rect.Y + ItemSlotSize) - textSize.Y);
+            var pos = new Vector2((iconStackPos.X + ItemSlotSize) - textSize.X, (iconStackPos.Y + ItemSlotSize) - textSize.Y);
             
             UIBatch.DrawString(text, pos, Color.White);
         }
