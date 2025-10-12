@@ -32,9 +32,6 @@ public class Hotbar
             hotBarSelectionIndex = WorldSave.Data.HotbarPosition;
 
         Resize();
-
-        hotbarSlots[0] = new ItemSlot(1, BlockType.Dirt);
-        hotbarSlots[1] = new ItemSlot(1, BlockType.Stone);
         
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
     }
@@ -44,6 +41,8 @@ public class Hotbar
         if (!isPlayerDead && !isFrozen &&
             !InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
         {
+            hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
+            
             var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
@@ -117,12 +116,14 @@ public class Hotbar
             {
                 if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
                 {
+                    var slot = hotbarSlots[i];
                     var xPos = hotbarRect.X + i * hotbarRect.Height;
                     
                     var itemDestRect = new RectangleF((xPos + 0.1f * hotbarRect.Height),
                         (hotbarRect.Y + 0.1f * hotbarRect.Height),
                         (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
             
+                    // Icon
                     if (GameScene.Inventory.BlockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
                     {
                         var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
@@ -135,6 +136,19 @@ public class Hotbar
                         );
                         
                         UIBatch.DrawTexturePro(iconTex, itemOrigRect, flippedDestRect, Vector2.Zero, 0.0f, Color.White);
+                    }
+                    
+                    // Stack amount
+                    if (slot.Type != BlockType.Air && slot.StackAmount > 0)
+                    {
+                        var padding = 8f;
+                        var text = $"{slot.StackAmount}";
+                        var textSize = Engine.MainFont.MeasureString(text) * 0.93f;
+                        
+                        var pos = new Vector2((itemDestRect.X + itemDestRect.Width) - textSize.X,
+                            (itemDestRect.Y + itemDestRect.Height) - textSize.Y);
+            
+                        UIBatch.DrawString(text, pos, Color.White);
                     }
                 }
             }

@@ -34,6 +34,9 @@ public class HandModel
         byte lightLevel,
         ItemSlot? selectedItem = null)
     {
+        if (selectedItem != null && selectedItem.Type == BlockType.Air)
+            selectedItem = null;
+        
         if (selectedItem == null)
             return;
 

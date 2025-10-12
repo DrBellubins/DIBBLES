@@ -49,16 +49,11 @@ public class ItemSlot
         cursorPos = Mouse.GetState().Position.ToVector2();
         var rectContains = Rect.Contains(cursorPos);
         
-        if (HeldItem != null && Input.StartedBreaking) // Place
-        {
-            Console.WriteLine("Test1");
+        // Placing/Grabbing
+        if (rectContains && Input.StartedBreaking && HeldItem != null && HeldItem != this)
             InvokeItemPlaced(this);
-        }
-        else if (rectContains && Input.StartedBreaking) // Grab
-        {
-            Console.WriteLine("Test2");
+        else if (rectContains && Input.StartedBreaking && HeldItem == null && StackAmount > 0)
             InvokeItemGrabbed(this);
-        }
         
         // Right click place one
         /*cursorPos = Mouse.GetState().Position.ToVector2();
