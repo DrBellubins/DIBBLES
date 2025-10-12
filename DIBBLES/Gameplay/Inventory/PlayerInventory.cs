@@ -1,5 +1,6 @@
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -23,7 +24,7 @@ public class PlayerInventory : InventoryBase
     {
         inventoryRect.X = (UI.CenterPivot.X - inventoryRect.Width * 0.5f);
         inventoryRect.Y = (UI.CenterPivot.Y - inventoryRect.Height * 0.5f) - 50f;
-
+        
         // Set main slot positions
         for (var x = 0; x < itemSlots.GetLength(0); x++)
         {
@@ -39,6 +40,8 @@ public class PlayerInventory : InventoryBase
                 itemSlots[x, y].Rect.Y = pos.Y;
             }
         }
+
+        itemSlots[0, 0].Set(BlockType.Dirt, 1);
 
         // Set hotbar slot positions
         for (var i = 0; i < hotBarSlots.Length; i++)

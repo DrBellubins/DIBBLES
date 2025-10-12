@@ -185,6 +185,11 @@ public static class UIBatch
             currentPos.X += glyph.Width * scale;
         }
     }
+
+    public static void DrawString(string text, Vector2 position, Color color)
+    {
+        DrawString(Engine.MainFont, text, position, color);
+    }
     
     // Draws a quad (as two triangles) using UIBatch
     private static void DrawQuad(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, Color color)
