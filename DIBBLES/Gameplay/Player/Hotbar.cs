@@ -41,7 +41,8 @@ public class Hotbar
 
     public void Update(bool isPlayerDead, bool isFrozen)
     {
-        if (!isPlayerDead && !isFrozen)
+        if (!isPlayerDead && !isFrozen &&
+            !InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
         {
             var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
@@ -96,51 +97,54 @@ public class Hotbar
 
     public void Draw(int health)
     {
-        UIBatch.DrawRect(hotbarRect, UI.MainColor);
+        if (!InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
+        {
+            UIBatch.DrawRect(hotbarRect, UI.MainColor);
         
-        // Hotbar dividers
-        for (int i = 0; i < hotbarSlots.Length; i++)
-        {
-            var xPos = hotbarRect.X + (i + 1.0f) * hotbarRect.Height;
-
-            UIBatch.DrawLine(new Vector2(xPos, hotbarRect.Y),
-                new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
-        }
-
-        UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, UI.AccentColor);
-
-        // Hotbar items
-        for (int i = 0; i < hotbarSlots.Length; i++)
-        {
-            if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
+            // Hotbar dividers
+            for (int i = 0; i < hotbarSlots.Length; i++)
             {
-                var xPos = hotbarRect.X + i * hotbarRect.Height;
-                
-                var itemDestRect = new RectangleF((xPos + 0.1f * hotbarRect.Height),
-                    (hotbarRect.Y + 0.1f * hotbarRect.Height),
-                    (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
-
-                if (GameScene.Inventory.BlockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
+                var xPos = hotbarRect.X + (i + 1.0f) * hotbarRect.Height;
+            
+                UIBatch.DrawLine(new Vector2(xPos, hotbarRect.Y),
+                    new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, UI.AccentColor);
+            }
+            
+            UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, UI.AccentColor);
+            
+            // Hotbar items
+            for (int i = 0; i < hotbarSlots.Length; i++)
+            {
+                if (hotbarSlots[i] != null && hotbarSlots[i].StackAmount > 0)
                 {
-                    var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
+                    var xPos = hotbarRect.X + i * hotbarRect.Height;
                     
-                    var flippedDestRect = new RectangleF(
-                        itemDestRect.X,
-                        itemDestRect.Y + itemDestRect.Height, // move Y down by height
-                        itemDestRect.Width,
-                        -itemDestRect.Height // negative height to flip
-                    );
-                    
-                    UIBatch.DrawTexturePro(iconTex, itemOrigRect, flippedDestRect, Vector2.Zero, 0.0f, Color.White);
+                    var itemDestRect = new RectangleF((xPos + 0.1f * hotbarRect.Height),
+                        (hotbarRect.Y + 0.1f * hotbarRect.Height),
+                        (hotbarRect.Height * 0.8f), (hotbarRect.Height * 0.8f));
+            
+                    if (GameScene.Inventory.BlockIcons.TryGetValue(hotbarSlots[i].Type, out var iconTex))
+                    {
+                        var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
+                        
+                        var flippedDestRect = new RectangleF(
+                            itemDestRect.X,
+                            itemDestRect.Y + itemDestRect.Height, // move Y down by height
+                            itemDestRect.Width,
+                            -itemDestRect.Height // negative height to flip
+                        );
+                        
+                        UIBatch.DrawTexturePro(iconTex, itemOrigRect, flippedDestRect, Vector2.Zero, 0.0f, Color.White);
+                    }
                 }
             }
+            
+            var healthPercent = ((float)health * 0.01f) * healthBarWidth;
+            healthBarRect.Width = (int)healthPercent;
+            
+            UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+            UIBatch.DrawRect(healthBarRect, Color.Red);
         }
-        
-        var healthPercent = ((float)health * 0.01f) * healthBarWidth;
-        healthBarRect.Width = (int)healthPercent;
-        
-        UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
-        UIBatch.DrawRect(healthBarRect, Color.Red);
     }
     
     // Commands

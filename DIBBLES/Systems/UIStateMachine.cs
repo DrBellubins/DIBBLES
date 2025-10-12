@@ -15,7 +15,7 @@ public enum UIState
     // Add more states as needed
 }
 
-public class InventoryStateMachine
+public class UIStateMachine
 {
     public UIState CurrentState { get; private set; } = UIState.None;
 
