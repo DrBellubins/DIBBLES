@@ -17,6 +17,10 @@ public class InventorySystem
     
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
     
+    // Events for item grab/place
+    public static event Action<ItemSlot>? ItemGrabbed;
+    public static event Action<ItemSlot>? ItemPlaced;
+    
     public static ItemSlot? HeldItem;
     public static bool IsItemHeld => HeldItem != null;
     
@@ -35,6 +39,9 @@ public class InventorySystem
 
         foreach (var inventory in Inventories)
             inventory.Start();
+        
+        ItemGrabbed += OnItemGrabbed;
+        ItemPlaced += OnItemPlaced;
     }
 
     public void Update()
@@ -80,6 +87,45 @@ public class InventorySystem
             
                 UIBatch.DrawString(text, pos, Color.White);
             }
+        }
+    }
+    
+    private void OnItemGrabbed(ItemSlot slot)
+    {
+        if (HeldItem == null && slot.StackAmount > 0)
+            HeldItem = slot;
+    }
+
+    private void OnItemPlaced(ItemSlot targetSlot)
+    {
+        if (HeldItem == null)
+            return;
+
+        // Only place if the target is not the same slot as held
+        if (HeldItem != targetSlot)
+        {
+            // Example logic: swap items, or move all stack, etc.
+            // Here, move all stack to target, if target is empty or same type
+            if (targetSlot.Type == BlockType.Air || targetSlot.Type == HeldItem.Type)
+            {
+                targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
+                HeldItem.Set(BlockType.Air, 0);
+                HeldItem = null;
+            }
+            else
+            {
+                // Swap items
+                var tempType = targetSlot.Type;
+                var tempAmount = targetSlot.StackAmount;
+                targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
+                HeldItem.Set(tempType, tempAmount);
+                HeldItem = null;
+            }
+        }
+        else
+        {
+            // Dropping onto same slot: just clear held state
+            HeldItem = null;
         }
     }
     

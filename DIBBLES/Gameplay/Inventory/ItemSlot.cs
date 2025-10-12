@@ -52,7 +52,7 @@ public class ItemSlot
         if (HeldItem != null && Input.StartedBreaking) // Place
         {
             Console.WriteLine("Test1");
-            //HeldItem = null;
+            InventorySystem.ItemGrabbed?.Invoke(this);
         }
         else if (rectContains && Input.StartedBreaking) // Grab
         {
