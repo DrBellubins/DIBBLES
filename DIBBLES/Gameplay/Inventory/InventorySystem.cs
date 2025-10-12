@@ -31,7 +31,7 @@ public class InventorySystem
     private List<ItemSlot> slotInteractionQueue = new List<ItemSlot>();
     
     // initialize inventory classes here to add them to the Inventories list
-    private PlayerInventory playerInventory = new();
+    public PlayerInventory PlayerInventory = new();
 
     public void Start()
     {
@@ -127,6 +127,16 @@ public class InventorySystem
             // Dropping onto same slot: just clear held state
             HeldItem = null;
         }
+    }
+    
+    public static void InvokeItemGrabbed(ItemSlot slot)
+    {
+        ItemGrabbed?.Invoke(slot);
+    }
+
+    public static void InvokeItemPlaced(ItemSlot slot)
+    {
+        ItemPlaced?.Invoke(slot);
     }
     
     // Draw each block type as a cube, then render out to a texture

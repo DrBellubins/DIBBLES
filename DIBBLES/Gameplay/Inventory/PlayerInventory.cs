@@ -15,10 +15,10 @@ public class PlayerInventory : InventoryBase
     private bool isOpen = false;
 
     // Main item slots
-    private ItemSlot[,] itemSlots = new ItemSlot[9, 3];
+    public ItemSlot[,] ItemSlots = new ItemSlot[9, 3];
     
     // Hotbar item slots
-    private ItemSlot[] hotBarSlots = new ItemSlot[9];
+    public ItemSlot[] HotBarSlots = new ItemSlot[9];
     
     public override void Start()
     {
@@ -26,33 +26,33 @@ public class PlayerInventory : InventoryBase
         inventoryRect.Y = (UI.CenterPivot.Y - inventoryRect.Height * 0.5f) - 50f;
         
         // Set main slot positions
-        for (var x = 0; x < itemSlots.GetLength(0); x++)
+        for (var x = 0; x < ItemSlots.GetLength(0); x++)
         {
-            for (var y = 0; y < itemSlots.GetLength(1); y++)
+            for (var y = 0; y < ItemSlots.GetLength(1); y++)
             {
-                itemSlots[x, y] = new ItemSlot();
+                ItemSlots[x, y] = new ItemSlot();
                 
                 var invRectY = inventoryRect.Y + (inventoryRect.Height * 0.5f) + 32f;
                 var pos = new Vector2(inventoryRect.X + (x * ItemSlotSize) * ItemSlotPadding,
                     invRectY + (y * ItemSlotSize) * ItemSlotPadding);
                 
-                itemSlots[x, y].Rect.X = pos.X;
-                itemSlots[x, y].Rect.Y = pos.Y;
+                ItemSlots[x, y].Rect.X = pos.X;
+                ItemSlots[x, y].Rect.Y = pos.Y;
             }
         }
 
-        itemSlots[0, 0].Set(BlockType.Dirt, 1);
+        ItemSlots[0, 0].Set(BlockType.Dirt, 1);
 
         // Set hotbar slot positions
-        for (var i = 0; i < hotBarSlots.Length; i++)
+        for (var i = 0; i < HotBarSlots.Length; i++)
         {
-            hotBarSlots[i] = new ItemSlot();
+            HotBarSlots[i] = new ItemSlot();
             
             var hotRectY = inventoryRect.Y + (inventoryRect.Height - ItemSlotSize) - 32f;
             var pos = new Vector2(inventoryRect.X + (i * ItemSlotSize) * ItemSlotPadding, hotRectY);
 
-            hotBarSlots[i].Rect.X = pos.X;
-            hotBarSlots[i].Rect.Y = hotRectY;
+            HotBarSlots[i].Rect.X = pos.X;
+            HotBarSlots[i].Rect.Y = hotRectY;
         }
     }
 
@@ -74,19 +74,19 @@ public class PlayerInventory : InventoryBase
         // Updates
         
         // Main slots
-        for (var x = 0; x < itemSlots.GetLength(0); x++)
+        for (var x = 0; x < ItemSlots.GetLength(0); x++)
         {
-            for (var y = 0; y < itemSlots.GetLength(1); y++)
+            for (var y = 0; y < ItemSlots.GetLength(1); y++)
             {
-                var slot = itemSlots[x, y];
+                var slot = ItemSlots[x, y];
                 slot.Update();
             }
         }
         
         // Hotbar slots
-        for (var i = 0; i < hotBarSlots.Length; i++)
+        for (var i = 0; i < HotBarSlots.Length; i++)
         {
-            var slot = hotBarSlots[i];
+            var slot = HotBarSlots[i];
             slot.Update();
         }
     }
@@ -98,19 +98,19 @@ public class PlayerInventory : InventoryBase
             UIBatch.DrawRect(inventoryRect, UI.MainColor);
             
             // Main slots
-            for (var x = 0; x < itemSlots.GetLength(0); x++)
+            for (var x = 0; x < ItemSlots.GetLength(0); x++)
             {
-                for (var y = 0; y < itemSlots.GetLength(1); y++)
+                for (var y = 0; y < ItemSlots.GetLength(1); y++)
                 {
-                    var slot = itemSlots[x, y];
+                    var slot = ItemSlots[x, y];
                     slot.Draw();
                 }
             }
             
             // Hotbar slots
-            for (var i = 0; i < hotBarSlots.Length; i++)
+            for (var i = 0; i < HotBarSlots.Length; i++)
             {
-                var slot = hotBarSlots[i];
+                var slot = HotBarSlots[i];
                 slot.Draw();
             }
         }
