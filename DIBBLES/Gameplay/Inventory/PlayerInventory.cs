@@ -15,11 +15,9 @@ public class PlayerInventory : InventoryBase
 
     // Main item slots
     private ItemSlot[,] itemSlots = new ItemSlot[9, 3];
-    private RectangleF[,] itemSlotRects = new RectangleF[9, 3];
     
     // Hotbar item slots
     private ItemSlot[] hotBarSlots = new ItemSlot[9];
-    private RectangleF[] hotbarItemSlotRects = new RectangleF[9];
     
     public override void Start()
     {
@@ -31,21 +29,25 @@ public class PlayerInventory : InventoryBase
         {
             for (var y = 0; y < itemSlots.GetLength(1); y++)
             {
+                var rect = itemSlots[x, y].Rect;
                 var invRectY = inventoryRect.Y + (inventoryRect.Height * 0.5f) + 32f;
                 var pos = new Vector2(inventoryRect.X + (x * ItemSlotSize) * ItemSlotPadding,
                     invRectY + (y * ItemSlotSize) * ItemSlotPadding);
                 
-                itemSlotRects[x, y] = new RectangleF(pos, ItemSlotSize, ItemSlotSize);
+                rect.X = pos.X;
+                rect.Y = invRectY;
             }
         }
 
         // Set hotbar slot positions
         for (var i = 0; i < hotBarSlots.Length; i++)
         {
+            var rect = hotBarSlots[i].Rect;
             var hotRectY = inventoryRect.Y + (inventoryRect.Height - ItemSlotSize) - 32f;
             var pos = new Vector2(inventoryRect.X + (i * ItemSlotSize) * ItemSlotPadding, hotRectY);
 
-            hotbarItemSlotRects[i] = new RectangleF(pos, ItemSlotSize, ItemSlotSize);
+            rect.X = pos.X;
+            rect.Y = hotRectY;
         }
     }
 
@@ -62,6 +64,26 @@ public class PlayerInventory : InventoryBase
         
         if (Input.IsKeyPressed(Keys.Escape))
             close();
+        
+        
+        // Updates
+        
+        // Main slots
+        for (var x = 0; x < itemSlots.GetLength(0); x++)
+        {
+            for (var y = 0; y < itemSlots.GetLength(1); y++)
+            {
+                var slot = itemSlots[x, y];
+                slot.Update();
+            }
+        }
+        
+        // Hotbar slots
+        for (var i = 0; i < hotBarSlots.Length; i++)
+        {
+            var slot = hotBarSlots[i];
+            slot.Update();
+        }
     }
 
     public override void Draw()
@@ -71,26 +93,20 @@ public class PlayerInventory : InventoryBase
             UIBatch.DrawRect(inventoryRect, UI.MainColor);
             
             // Main slots
-            for (var x = 0; x < itemSlotRects.GetLength(0); x++)
+            for (var x = 0; x < itemSlots.GetLength(0); x++)
             {
-                for (var y = 0; y < itemSlotRects.GetLength(1); y++)
+                for (var y = 0; y < itemSlots.GetLength(1); y++)
                 {
-                    var rect = itemSlotRects[x, y];
-                    var mousePos = Mouse.GetState().Position.ToVector2();
-                    var currentColor = rect.Contains(mousePos) ? UI.AccentColor : UI.MainColor;
-                    
-                    UIBatch.DrawRect(itemSlotRects[x, y], currentColor);
+                    var slot = itemSlots[x, y];
+                    slot.Draw();
                 }
             }
             
             // Hotbar slots
-            for (var i = 0; i < hotbarItemSlotRects.Length; i++)
+            for (var i = 0; i < hotBarSlots.Length; i++)
             {
-                var rect = hotbarItemSlotRects[i];
-                var mousePos = Mouse.GetState().Position.ToVector2();
-                var currentColor = rect.Contains(mousePos) ? UI.AccentColor : UI.MainColor;
-                
-                UIBatch.DrawRect(hotbarItemSlotRects[i], currentColor);
+                var slot = hotBarSlots[i];
+                slot.Draw();
             }
         }
     }

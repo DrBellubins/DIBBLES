@@ -18,7 +18,7 @@ public class Debug
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
 
-    public static bool ShowDebug { get; private set; } = false;
+    public static bool ShowDebug { get; private set; } = true;
     public static bool ShowDebugExtended { get; private set; }
     
     public static void Update(Camera3D camera)
