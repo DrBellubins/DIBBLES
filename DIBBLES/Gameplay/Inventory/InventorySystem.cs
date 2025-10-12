@@ -1,3 +1,4 @@
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
@@ -15,8 +16,10 @@ public class InventorySystem
     public const float ItemSlotPadding = 1.1f; // Multiply by this each item slot
     
     public readonly Dictionary<BlockType, Texture2D> BlockIcons = new();
-
+    
     public static ItemSlot? HeldItem;
+    public static bool IsItemHeld => HeldItem != null;
+    
     public static UIStateMachine StateMachine = new();
     public static List<InventoryBase> Inventories = new();
     
@@ -44,6 +47,40 @@ public class InventorySystem
     {
         foreach (var inventory in Inventories)
             inventory.Draw();
+
+        if (IsItemHeld && HeldItem != null)
+        {
+            var cursorPos = Mouse.GetState().Position.ToVector2();
+            
+            // Icons
+            if (HeldItem.Type != BlockType.Air && HeldItem.StackAmount > 0)
+            {
+                if (GameScene.Inventory.BlockIcons.TryGetValue(HeldItem.Type, out var iconTex))
+                {
+                    var itemOrigRect = new RectangleF(0f, 0f, iconTex.Width, iconTex.Height);
+                        
+                    var flippedDestRect = new RectangleF(
+                        cursorPos.X,
+                        cursorPos.Y + HeldItem.Rect.Height, // move Y down by height
+                        HeldItem.Rect.Width,
+                        -HeldItem.Rect.Height // negative height to flip
+                    );
+                        
+                    UIBatch.DrawTexturePro(iconTex, itemOrigRect, flippedDestRect, Vector2.Zero, 0.0f, Color.White);
+                }
+            }
+
+            // Stack amount
+            if (HeldItem.Type != BlockType.Air && HeldItem.StackAmount > 0)
+            {
+                var padding = 8f;
+                var text = $"{HeldItem.StackAmount}";
+                var textSize = Engine.MainFont.MeasureString(text) * 0.93f; 
+                var pos = new Vector2((cursorPos.X + ItemSlotSize) - textSize.X, (cursorPos.Y + ItemSlotSize) - textSize.Y);
+            
+                UIBatch.DrawString(text, pos, Color.White);
+            }
+        }
     }
     
     // Draw each block type as a cube, then render out to a texture
