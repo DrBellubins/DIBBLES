@@ -64,7 +64,7 @@ public class WorldSave
         using (var stream = File.Open(worldDataDir, FileMode.Create))
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
         {
-            writer.Write("DIBW");
+            writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBW"));
             
             writer.Write(Seed);
         }
@@ -74,7 +74,7 @@ public class WorldSave
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("DIBP");
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBP"));
                 
                 writer.Write(GameScene.PlayerCharacter.Position.X);
                 writer.Write(GameScene.PlayerCharacter.Position.Y);
@@ -129,7 +129,7 @@ public class WorldSave
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("DIBR");
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBR"));
                 
                 writer.Write(nonAirBlocks);
                 
@@ -182,7 +182,7 @@ public class WorldSave
             using (var stream = File.Open(worldDataDir, FileMode.Open))
             using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
             {
-                var header = reader.ReadString();
+                var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
                 if (header != "DIBW")
                     Console.WriteLine("World data format is incorrect");
@@ -198,7 +198,7 @@ public class WorldSave
             using (var stream = File.Open(playerDataDir, FileMode.Open))
             using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
             {
-                var header = reader.ReadString();
+                var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
                 if (header != "DIBP")
                     Console.WriteLine("Player data format is incorrect");
@@ -269,7 +269,7 @@ public class WorldSave
                 for (int z = 0; z < ChunkSize; z++)
                     chunk.SetTypeAt(x, y, z, BlockType.Air);
                 
-                var header = reader.ReadString();
+                var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
                 
                 if (header != "DIBR")
                     Console.WriteLine("Region data format is incorrect!");
