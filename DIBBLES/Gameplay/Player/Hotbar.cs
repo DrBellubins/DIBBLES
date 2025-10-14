@@ -100,8 +100,8 @@ public class Hotbar
         var mainColor = new Color(UI.MainColor.R / 255f, UI.MainColor.G / 255f,
             UI.MainColor.B / 255f, (UI.MainColor.A / 255f) * mainAlpha);
         
-        var accentColor = new Color(UI.AccentColor.R / 255f, UI.AccentColor.G / 255f,
-            UI.AccentColor.B / 255f, 0f);
+        var accentColor = new Color(UI.AccentColor.R / 255f * uiAlpha, UI.AccentColor.G / 255f * uiAlpha,
+            UI.AccentColor.B / 255f * uiAlpha, (UI.AccentColor.A / 255f) * (uiAlpha * 0.25f));
         
         var textColor = new Color(uiAlpha, uiAlpha, uiAlpha, uiAlpha);
         var healthColor = new Color(uiAlpha, 0f, 0f, uiAlpha);
@@ -179,8 +179,8 @@ public class Hotbar
         hotbarRect.X = (int)hotbarPos.X;
         hotbarRect.Y = (int)hotbarPos.Y;
 
-        hotbarSelectionRect = new RectangleF(hotbarRect.X, hotbarRect.Y, hotbarRect.Height, hotbarRect.Height);
-
+        hotbarSelectionRect = new RectangleF(hotbarRect.X, hotbarRect.Y, hotbarRect.Height * 0.9f, hotbarRect.Height * 0.9f);
+        
         var healthBarPos = hotbarPos;
         healthBarPos.Y -= 20f;
         
