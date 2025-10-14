@@ -14,6 +14,8 @@ public class Hotbar
     public ItemSlot? SelectedItem;
     public int HotBarSelectionIndex;
     
+    private const float selectionSizeMultiplier = 0.9f;
+    
     // Item slots
     private RectangleF hotbarRect = new RectangleF(0f, 0f, 900f, 100f);
     private RectangleF hotbarSelectionRect;
@@ -80,11 +82,19 @@ public class Hotbar
                     break;
             }
 
-            hotBarSelectionPosX = HotBarSelectionIndex * hotbarRect.Height;
+            // Selection rectangle centered in current slot
+            float slotSize = hotbarRect.Height;
+            float selectionSize = slotSize * selectionSizeMultiplier;
+
+            hotBarSelectionPosX = HotBarSelectionIndex * slotSize;
+        
+            float selectionX = hotbarRect.X + hotBarSelectionPosX + (slotSize - selectionSize) / 2f;
+            float selectionY = hotbarRect.Y + (slotSize - selectionSize) / 2f;
+            
             SelectedItem = hotbarSlots[HotBarSelectionIndex];
 
-            hotbarSelectionRect.X = hotbarRect.X + hotBarSelectionPosX;
-            hotbarSelectionRect.Y = hotbarRect.Y;
+            hotbarSelectionRect.X = selectionX;
+            hotbarSelectionRect.Y = selectionY;
         }
         
         WorldSave.Data.HotbarPosition = HotBarSelectionIndex;
@@ -179,7 +189,8 @@ public class Hotbar
         hotbarRect.X = (int)hotbarPos.X;
         hotbarRect.Y = (int)hotbarPos.Y;
 
-        hotbarSelectionRect = new RectangleF(hotbarRect.X, hotbarRect.Y, hotbarRect.Height * 0.9f, hotbarRect.Height * 0.9f);
+        hotbarSelectionRect = new RectangleF(0f, 0f,
+            hotbarRect.Height * selectionSizeMultiplier, hotbarRect.Height * selectionSizeMultiplier);
         
         var healthBarPos = hotbarPos;
         healthBarPos.Y -= 20f;
