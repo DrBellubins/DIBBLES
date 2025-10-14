@@ -42,6 +42,7 @@ public class PlayerInventory : InventoryBase
         }
 
         ItemSlots[0, 0].Set(BlockType.Dirt, 1);
+        ItemSlots[1, 0].Set(BlockType.Grass, 1);
 
         // Set hotbar slot positions
         for (var i = 0; i < HotBarSlots.Length; i++)
@@ -54,6 +55,8 @@ public class PlayerInventory : InventoryBase
             HotBarSlots[i].Rect.X = pos.X;
             HotBarSlots[i].Rect.Y = hotRectY;
         }
+        
+        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
     }
 
     public override void Update()
@@ -69,9 +72,6 @@ public class PlayerInventory : InventoryBase
         
         if (Input.IsKeyPressed(Keys.Escape))
             close();
-        
-        
-        // Updates
         
         // Main slots
         for (var x = 0; x < ItemSlots.GetLength(0); x++)
@@ -113,6 +113,31 @@ public class PlayerInventory : InventoryBase
                 var slot = HotBarSlots[i];
                 slot.Draw();
             }
+        }
+    }
+    
+    // Commands
+    private void giveCMD(string[] args)
+    {
+        if (args.Length != 1)
+        {
+            Chat.Write("Usage: /give blocktype", ChatMessageType.Error);
+            return;
+        }
+
+        var blockName = args[0].ToLower();
+            
+        if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
+        {
+            // Give block at selected slot in hotbar
+            var selectionIndex = GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex;
+            HotBarSlots[selectionIndex].Set(blockType, 1);
+                
+            Chat.Write($"Gave yourself '{blockType}'", ChatMessageType.Command);
+        }
+        else
+        {
+            Chat.Write($"Unknown block type: '{blockName}'", ChatMessageType.Error);
         }
     }
 

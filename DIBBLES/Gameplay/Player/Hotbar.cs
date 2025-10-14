@@ -12,14 +12,12 @@ namespace DIBBLES.Gameplay.Player;
 public class Hotbar
 {
     public ItemSlot? SelectedItem;
-
+    public int HotBarSelectionIndex;
+    
     // Item slots
-    private ItemSlot[] hotbarSlots = new ItemSlot[9];
-
     private RectangleF hotbarRect = new RectangleF(0f, 0f, 900f, 100f);
     private RectangleF hotbarSelectionRect;
     
-    private int hotBarSelectionIndex;
     private float hotBarSelectionPosX;
     
     // Health
@@ -29,11 +27,9 @@ public class Hotbar
     public void Start()
     {
         if (WorldSave.Data.HotbarPosition != 0)
-            hotBarSelectionIndex = WorldSave.Data.HotbarPosition;
+            HotBarSelectionIndex = WorldSave.Data.HotbarPosition;
 
         Resize();
-        
-        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
     }
 
     public void Update(bool isPlayerDead, bool isFrozen)
@@ -41,14 +37,14 @@ public class Hotbar
         if (!isPlayerDead && !isFrozen &&
             !InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
         {
-            hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
+            var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
             
             var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
             {
-                hotBarSelectionIndex += (int)mouseWheelNormalized;
-                hotBarSelectionIndex = GMath.Repeat(hotBarSelectionIndex, 0, 8);
+                HotBarSelectionIndex += (int)mouseWheelNormalized;
+                HotBarSelectionIndex = GMath.Repeat(HotBarSelectionIndex, 0, 8);
             }
 
             var numKeys = Input.GetKeyPressed();
@@ -56,48 +52,50 @@ public class Hotbar
             switch (numKeys)
             {
                 case Keys.D1:
-                    hotBarSelectionIndex = 0;
+                    HotBarSelectionIndex = 0;
                     break;
                 case Keys.D2:
-                    hotBarSelectionIndex = 1;
+                    HotBarSelectionIndex = 1;
                     break;
                 case Keys.D3:
-                    hotBarSelectionIndex = 2;
+                    HotBarSelectionIndex = 2;
                     break;
                 case Keys.D4:
-                    hotBarSelectionIndex = 3;
+                    HotBarSelectionIndex = 3;
                     break;
                 case Keys.D5:
-                    hotBarSelectionIndex = 4;
+                    HotBarSelectionIndex = 4;
                     break;
                 case Keys.D6:
-                    hotBarSelectionIndex = 5;
+                    HotBarSelectionIndex = 5;
                     break;
                 case Keys.D7:
-                    hotBarSelectionIndex = 6;
+                    HotBarSelectionIndex = 6;
                     break;
                 case Keys.D8:
-                    hotBarSelectionIndex = 7;
+                    HotBarSelectionIndex = 7;
                     break;
                 case Keys.D9:
-                    hotBarSelectionIndex = 8;
+                    HotBarSelectionIndex = 8;
                     break;
             }
 
-            hotBarSelectionPosX = hotBarSelectionIndex * hotbarRect.Height;
-            SelectedItem = hotbarSlots[hotBarSelectionIndex];
+            hotBarSelectionPosX = HotBarSelectionIndex * hotbarRect.Height;
+            SelectedItem = hotbarSlots[HotBarSelectionIndex];
 
             hotbarSelectionRect.X = hotbarRect.X + hotBarSelectionPosX;
             hotbarSelectionRect.Y = hotbarRect.Y;
         }
         
-        WorldSave.Data.HotbarPosition = hotBarSelectionIndex;
+        WorldSave.Data.HotbarPosition = HotBarSelectionIndex;
     }
 
     public void Draw(int health)
     {
         if (!InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
         {
+            var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
+            
             UIBatch.DrawRect(hotbarRect, UI.MainColor);
         
             // Hotbar dividers
@@ -158,30 +156,6 @@ public class Hotbar
             
             UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
             UIBatch.DrawRect(healthBarRect, Color.Red);
-        }
-    }
-    
-    // Commands
-    private void giveCMD(string[] args)
-    {
-        if (args.Length != 1)
-        {
-            Chat.Write("Usage: /give blocktype", ChatMessageType.Error);
-            return;
-        }
-
-        var blockName = args[0].ToLower();
-            
-        if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
-        {
-            // Give block logic (e.g., add to hotbar or inventory)
-            hotbarSlots[hotBarSelectionIndex] = new ItemSlot(1, blockType);
-                
-            Chat.Write($"Gave yourself '{blockType}'", ChatMessageType.Command);
-        }
-        else
-        {
-            Chat.Write($"Unknown block type: '{blockName}'", ChatMessageType.Error);
         }
     }
     

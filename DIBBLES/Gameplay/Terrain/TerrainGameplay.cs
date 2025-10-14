@@ -238,7 +238,7 @@ public class TerrainGameplay
     
     public void PlaceBlock(PlayerCharacter player, BlockType blockType)
     {
-        if (SelectedBlock.Type == BlockType.Air)
+        if (SelectedBlock.Type == BlockType.Air || blockType == BlockType.Air)
             return;
 
         // Quantize the normal to the nearest axis-aligned direction

@@ -55,6 +55,7 @@ public class InventorySystem
         foreach (var inventory in Inventories)
             inventory.Draw();
 
+        // Draw held item
         if (IsItemHeld && HeldItem != null)
         {
             var cursorPos = Mouse.GetState().Position.ToVector2();
