@@ -400,6 +400,7 @@ public class PlayerCharacter
         {
             Position = WorldSave.Data.PlayerPosition;
             SetCameraDirection(WorldSave.Data.CameraDirection);
+            Input.FlushLookDelta();
             
             spawnPosition = Position.ToVector3();
         }
