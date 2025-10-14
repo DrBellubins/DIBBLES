@@ -71,7 +71,9 @@ public class ItemSlot
         var currentColor = Rect.Contains(cursorPos) ? UI.AccentColor : UI.MainColor;
         UIBatch.DrawRect(Rect, currentColor);
 
-        if (!IsItemHeld)
+        var shouldDrawIcon = !IsItemHeld || HeldItem != this;
+        
+        if (shouldDrawIcon)
         {
             // Icons
             if (Type != BlockType.Air && StackAmount > 0)
