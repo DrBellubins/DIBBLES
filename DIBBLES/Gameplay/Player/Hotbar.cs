@@ -103,7 +103,7 @@ public class Hotbar
             UI.AccentColor.B * 0.0039f, (UI.AccentColor.A * 0.0039f) * uiAlpha);
         
         var textColor = new Color(1f, 1f, 1f, uiAlpha);
-        var healthColor = new Color(1f, 0f, 0f, 0.1f);
+        var healthColor = new Color(uiAlpha, 0f, 0f, uiAlpha);
         
         UIBatch.DrawRect(hotbarRect, mainColor);
         
