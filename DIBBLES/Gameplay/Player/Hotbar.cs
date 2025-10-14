@@ -94,12 +94,16 @@ public class Hotbar
     {
         var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
 
-        var uiAlpha = InventorySystem.StateMachine.IsAnyInventoryOpen ? 0.5f : 1f;
+        var uiAlpha = InventorySystem.StateMachine.IsAnyInventoryOpen ? 0.25f : 1f;
 
-        var mainColor = new Color(UI.MainColor.R * 0.0039f, UI.MainColor.G * 0.0039f, UI.MainColor.B * 0.0039f, UI.MainColor.A * uiAlpha);
-        var accentColor = new Color(UI.AccentColor.R * 0.0039f, UI.AccentColor.G * 0.0039f, UI.AccentColor.B * 0.0039f, UI.AccentColor.A * uiAlpha);
+        var mainColor = new Color(UI.MainColor.R * 0.0039f, UI.MainColor.G * 0.0039f,
+            UI.MainColor.B * 0.0039f, (UI.MainColor.A * 0.0039f) * uiAlpha);
+        
+        var accentColor = new Color(UI.AccentColor.R * 0.0039f, UI.AccentColor.G * 0.0039f,
+            UI.AccentColor.B * 0.0039f, (UI.AccentColor.A * 0.0039f) * uiAlpha);
+        
         var textColor = new Color(1f, 1f, 1f, uiAlpha);
-        var healthColor = new Color(1f, 0f, 0f, uiAlpha);
+        var healthColor = new Color(1f, 0f, 0f, 0.1f);
         
         UIBatch.DrawRect(hotbarRect, mainColor);
         
@@ -161,7 +165,7 @@ public class Hotbar
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
         
-        UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), new Color(0f,0f,0f,0.5f));
+        UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), mainColor);
         UIBatch.DrawRect(healthBarRect, healthColor);
     }
     
