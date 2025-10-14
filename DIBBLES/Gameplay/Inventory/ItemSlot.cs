@@ -23,8 +23,8 @@ public enum ItemSlotInteraction
 // Both ItemSlot logic, and UI logic/drawing
 public class ItemSlot
 {
-    public int StackAmount;
     public BlockType Type;
+    public int StackAmount;
     
     public RectangleF Rect = new RectangleF(0f, 0f, ItemSlotSize, ItemSlotSize);
     
@@ -32,15 +32,15 @@ public class ItemSlot
 
     public ItemSlot()
     {
-        StackAmount = 0;
         Type = BlockType.Air;
+        StackAmount = 0;
         Rect = new RectangleF(0f, 0f, ItemSlotSize, ItemSlotSize);
     }
     
     public ItemSlot(int stackAmount, BlockType type)
     {
-        StackAmount = stackAmount;
         Type = type;
+        StackAmount = stackAmount;
     }
 
     public void Update()

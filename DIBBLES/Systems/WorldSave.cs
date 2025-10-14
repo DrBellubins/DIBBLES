@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using System.Text;
+using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using DIBBLES.Terrain;
@@ -17,6 +18,8 @@ public struct SaveData
     public GVec3 PlayerPosition;
     public Vector3 CameraDirection;
     public int HotbarPosition;
+    public ItemSlot[,] PlayerItemSlots;
+    public ItemSlot[] HotbarItemSlots;
 
     public Dictionary<Vector3Int, Chunk> ModifiedChunks = new ();
 
@@ -61,7 +64,7 @@ public class WorldSave
         using (var stream = File.Open(worldDataDir, FileMode.Create))
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
         {
-            writer.Write("W_DIBBLES");
+            writer.Write("DIBW");
             
             writer.Write(Seed);
         }
@@ -71,7 +74,7 @@ public class WorldSave
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("P_DIBBLES");
+                writer.Write("DIBP");
                 
                 writer.Write(GameScene.PlayerCharacter.Position.X);
                 writer.Write(GameScene.PlayerCharacter.Position.Y);
@@ -82,6 +85,29 @@ public class WorldSave
                 writer.Write(GameScene.PlayerCharacter.CameraForward.Z);
                 
                 writer.Write(Data.HotbarPosition);
+
+                // Main player inventory slots
+                for (int x = 0; x < Data.PlayerItemSlots.GetLength(0); x++)
+                {
+                    for (int y = 0; y < Data.PlayerItemSlots.GetLength(1); y++)
+                    {
+                        var itemSlot = Data.PlayerItemSlots[x, y];
+
+                        writer.Write((int)itemSlot.Type);
+                        writer.Write(itemSlot.StackAmount);
+                    }
+                }
+                
+                // Hotbar slots
+                writer.Write(Data.HotbarItemSlots.Length);
+                
+                for (var i = 0; i < Data.HotbarItemSlots.Length; i++)
+                {
+                    var itemSlot = Data.HotbarItemSlots[i];
+                    
+                    writer.Write((int)itemSlot.Type);
+                    writer.Write(itemSlot.StackAmount);
+                }
             }
         }
         
@@ -103,7 +129,7 @@ public class WorldSave
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("R_DIBBLES");
+                writer.Write("DIBR");
                 
                 writer.Write(nonAirBlocks);
                 
@@ -158,7 +184,7 @@ public class WorldSave
             {
                 var header = reader.ReadString();
 
-                if (header != "W_DIBBLES")
+                if (header != "DIBW")
                     Console.WriteLine("World data format is incorrect");
                 
                 Data.WorldName = worldName;
@@ -174,12 +200,41 @@ public class WorldSave
             {
                 var header = reader.ReadString();
 
-                if (header != "P_DIBBLES")
+                if (header != "DIBP")
                     Console.WriteLine("Player data format is incorrect");
                 
                 Data.PlayerPosition = new GVec3(reader.ReadDouble(), reader.ReadDouble(), reader.ReadDouble());
                 Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                 Data.HotbarPosition = reader.ReadInt32();
+
+                // Main player inventory slots
+                Data.PlayerItemSlots = new ItemSlot[9, 3];
+                
+                for (int x = 0; x < 9; x++)
+                {
+                    for (int y = 0; y < 3; y++)
+                    {
+                        var itemSlot = new  ItemSlot();
+                        
+                        itemSlot.Type = (BlockType)reader.ReadInt32();
+                        itemSlot.StackAmount = reader.ReadInt32();
+                        
+                        Data.PlayerItemSlots[x, y] = itemSlot;
+                    }
+                }
+                
+                // Hotbar slots
+                Data.HotbarItemSlots = new ItemSlot[9];
+                
+                for (var i = 0; i < Data.HotbarItemSlots.Length; i++)
+                {
+                    var itemSlot = new  ItemSlot();
+                    
+                    itemSlot.Type = (BlockType)reader.ReadInt32();
+                    itemSlot.StackAmount = reader.ReadInt32();
+                    
+                    Data.HotbarItemSlots[i] = itemSlot;
+                }
             }
         }
         else
@@ -216,7 +271,7 @@ public class WorldSave
                 
                 var header = reader.ReadString();
                 
-                if (header != "R_DIBBLES")
+                if (header != "DIBR")
                     Console.WriteLine("Region data format is incorrect!");
                 
                 int nonAirCount = reader.ReadInt32();

@@ -24,6 +24,12 @@ public class PlayerInventory : InventoryBase
     {
         inventoryRect.X = (UI.CenterPivot.X - inventoryRect.Width * 0.5f);
         inventoryRect.Y = (UI.CenterPivot.Y - inventoryRect.Height * 0.5f) - 50f;
+
+        if (WorldSave.Exists)
+        {
+            ItemSlots = WorldSave.Data.PlayerItemSlots;
+            HotBarSlots = WorldSave.Data.HotbarItemSlots;
+        }
         
         // Set main slot positions
         for (var x = 0; x < ItemSlots.GetLength(0); x++)
@@ -40,9 +46,6 @@ public class PlayerInventory : InventoryBase
                 ItemSlots[x, y].Rect.Y = pos.Y;
             }
         }
-
-        ItemSlots[0, 0].Set(BlockType.Dirt, 1);
-        ItemSlots[1, 0].Set(BlockType.Grass, 1);
 
         // Set hotbar slot positions
         for (var i = 0; i < HotBarSlots.Length; i++)
@@ -61,6 +64,9 @@ public class PlayerInventory : InventoryBase
 
     public override void Update()
     {
+        WorldSave.Data.PlayerItemSlots = ItemSlots;
+        WorldSave.Data.HotbarItemSlots = HotBarSlots;
+        
         // Opening/Closing
         if (Input.IsKeyPressed(Keys.E))
         {
