@@ -1,11 +1,19 @@
-// Parameters
-float2 texelSize;
-float radius;
+// Multi-pass Gaussian Blur with Mask Support (for MonoGame Effects)
+// Author: Copilot Space
 
-Texture2D Texture0      : register(t0);
-Texture2D MaskTexture   : register(t1);
+// === Parameters ===
+float2 texelSize;          // 1 / texture resolution (set per pass)
+float radius;              // Blur radius in pixels (used to scale offsets)
 
-// Samplers
+// --- Fixed kernel size for HLSL compatibility (must match C# code) ---
+#define KERNEL_SIZE 9
+float kernel[KERNEL_SIZE]; // Gaussian weights (set from C#)
+
+// === Textures ===
+Texture2D Texture0      : register(t0); // Input (for blur stage)
+Texture2D MaskTexture   : register(t1); // Mask (for masking stage)
+
+// === Samplers ===
 sampler Sampler = sampler_state
 {
     Texture = <Texture0>;
@@ -26,7 +34,7 @@ sampler MaskSampler = sampler_state
     AddressV = Clamp;
 };
 
-// Vertex shader structs
+// === Vertex structs ===
 struct VSInput
 {
     float4 Position : POSITION;
@@ -39,7 +47,7 @@ struct VSOutput
     float2 TexCoord : TEXCOORD0;
 };
 
-// Vertex shader: passthrough
+// === Vertex Shader ===
 VSOutput VSMain(VSInput input)
 {
     VSOutput output;
@@ -48,93 +56,96 @@ VSOutput VSMain(VSInput input)
     return output;
 }
 
-float4 Box4(float4 p0, float4 p1, float4 p2, float4 p3)
+// === Gaussian Blur (Horizontal) ===
+float4 GaussianBlurHPS(float2 texCoord)
 {
-    return (p0 + p1 + p2 + p3) * 0.25f;
+    float4 color = float4(0,0,0,0);
+
+    // Kernel is always KERNEL_SIZE (must be odd, e.g. 9)
+    int halfKernel = KERNEL_SIZE / 2;
+
+    // Sample horizontally
+    [unroll]
+    for (int i = 0; i < KERNEL_SIZE; i++)
+    {
+        int offset = i - halfKernel;
+        float2 sampleOffset = float2(offset, 0) * texelSize * radius;
+        color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
+    }
+    return color;
 }
 
-// Downsample pass (weighted 5-group mix from original)
-float4 DownsamplePS(float2 texCoord)
+// === Gaussian Blur (Vertical) ===
+float4 GaussianBlurVPS(float2 texCoord)
 {
-    float2 offset = texelSize;
+    float4 color = float4(0,0,0,0);
 
-    float4 c0  = tex2D(Sampler, texCoord + float2(-2, -2) * offset);
-    float4 c1  = tex2D(Sampler, texCoord + float2( 0, -2) * offset);
-    float4 c2  = tex2D(Sampler, texCoord + float2( 2, -2) * offset);
-    float4 c3  = tex2D(Sampler, texCoord + float2(-1, -1) * offset);
-    float4 c4  = tex2D(Sampler, texCoord + float2( 1, -1) * offset);
-    float4 c5  = tex2D(Sampler, texCoord + float2(-2,  0) * offset);
-    float4 c6  = tex2D(Sampler, texCoord + float2( 0,  0) * offset);
-    float4 c7  = tex2D(Sampler, texCoord + float2( 2,  0) * offset);
-    float4 c8  = tex2D(Sampler, texCoord + float2(-1,  1) * offset);
-    float4 c9  = tex2D(Sampler, texCoord + float2( 1,  1) * offset);
-    float4 c10 = tex2D(Sampler, texCoord + float2(-2,  2) * offset);
-    float4 c11 = tex2D(Sampler, texCoord + float2( 0,  2) * offset);
-    float4 c12 = tex2D(Sampler, texCoord + float2( 2,  2) * offset);
+    int halfKernel = KERNEL_SIZE / 2;
 
-    float4 result =
-          Box4(c0,  c1,  c5,  c6)  * 0.125
-        + Box4(c1,  c2,  c6,  c7)  * 0.125
-        + Box4(c5,  c6,  c10, c11) * 0.125
-        + Box4(c6,  c7,  c11, c12) * 0.125
-        + Box4(c3,  c4,  c8,  c9)  * 0.5;
-
-    return result;
+    // Sample vertically
+    [unroll]
+    for (int i = 0; i < KERNEL_SIZE; i++)
+    {
+        int offset = i - halfKernel;
+        float2 sampleOffset = float2(0, offset) * texelSize * radius;
+        color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
+    }
+    return color;
 }
 
-// Upsample pass (3x3 tent)
-float4 UpsamplePS(float2 texCoord)
+// === Masked Upsample Pass ===
+float4 MaskedPS(float2 texCoord)
 {
-    float2 offset = texelSize * radius * 0.5;
-
-    float4 c0 = tex2D(Sampler, texCoord + float2(-1, -1) * offset);
-    float4 c1 = tex2D(Sampler, texCoord + float2( 0, -1) * offset);
-    float4 c2 = tex2D(Sampler, texCoord + float2( 1, -1) * offset);
-    float4 c3 = tex2D(Sampler, texCoord + float2(-1,  0) * offset);
-    float4 c4 = tex2D(Sampler, texCoord + float2( 0,  0) * offset);
-    float4 c5 = tex2D(Sampler, texCoord + float2( 1,  0) * offset);
-    float4 c6 = tex2D(Sampler, texCoord + float2(-1,  1) * offset);
-    float4 c7 = tex2D(Sampler, texCoord + float2( 0,  1) * offset);
-    float4 c8 = tex2D(Sampler, texCoord + float2( 1,  1) * offset);
-
-    float4 result = 0.0625f * (c0 + 2.0 * c1 + c2 + 2.0 * c3 + 4.0 * c4 + 2.0 * c5 + c6 + 2.0 * c7 + c8);
-    return result;
-}
-
-// Pixel shaders (entrypoints per technique)
-float4 PSDownsample(VSOutput input) : SV_Target
-{
-    float4 blur = DownsamplePS(input.TexCoord);
-    return float4(blur.rgb, 1.0);
-}
-
-float4 PSUpsampleMasked(VSOutput input) : SV_Target
-{
-    float4 blurUpscaled = UpsamplePS(input.TexCoord);
-    float maskA = tex2D(MaskSampler, input.TexCoord).a;
+    float4 blurColor = tex2D(Sampler, texCoord); // Already blurred
+    float maskA = tex2D(MaskSampler, texCoord).a;
 
     // Only output blurred color where mask alpha > 0.5
     if (maskA > 0.5)
-        return blurUpscaled;
+        return blurColor;
     else
-        return float4(0, 0, 0, 0);
+        return float4(0,0,0,0);
 }
 
-// Techniques
-technique Downsample
+// === Shader Entrypoints ===
+float4 PSBlurH(VSOutput input) : SV_Target
+{
+    return GaussianBlurHPS(input.TexCoord);
+}
+
+float4 PSBlurV(VSOutput input) : SV_Target
+{
+    return GaussianBlurVPS(input.TexCoord);
+}
+
+float4 PSMask(VSOutput input) : SV_Target
+{
+    return MaskedPS(input.TexCoord);
+}
+
+// === Techniques ===
+technique GaussianBlurH
 {
     pass P0
     {
         VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PSDownsample();
+        PixelShader  = compile ps_3_0 PSBlurH();
     }
 }
 
-technique UpsampleMasked
+technique GaussianBlurV
 {
     pass P0
     {
         VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PSUpsampleMasked();
+        PixelShader  = compile ps_3_0 PSBlurV();
+    }
+}
+
+technique MaskedComposite
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 VSMain();
+        PixelShader  = compile ps_3_0 PSMask();
     }
 }

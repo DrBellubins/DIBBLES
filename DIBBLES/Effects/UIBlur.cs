@@ -11,14 +11,17 @@ public class UIBlur
     public RenderTarget2D BlurBuffer;      // Low-res downsampled buffer (e.g. 128x72)
     public RenderTarget2D UIBlurBuffer;    // Final output buffer (same as screen/UI resolution)
     
-    private int blurBufferWidth = 128;
-    private int blurBufferHeight = 72;
+    private const int blurBufferWidth = 128;
+    private const int blurBufferHeight = 72;
+    private const float blurRadius = 8f;
     
     private Effect uiBlurEffect;
     
     // Quad geometry
     private VertexPositionTexture[] quadVertices;
     private short[] quadIndices;
+
+    private float[] kernel = new float[9];
     
     public void Start()
     {
@@ -37,6 +40,8 @@ public class UIBlur
         };
         
         quadIndices = new short[] { 0, 1, 2, 0, 2, 3 };
+        
+        kernel = GaussianWeights(9, blurRadius * 0.5f);
     }
 
     public void Apply()
@@ -44,24 +49,8 @@ public class UIBlur
         var graphics = Engine.Graphics;
         
         // ----------- STAGE 1: Downsample BackBuffer to BlurBuffer -----------
-        graphics.SetRenderTarget(BlurBuffer);
-        graphics.Clear(Color.Transparent);
-
-        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["Downsample"];
-        uiBlurEffect.Parameters["Texture0"].SetValue(GameScene.BackBuffer);
-        uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / blurBufferWidth, 1f / blurBufferHeight));
-        uiBlurEffect.Parameters["radius"].SetValue(40f); // Not used in downsample
-
-        DrawFullscreenQuad();
-
-        // ----------- STAGE 2: Upsample (masked) BlurBuffer to UIBlurBuffer -----------
         graphics.SetRenderTarget(UIBlurBuffer);
         graphics.Clear(Color.Transparent);
-
-        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["UpsampleMasked"];
-        uiBlurEffect.Parameters["Texture0"].SetValue(BlurBuffer);
-        uiBlurEffect.Parameters["MaskTexture"].SetValue(GameScene.UIBuffer);
-        uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / Engine.ScreenWidth, 1f / Engine.ScreenHeight));
 
         DrawFullscreenQuad();
 
@@ -85,11 +74,35 @@ public class UIBlur
 
         foreach (var pass in uiBlurEffect.CurrentTechnique.Passes)
         {
+            uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / Engine.ScreenWidth, 1f / Engine.ScreenHeight));
+            uiBlurEffect.Parameters["radius"].SetValue(blurRadius);
+            
             pass.Apply();
             graphics.DrawUserIndexedPrimitives<VertexPositionTexture>(
                 PrimitiveType.TriangleList,
                 quadVertices, 0, 4,
                 quadIndices, 0, 2);
         }
+    }
+    
+    private float[] GaussianWeights(int kernelSize, float sigma)
+    {
+        float[] weights = new float[kernelSize];
+        float sum = 0f;
+        int half = kernelSize / 2;
+        
+        for (int i = 0; i < kernelSize; i++)
+        {
+            int x = i - half;
+            
+            weights[i] = (float)Math.Exp(-(x * x) / (2 * sigma * sigma));
+            sum += weights[i];
+        }
+        
+        // Normalize
+        for (int i = 0; i < kernelSize; i++)
+            weights[i] /= sum;
+        
+        return weights;
     }
 }
