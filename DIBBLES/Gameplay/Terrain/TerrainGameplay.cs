@@ -234,6 +234,10 @@ public class TerrainGameplay
                 audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position.ToVector3(), GameScene.PlayerCharacter.CameraForward);
             }
         }
+        
+        // Add block to inventory
+        if (GameScene.PlayerCharacter.IsSurvival)
+            GameScene.Inventory.PlayerInventory.AddBlock(oldBlock.Type);
     }
     
     public void PlaceBlock(PlayerCharacter player, BlockType blockType)
@@ -312,6 +316,10 @@ public class TerrainGameplay
             audioPlayer.Position = newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             audioPlayer.Play(GameScene.PlayerCharacter.Camera.Position.ToVector3(), GameScene.PlayerCharacter.CameraForward);
         }
+        
+        // Decrement stack amount
+        if (GameScene.PlayerCharacter.IsSurvival)
+            GameScene.Inventory.PlayerInventory.DecrementStack();
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

@@ -55,6 +55,8 @@ public class PlayerCharacter
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
+    
+    public bool IsSurvival = true;
 
     //private Sound fallSound;
     private HandModel handModel = new();
@@ -98,6 +100,7 @@ public class PlayerCharacter
         Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
         Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
         Commands.RegisterCommand("teleport", "Teleport to a position: /teleport x y z", teleportCMD);
+        Commands.RegisterCommand("gm", "Toggle gamemode between creative and survival", gameModeCMD);
         
         CursorManager.LockCursor();
     }
@@ -151,7 +154,7 @@ public class PlayerCharacter
             }
         }
         
-        if (Input.FlyToggle() && !IsFrozen)
+        if (Input.FlyToggle() && !IsFrozen && !IsSurvival)
         {
             if (FreeCamEnabled)
                 Velocity = Vector3.Zero;
@@ -371,7 +374,7 @@ public class PlayerCharacter
     
     public void Damage(int damage)
     {
-        if (Health > 0)
+        if (Health > 0 && IsSurvival)
             Health -= damage;
         
         //Raylib.PlaySound(fallSound);
@@ -647,5 +650,15 @@ public class PlayerCharacter
 
         Position = new GVec3(x, y, z);
         Chat.Write($"Teleported to ({x}, {y}, {z})", ChatMessageType.Command);
+    }
+
+    private void gameModeCMD(string[] args)
+    {
+        IsSurvival = !IsSurvival;
+        
+        if (IsSurvival)
+            Chat.Write("Set gamemode to survival",  ChatMessageType.Command);
+        else
+            Chat.Write("Set gamemode to creative",  ChatMessageType.Command);
     }
 }

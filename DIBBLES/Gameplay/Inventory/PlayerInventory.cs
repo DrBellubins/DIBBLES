@@ -40,6 +40,7 @@ public class PlayerInventory : InventoryBase
                     ItemSlots[x, y] = new ItemSlot();
                 
                 var invRectY = inventoryRect.Y + (inventoryRect.Height * 0.5f) + 32f;
+                
                 var pos = new Vector2(inventoryRect.X + (x * ItemSlotSize) * ItemSlotPadding,
                     invRectY + (y * ItemSlotSize) * ItemSlotPadding);
                 
@@ -123,13 +124,33 @@ public class PlayerInventory : InventoryBase
             }
         }
     }
+
+    public void AddBlock(BlockType blockType, int stackAmount = 1)
+    {
+        var selectedSlot = HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex];
+        
+        if (selectedSlot.Type == BlockType.Air && selectedSlot.StackAmount <= 0)
+            selectedSlot.Set(blockType, stackAmount);
+        else if (selectedSlot.Type == blockType)
+            InrementStack(stackAmount);
+    }
+    
+    public void InrementStack(int amount = 1)
+    {
+        HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex].StackAmount += amount;
+    }
+    
+    public void DecrementStack(int amount = 1)
+    {
+        HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex].StackAmount -= amount;
+    }
     
     // Commands
     private void giveCMD(string[] args)
     {
-        if (args.Length != 1)
+        if (args.Length < 1)
         {
-            Chat.Write("Usage: /give blocktype", ChatMessageType.Error);
+            Chat.Write("Usage: /give blocktype amount", ChatMessageType.Error);
             return;
         }
 
@@ -139,14 +160,20 @@ public class PlayerInventory : InventoryBase
         {
             // Give block at selected slot in hotbar
             var selectionIndex = GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex;
-            HotBarSlots[selectionIndex].Set(blockType, 1);
-                
-            Chat.Write($"Gave yourself '{blockType}'", ChatMessageType.Command);
+
+            if (args.Length == 2)
+            {
+                if (int.TryParse(args[1], out var stackAmount))
+                {
+                    HotBarSlots[selectionIndex].Set(blockType, stackAmount);
+                    Chat.Write($"Gave yourself {stackAmount} '{blockType}'", ChatMessageType.Command);
+                }
+                else
+                    Chat.Write("Couldn't parse amount", ChatMessageType.Error);
+            }
         }
         else
-        {
             Chat.Write($"Unknown block type: '{blockName}'", ChatMessageType.Error);
-        }
     }
 
     private void open()

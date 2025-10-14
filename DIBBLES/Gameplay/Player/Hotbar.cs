@@ -158,7 +158,7 @@ public class Hotbar
                 }
                 
                 // Stack amount
-                if (slot.Type != BlockType.Air && slot.StackAmount > 0)
+                if (slot.Type != BlockType.Air && slot.StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
                 {
                     var padding = 8f;
                     var text = $"{slot.StackAmount}";
@@ -173,13 +173,16 @@ public class Hotbar
         }
         
         // Health bar
-        var healthPercent = (health * 0.01f) * healthBarWidth;
-        healthBarRect.Width = (int)healthPercent;
+        if (GameScene.PlayerCharacter.IsSurvival)
+        {
+            var healthPercent = (health * 0.01f) * healthBarWidth;
+            healthBarRect.Width = (int)healthPercent;
 
-        var healthBGRect = new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height);
+            var healthBGRect = new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height);
         
-        UIBatch.DrawRectRounded(healthBGRect, 0.65f, 2, mainColor);
-        UIBatch.DrawRectRounded(healthBarRect, 0.65f, 2, healthColor);
+            UIBatch.DrawRectRounded(healthBGRect, 0.65f, 2, mainColor);
+            UIBatch.DrawRectRounded(healthBarRect, 0.65f, 2, healthColor);
+        }
     }
     
     public void Resize()

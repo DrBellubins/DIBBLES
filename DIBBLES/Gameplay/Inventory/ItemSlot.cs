@@ -45,6 +45,9 @@ public class ItemSlot
 
     public void Update()
     {
+        if (StackAmount <= 0)
+            Set(BlockType.Air, 0);
+        
         // Left click grab/place
         cursorPos = Mouse.GetState().Position.ToVector2();
         var rectContains = Rect.Contains(cursorPos);
@@ -94,7 +97,7 @@ public class ItemSlot
             }
 
             // Stack amount
-            if (Type != BlockType.Air && StackAmount > 0)
+            if (Type != BlockType.Air && StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
             {
                 var padding = 8f;
                 var text = $"{StackAmount}";
