@@ -86,6 +86,7 @@ public class TerrainGeneration
         // After all chunk data in render distance has loaded in
         if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
         {
+            playerCharacter.ShouldUpdate = true;
             playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
             InitialLoadDone = true;
@@ -517,6 +518,55 @@ public class TerrainGeneration
                     GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
                     GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
                 );
+            }
+        }
+    }
+    
+    public void CreateCylinder(BlockType blockType, int radius, int height = 1)
+    {
+        var centerX = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.X);
+        var centerY = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Y - 2);
+        var centerZ = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z);
+    
+        HashSet<Vector3Int> affectedChunks = new();
+    
+        for (int h = 0; h < height; h++)
+        {
+            int y = centerY - h;
+            for (int dx = -radius; dx <= radius; dx++)
+            for (int dz = -radius; dz <= radius; dz++)
+            {
+                if (dx * dx + dz * dz <= radius * radius)
+                {
+                    var blockPos = new Vector3Int(centerX + dx, y, centerZ + dz);
+                    Chunk.SetBlockTypeGlobal(blockPos, blockType);
+    
+                    // Track affected chunk
+                    int chunkX = (int)Math.Floor((float)blockPos.X / ChunkSize) * ChunkSize;
+                    int chunkY = (int)Math.Floor((float)blockPos.Y / ChunkSize) * ChunkSize;
+                    int chunkZ = (int)Math.Floor((float)blockPos.Z / ChunkSize) * ChunkSize;
+                    
+                    affectedChunks.Add(new Vector3Int(chunkX, chunkY, chunkZ));
+                }
+            }
+        }
+    
+        // Remesh affected chunks
+        foreach (var chunkCoord in affectedChunks)
+        {
+            if (ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            {
+                // Opaque
+                var meshData = Mesh.GenerateMeshData(chunk, false);
+                Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
+    
+                // Transparent
+                var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
+
+                // Add to save
+                if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
+                    WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
             }
         }
     }

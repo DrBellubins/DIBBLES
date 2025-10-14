@@ -283,21 +283,22 @@ public class Chunk
     
     public static void SetBlockTypeGlobal(Vector3Int worldPos, BlockType type)
     {
-        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+        
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             return;
 
         int localX = worldPos.X - chunkX;
         int localY = worldPos.Y - chunkY;
         int localZ = worldPos.Z - chunkZ;
 
-        if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-            localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-            localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
             return;
 
         chunk.SetTypeAt(localX, localY, localZ, type);
@@ -310,7 +311,7 @@ public class Chunk
         int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-        if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             return;
 
         int localX = worldPos.X - chunkX;
