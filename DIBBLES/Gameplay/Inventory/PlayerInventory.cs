@@ -103,7 +103,7 @@ public class PlayerInventory : InventoryBase
     {
         if (isOpen)
         {
-            UIBatch.DrawRect(inventoryRect, UI.MainColor);
+            UIBatch.DrawRectRounded(inventoryRect, 0.1f, 4, UI.MainColor);
             
             // Main slots
             for (var x = 0; x < ItemSlots.GetLength(0); x++)

@@ -116,7 +116,7 @@ public class Hotbar
         var textColor = new Color(uiAlpha, uiAlpha, uiAlpha, uiAlpha);
         var healthColor = new Color(uiAlpha, 0f, 0f, uiAlpha);
         
-        UIBatch.DrawRect(hotbarRect, mainColor);
+        UIBatch.DrawRectRounded(hotbarRect, 0.5f, 4, mainColor);
         
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length - 1; i++)
@@ -173,11 +173,13 @@ public class Hotbar
         }
         
         // Health bar
-        var healthPercent = ((float)health * 0.01f) * healthBarWidth;
+        var healthPercent = (health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
+
+        var healthBGRect = new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height);
         
-        UIBatch.DrawRect(new RectangleF(healthBarRect.X, healthBarRect.Y, healthBarWidth, healthBarRect.Height), mainColor);
-        UIBatch.DrawRect(healthBarRect, healthColor);
+        UIBatch.DrawRectRounded(healthBGRect, 0.65f, 2, mainColor);
+        UIBatch.DrawRectRounded(healthBarRect, 0.65f, 2, healthColor);
     }
     
     public void Resize()

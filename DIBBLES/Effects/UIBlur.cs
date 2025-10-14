@@ -15,7 +15,7 @@ public class UIBlur
     
     private const int blurBufferWidth = 128;
     private const int blurBufferHeight = 72;
-    private const float blurRadius = 16f;
+    private const float blurRadius = 9f;
     
     private Effect uiBlurEffect;
     
