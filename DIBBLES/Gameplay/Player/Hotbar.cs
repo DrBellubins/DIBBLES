@@ -102,7 +102,7 @@ public class Hotbar
         var accentColor = new Color(UI.AccentColor.R * 0.0039f, UI.AccentColor.G * 0.0039f,
             UI.AccentColor.B * 0.0039f, (UI.AccentColor.A * 0.0039f) * uiAlpha);
         
-        var textColor = new Color(1f, 1f, 1f, uiAlpha);
+        var textColor = new Color(uiAlpha, uiAlpha, uiAlpha, uiAlpha);
         var healthColor = new Color(uiAlpha, 0f, 0f, uiAlpha);
         
         UIBatch.DrawRect(hotbarRect, mainColor);
@@ -118,6 +118,7 @@ public class Hotbar
                 new Vector2(xPos, hotbarRect.Y + hotbarRect.Height), 1.0f, accentColor);
         }
         
+        // Selection
         UIBatch.DrawRectRounded(hotbarSelectionRect, 0.5f, 4, accentColor);
         
         // Hotbar items
@@ -162,6 +163,7 @@ public class Hotbar
             }
         }
         
+        // Health bar
         var healthPercent = ((float)health * 0.01f) * healthBarWidth;
         healthBarRect.Width = (int)healthPercent;
         

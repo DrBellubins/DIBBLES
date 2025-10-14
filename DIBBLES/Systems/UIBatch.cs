@@ -34,7 +34,7 @@ public static class UIBatch
     public static void Initialize()
     {
         _graphics = Engine.Graphics;
-
+        
         _effect = new BasicEffect(_graphics)
         {
             TextureEnabled = true,
@@ -78,7 +78,7 @@ public static class UIBatch
 
         roundness = Math.Clamp(roundness, 0f, 1f);
         segments = Math.Max(segments, 2);
-
+        
         // Calculate corner radius
         float radius = (rect.Width > rect.Height) ? (rect.Height * roundness) / 2f : (rect.Width * roundness) / 2f;
         
@@ -110,10 +110,10 @@ public static class UIBatch
         points[11] = new Vector2(x + radius, y + h - radius);          // Bottom-left arc center
 
         // Draw the 4 corner arcs as triangle fans
-        DrawQuarterCircleFan(points[8], radius, 180, 270, segments, color); // Top-left
-        DrawQuarterCircleFan(points[9], radius, 270, 360, segments, color); // Top-right
-        DrawQuarterCircleFan(points[10], radius, 0, 90, segments, color);   // Bottom-right
-        DrawQuarterCircleFan(points[11], radius, 90, 180, segments, color); // Bottom-left
+        drawQuarterCircleFan(points[8], radius, 180, 270, segments, color); // Top-left
+        drawQuarterCircleFan(points[9], radius, 270, 360, segments, color); // Top-right
+        drawQuarterCircleFan(points[10], radius, 0, 90, segments, color);   // Bottom-right
+        drawQuarterCircleFan(points[11], radius, 90, 180, segments, color); // Bottom-left
 
         // Draw the 4 edge rectangles as quads
         DrawQuad(points[0], points[8], points[9], points[1], color); // Top edge
@@ -124,7 +124,7 @@ public static class UIBatch
         // Draw the center rectangle as a quad
         DrawQuad(points[8], points[9], points[10], points[11], color);
     }
-
+    
     /// <summary>
     /// Draws text to screen
     /// </summary>
@@ -132,7 +132,7 @@ public static class UIBatch
     {
         if (!_inBatch) throw new InvalidOperationException("Call Begin() before DrawString()");
         if (string.IsNullOrEmpty(text)) return;
-    
+        
         Texture2D fontTex = font.Texture;
 
         // Flush if texture changes
@@ -242,7 +242,7 @@ public static class UIBatch
     }
 
     // Draws a quarter-circle as a triangle fan using UIBatch
-    private static void DrawQuarterCircleFan(Vector2 center, float radius, float angleStart, float angleEnd, int segments, Color color)
+    private static void drawQuarterCircleFan(Vector2 center, float radius, float angleStart, float angleEnd, int segments, Color color)
     {
         if (_currentTexture != null && _currentTexture != _whitePixel)
             Flush();
