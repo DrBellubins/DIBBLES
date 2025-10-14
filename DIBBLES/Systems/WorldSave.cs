@@ -99,8 +99,6 @@ public class WorldSave
                 }
                 
                 // Hotbar slots
-                writer.Write(Data.HotbarItemSlots.Length);
-                
                 for (var i = 0; i < Data.HotbarItemSlots.Length; i++)
                 {
                     var itemSlot = Data.HotbarItemSlots[i];
