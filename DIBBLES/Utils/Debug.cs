@@ -54,7 +54,7 @@ public class Debug
                 var text = bufferText.Item1;
                 var color = bufferText.Item2;
                 
-                UIBatch.DrawString(Engine.MainFont, text, new Vector2(0f, index), new Color(1f, 1f, 1f, 0.5f));
+                UIBatch.DrawString(Engine.MainFont, text, new Vector2(0f, index), new Color(1f, 1f, 1f, 0f));
                 index += 24;
             }
         }
