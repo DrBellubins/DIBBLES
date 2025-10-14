@@ -134,13 +134,12 @@ public static class UIBatch
         if (string.IsNullOrEmpty(text)) return;
     
         Texture2D fontTex = font.Texture;
-        Texture2D fontPremultiplied = PremultiplyAlpha(fontTex);
 
         // Flush if texture changes
-        if (_currentTexture != null && _currentTexture != fontPremultiplied)
+        if (_currentTexture != null && _currentTexture != fontTex)
             Flush();
         
-        _currentTexture = fontPremultiplied;
+        _currentTexture = fontTex;
 
         Vector2 currentPos = position;
         
