@@ -131,13 +131,13 @@ public class GameScene : Scene
         
         gd.SetRenderTarget(null);
         
-        uiBlur.Apply();
+        //uiBlur.Apply();
         
         UIBatch.Begin();
         
         // Draw buffers
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
-        uiBlur.Draw();
+        //uiBlur.Draw();
         UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         UIBatch.End();

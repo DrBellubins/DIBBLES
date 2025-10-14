@@ -103,6 +103,8 @@ public class Hotbar
         
         UIBatch.DrawRect(hotbarRect, mainColor);
         
+        Debug.Draw2DText($"mainColor: {mainColor.ToVector4()}", Color.White);
+        
         // Hotbar dividers
         for (int i = 0; i < hotbarSlots.Length; i++)
         {
