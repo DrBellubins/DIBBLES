@@ -134,12 +134,13 @@ public static class UIBatch
         if (string.IsNullOrEmpty(text)) return;
     
         Texture2D fontTex = font.Texture;
+        Texture2D fontPremultiplied = PremultiplyAlpha(fontTex);
 
         // Flush if texture changes
-        if (_currentTexture != null && _currentTexture != fontTex)
+        if (_currentTexture != null && _currentTexture != fontPremultiplied)
             Flush();
         
-        _currentTexture = fontTex;
+        _currentTexture = fontPremultiplied;
 
         Vector2 currentPos = position;
         
@@ -186,6 +187,30 @@ public static class UIBatch
         }
     }
 
+    public static Texture2D PremultiplyAlpha(Texture2D source)
+    {
+        // Step 1: Extract pixel data
+        int width = source.Width;
+        int height = source.Height;
+        Color[] pixels = new Color[width * height];
+        source.GetData(pixels);
+
+        // Step 2: Premultiply
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            float a = pixels[i].A / 255f;
+            pixels[i].R = (byte)(pixels[i].R * a);
+            pixels[i].G = (byte)(pixels[i].G * a);
+            pixels[i].B = (byte)(pixels[i].B * a);
+        }
+
+        // Step 3: Create new texture and set data
+        Texture2D result = new Texture2D(source.GraphicsDevice, width, height, false, SurfaceFormat.Color);
+        result.SetData(pixels);
+
+        return result;
+    }
+    
     public static void DrawString(string text, Vector2 position, Color color)
     {
         DrawString(Engine.MainFont, text, position, color);
