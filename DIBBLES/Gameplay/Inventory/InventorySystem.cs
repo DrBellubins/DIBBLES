@@ -59,6 +59,7 @@ public class InventorySystem
         if (IsItemHeld && HeldItem != null)
         {
             var cursorPos = Mouse.GetState().Position.ToVector2();
+            cursorPos = new Vector2(cursorPos.X - (ItemSlotSize * 0.5f), cursorPos.Y - (ItemSlotSize * 0.5f));
             
             // Icons
             if (HeldItem.Type != BlockType.Air && HeldItem.StackAmount > 0)
@@ -120,7 +121,6 @@ public class InventorySystem
                 var tempAmount = targetSlot.StackAmount;
                 targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
                 HeldItem.Set(tempType, tempAmount);
-                HeldItem = null;
             }
         }
         else
