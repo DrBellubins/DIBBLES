@@ -95,22 +95,21 @@ public class Hotbar
         var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
 
         var uiAlpha = InventorySystem.StateMachine.IsAnyInventoryOpen ? 0.25f : 1f;
+        var mainAlpha = InventorySystem.StateMachine.IsAnyInventoryOpen ? 0.49f : 1f;
 
-        var mainColor = new Color(UI.MainColor.R * 0.0039f, UI.MainColor.G * 0.0039f,
-            UI.MainColor.B * 0.0039f, (UI.MainColor.A * 0.0039f) * uiAlpha);
+        var mainColor = new Color(UI.MainColor.R / 255f, UI.MainColor.G / 255f,
+            UI.MainColor.B / 255f, (UI.MainColor.A / 255f) * mainAlpha);
         
-        var accentColor = new Color(UI.AccentColor.R * 0.0039f, UI.AccentColor.G * 0.0039f,
-            UI.AccentColor.B * 0.0039f, (UI.AccentColor.A * 0.0039f) * uiAlpha);
+        var accentColor = new Color(UI.AccentColor.R / 255f, UI.AccentColor.G / 255f,
+            UI.AccentColor.B / 255f, 0f);
         
         var textColor = new Color(uiAlpha, uiAlpha, uiAlpha, uiAlpha);
         var healthColor = new Color(uiAlpha, 0f, 0f, uiAlpha);
         
         UIBatch.DrawRect(hotbarRect, mainColor);
         
-        Debug.Draw2DText($"mainColor: {mainColor.ToVector4()}", Color.White);
-        
         // Hotbar dividers
-        for (int i = 0; i < hotbarSlots.Length; i++)
+        for (int i = 0; i < hotbarSlots.Length - 1; i++)
         {
             var xPos = hotbarRect.X + (i + 1.0f) * hotbarRect.Height;
         

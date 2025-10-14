@@ -114,7 +114,7 @@ float4 PSUpsampleMasked(VSOutput input) : SV_Target
     float maskA = tex2D(MaskSampler, input.TexCoord).a;
 
     // Only output blurred color where mask alpha > 0.5
-    if (maskA > 0.0)
+    if (maskA > 0.5)
         return blurUpscaled;
     else
         return float4(0, 0, 0, 0);
