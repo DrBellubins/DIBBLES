@@ -92,7 +92,7 @@ public class WorldSave
                     for (int y = 0; y < Data.PlayerItemSlots.GetLength(1); y++)
                     {
                         var itemSlot = Data.PlayerItemSlots[x, y];
-
+                        
                         writer.Write((int)itemSlot.Type);
                         writer.Write(itemSlot.StackAmount);
                     }
@@ -214,7 +214,7 @@ public class WorldSave
                 {
                     for (int y = 0; y < 3; y++)
                     {
-                        var itemSlot = new  ItemSlot();
+                        var itemSlot = new ItemSlot();
                         
                         itemSlot.Type = (BlockType)reader.ReadInt32();
                         itemSlot.StackAmount = reader.ReadInt32();
@@ -226,9 +226,9 @@ public class WorldSave
                 // Hotbar slots
                 Data.HotbarItemSlots = new ItemSlot[9];
                 
-                for (var i = 0; i < Data.HotbarItemSlots.Length; i++)
+                for (var i = 0; i < 9; i++)
                 {
-                    var itemSlot = new  ItemSlot();
+                    var itemSlot = new ItemSlot();
                     
                     itemSlot.Type = (BlockType)reader.ReadInt32();
                     itemSlot.StackAmount = reader.ReadInt32();

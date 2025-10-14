@@ -36,7 +36,8 @@ public class PlayerInventory : InventoryBase
         {
             for (var y = 0; y < ItemSlots.GetLength(1); y++)
             {
-                ItemSlots[x, y] = new ItemSlot();
+                if (ItemSlots[x, y] == null) // Only create if not loaded
+                    ItemSlots[x, y] = new ItemSlot();
                 
                 var invRectY = inventoryRect.Y + (inventoryRect.Height * 0.5f) + 32f;
                 var pos = new Vector2(inventoryRect.X + (x * ItemSlotSize) * ItemSlotPadding,
@@ -50,7 +51,8 @@ public class PlayerInventory : InventoryBase
         // Set hotbar slot positions
         for (var i = 0; i < HotBarSlots.Length; i++)
         {
-            HotBarSlots[i] = new ItemSlot();
+            if (HotBarSlots[i] == null)
+                HotBarSlots[i] = new ItemSlot();
             
             var hotRectY = inventoryRect.Y + (inventoryRect.Height - ItemSlotSize) - 32f;
             var pos = new Vector2(inventoryRect.X + (i * ItemSlotSize) * ItemSlotPadding, hotRectY);
