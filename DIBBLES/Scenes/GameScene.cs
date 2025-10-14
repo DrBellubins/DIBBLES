@@ -131,7 +131,7 @@ public class GameScene : Scene
         
         gd.SetRenderTarget(null);
         
-        uiBlur.Apply();
+        uiBlur.Apply(BackBuffer, UIBuffer);
         
         UIBatch.Begin();
         

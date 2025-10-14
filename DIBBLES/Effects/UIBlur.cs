@@ -8,12 +8,14 @@ namespace DIBBLES.Effects;
 public class UIBlur
 {
     // Buffers
-    public RenderTarget2D BlurBuffer;      // Low-res downsampled buffer (e.g. 128x72)
-    public RenderTarget2D UIBlurBuffer;    // Final output buffer (same as screen/UI resolution)
+    public RenderTarget2D BlurBuffer;       // Downsampled input
+    public RenderTarget2D TempBufferH;      // Horizontal blur
+    public RenderTarget2D TempBufferV;      // Vertical blur
+    public RenderTarget2D UIBlurBuffer;     // Final output
     
     private const int blurBufferWidth = 128;
     private const int blurBufferHeight = 72;
-    private const float blurRadius = 8f;
+    private const float blurRadius = 16f;
     
     private Effect uiBlurEffect;
     
@@ -28,6 +30,8 @@ public class UIBlur
         uiBlurEffect = Engine.Instance.Content.Load<Effect>("Shaders/UIBlur");
         
         BlurBuffer = new RenderTarget2D(Engine.Graphics, blurBufferWidth, blurBufferHeight, false, SurfaceFormat.Color, DepthFormat.None);
+        TempBufferH = new RenderTarget2D(Engine.Graphics, blurBufferWidth, blurBufferHeight, false, SurfaceFormat.Color, DepthFormat.None);
+        TempBufferV = new RenderTarget2D(Engine.Graphics, blurBufferWidth, blurBufferHeight, false, SurfaceFormat.Color, DepthFormat.None);
         UIBlurBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight, false, SurfaceFormat.Color, DepthFormat.None);
         
         // Fullscreen quad for drawing
@@ -44,17 +48,47 @@ public class UIBlur
         kernel = GaussianWeights(9, blurRadius * 0.5f);
     }
 
-    public void Apply()
+    public void Apply(Texture2D srcTexture, Texture2D maskTexture)
     {
         var graphics = Engine.Graphics;
-        
-        // ----------- STAGE 1: Downsample BackBuffer to BlurBuffer -----------
+
+        // --- 1. Downsample UI to BlurBuffer ---
+        graphics.SetRenderTarget(BlurBuffer);
+        graphics.Clear(Color.Transparent);
+
+        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["GaussianBlurH"];
+        uiBlurEffect.Parameters["texelSize"].SetValue(new Vector2(1f / BlurBuffer.Width, 1f / BlurBuffer.Height));
+        uiBlurEffect.Parameters["radius"].SetValue(blurRadius);
+        uiBlurEffect.Parameters["kernel"].SetValue(kernel);
+        uiBlurEffect.Parameters["Texture0"].SetValue(srcTexture);
+        DrawFullscreenQuad();
+
+        // --- 2. Horizontal blur: BlurBuffer → TempBufferH ---
+        graphics.SetRenderTarget(TempBufferH);
+        graphics.Clear(Color.Transparent);
+
+        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["GaussianBlurH"];
+        uiBlurEffect.Parameters["Texture0"].SetValue(BlurBuffer);
+        DrawFullscreenQuad();
+
+        // --- 3. Vertical blur: TempBufferH → TempBufferV ---
+        graphics.SetRenderTarget(TempBufferV);
+        graphics.Clear(Color.Transparent);
+
+        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["GaussianBlurV"];
+        uiBlurEffect.Parameters["Texture0"].SetValue(TempBufferH);
+        DrawFullscreenQuad();
+
+        // --- 4. Masked composite: TempBufferV + MaskTexture → UIBlurBuffer ---
         graphics.SetRenderTarget(UIBlurBuffer);
         graphics.Clear(Color.Transparent);
 
+        uiBlurEffect.CurrentTechnique = uiBlurEffect.Techniques["MaskedComposite"];
+        uiBlurEffect.Parameters["Texture0"].SetValue(TempBufferV);
+        uiBlurEffect.Parameters["MaskTexture"].SetValue(maskTexture); // Your mask texture
         DrawFullscreenQuad();
 
-        // ----------- Done, unset RenderTarget for final screen draw -----------
+        // --- 5. Unset target ---
         graphics.SetRenderTarget(null);
     }
     
