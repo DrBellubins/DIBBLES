@@ -63,6 +63,7 @@ public class PlayerInventory : InventoryBase
         }
         
         Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
+        Commands.RegisterCommand("clear", "Clears your entire inventory", clearCMD);
     }
 
     public override void Update()
@@ -161,7 +162,12 @@ public class PlayerInventory : InventoryBase
             // Give block at selected slot in hotbar
             var selectionIndex = GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex;
 
-            if (args.Length == 2)
+            if (args.Length == 1)
+            {
+                HotBarSlots[selectionIndex].Set(blockType, 1);
+                Chat.Write($"Gave yourself '{blockType}'", ChatMessageType.Command);
+            }
+            else if (args.Length == 2)
             {
                 if (int.TryParse(args[1], out var stackAmount))
                 {
@@ -174,6 +180,20 @@ public class PlayerInventory : InventoryBase
         }
         else
             Chat.Write($"Unknown block type: '{blockName}'", ChatMessageType.Error);
+    }
+
+    private void clearCMD(string[] args)
+    {
+        // Main inventory
+        for (var x = 0; x < ItemSlots.GetLength(0); x++)
+        for (var y = 0; y < ItemSlots.GetLength(1); y++)
+            ItemSlots[x,y].Set(BlockType.Air, 0);
+        
+        // Hotbar
+        for (var i = 0; i < HotBarSlots.Length; i++)
+            HotBarSlots[i].Set(BlockType.Air, 0);
+        
+        Chat.Write($"Cleared inventory", ChatMessageType.Command);
     }
 
     private void open()

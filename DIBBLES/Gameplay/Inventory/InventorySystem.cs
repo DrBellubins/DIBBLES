@@ -110,13 +110,14 @@ public class InventorySystem
             // Here, move all stack to target, if target is empty or same type
             if (targetSlot.Type == BlockType.Air || targetSlot.Type == HeldItem.Type)
             {
-                targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
+                targetSlot.Set(HeldItem.Type, HeldItem.StackAmount + targetSlot.StackAmount);
                 HeldItem.Set(BlockType.Air, 0);
                 HeldItem = null;
             }
             else
             {
                 // Swap items
+                Console.WriteLine("Swap");
                 var tempType = targetSlot.Type;
                 var tempAmount = targetSlot.StackAmount;
                 targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
