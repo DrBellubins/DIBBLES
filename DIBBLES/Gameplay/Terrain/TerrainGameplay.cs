@@ -11,8 +11,6 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    private AudioPlayer audioPlayer = new AudioPlayer();
-    
     public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
@@ -229,9 +227,7 @@ public class TerrainGameplay
         
             if (!sound.IsDisposed)
             {
-                audioPlayer.Sound = sound;
-                audioPlayer.Position = blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-                audioPlayer.Play();
+                AudioPlayer.CreateAndPlay(sound, blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
             }
         }
         
@@ -312,9 +308,7 @@ public class TerrainGameplay
 
         if (!sound.IsDisposed)
         {
-            audioPlayer.Sound = sound;
-            audioPlayer.Position = newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-            audioPlayer.Play();
+            AudioPlayer.CreateAndPlay(sound, newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
         }
         
         // Decrement stack amount

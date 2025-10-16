@@ -89,8 +89,8 @@ public class Engine : Game
         foreach (var scene in Scenes)
             scene.Update();
 
-        //foreach (var audioPlayer in AudioPlayers)
-        //    audioPlayer.Update();
+        foreach (var audioPlayer in AudioPlayers)
+            audioPlayer.Update();
         
         // Cap frame rate with optimized spin-wait
         long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision

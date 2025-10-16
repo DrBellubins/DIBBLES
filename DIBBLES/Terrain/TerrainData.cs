@@ -100,10 +100,7 @@ public class BlockData
                 var blockSounds = new BlockSounds();
 
                 for (int i = 0; i < 4; i++)
-                {
-                    var sound = loadBlockSounds(blockType, i);
-                    blockSounds.Sounds[i] = sound.CreateInstance();
-                }
+                    blockSounds.Sounds[i] = loadBlockSounds(blockType, i);
 
                 Sounds.Add(blockType, blockSounds);
             }
@@ -244,12 +241,12 @@ public class BlockData
 
 public class BlockSounds
 {
-    public SoundEffectInstance[] Sounds = new SoundEffectInstance[4];
+    public SoundEffect[] Sounds = new SoundEffect[4];
 
     /// <summary>
     /// Get random sound from array
     /// </summary>
-    public SoundEffectInstance RND
+    public SoundEffect RND
     {
         get { return Sounds[new Random().Next(0, 3)]; }
     }
