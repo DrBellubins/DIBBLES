@@ -51,7 +51,6 @@ public class PlayerCharacter
 
     public bool ShouldUpdate = false;
     public bool IsFrozen = true;
-    public bool NeedsToSpawn = false;
     public bool IsDead = false;
     
     public float CameraPitch = 0f;
@@ -95,6 +94,8 @@ public class PlayerCharacter
         hotbar.Start();
         handModel.Start();
         
+        Spawn();
+        
         Commands.RegisterCommand("kill", "Kills the player", killCMD);
         Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
         Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
@@ -117,12 +118,6 @@ public class PlayerCharacter
         IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
         
         hotbar.Update(IsDead, IsFrozen);
-        
-        if (NeedsToSpawn)
-        {
-            Spawn();
-            NeedsToSpawn = false;
-        }
         
         if (!ShouldUpdate)
             return;

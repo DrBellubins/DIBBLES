@@ -87,7 +87,6 @@ public class TerrainGeneration
         if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
         {
             playerCharacter.ShouldUpdate = true;
-            playerCharacter.NeedsToSpawn = true;
             playerCharacter.FreeCamEnabled = false;
             InitialLoadDone = true;
         }
