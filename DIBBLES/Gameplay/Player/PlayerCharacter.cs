@@ -118,6 +118,12 @@ public class PlayerCharacter
         
         hotbar.Update(IsDead, IsFrozen);
         
+        if (NeedsToSpawn)
+        {
+            Spawn();
+            NeedsToSpawn = false;
+        }
+        
         if (!ShouldUpdate)
             return;
         
@@ -359,13 +365,6 @@ public class PlayerCharacter
         
         if (Health <= 0)
             Kill();
-
-        // Needs to happen a frame late
-        if (NeedsToSpawn)
-        {
-            Spawn();
-            NeedsToSpawn = false;
-        }
         
         wasGrounded = isGrounded;
     }
