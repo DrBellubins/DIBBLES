@@ -89,7 +89,7 @@ public class Engine : Game
         foreach (var scene in Scenes)
             scene.Update();
 
-        foreach (var audioPlayer in AudioPlayers)
+        foreach (var audioPlayer in AudioPlayers.ToList()) // Must do ToList because it crashes otherwise
             audioPlayer.Update();
         
         // Cap frame rate with optimized spin-wait
