@@ -91,9 +91,6 @@ public class PlayerCharacter
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
-
-        if (WorldSave.Exists)
-            Position = WorldSave.Data.PlayerPosition;
         
         hotbar.Start();
         handModel.Start();
@@ -101,7 +98,7 @@ public class PlayerCharacter
         Commands.RegisterCommand("kill", "Kills the player", killCMD);
         Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
         Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
-        Commands.RegisterCommand("teleport", "Teleport to a position: /teleport x y z", teleportCMD);
+        Commands.RegisterCommand("tp", "Teleport to a position: /teleport x y z", teleportCMD);
         Commands.RegisterCommand("gm", "Toggle gamemode between creative and survival", gameModeCMD);
         Commands.RegisterCommand("cyl", "Creates a cylinder beneath the player", cylinderCMD);
         
@@ -117,12 +114,12 @@ public class PlayerCharacter
         Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
 
-        if (!ShouldUpdate)
-            return;
-        
         IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
         
         hotbar.Update(IsDead, IsFrozen);
+        
+        if (!ShouldUpdate)
+            return;
         
         // --- Block breaking and placing ---
         if (!IsFrozen)
@@ -400,6 +397,11 @@ public class PlayerCharacter
         {
             Position = WorldSave.Data.PlayerPosition;
             SetCameraDirection(WorldSave.Data.CameraDirection);
+            
+            Camera.Position = Position + new GVec3(0.0f, PlayerHeight * 0.49f, 0.0f);
+            Camera.Target = Camera.Position.ToVector3() + CameraForward;
+            Camera.Up = CameraUp;
+            
             Input.FlushLookDelta();
             
             spawnPosition = Position.ToVector3();
@@ -427,30 +429,6 @@ public class PlayerCharacter
         CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
         CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
         CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
-    }
-
-    private static byte closestLightLevel = 0;
-    public void Draw()
-    {
-        UpdateClosestLightLevel();
-        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
-    }
-
-    public void DrawUI()
-    {
-        hotbar.Draw(Health);
-        
-        // TODO: Temporary death screen
-        if (IsDead)
-        {
-            var deathScreen = new RectangleF(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
-            
-            UIBatch.DrawRect(deathScreen, new Color(1f, 0f, 0f, 0.5f));
-        }
-        
-        // Draw cursor
-        if (!IsFrozen)
-            UIBatch.DrawCircle(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f, 1f, Color.White);
     }
     
     private void run()
@@ -600,6 +578,31 @@ public class PlayerCharacter
         );
         
         return new BoundingBox(min.ToVector3(), max.ToVector3());
+    }
+    
+    // Draw
+    private static byte closestLightLevel = 0;
+    public void Draw()
+    {
+        UpdateClosestLightLevel();
+        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
+    }
+
+    public void DrawUI()
+    {
+        hotbar.Draw(Health);
+        
+        // TODO: Temporary death screen
+        if (IsDead)
+        {
+            var deathScreen = new RectangleF(0f, 0f, Engine.ScreenWidth, Engine.ScreenHeight);
+            
+            UIBatch.DrawRect(deathScreen, new Color(1f, 0f, 0f, 0.5f));
+        }
+        
+        // Draw cursor
+        if (!IsFrozen)
+            UIBatch.DrawCircle(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f, 1f, Color.White);
     }
     
     // Commands

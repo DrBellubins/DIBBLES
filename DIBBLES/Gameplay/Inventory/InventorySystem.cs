@@ -80,7 +80,8 @@ public class InventorySystem
             }
 
             // Stack amount
-            if (HeldItem.Type != BlockType.Air && HeldItem.StackAmount > 0)
+            if (HeldItem.Type != BlockType.Air &&
+                HeldItem.StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
             {
                 var padding = 8f;
                 var text = $"{HeldItem.StackAmount}";
@@ -106,7 +107,7 @@ public class InventorySystem
         // Only place if the target is not the same slot as held
         if (HeldItem != targetSlot)
         {
-            // Example logic: swap items, or move all stack, etc.
+            // TODO: In creative items can not be placed back to slot grabbed from
             // Here, move all stack to target, if target is empty or same type
             if (targetSlot.Type == BlockType.Air || targetSlot.Type == HeldItem.Type)
             {
@@ -116,8 +117,7 @@ public class InventorySystem
             }
             else
             {
-                // Swap items
-                Console.WriteLine("Swap");
+                // Swap item
                 var tempType = targetSlot.Type;
                 var tempAmount = targetSlot.StackAmount;
                 targetSlot.Set(HeldItem.Type, HeldItem.StackAmount);
