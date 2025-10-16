@@ -53,6 +53,7 @@ VSOutput VSMain(VSInput input)
     VSOutput output;
     output.Position = input.Position;
     output.TexCoord = input.TexCoord;
+
     return output;
 }
 
@@ -72,6 +73,7 @@ float4 GaussianBlurHPS(float2 texCoord)
         float2 sampleOffset = float2(offset, 0) * texelSize * radius;
         color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
     }
+
     return color;
 }
 
@@ -90,6 +92,7 @@ float4 GaussianBlurVPS(float2 texCoord)
         float2 sampleOffset = float2(0, offset) * texelSize * radius;
         color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
     }
+
     return color;
 }
 

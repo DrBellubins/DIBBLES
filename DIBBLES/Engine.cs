@@ -26,6 +26,7 @@ public class Engine : Game
     
     public static SpriteFont MainFont;
     public static List<Scene> Scenes = new();
+    public static List<AudioPlayer> AudioPlayers = new();
 
     private static GraphicsDeviceManager GraphicsManager;
     
@@ -87,6 +88,9 @@ public class Engine : Game
         
         foreach (var scene in Scenes)
             scene.Update();
+
+        //foreach (var audioPlayer in AudioPlayers)
+        //    audioPlayer.Update();
         
         // Cap frame rate with optimized spin-wait
         long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
