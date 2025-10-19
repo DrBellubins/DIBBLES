@@ -19,8 +19,10 @@ public class TerrainMesh
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
     
     // MeshData generation (thread-safe, no Raylib calls)
-    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass, Vector3? cameraPosition = null)
+    public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
     {
+        var cameraPosition = GameScene.PlayerCharacter.Camera.Position.ToVector3();
+        
         List<(float dist, FaceData face)> transparentFaces = new();
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -98,11 +100,11 @@ public class TerrainMesh
                     if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
                         faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
                     
-                    if (isTransparencyPass && cameraPosition.HasValue)
+                    if (isTransparencyPass)
                     {
                         // For transparent faces, store for sorting
                         var center = (faceVerts[0] + faceVerts[1] + faceVerts[2] + faceVerts[3]) / 4f;
-                        var dist = Vector3.Distance(cameraPosition.Value, center);
+                        var dist = Vector3.Distance(cameraPosition, center);
                         
                         transparentFaces.Add((dist, new FaceData
                         {
@@ -135,7 +137,7 @@ public class TerrainMesh
         }
         
         // If transparent: sort faces back-to-front and build arrays
-        if (isTransparencyPass && cameraPosition.HasValue)
+        if (isTransparencyPass)
         {
             transparentFaces.Sort((a, b) => b.dist.CompareTo(a.dist));
             
@@ -226,17 +228,17 @@ public class TerrainMesh
                 OpaqueModels[neighborChunkPos] = UploadMesh(meshData);
 
                 // Remesh transparent
-                var tMeshData = GenerateMeshData(neighborChunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                var tMeshData = GenerateMeshData(neighborChunk, true);
                 TransparentModels[neighborChunkPos] = UploadMesh(tMeshData);
             }
         }
     }
     
-    public void RemeshAllTransparentChunks(Vector3 cameraPos)
+    public void RemeshAllTransparentChunks()
     {
         foreach (var chunk in ChunkBuffer.Values)
         {
-            var tMeshData = Mesh.GenerateMeshData(chunk, true, cameraPos);
+            var tMeshData = Mesh.GenerateMeshData(chunk, true);
             Mesh.TransparentModels[chunk.Position] = Mesh.UploadMesh(tMeshData);
         }
     }

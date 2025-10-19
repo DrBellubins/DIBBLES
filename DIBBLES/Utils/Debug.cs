@@ -82,6 +82,11 @@ public class Debug
         textBuffer2d.Add((text, color));
     }
     
+    public static void Draw2DText(string text)
+    {
+        textBuffer2d.Add((text, Color.White));
+    }
+    
     // TODO: Strings too long get cut off
     public static void Draw3DText(string text, Vector3 position, Color color, float scale = 1f)
     {

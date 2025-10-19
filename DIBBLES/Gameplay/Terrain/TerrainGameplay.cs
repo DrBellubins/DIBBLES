@@ -28,7 +28,11 @@ public class TerrainGameplay
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
             
             // Face selection overlay
-            Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), new Color(1f, 1f, 1f, 0.2f), -SelectedNormal.ToVector3());
+            var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
+            var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
+            var faceSelectionColor = new Color(1, 1, 1, smoothStepDist * 0.2f);
+            
+            Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
             
             // Draw block selection overlay
             Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 
@@ -291,7 +295,7 @@ public class TerrainGameplay
         
         // Regenerate mesh
         var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        var tMeshData = Mesh.GenerateMeshData(chunk, true);
             
         Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);

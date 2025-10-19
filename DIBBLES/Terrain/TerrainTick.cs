@@ -68,7 +68,7 @@ public class TerrainTick
             if (TerrainGeneration.ChunkBuffer.TryGetValue(chunkPos, out var chunk))
             {
                 var meshData = TerrainGeneration.Mesh.GenerateMeshData(chunk, false);
-                var tMeshData = TerrainGeneration.Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                var tMeshData = TerrainGeneration.Mesh.GenerateMeshData(chunk, true);
 
                 // Unload and upload models (main thread only)
                 if (TerrainGeneration.Mesh.OpaqueModels.TryGetValue(chunkPos, out var oldOpaque))

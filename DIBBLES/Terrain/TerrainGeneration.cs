@@ -407,7 +407,7 @@ public class TerrainGeneration
     public void generateMesh(Chunk chunk)
     {
         var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        var tMeshData = Mesh.GenerateMeshData(chunk, true);
         
         // Enqueue for main thread mesh upload
         meshUploadQueue.Enqueue((chunk.Position, meshData));
@@ -560,7 +560,7 @@ public class TerrainGeneration
                 Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
     
                 // Transparent
-                var tMeshData = Mesh.GenerateMeshData(chunk, true, GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                var tMeshData = Mesh.GenerateMeshData(chunk, true);
                 Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
 
                 // Add to save
