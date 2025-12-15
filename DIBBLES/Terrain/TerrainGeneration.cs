@@ -522,7 +522,7 @@ public class TerrainGeneration
         
         // Draw debug chunk lines
         foreach (var chunk in ChunkBuffer)
-            Debug.DrawBox(chunk.Key, new Vector3Int(ChunkSize, ChunkSize, ChunkSize));
+            Debug.DrawBox(chunk.Key, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
     }
     
     public void CreateCylinder(BlockType blockType, int radius, int height = 1)

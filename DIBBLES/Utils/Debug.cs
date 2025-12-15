@@ -13,7 +13,8 @@ public class Debug
 
     private static List<(string, Color)> textBuffer2d = new();
     
-    private static Dictionary<Vector3, Vector3> debugBoxes = new();
+    //private static Dictionary<Vector3, Vector3> debugBoxes = new();
+    private static List<DebuBox> debugBoxes = new();
     
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
@@ -70,26 +71,41 @@ public class Debug
 
             foreach (var box in debugBoxes)
             {
-                var position = box.Key;
-                var size = box.Value;
-                
-                Primatives3D.DrawCubeWiresThick(position - (size * 0.5f), 
-                    size.X, size.Y, size.Z, Color.Blue, 0.005f);
+                Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
+                    box.Size.X, box.Size.Y, box.Size.Z, Color.Blue, 0.005f);
             }
         
             debugBoxes.Clear();
         }
     }
 
+    // Draw box Vector3
     public static void DrawBox(Vector3 position, Vector3 size)
     {
-        debugBoxes.TryAdd(position, size);
+        var debugBox = new DebuBox(position, size, Color.White);
+        debugBoxes.Add(debugBox);
     }
     
+    public static void DrawBox(Vector3 position, Vector3 size, Color color)
+    {
+        var debugBox = new DebuBox(position, size, color);
+        debugBoxes.Add(debugBox);
+    }
+    
+    // Draw box Vector3Int
     public static void DrawBox(Vector3Int position, Vector3Int size)
     {
-        debugBoxes.TryAdd(position.ToVector3(), size.ToVector3());
+        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), Color.White);
+        debugBoxes.Add(debugBox);
     }
+    
+    public static void DrawBox(Vector3Int position, Vector3Int size, Color color)
+    {
+        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), color);
+        debugBoxes.Add(debugBox);
+    }
+    
+    // Draw text
     
     public static void Draw2DText(string text, Color color)
     {
@@ -144,4 +160,11 @@ public class Debug
         // Draw the billboard with the cached texture
         Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);*/
     }
+}
+
+public struct DebuBox(Vector3 position, Vector3 size, Color color)
+{
+    public Vector3 Position;
+    public Vector3 Size;
+    public Color Color;
 }
