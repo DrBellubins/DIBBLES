@@ -186,22 +186,19 @@ public struct DebuBox : IEquatable<DebuBox>
     public Vector3 Position;
     public Vector3 Size;
     public Color Color;
-    public DebugBoxType DebugType;
 
-    public DebuBox(Vector3 position, Vector3 size, Color color,  DebugBoxType debugType = DebugBoxType.Other)
+    public DebuBox(Vector3 position, Vector3 size, Color color)
     {
         Position = position;
         Size = size;
         Color = color;
-        DebugType = debugType;
     }
 
     public bool Equals(DebuBox other)
     {
         return Position.Equals(other.Position)
                && Size.Equals(other.Size)
-               && Color.Equals(other.Color)
-               && DebugType == other.DebugType;
+               && Color.Equals(other.Color);
     }
 
     public override bool Equals(object obj) => obj is DebuBox other && Equals(other);
@@ -221,11 +218,4 @@ public struct DebuBox : IEquatable<DebuBox>
 
     public static bool operator ==(DebuBox left, DebuBox right) => left.Equals(right);
     public static bool operator !=(DebuBox left, DebuBox right) => !left.Equals(right);
-}
-
-public enum DebugBoxType
-{
-    Other,
-    ChunkBorder,
-    LightLevel
 }

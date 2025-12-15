@@ -524,6 +524,7 @@ public class TerrainGeneration
         foreach (var chunkPair in ChunkBuffer)
         {
             var chunkPos = chunkPair.Key;
+            
             Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
         }
         
