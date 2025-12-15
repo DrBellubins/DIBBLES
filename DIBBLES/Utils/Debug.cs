@@ -21,7 +21,7 @@ public class Debug
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
 
     public static bool ShowDebug { get; private set; } = true;
-    public static bool ShowDebugExtended { get; private set; } = false;
+    public static bool ShowChunkDebug { get; private set; } = false;
     public static bool ShowLightDebug { get; private set; } = true;
     
     public static void Update(Camera3D camera)
@@ -42,7 +42,7 @@ public class Debug
     
     public static void ToggleDebugExtended(string[] args)
     {
-        ShowDebugExtended = !ShowDebugExtended;
+        ShowChunkDebug = !ShowChunkDebug;
         Chat.Write("Toggled extended debug information", ChatMessageType.Command);
     }
     
@@ -69,7 +69,7 @@ public class Debug
 
         foreach (var box in debugBoxes)
         {
-            if (ShowDebugExtended)
+            if (ShowChunkDebug)
             {
                 if (playerCamera.InFrustum(box.Position, 16f))
                 {
