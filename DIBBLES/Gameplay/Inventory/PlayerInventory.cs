@@ -9,6 +9,8 @@ namespace DIBBLES.Gameplay.Inventory;
 
 using static InventorySystem;
 
+// TODO: Can't set an item back where it was picked up from
+
 public class PlayerInventory : InventoryBase
 {
     private RectangleF inventoryRect = new RectangleF(0f, 0f, 550f, 650f);
