@@ -27,8 +27,8 @@ public static class Primatives3D
     /// <summary>
     /// Draws a cube wireframe with customizable line thickness.
     /// </summary>
-    public static void DrawCubeWiresThick(
-        Vector3 position, float width, float height, float length, Color color, float thickness = 0.02f)
+    public static void DrawCubeWiresThick(Vector3 position, float width, float height,
+        float length, Color color, float thickness = 0.02f)
     {
         var padding = 0.01f; // To prevent z fighting
 
@@ -80,55 +80,60 @@ public static class Primatives3D
     /// <summary>
     /// Draws a 3D line with thickness as a quad facing the camera.
     /// </summary>
-    public static void DrawThickLine3D(
-    Vector3 start, Vector3 end, Color color, float thickness)
+    public static void DrawThickLine3D(Vector3 start, Vector3 end, Color color, float thickness)
     {
-        var gd = Engine.Graphics;
+        // Use camera forward/up to build a world-space billboard around the line
+        var camView = GameScene.PlayerCharacter.Camera.View;
+        var camProj = GameScene.PlayerCharacter.Camera.Projection;
     
-        // Project start/end to screen space (viewport)
-        var view = GameScene.PlayerCharacter.Camera.View;
-        var proj = GameScene.PlayerCharacter.Camera.Projection;
-        var viewport = gd.Viewport;
+        // Extract camera forward from View (third column of inverse view gives forward)
+        // Alternatively, use PlayerCharacter.CameraForward which is already maintained.
+        Vector3 camForward = Vector3.Normalize(GameScene.PlayerCharacter.Camera.Target - GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        Vector3 camUp = GameScene.PlayerCharacter.Camera.Up;
     
-        // Project to screen
-        Vector3 startScreen = viewport.Project(start, proj, view, Matrix.Identity);
-        Vector3 endScreen = viewport.Project(end, proj, view, Matrix.Identity);
+        // Line direction
+        Vector3 dir = end - start;
+        float dirLenSq = dir.LengthSquared();
     
-        // Compute perpendicular in screen space
-        Vector2 screenDir = new Vector2(endScreen.X - startScreen.X, endScreen.Y - startScreen.Y);
+        if (dirLenSq < 1e-6f)
+            return;
     
-        if (screenDir.LengthSquared() < 0.01f)
-            return; // Points overlap on screen
+        dir /= MathF.Sqrt(dirLenSq);
     
-        screenDir.Normalize();
-        Vector2 perp = new Vector2(-screenDir.Y, screenDir.X); // 2D perpendicular
+        // Perpendicular in world space using camera forward (fallback to camUp when nearly parallel)
+        Vector3 side = Vector3.Cross(dir, camForward);
     
-        // Offset by half thickness (in pixels)
-        perp *= (thickness * 0.5f * viewport.Height); // Use height for pixel scale, or tweak as needed
+        if (side.LengthSquared() < 1e-6f)
+            side = Vector3.Cross(dir, camUp);
     
-        // Build quad in screen space
-        Vector3 ssA1 = startScreen + new Vector3(perp.X, perp.Y, 0);
-        Vector3 ssA2 = startScreen - new Vector3(perp.X, perp.Y, 0);
-        Vector3 ssB1 = endScreen + new Vector3(perp.X, perp.Y, 0);
-        Vector3 ssB2 = endScreen - new Vector3(perp.X, perp.Y, 0);
+        side = Vector3.Normalize(side);
     
-        // Unproject back to world space
-        Vector3 wsA1 = viewport.Unproject(ssA1, proj, view, Matrix.Identity);
-        Vector3 wsA2 = viewport.Unproject(ssA2, proj, view, Matrix.Identity);
-        Vector3 wsB1 = viewport.Unproject(ssB1, proj, view, Matrix.Identity);
-        Vector3 wsB2 = viewport.Unproject(ssB2, proj, view, Matrix.Identity);
+        // Optional: scale thickness by distance for visual consistency
+        float dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), (start + end) * 0.5f);
+        float pixelScale = 0.0015f; // tune to taste
+        float halfWidth = thickness * 0.5f * MathF.Max(1f, dist) * pixelScale;
     
+        Vector3 offset = side * halfWidth;
+    
+        // Build the quad in world space
+        Vector3 v0 = start + offset;
+        Vector3 v1 = start - offset;
+        Vector3 v2 = end - offset;
+        Vector3 v3 = end + offset;
+    
+        // Submit as a single quad (two triangles)
         VertexPositionColor[] quadVerts = new[]
         {
-            new VertexPositionColor(wsA1, color),
-            new VertexPositionColor(wsA2, color),
-            new VertexPositionColor(wsB2, color),
-            new VertexPositionColor(wsB1, color),
+            new VertexPositionColor(v0, color),
+            new VertexPositionColor(v1, color),
+            new VertexPositionColor(v2, color),
+            new VertexPositionColor(v3, color),
         };
-        
+    
         short[] quadIdx = { 0, 1, 2, 0, 2, 3 };
     
-        gd.DrawUserIndexedPrimitives(
+        // Effect is already applied in DrawCubeWiresThick before calling this
+        Engine.Graphics.DrawUserIndexedPrimitives(
             PrimitiveType.TriangleList,
             quadVerts, 0, 4,
             quadIdx, 0, 2
