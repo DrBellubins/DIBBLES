@@ -62,11 +62,20 @@ public class Debug
 
     public static void Draw3D()
     {
-        if (ShowDebug)
+        if (ShowDebugExtended)
         {
             // TODO: Monogame
             //foreach (var box in debugBoxes)
             //    Raylib.DrawCubeV(box.Key, box.Value, new Color(1f, 0f, 0f, 0.5f));
+
+            foreach (var box in debugBoxes)
+            {
+                var position = box.Key;
+                var size = box.Value;
+                
+                Primatives3D.DrawCubeWiresThick(position - (size * 0.5f), 
+                    size.X, size.Y, size.Z, Color.Blue, 0.005f);
+            }
         
             debugBoxes.Clear();
         }
@@ -75,6 +84,11 @@ public class Debug
     public static void DrawBox(Vector3 position, Vector3 size)
     {
         debugBoxes.TryAdd(position, size);
+    }
+    
+    public static void DrawBox(Vector3Int position, Vector3Int size)
+    {
+        debugBoxes.TryAdd(position.ToVector3(), size.ToVector3());
     }
     
     public static void Draw2DText(string text, Color color)

@@ -109,7 +109,7 @@ public class GameScene : Scene
         if (Input.IsKeyPressed(Keys.F2))
             takeScreenshot(gd);
         
-        //Debug.Draw3D();
+        Debug.Draw3D();
         
         // Draw UI (UI Batch)
         gd.SetRenderTarget(UIBuffer);

@@ -11,7 +11,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainMesh
 {
-    public const bool SmoothLighting = true; // Flat lighting doesn't work, don't care to fix it
+    public const bool SmoothLighting = false; // Flat lighting doesn't work, don't care to fix it
     
     public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
 
@@ -64,7 +64,10 @@ public class TerrainMesh
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
                     
-                    Color flatColor = FaceUtils.ToColor(FaceUtils.GetVertexLight(chunk, x, y, z));
+                    //Color flatColor = FaceUtils.ToColor(FaceUtils.GetVertexLight(chunk, x, y, z));
+                    
+                    float blockLight = chunk.GetLightLevelAt(x, y, z) / 15f;
+                    Color flatColor = FaceUtils.ToColor(blockLight);
 
                     Color[] faceColors = SmoothLighting
                         ? FaceUtils.GetFaceColors(chunk, pos, faceIdx)
