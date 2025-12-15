@@ -67,7 +67,9 @@ public class TerrainMesh
                     //Color flatColor = FaceUtils.ToColor(FaceUtils.GetVertexLight(chunk, x, y, z));
                     
                     float blockLight = chunk.GetLightLevelAt(x, y, z) / 15f;
-                    Color flatColor = FaceUtils.ToColor(blockLight);
+                    
+                    float faceLight = FaceUtils.GetVertexLight(chunk, x, y, z); // samples surrounding voxels
+                    Color flatColor = FaceUtils.ToColor(faceLight);
 
                     Color[] faceColors = SmoothLighting
                         ? FaceUtils.GetFaceColors(chunk, pos, faceIdx)

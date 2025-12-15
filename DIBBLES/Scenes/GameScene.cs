@@ -106,10 +106,10 @@ public class GameScene : Scene
         
         PlayerCharacter.Draw();
         
+        Debug.Draw3D();
+        
         if (Input.IsKeyPressed(Keys.F2))
             takeScreenshot(gd);
-        
-        Debug.Draw3D();
         
         // Draw UI (UI Batch)
         gd.SetRenderTarget(UIBuffer);
@@ -145,23 +145,33 @@ public class GameScene : Scene
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
     {
-        // Create a texture to store the backbuffer
-        var width = graphicsDevice.PresentationParameters.BackBufferWidth;
-        var height = graphicsDevice.PresentationParameters.BackBufferHeight;
-        var screenshot = new Texture2D(graphicsDevice, width, height, false, SurfaceFormat.Color);
+        int width = graphicsDevice.PresentationParameters.BackBufferWidth;
+        int height = graphicsDevice.PresentationParameters.BackBufferHeight;
 
-        // Copy backbuffer data
+        // Read backbuffer
         int[] pixelData = new int[width * height];
         graphicsDevice.GetBackBufferData(pixelData);
+
+        // Flip vertically: swap rows in-place
+        int rowStride = width;
+        
+        for (int y = 0; y < height / 2; y++)
+        {
+            int topIdx = y * rowStride;
+            int bottomIdx = (height - 1 - y) * rowStride;
+
+            for (int x = 0; x < rowStride; x++)
+                (pixelData[topIdx + x], pixelData[bottomIdx + x]) = (pixelData[bottomIdx + x], pixelData[topIdx + x]);
+        }
+
+        // Create texture and write flipped data
+        using var screenshot = new Texture2D(graphicsDevice, width, height, false, SurfaceFormat.Color);
         screenshot.SetData(pixelData);
 
-        // Save to PNG
         string path = $"Screenshot-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.png";
         
         using (var fileStream = new FileStream(path, FileMode.Create))
             screenshot.SaveAsPng(fileStream, width, height);
-
-        screenshot.Dispose();
 
         var outputString = $"Saved screenshot: {path}";
         Console.WriteLine(outputString);
