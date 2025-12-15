@@ -520,17 +520,46 @@ public class TerrainGeneration
             }
         }
         
-        // Debug draw
+        // Chunk border debug
         foreach (var chunkPair in ChunkBuffer)
         {
-            var player = GameScene.PlayerCharacter;
-            var chunk = chunkPair.Value;
             var chunkPos = chunkPair.Key;
-            
-            // Chunk lines
             Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
+        }
+        
+        // Light level debug
+        if (Debug.ShowLightDebug)
+        {
+            var playerBlockPos = new Vector3Int(
+                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.X),
+                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Y),
+                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z)
+            );
+
+            int radius = 16; // 16 block radius (cube)
             
-            
+            for (int x = playerBlockPos.X - radius; x <= playerBlockPos.X + radius; x++)
+            for (int y = playerBlockPos.Y - radius; y <= playerBlockPos.Y + radius; y++)
+            for (int z = playerBlockPos.Z - radius; z <= playerBlockPos.Z + radius; z++)
+            {
+                var worldPos = new Vector3Int(x, y, z);
+                
+                // Only draw for non-air blocks
+                var (type, withinLoaded) = Chunk.GetBlockTypeGlobal(worldPos);
+                
+                if (!withinLoaded || type == BlockType.Air)
+                    continue;
+
+                // Get light level (0..15) and map to grayscale color
+                byte light = Chunk.GetLightLevelGlobal(worldPos);
+                float light01 = light / 15f; // 0..1
+                
+                var color = FaceUtils.ToColor(light01); // Maps to grayscale with minimum 0.1f
+
+                // Draw a 1x1x1 wire box around the block (centered on block center)
+                Vector3 boxCenter = worldPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+                Debug.DrawBox(boxCenter, Vector3.One, color);
+            }
         }
     }
     

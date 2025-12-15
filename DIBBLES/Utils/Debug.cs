@@ -22,7 +22,7 @@ public class Debug
 
     public static bool ShowDebug { get; private set; } = true;
     public static bool ShowDebugExtended { get; private set; } = false;
-    public static bool ShowLightDebug { get; private set; } = false;
+    public static bool ShowLightDebug { get; private set; } = true;
     
     public static void Update(Camera3D camera)
     {
@@ -186,19 +186,22 @@ public struct DebuBox : IEquatable<DebuBox>
     public Vector3 Position;
     public Vector3 Size;
     public Color Color;
+    public DebugBoxType DebugType;
 
-    public DebuBox(Vector3 position, Vector3 size, Color color)
+    public DebuBox(Vector3 position, Vector3 size, Color color,  DebugBoxType debugType = DebugBoxType.Other)
     {
         Position = position;
         Size = size;
         Color = color;
+        DebugType = debugType;
     }
 
     public bool Equals(DebuBox other)
     {
         return Position.Equals(other.Position)
                && Size.Equals(other.Size)
-               && Color.Equals(other.Color);
+               && Color.Equals(other.Color)
+               && DebugType == other.DebugType;
     }
 
     public override bool Equals(object obj) => obj is DebuBox other && Equals(other);
@@ -218,4 +221,11 @@ public struct DebuBox : IEquatable<DebuBox>
 
     public static bool operator ==(DebuBox left, DebuBox right) => left.Equals(right);
     public static bool operator !=(DebuBox left, DebuBox right) => !left.Equals(right);
+}
+
+public enum DebugBoxType
+{
+    Other,
+    ChunkBorder,
+    LightLevel
 }
