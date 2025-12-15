@@ -101,7 +101,6 @@ public class PlayerCharacter
         Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
         Commands.RegisterCommand("tp", "Teleport to a position: /teleport x y z", teleportCMD);
         Commands.RegisterCommand("gm", "Toggle gamemode between creative and survival", gameModeCMD);
-        Commands.RegisterCommand("cyl", "Creates a cylinder beneath the player", cylinderCMD);
         
         CursorManager.LockCursor();
     }
@@ -665,42 +664,5 @@ public class PlayerCharacter
             Chat.Write("Set gamemode to survival",  ChatMessageType.Command);
         else
             Chat.Write("Set gamemode to creative",  ChatMessageType.Command);
-    }
-
-    private void cylinderCMD(string[] args)
-    {
-        if (args.Length < 1)
-        {
-            Chat.Write("Usage: /cylinder type [radius] [height]", ChatMessageType.Error);
-            return;
-        }
-
-        // Parse block type
-        var typeStr = args[0];
-        if (!Enum.TryParse<BlockType>(typeStr, true, out var blockType))
-        {
-            Chat.Write($"Unknown block type: '{typeStr}'", ChatMessageType.Error);
-            return;
-        }
-
-        // Parse radius (optional, default 5)
-        int radius = 5;
-        if (args.Length >= 2 && !int.TryParse(args[1], out radius))
-        {
-            Chat.Write($"Invalid radius: '{args[1]}'", ChatMessageType.Error);
-            return;
-        }
-
-        // Parse height (optional, default 1)
-        int height = 1;
-        if (args.Length >= 3 && !int.TryParse(args[2], out height))
-        {
-            Chat.Write($"Invalid height: '{args[2]}'", ChatMessageType.Error);
-            return;
-        }
-
-        // Create cylinder
-        GameScene.TerrainGen.CreateCylinder(blockType, radius, height);
-        Chat.Write($"Created cylinder of {blockType} (radius {radius}, height {height})", ChatMessageType.Command);
     }
 }

@@ -1,6 +1,7 @@
 using DIBBLES.Utils;
+using static DIBBLES.Terrain.TerrainGeneration;
 
-namespace DIBBLES.Terrain;
+namespace DIBBLES.Terrain.Features;
 
 /// <summary>
 /// Things generated in the world after the terrain.
@@ -8,6 +9,36 @@ namespace DIBBLES.Terrain;
 /// </summary>
 public class TerrainDecorations
 {
+    public void Generate(Chunk chunk)
+    {
+        long chunkSeed = Seed 
+                         ^ (chunk.Position.X * 73428767L)
+                         ^ (chunk.Position.Y * 9127841L)
+                         ^ (chunk.Position.Z * 192837465L);
+        
+        var rng = new SeededRandom(chunkSeed);
+        var noise = new FastNoiseLite();
+        noise.SetSeed(Seed);
+        
+        var decorations = new TerrainDecorations();
+        
+        for (int x = 0; x < ChunkSize; x++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            for (int y = ChunkSize - 1; y >= 0; y--)
+            {
+                var currentBlockType =  chunk.GetTypeAt(x, y, z);
+                var pos = new Vector3Int(x, y, z);
+
+                if (currentBlockType == BlockType.Grass)
+                {
+                    if (rng.NextChance(0.5f))
+                        decorations.GenerateTrees(pos, chunk);
+                }
+            }
+        }
+    }
+    
     public void GenerateTrees(Vector3Int localSurfacePos, Chunk chunk)
     {
         // Convert local chunk pos to world pos
@@ -48,7 +79,7 @@ public class TerrainDecorations
         }
     }
 
-    public static bool CheckSpace(Vector3Int startPos, Vector3Int size)
+    public bool CheckSpace(Vector3Int startPos, Vector3Int size)
     {
         // For each block in the region defined by startPos and size, check if it is BlockType.Air
         for (int dx = 0; dx < size.X; dx++)
@@ -62,13 +93,13 @@ public class TerrainDecorations
             );
 
             // Find the chunk containing this block
-            int chunkX = (int)Math.Floor((float)checkPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkY = (int)Math.Floor((float)checkPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
-            int chunkZ = (int)Math.Floor((float)checkPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+            int chunkX = (int)Math.Floor((float)checkPos.X / ChunkSize) * ChunkSize;
+            int chunkY = (int)Math.Floor((float)checkPos.Y / ChunkSize) * ChunkSize;
+            int chunkZ = (int)Math.Floor((float)checkPos.Z / ChunkSize) * ChunkSize;
 
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
-            if (!TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
                 return false; // Out of loaded world bounds or chunk missing
 
             int localX = checkPos.X - chunkX;
@@ -76,9 +107,9 @@ public class TerrainDecorations
             int localZ = checkPos.Z - chunkZ;
 
             // Bounds check (should always be safe due to chunk math, but just in case)
-            if (localX < 0 || localX >= TerrainGeneration.ChunkSize ||
-                localY < 0 || localY >= TerrainGeneration.ChunkSize ||
-                localZ < 0 || localZ >= TerrainGeneration.ChunkSize)
+            if (localX < 0 || localX >= ChunkSize ||
+                localY < 0 || localY >= ChunkSize ||
+                localZ < 0 || localZ >= ChunkSize)
                 return false; // Out of chunk bounds
 
             var block = chunk.GetTypeAt(localX, localY, localZ);

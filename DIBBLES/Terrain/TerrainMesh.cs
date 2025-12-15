@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using Microsoft.Xna.Framework;
 using System.Runtime.InteropServices;
+using DIBBLES.Effects;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -17,6 +19,81 @@ public class TerrainMesh
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
+
+    // Main-thread mesh upload queue
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
+    
+    public void Generate(Chunk chunk)
+    {
+        var meshData = Mesh.GenerateMeshData(chunk, false);
+        var tMeshData = Mesh.GenerateMeshData(chunk, true);
+        
+        // Enqueue for main thread mesh upload
+        MeshUploadQueue.Enqueue((chunk.Position, meshData));
+        TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
+    }
+
+    public void DrawAllMeshes()
+    {
+        // Draw opaque
+        foreach (var oModel in Mesh.OpaqueModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (oModel.Value != null)
+            {
+                var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
+                
+                var shader = oModel.Value.Shader;
+                
+                shader.Parameters["World"].SetValue(world);
+                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
+                
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                    pass.Apply();
+                
+                oModel.Value.Draw(world,                        // World matrix for chunk position
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
+        
+        // Draw transparent
+        foreach (var tModel in Mesh.TransparentModels)
+        {
+            // oModel.Value is a RuntimeModel
+            if (tModel.Value != null)
+            {
+                var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
+                
+                var shader = tModel.Value.Shader;
+                
+                shader.Parameters["World"].SetValue(world);
+                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
+                
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                    pass.Apply();
+                
+                tModel.Value.Draw(world,                        // World matrix for chunk position
+                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
+                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
+                );
+            }
+        }
+    }
     
     // MeshData generation (thread-safe, no Raylib calls)
     public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)

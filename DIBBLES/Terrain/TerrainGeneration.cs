@@ -6,6 +6,7 @@ using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain.Features;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -20,19 +21,25 @@ public class TerrainGeneration
     
     public static int Seed = -1888248476;
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ChunkBuffer = new();
+    
+    // Generation engine
     public static TerrainMesh Mesh = new();
     public static TerrainLighting Lighting = new();
+    
+    // Features
+    public TerrainIsland Islands = new();
+    public TerrainSurface Surface = new();
+    public TerrainDecorations Decorations = new();
+    
+    // Gameplay
     public static TerrainGameplay Gameplay = new();
+    public TerrainCommands Commands = new();
+    
     public static Effect terrainShader;
     public static bool InitialLoadDone = false;
     
-    // Gameplay
     public static Block SelectedBlock;
     public static Vector3Int SelectedNormal;
-    
-    // Thread-safe mesh generation queues
-    private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> meshUploadQueue = new(); // Opaque
-    private readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> tMeshUploadQueue = new(); // Transparent
 
     private ChunkGenerationStage terrainGenerationStage = ChunkGenerationStage.Uninitialized;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
@@ -55,7 +62,7 @@ public class TerrainGeneration
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
         
-        Commands.RegisterCommand("seed", "Displays seed in chat, and saves to txt file.", seedCmd);
+        Commands.Register();
     }
 
     public void Update(PlayerCharacter playerCharacter)
@@ -93,7 +100,7 @@ public class TerrainGeneration
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass
-        while (meshUploadQueue.TryDequeue(out var entry))
+        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
@@ -103,7 +110,7 @@ public class TerrainGeneration
         }
         
         // Transparent pass
-        while (tMeshUploadQueue.TryDequeue(out var entry))
+        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
@@ -230,7 +237,7 @@ public class TerrainGeneration
             case ChunkGenerationStage.Islands:
             {
                 if (!chunk.IsModified)
-                    generateIslands(chunk);
+                    Islands.Generate(chunk);
                 
                 chunk.GenerationStage++;
                 break;
@@ -238,7 +245,7 @@ public class TerrainGeneration
             case ChunkGenerationStage.Surface:
             {
                 if (!chunk.IsModified)
-                    generateSurface(chunk);
+                    Surface.Generate(chunk);
                 
                 chunk.GenerationStage++;
                 break;
@@ -246,159 +253,24 @@ public class TerrainGeneration
             case ChunkGenerationStage.Decorations:
             {
                 if (!chunk.IsModified)
-                    generateChunkDecorations(chunk);
+                    Decorations.Generate(chunk);
                 
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Lighting:
             {
-                generateLighting(chunk);
+                Lighting.Generate(chunk);
                 chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Meshing:
             {
-                generateMesh(chunk);
+                Mesh.Generate(chunk);
                 chunk.GenerationStage++;
                 break;
             }
         }
-    }
-    
-    private void generateIslands(Chunk chunk)
-    {
-        var noise = new FastNoiseLite();
-        noise.SetSeed(Seed);
-        
-        for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int z = 0; z < ChunkSize; z++)
-            {
-                for (int y = ChunkSize - 1; y >= 0; y--)
-                {
-                    var worldX = chunk.Position.X + x;
-                    var worldY = chunk.Position.Y + y;
-                    var worldZ = chunk.Position.Z + z;
-                    
-                    // Island noise
-                    noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-                    noise.SetFrequency(0.01f);
-                    noise.SetFractalType(FastNoiseLite.FractalType.FBm);
-                    noise.SetFractalOctaves(4);
-                    noise.SetFractalLacunarity(2.0f);
-                    noise.SetFractalGain(0.5f);
-                    
-                    var islandNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-                    
-                    // Loop downward
-                    if (islandNoise > 0.6f) // Islands
-                        chunk.SetTypeAt(x, y, z, BlockType.Stone);
-                    else // Not islands
-                        chunk.SetTypeAt(x, y, z, BlockType.Air);
-                }
-            }
-        }
-    }
-
-    private void generateSurface(Chunk chunk)
-    {
-        long chunkSeed = Seed 
-                         ^ (chunk.Position.X * 73428767L)
-                         ^ (chunk.Position.Y * 9127841L)
-                         ^ (chunk.Position.Z * 192837465L);
-        
-        var rng = new SeededRandom(chunkSeed);
-        var noise = new FastNoiseLite();
-        noise.SetSeed(Seed);
-        
-        var plainsBiome = new PlainsBiome();
-        var desertBiome = new DesertBiome();
-        var snowlandsBiome = new SnowlandsBiome();
-        
-        for (int x = 0; x < ChunkSize; x++)
-        {
-            for (int z = 0; z < ChunkSize; z++)
-            {
-                var blockReturnData = new BlockReturnData();
-                blockReturnData.RNG = rng;
-                blockReturnData.Noise = noise;
-                
-                for (int y = ChunkSize - 1; y >= 0; y--)
-                {
-                    var worldX = chunk.Position.X + x;
-                    var worldY = chunk.Position.Y + y;
-                    var worldZ = chunk.Position.Z + z;
-
-                    blockReturnData.LocalPos = new Vector3Int(x, y, z);
-
-                    var currentType = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY, worldZ));
-                    
-                    if (currentType.Item1 != BlockType.Stone)
-                        continue;
-                    
-                    // TODO: Biomes other than Plains are really rare
-                    /*noise.SetFrequency(0.001f);
-                    var biomeNoise = noise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-
-                    if (GMath.InRangeNotEqual(biomeNoise, 0f, 0.25f)) // Desert
-                        desertBiome.Generate(chunk, ref blockReturnData);
-                    else if (GMath.InRangeNotEqual(biomeNoise, 0.25f, 0.5f)) // Plains
-                        plainsBiome.Generate(chunk, ref blockReturnData);
-                    else if (GMath.InRangeNotEqual(biomeNoise, 0.5f, 0.75f)) // Snowlands
-                        plainsBiome.Generate(chunk, ref blockReturnData);
-                    else // Fallback
-                        snowlandsBiome.Generate(chunk, ref blockReturnData);*/
-                    
-                    plainsBiome.Generate(chunk, ref blockReturnData);
-                }
-            }
-        }
-    }
-    
-    private void generateChunkDecorations(Chunk chunk)
-    {
-        long chunkSeed = Seed 
-                         ^ (chunk.Position.X * 73428767L)
-                         ^ (chunk.Position.Y * 9127841L)
-                         ^ (chunk.Position.Z * 192837465L);
-        
-        var rng = new SeededRandom(chunkSeed);
-        var noise = new FastNoiseLite();
-        noise.SetSeed(Seed);
-        
-        var decorations = new TerrainDecorations();
-        
-        for (int x = 0; x < ChunkSize; x++)
-        for (int z = 0; z < ChunkSize; z++)
-        {
-            for (int y = ChunkSize - 1; y >= 0; y--)
-            {
-                var currentBlockType =  chunk.GetTypeAt(x, y, z);
-                var pos = new Vector3Int(x, y, z);
-
-                if (currentBlockType == BlockType.Grass)
-                {
-                    if (rng.NextChance(0.5f))
-                        decorations.GenerateTrees(pos, chunk);
-                }
-            }
-        }
-    }
-
-    private void generateLighting(Chunk chunk)
-    {
-        Lighting.Generate(chunk);
-    }
-
-    public void generateMesh(Chunk chunk)
-    {
-        var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true);
-        
-        // Enqueue for main thread mesh upload
-        meshUploadQueue.Enqueue((chunk.Position, meshData));
-        tMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
     }
     
     private void unloadDistantChunks(Vector3Int centerChunk)
@@ -421,9 +293,7 @@ public class TerrainGeneration
             int dz = Math.Abs(chunkZ - centerZ);
         
             if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
-            {
                 chunksToRemove.Add(chunk.Key);
-            }
         }
 
         foreach (var coord in chunksToRemove)
@@ -449,63 +319,8 @@ public class TerrainGeneration
     
     public void Draw()
     {
-        // Draw opaque
-        foreach (var oModel in Mesh.OpaqueModels)
-        {
-            // oModel.Value is a RuntimeModel
-            if (oModel.Value != null)
-            {
-                var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
-                
-                var shader = oModel.Value.Shader;
-                
-                shader.Parameters["World"].SetValue(world);
-                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
-                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
-                
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                    pass.Apply();
-                
-                oModel.Value.Draw(world,                        // World matrix for chunk position
-                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
-                );
-            }
-        }
-        
-        // Draw transparent
-        foreach (var tModel in Mesh.TransparentModels)
-        {
-            // oModel.Value is a RuntimeModel
-            if (tModel.Value != null)
-            {
-                var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
-                
-                var shader = tModel.Value.Shader;
-                
-                shader.Parameters["World"].SetValue(world);
-                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
-                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
-                
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                    pass.Apply();
-                
-                tModel.Value.Draw(world,                        // World matrix for chunk position
-                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
-                );
-            }
-        }
+        // Draw every mesh in the mesh queue
+        Mesh.DrawAllMeshes();
         
         // Chunk border debug
         if (Debug.ShowChunkDebug)
@@ -553,69 +368,5 @@ public class TerrainGeneration
                 Debug.DrawBox(boxCenter, Vector3.One, color);
             }
         }
-    }
-    
-    public void CreateCylinder(BlockType blockType, int radius, int height = 1)
-    {
-        var centerX = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.X);
-        var centerY = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Y - 2);
-        var centerZ = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z);
-    
-        HashSet<Vector3Int> affectedChunks = new();
-    
-        for (int h = 0; h < height; h++)
-        {
-            int y = centerY - h;
-            for (int dx = -radius; dx <= radius; dx++)
-            for (int dz = -radius; dz <= radius; dz++)
-            {
-                if (dx * dx + dz * dz <= radius * radius)
-                {
-                    var blockPos = new Vector3Int(centerX + dx, y, centerZ + dz);
-                    Chunk.SetBlockTypeGlobal(blockPos, blockType);
-    
-                    // Track affected chunk
-                    int chunkX = (int)Math.Floor((float)blockPos.X / ChunkSize) * ChunkSize;
-                    int chunkY = (int)Math.Floor((float)blockPos.Y / ChunkSize) * ChunkSize;
-                    int chunkZ = (int)Math.Floor((float)blockPos.Z / ChunkSize) * ChunkSize;
-                    
-                    affectedChunks.Add(new Vector3Int(chunkX, chunkY, chunkZ));
-                }
-            }
-        }
-    
-        // Remesh affected chunks
-        foreach (var chunkCoord in affectedChunks)
-        {
-            if (ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-            {
-                // Opaque
-                var meshData = Mesh.GenerateMeshData(chunk, false);
-                Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
-    
-                // Transparent
-                var tMeshData = Mesh.GenerateMeshData(chunk, true);
-                Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
-
-                // Add to save
-                if (WorldSave.Data.ModifiedChunks.All(c => c.Key != chunk.Position))
-                    WorldSave.Data.ModifiedChunks.Add(chunk.Position, chunk);
-            }
-        }
-    }
-
-    private void seedCmd(string[] args)
-    {
-        Chat.Write($"Current seed: {Seed}", ChatMessageType.Command);
-
-        var filename = Path.Combine(AppContext.BaseDirectory, $"Seed_{Seed}.txt");
-
-        if (!File.Exists(filename))
-        {
-            File.Create(filename);
-            Chat.Write($"Wrote to file: Seed_{Seed}.txt", ChatMessageType.Command);
-        }
-        else
-            Chat.Write($"Seed file 'Seed_{Seed}.txt' already exists.", ChatMessageType.Warning);
     }
 }
