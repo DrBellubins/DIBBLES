@@ -56,7 +56,7 @@ public class PlayerCharacter
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
     
-    public bool IsSurvival = true;
+    public bool IsSurvival = false;
 
     //private Sound fallSound;
     private HandModel handModel = new();

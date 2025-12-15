@@ -69,22 +69,10 @@ public class Debug
 
         foreach (var box in debugBoxes)
         {
-            if (ShowChunkDebug)
+            if (playerCamera.InFrustum(box.Position, box.FrustumCullRadius))
             {
-                if (playerCamera.InFrustum(box.Position, 16f))
-                {
-                    Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
-                        box.Size.X, box.Size.Y, box.Size.Z, box.Color, 0.005f);
-                }
-            }
-
-            if (ShowLightDebug)
-            {
-                if (playerCamera.InFrustum(box.Position, 1f))
-                {
-                    Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
-                        box.Size.X, box.Size.Y, box.Size.Z, box.Color, 0.005f);
-                }
+                Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
+                    box.Size.X, box.Size.Y, box.Size.Z, box.Color, 0.005f);
             }
         }
         
@@ -92,34 +80,34 @@ public class Debug
     }
 
     // Draw box Vector3
-    public static void DrawBox(Vector3 position, Vector3 size)
+    public static void DrawBox(Vector3 position, Vector3 size, float frustumCullRadius = 1f)
     {
-        var debugBox = new DebuBox(position, size, Color.White);
+        var debugBox = new DebuBox(position, size, Color.White, frustumCullRadius);
         
         if (!debugBoxes.Contains(debugBox))
             debugBoxes.Add(debugBox);
     }
     
-    public static void DrawBox(Vector3 position, Vector3 size, Color color)
+    public static void DrawBox(Vector3 position, Vector3 size, Color color, float frustumCullRadius = 1f)
     {
-        var debugBox = new DebuBox(position, size, color);
+        var debugBox = new DebuBox(position, size, color, frustumCullRadius);
         
         if (!debugBoxes.Contains(debugBox))
             debugBoxes.Add(debugBox);
     }
     
     // Draw box Vector3Int
-    public static void DrawBox(Vector3Int position, Vector3Int size)
+    public static void DrawBox(Vector3Int position, Vector3Int size, float frustumCullRadius = 1f)
     {
-        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), Color.White);
+        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), Color.White, frustumCullRadius);
         
         if (!debugBoxes.Contains(debugBox))
             debugBoxes.Add(debugBox);
     }
     
-    public static void DrawBox(Vector3Int position, Vector3Int size, Color color)
+    public static void DrawBox(Vector3Int position, Vector3Int size, Color color, float frustumCullRadius = 1f)
     {
-        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), color);
+        var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), color, frustumCullRadius);
         
         if (!debugBoxes.Contains(debugBox))
             debugBoxes.Add(debugBox);
@@ -187,11 +175,15 @@ public struct DebuBox : IEquatable<DebuBox>
     public Vector3 Size;
     public Color Color;
 
-    public DebuBox(Vector3 position, Vector3 size, Color color)
+    public float FrustumCullRadius;
+
+    public DebuBox(Vector3 position, Vector3 size, Color color, float frustumCullRadius = 1f)
     {
         Position = position;
         Size = size;
         Color = color;
+
+        FrustumCullRadius = frustumCullRadius;
     }
 
     public bool Equals(DebuBox other)

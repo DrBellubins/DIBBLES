@@ -521,11 +521,13 @@ public class TerrainGeneration
         }
         
         // Chunk border debug
-        foreach (var chunkPair in ChunkBuffer)
+        if (Debug.ShowChunkDebug)
         {
-            var chunkPos = chunkPair.Key;
-            
-            Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
+            foreach (var chunkPair in ChunkBuffer)
+            {
+                var chunkPos = chunkPair.Key;
+                Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue, 16f);
+            }
         }
         
         // Light level debug
@@ -537,7 +539,7 @@ public class TerrainGeneration
                 (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z)
             );
 
-            int radius = 16; // 16 block radius (cube)
+            int radius = 5; // 16 block radius (cube)
             
             for (int x = playerBlockPos.X - radius; x <= playerBlockPos.X + radius; x++)
             for (int y = playerBlockPos.Y - radius; y <= playerBlockPos.Y + radius; y++)
@@ -555,10 +557,12 @@ public class TerrainGeneration
                 byte light = Chunk.GetLightLevelGlobal(worldPos);
                 float light01 = light / 15f; // 0..1
                 
-                var color = FaceUtils.ToColor(light01); // Maps to grayscale with minimum 0.1f
+                var lightColor = (byte)(255f * light01);
+                
+                var color = new Color(lightColor, lightColor, lightColor, (byte)255);
 
                 // Draw a 1x1x1 wire box around the block (centered on block center)
-                Vector3 boxCenter = worldPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
+                Vector3 boxCenter = worldPos.ToVector3() + new Vector3(1f, 1f, 1f);
                 Debug.DrawBox(boxCenter, Vector3.One, color);
             }
         }

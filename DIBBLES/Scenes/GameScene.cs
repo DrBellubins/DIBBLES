@@ -143,23 +143,23 @@ public class GameScene : Scene
         UIBatch.End();
     }
     
-    private void takeScreenshot(GraphicsDevice gd)
+    private void takeScreenshot(GraphicsDevice graphicsDevice)
     {
         // Create a texture to store the backbuffer
-        var width = gd.PresentationParameters.BackBufferWidth;
-        var height = gd.PresentationParameters.BackBufferHeight;
-        var screenshot = new Texture2D(gd, width, height, false, SurfaceFormat.Color);
+        var width = graphicsDevice.PresentationParameters.BackBufferWidth;
+        var height = graphicsDevice.PresentationParameters.BackBufferHeight;
+        var screenshot = new Texture2D(graphicsDevice, width, height, false, SurfaceFormat.Color);
 
         // Copy backbuffer data
         int[] pixelData = new int[width * height];
-        gd.GetBackBufferData(pixelData);
+        graphicsDevice.GetBackBufferData(pixelData);
         screenshot.SetData(pixelData);
 
         // Save to PNG
         string path = $"Screenshot-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.png";
         
-        using (var fs = new FileStream(path, FileMode.Create))
-            screenshot.SaveAsPng(fs, width, height);
+        using (var fileStream = new FileStream(path, FileMode.Create))
+            screenshot.SaveAsPng(fileStream, width, height);
 
         screenshot.Dispose();
 
