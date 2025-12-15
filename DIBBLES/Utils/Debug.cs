@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Text;
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 
@@ -19,8 +20,9 @@ public class Debug
     // Cache for text textures: key is a combination of text and position
     private static Dictionary<(string Text, Vector3 Position), Texture2D> textTextureCache = new();
 
-    public static bool ShowDebug { get; private set; } = false;
-    public static bool ShowDebugExtended { get; private set; }
+    public static bool ShowDebug { get; private set; } = true;
+    public static bool ShowDebugExtended { get; private set; } = false;
+    public static bool ShowLightDebug { get; private set; } = false;
     
     public static void Update(Camera3D camera)
     {
@@ -63,50 +65,67 @@ public class Debug
 
     public static void Draw3D()
     {
-        if (ShowDebugExtended)
-        {
-            // TODO: Monogame
-            //foreach (var box in debugBoxes)
-            //    Raylib.DrawCubeV(box.Key, box.Value, new Color(1f, 0f, 0f, 0.5f));
+        var playerCamera = GameScene.PlayerCharacter.Camera;
 
-            foreach (var box in debugBoxes)
+        foreach (var box in debugBoxes)
+        {
+            if (ShowDebugExtended)
             {
-                Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
-                    box.Size.X, box.Size.Y, box.Size.Z, Color.Blue, 0.005f);
+                if (playerCamera.InFrustum(box.Position, 16f))
+                {
+                    Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
+                        box.Size.X, box.Size.Y, box.Size.Z, box.Color, 0.005f);
+                }
             }
-        
-            debugBoxes.Clear();
+
+            if (ShowLightDebug)
+            {
+                if (playerCamera.InFrustum(box.Position, 1f))
+                {
+                    Primatives3D.DrawCubeWiresThick(box.Position - (box.Size * 0.5f), 
+                        box.Size.X, box.Size.Y, box.Size.Z, box.Color, 0.005f);
+                }
+            }
         }
+        
+        debugBoxes.Clear();
     }
 
     // Draw box Vector3
     public static void DrawBox(Vector3 position, Vector3 size)
     {
         var debugBox = new DebuBox(position, size, Color.White);
-        debugBoxes.Add(debugBox);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
     }
     
     public static void DrawBox(Vector3 position, Vector3 size, Color color)
     {
         var debugBox = new DebuBox(position, size, color);
-        debugBoxes.Add(debugBox);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
     }
     
     // Draw box Vector3Int
     public static void DrawBox(Vector3Int position, Vector3Int size)
     {
         var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), Color.White);
-        debugBoxes.Add(debugBox);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
     }
     
     public static void DrawBox(Vector3Int position, Vector3Int size, Color color)
     {
         var debugBox = new DebuBox(position.ToVector3(), size.ToVector3(), color);
-        debugBoxes.Add(debugBox);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
     }
     
     // Draw text
-    
     public static void Draw2DText(string text, Color color)
     {
         textBuffer2d.Add((text, color));
@@ -162,9 +181,41 @@ public class Debug
     }
 }
 
-public struct DebuBox(Vector3 position, Vector3 size, Color color)
+public struct DebuBox : IEquatable<DebuBox>
 {
     public Vector3 Position;
     public Vector3 Size;
     public Color Color;
+
+    public DebuBox(Vector3 position, Vector3 size, Color color)
+    {
+        Position = position;
+        Size = size;
+        Color = color;
+    }
+
+    public bool Equals(DebuBox other)
+    {
+        return Position.Equals(other.Position)
+               && Size.Equals(other.Size)
+               && Color.Equals(other.Color);
+    }
+
+    public override bool Equals(object obj) => obj is DebuBox other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        unchecked
+        {
+            int hash = 17;
+            hash = (hash * 31) + Position.GetHashCode();
+            hash = (hash * 31) + Size.GetHashCode();
+            hash = (hash * 31) + Color.GetHashCode();
+            
+            return hash;
+        }
+    }
+
+    public static bool operator ==(DebuBox left, DebuBox right) => left.Equals(right);
+    public static bool operator !=(DebuBox left, DebuBox right) => !left.Equals(right);
 }

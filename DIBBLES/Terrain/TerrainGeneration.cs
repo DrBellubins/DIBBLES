@@ -520,9 +520,18 @@ public class TerrainGeneration
             }
         }
         
-        // Draw debug chunk lines
-        foreach (var chunk in ChunkBuffer)
-            Debug.DrawBox(chunk.Key, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
+        // Debug draw
+        foreach (var chunkPair in ChunkBuffer)
+        {
+            var player = GameScene.PlayerCharacter;
+            var chunk = chunkPair.Value;
+            var chunkPos = chunkPair.Key;
+            
+            // Chunk lines
+            Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue);
+            
+            
+        }
     }
     
     public void CreateCylinder(BlockType blockType, int radius, int height = 1)

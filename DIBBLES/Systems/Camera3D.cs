@@ -26,4 +26,20 @@ public class Camera3D
     {
         Projection = Matrix.CreateOrthographic(Fov * AspectRatio, Fov, NearPlane, FarPlane);
     }
+    
+    public bool InFrustum(Vector3 position, float radius = 0f)
+    {
+        // Build frustum from current view-projection
+        var frustum = new BoundingFrustum(View * Projection);
+
+        // Optionally, provide a radius to test a sphere (useful for objects with extent).
+        if (radius > 0f)
+        {
+            var sphere = new BoundingSphere(position, radius);
+            return frustum.Contains(sphere) != ContainmentType.Disjoint;
+        }
+
+        // Point test
+        return frustum.Contains(position) != ContainmentType.Disjoint;
+    }
 }
