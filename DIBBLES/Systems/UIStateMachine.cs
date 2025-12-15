@@ -20,6 +20,7 @@ public class UIStateMachine
     public UIState CurrentState { get; private set; } = UIState.None;
 
     // --- State checks for convenience ---
+    public bool CanOpenAnyUI = true;
     public bool IsChatOpen => CurrentState == UIState.Chat;
     public bool IsInventoryOpen => CurrentState == UIState.PlayerInventory;
     public bool IsAnyInventoryOpen => CurrentState != UIState.None;
@@ -30,7 +31,6 @@ public class UIStateMachine
     public event Action<UIState> OnUIStateChanged;
 
     // --- Core logic ---
-
     public bool IsAnyOtherInventoryOpen(UIState state)
     {
         return CurrentState != state && CurrentState != UIState.None;
@@ -43,7 +43,7 @@ public class UIStateMachine
     public bool Open(UIState state)
     {
         // If already open, do nothing
-        if (CurrentState == state)
+        if (CurrentState == state || !CanOpenAnyUI)
             return false;
 
         // If trying to open Chat while PlayerInventory is open, suppress

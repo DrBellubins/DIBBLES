@@ -103,6 +103,12 @@ public class PlayerCharacter
         Commands.RegisterCommand("gm", "Toggle gamemode between creative and survival", gameModeCMD);
         
         CursorManager.LockCursor();
+
+        // Update from UI state machine
+        InventorySystem.StateMachine.OnUIStateChanged += state =>
+        {
+            IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
+        };
     }
     
     float lastHeight = PlayerHeight;
@@ -113,8 +119,6 @@ public class PlayerCharacter
         Debug.Draw2DText($"Position: {vec3Position.X}, {vec3Position.Y}, {vec3Position.Z}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
-
-        IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
         
         hotbar.Update(IsDead, IsFrozen);
         
@@ -512,6 +516,7 @@ public class PlayerCharacter
             int chunkX = (int)Math.Floor((float)x / ChunkSize) * ChunkSize;
             int chunkY = (int)Math.Floor((float)y / ChunkSize) * ChunkSize;
             int chunkZ = (int)Math.Floor((float)z / ChunkSize) * ChunkSize;
+            
             var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
             if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
@@ -612,8 +617,6 @@ public class PlayerCharacter
 
         Health = 100;
         Velocity = Vector3.Zero;
-        IsDead = false;
-        IsFrozen = false;
         
         Chat.Write($"Spawning at {WorldSave.Data.PlayerPosition}", ChatMessageType.Command);
     }

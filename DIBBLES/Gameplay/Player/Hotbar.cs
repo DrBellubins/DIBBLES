@@ -36,11 +36,8 @@ public class Hotbar
 
     public void Update(bool isPlayerDead, bool isFrozen)
     {
-        if (!isPlayerDead && !isFrozen &&
-            !InventorySystem.StateMachine.IsAnyOtherInventoryOpen(UIState.Chat))
+        if (!isPlayerDead && !isFrozen)
         {
-            var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
-            
             var mouseWheelNormalized = MathF.Ceiling(-Input.ScrollDelta());
 
             if (mouseWheelNormalized > 0.0f || mouseWheelNormalized < 0.0f)
@@ -81,21 +78,23 @@ public class Hotbar
                     HotBarSelectionIndex = 8;
                     break;
             }
-
-            // Selection rectangle centered in current slot
-            float slotSize = hotbarRect.Height;
-            float selectionSize = slotSize * selectionSizeMultiplier;
-
-            hotBarSelectionPosX = HotBarSelectionIndex * slotSize;
-        
-            float selectionX = hotbarRect.X + hotBarSelectionPosX + (slotSize - selectionSize) / 2f;
-            float selectionY = hotbarRect.Y + (slotSize - selectionSize) / 2f;
-            
-            SelectedItem = hotbarSlots[HotBarSelectionIndex];
-
-            hotbarSelectionRect.X = selectionX;
-            hotbarSelectionRect.Y = selectionY;
         }
+        
+        // Selection rectangle centered in current slot
+        var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
+        
+        float slotSize = hotbarRect.Height;
+        float selectionSize = slotSize * selectionSizeMultiplier;
+
+        hotBarSelectionPosX = HotBarSelectionIndex * slotSize;
+        
+        float selectionX = hotbarRect.X + hotBarSelectionPosX + (slotSize - selectionSize) / 2f;
+        float selectionY = hotbarRect.Y + (slotSize - selectionSize) / 2f;
+            
+        SelectedItem = hotbarSlots[HotBarSelectionIndex];
+
+        hotbarSelectionRect.X = selectionX;
+        hotbarSelectionRect.Y = selectionY;
         
         WorldSave.Data.HotbarPosition = HotBarSelectionIndex;
     }
