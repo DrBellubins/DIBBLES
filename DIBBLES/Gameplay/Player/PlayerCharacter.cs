@@ -49,9 +49,16 @@ public class PlayerCharacter
     public bool FreeCamEnabled = true;
     public Freecam freecam = new();
 
-    public bool ShouldUpdate = false;
-    public bool IsFrozen = true;
     public bool IsDead = false;
+    public bool IsUIFrozen = false;
+    
+    public bool IsFrozen
+    {
+        get { return IsUIFrozen || IsDead; }
+    }
+    
+    public bool ShouldUpdate = false;
+    
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
@@ -107,7 +114,7 @@ public class PlayerCharacter
         // Update from UI state machine
         InventorySystem.StateMachine.OnUIStateChanged += state =>
         {
-            IsFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
+            IsUIFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
         };
     }
     
@@ -383,7 +390,6 @@ public class PlayerCharacter
     public void Kill()
     {
         IsDead = true;
-        IsFrozen = true;
     }
     
     public void Spawn()
@@ -406,6 +412,16 @@ public class PlayerCharacter
         else
             Position = spawnPosition.ToGVec3();
         
+        Velocity = Vector3.Zero;
+    }
+
+    public void Respawn()
+    {
+        Position = spawnPosition.ToGVec3();
+        SetCameraDirection(WorldSave.Data.CameraDirection);
+
+        Health = 100;
+        IsDead = false;
         Velocity = Vector3.Zero;
     }
     
@@ -612,12 +628,7 @@ public class PlayerCharacter
     
     private void respawnCMD(string[] args)
     {
-        Position = spawnPosition.ToGVec3();
-        SetCameraDirection(WorldSave.Data.CameraDirection);
-
-        Health = 100;
-        Velocity = Vector3.Zero;
-        
+        Respawn();
         Chat.Write($"Spawning at {WorldSave.Data.PlayerPosition}", ChatMessageType.Command);
     }
     
