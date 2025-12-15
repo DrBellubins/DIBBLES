@@ -389,19 +389,6 @@ public class TerrainGeneration
     private void generateLighting(Chunk chunk)
     {
         Lighting.Generate(chunk);
-        
-        // Re-propagate existing neighbors to handle cross-chunk
-        var faceInfos = FaceUtils.VoxelFaceInfos();
-        foreach (var (_, _, neighborOffset) in faceInfos)
-        {
-            var neighborPos = chunk.Position + neighborOffset * new Vector3Int(ChunkSize, ChunkSize, ChunkSize);
-            
-            if (ChunkBuffer.TryGetValue(neighborPos, out var neighborChunk) &&
-                neighborChunk.GenerationStage >= ChunkGenerationStage.Lighting) // Only if neighbor already lit
-            {
-                //Lighting.PropagateLight(neighborChunk); // Re-runs BFS from its current >0 blocks, propagating cross-chunk if needed
-            }
-        }
     }
 
     public void generateMesh(Chunk chunk)

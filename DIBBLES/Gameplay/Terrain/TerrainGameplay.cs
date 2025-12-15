@@ -36,7 +36,7 @@ public class TerrainGameplay
             
             // Draw block selection overlay
             Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 
-                1f, 1f, 1f, Color.Black, 0.005f);
+                1f, 1f, 1f, Color.Black, 0.025f);
         }
     }
     

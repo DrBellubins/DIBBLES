@@ -64,6 +64,14 @@ public static class Primatives3D
         _effect.View = v;
         _effect.Projection = p;
 
+        // Disable culling so the line-quads are visible from any angle
+        var graohicsDevice = Engine.Graphics;
+        var prevRaster = graohicsDevice.RasterizerState;
+        var prevDepth = graohicsDevice.DepthStencilState;
+
+        graohicsDevice.RasterizerState = RasterizerState.CullNone;
+        graohicsDevice.DepthStencilState = DepthStencilState.Default;
+
         foreach (var pass in _effect.CurrentTechnique.Passes)
         {
             pass.Apply();
@@ -75,6 +83,10 @@ public static class Primatives3D
                 DrawThickLine3D(start, end, color, thickness);
             }
         }
+
+        // Restore previous states
+        graohicsDevice.RasterizerState = prevRaster;
+        graohicsDevice.DepthStencilState = prevDepth;
     }
 
     /// <summary>
@@ -82,57 +94,46 @@ public static class Primatives3D
     /// </summary>
     public static void DrawThickLine3D(Vector3 start, Vector3 end, Color color, float thickness)
     {
-        // Use camera forward/up to build a world-space billboard around the line
-        var camView = GameScene.PlayerCharacter.Camera.View;
-        var camProj = GameScene.PlayerCharacter.Camera.Projection;
-    
-        // Extract camera forward from View (third column of inverse view gives forward)
-        // Alternatively, use PlayerCharacter.CameraForward which is already maintained.
         Vector3 camForward = Vector3.Normalize(GameScene.PlayerCharacter.Camera.Target - GameScene.PlayerCharacter.Camera.Position.ToVector3());
         Vector3 camUp = GameScene.PlayerCharacter.Camera.Up;
-    
-        // Line direction
+
         Vector3 dir = end - start;
         float dirLenSq = dir.LengthSquared();
-    
+
         if (dirLenSq < 1e-6f)
             return;
-    
+
         dir /= MathF.Sqrt(dirLenSq);
-    
+
         // Perpendicular in world space using camera forward (fallback to camUp when nearly parallel)
         Vector3 side = Vector3.Cross(dir, camForward);
-    
+
         if (side.LengthSquared() < 1e-6f)
             side = Vector3.Cross(dir, camUp);
-    
+
         side = Vector3.Normalize(side);
-    
-        // Optional: scale thickness by distance for visual consistency
-        float dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), (start + end) * 0.5f);
-        float pixelScale = 0.0015f; // tune to taste
-        float halfWidth = thickness * 0.5f * MathF.Max(1f, dist) * pixelScale;
-    
+
+        // Use a constant half-width from thickness; remove distance scaling
+        float halfWidth = MathF.Max(0.0001f, thickness * 0.5f);
+
         Vector3 offset = side * halfWidth;
-    
+
         // Build the quad in world space
         Vector3 v0 = start + offset;
         Vector3 v1 = start - offset;
         Vector3 v2 = end - offset;
         Vector3 v3 = end + offset;
-    
-        // Submit as a single quad (two triangles)
-        VertexPositionColor[] quadVerts = new[]
+
+        VertexPositionColor[] quadVerts =
         {
             new VertexPositionColor(v0, color),
             new VertexPositionColor(v1, color),
             new VertexPositionColor(v2, color),
             new VertexPositionColor(v3, color),
         };
-    
+
         short[] quadIdx = { 0, 1, 2, 0, 2, 3 };
-    
-        // Effect is already applied in DrawCubeWiresThick before calling this
+
         Engine.Graphics.DrawUserIndexedPrimitives(
             PrimitiveType.TriangleList,
             quadVerts, 0, 4,
