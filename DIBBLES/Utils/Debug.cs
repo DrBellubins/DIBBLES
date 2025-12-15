@@ -22,7 +22,7 @@ public class Debug
 
     public static bool ShowDebug { get; private set; } = true;
     public static bool ShowChunkDebug { get; private set; } = false;
-    public static bool ShowLightDebug { get; private set; } = true;
+    public static bool ShowLightDebug { get; private set; } = false;
     
     public static void Update(Camera3D camera)
     {
@@ -40,10 +40,16 @@ public class Debug
         Chat.Write("Toggled debug information", ChatMessageType.Command);
     }
     
-    public static void ToggleDebugExtended(string[] args)
+    public static void ToggleChunkDebug(string[] args)
     {
         ShowChunkDebug = !ShowChunkDebug;
-        Chat.Write("Toggled extended debug information", ChatMessageType.Command);
+        Chat.Write("Toggled chunk border debug", ChatMessageType.Command);
+    }
+    
+    public static void ToggleLightDebug(string[] args)
+    {
+        ShowLightDebug = !ShowLightDebug;
+        Chat.Write("Toggled light level debug", ChatMessageType.Command);
     }
     
     public static void Draw2D()

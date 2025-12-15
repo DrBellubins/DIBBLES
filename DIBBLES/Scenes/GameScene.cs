@@ -53,8 +53,9 @@ public class GameScene : Scene
         uiBlur.Start();
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
-        Commands.RegisterCommand("debug", "Toggle debug information", Debug.ToggleDebug);
-        Commands.RegisterCommand("debugEx", "Toggle extended debug information", Debug.ToggleDebugExtended);
+        Commands.RegisterCommand("db", "Toggle debug information", Debug.ToggleDebug);
+        Commands.RegisterCommand("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
+        Commands.RegisterCommand("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
     }
 
     private int fpsCounter;

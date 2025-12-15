@@ -205,6 +205,50 @@ public static class FaceUtils
         return new Color(color, color, color, (byte)255);
     }
     
+    // Flat face light from neighbor cell in face direction
+    public static float GetFaceLightFlat(Chunk chunk, Vector3Int pos, int faceIdx)
+    {
+        // Map faceIdx to neighbor offset (same ordering as VoxelFaceInfos)
+        Vector3Int neighborOffset = faceIdx switch
+        {
+            0 => new Vector3Int(0, 0, -1), // Front (-Z)
+            1 => new Vector3Int(0, 0,  1), // Back (+Z)
+            2 => new Vector3Int(-1,0,  0), // Left (-X)
+            3 => new Vector3Int( 1,0,  0), // Right (+X)
+            4 => new Vector3Int( 0,-1, 0), // Bottom (-Y)
+            5 => new Vector3Int( 0, 1, 0), // Top (+Y)
+            _ => Vector3Int.Zero
+        };
+
+        int nx = pos.X + neighborOffset.X;
+        int ny = pos.Y + neighborOffset.Y;
+        int nz = pos.Z + neighborOffset.Z;
+
+        byte lightLevel = 0;
+
+        // If inside current chunk, read directly
+        if (nx >= 0 && nx < TerrainGeneration.ChunkSize &&
+            ny >= 0 && ny < TerrainGeneration.ChunkSize &&
+            nz >= 0 && nz < TerrainGeneration.ChunkSize)
+        {
+            lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
+        }
+        /*else
+        {
+            // Cross-chunk read: convert to world pos and use global helper
+            var worldPos = new Vector3Int(
+                chunk.Position.X + nx,
+                chunk.Position.Y + ny,
+                chunk.Position.Z + nz
+            );
+
+            lightLevel = GetLightLevelAtWorldPos(worldPos);
+        }*/
+
+        // Normalize to [0..1]
+        return lightLevel / 15f;
+    }
+    
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
     public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz)
     {
@@ -242,6 +286,7 @@ public static class FaceUtils
             total += lightLevel;
             count++;
         }
+        
         return total / (count * 15f); // Normalize to [0,1]
     }
     

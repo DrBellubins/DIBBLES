@@ -550,7 +550,7 @@ public class TerrainGeneration
                 // Only draw for non-air blocks
                 var (type, withinLoaded) = Chunk.GetBlockTypeGlobal(worldPos);
                 
-                if (!withinLoaded || type == BlockType.Air)
+                if (!withinLoaded)
                     continue;
 
                 // Get light level (0..15) and map to grayscale color

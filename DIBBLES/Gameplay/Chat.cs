@@ -25,7 +25,8 @@ public struct ChatMessage(string message, ChatMessageType type)
     public string Message = message;
 }
 
-// TODO: Text box sometimes disappears
+// TODO: Implement scrolling.
+
 // TODO: Implement text wrapping.
 public class Chat
 {
