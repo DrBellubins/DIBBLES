@@ -41,9 +41,30 @@ public class TerrainGeneration
     public static Block SelectedBlock;
     public static Vector3Int SelectedNormal;
 
-    private ChunkGenerationStage terrainGenerationStage = ChunkGenerationStage.Uninitialized;
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     private int chunksLoaded = 0;
+    
+    // Multi-threading/queues
+    private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
+    
+    private readonly object _pqLock = new object();
+    private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue
+        = new PriorityQueue<(Vector3Int, ChunkGenerationStage), int>();
+    
+    private static readonly ChunkGenerationStage FreezeStage = ChunkGenerationStage.Surface;
+    
+    private static Vector3Int[] getNeighborOffsets()
+    {
+        return new[]
+        {
+            new Vector3Int( ChunkSize, 0, 0),
+            new Vector3Int(-ChunkSize, 0, 0),
+            new Vector3Int(0,  ChunkSize, 0),
+            new Vector3Int(0, -ChunkSize, 0),
+            new Vector3Int(0, 0,  ChunkSize),
+            new Vector3Int(0, 0, -ChunkSize),
+        };
+    }
     
     public void Start()
     {
@@ -80,12 +101,14 @@ public class TerrainGeneration
             lastCameraChunk = centerChunk;
             chunksLoaded = 0;
 
-            // Start chunk staging
-            terrainGenerationThreaded(centerChunk, true);
+            // Start chunk queue
+            QueueChunksInView(centerChunk);
+            UnloadAndFreezeDistant(centerChunk);
         }
+        
+        ProcessTaskQueue();
 
-        updateStageIfReady(centerChunk);
-        Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
+        //Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
@@ -93,8 +116,8 @@ public class TerrainGeneration
         // After all chunk data in render distance has loaded in
         if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
         {
-            playerCharacter.ShouldUpdate = true;
-            playerCharacter.FreeCamEnabled = false;
+            //playerCharacter.ShouldUpdate = true;
+            //playerCharacter.FreeCamEnabled = false;
             InitialLoadDone = true;
         }
         
@@ -119,127 +142,161 @@ public class TerrainGeneration
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
             chunksLoaded++;
         }
-        
-        unloadDistantChunks(centerChunk);
+    }
+    
+    private void QueueChunksInView(Vector3Int center)
+    {
+        int half = RenderDistance / 2;
+
+        for (int cx = center.X - half; cx <= center.X + half; cx++)
+        for (int cy = center.Y - half; cy <= center.Y + half; cy++)
+        for (int cz = center.Z - half; cz <= center.Z + half; cz++)
+        {
+            var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+
+            if (!ChunkBuffer.TryGetValue(pos, out var chunk))
+            {
+                chunk = new Chunk(pos);
+                ChunkBuffer[pos] = chunk;
+            }
+
+            if (chunk.IsFrozen)
+                chunk.IsFrozen = false;
+
+            EnqueueAdvance(pos, ChunkGenerationStage.Meshing, center);
+        }
     }
 
-    private void updateStageIfReady(Vector3Int centerChunk)
+    private void UnloadAndFreezeDistant(Vector3Int center)
     {
-        int halfRenderDistance = RenderDistance / 2;
-        bool allReady = true;
-
-        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
-        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
-        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+        foreach (var kv in ChunkBuffer)
         {
-            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            
-            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            var pos = kv.Key;
+            int dx = Math.Abs((pos.X / ChunkSize) - center.X);
+            int dy = Math.Abs((pos.Y / ChunkSize) - center.Y);
+            int dz = Math.Abs((pos.Z / ChunkSize) - center.Z);
+
+            if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
             {
-                if (chunk.GenerationStage <= terrainGenerationStage)
+                var chunk = kv.Value;
+
+                if (chunk.GenerationStage > FreezeStage)
+                    chunk.ResetToStage(FreezeStage);
+
+                chunk.IsFrozen = true;
+
+                // Dispose meshes (existing logic)
+                if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
                 {
-                    allReady = false;
-                    break;
+                    oModel.Dispose();
+                    Mesh.OpaqueModels.Remove(pos);
+                }
+                
+                if (Mesh.TransparentModels.TryGetValue(pos, out var tModel) && tModel != null)
+                {
+                    tModel.Dispose();
+                    Mesh.TransparentModels.Remove(pos);
                 }
             }
-            else
-            {
-                allReady = false;
-                break;
-            }
-        }
-
-        if (allReady)
-        {
-            if (terrainGenerationStage < ChunkGenerationStage.Meshing)
-            {
-                terrainGenerationStage++;
-                terrainGenerationThreaded(centerChunk);
-            }
         }
     }
     
-    private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
-    
-    private void terrainGenerationThreaded(Vector3Int centerChunk, bool addAfterInitial = false)
+    private void EnqueueAdvance(Vector3Int pos, ChunkGenerationStage target, Vector3Int centerChunk)
     {
-        int halfRenderDistance = RenderDistance / 2;
-        List<Vector3Int> chunksToGenerate = new();
+        int dist2 = (int)Vector3.DistanceSquared(new Vector3(pos.X / (float)ChunkSize,
+                pos.Y / (float)ChunkSize, pos.Z / (float)ChunkSize),
+                new Vector3(centerChunk.X, centerChunk.Y, centerChunk.Z));
+
+        lock (_pqLock)
+            taskQueue.Enqueue((pos, target), dist2);
+    }
     
-        for (int cx = centerChunk.X - halfRenderDistance; cx <= centerChunk.X + halfRenderDistance; cx++)
-        for (int cy = centerChunk.Y - halfRenderDistance; cy <= centerChunk.Y + halfRenderDistance; cy++)
-        for (int cz = centerChunk.Z - halfRenderDistance; cz <= centerChunk.Z + halfRenderDistance; cz++)
+    private void ProcessTaskQueue()
+    {
+        while (true)
         {
-            Vector3Int chunkPos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-    
-            if (ChunkBuffer.TryGetValue(chunkPos, out var chunk))
+            (Vector3Int pos, ChunkGenerationStage target) workItem;
+
+            lock (_pqLock)
             {
-                // Process any chunk that needs to catch up to (or is at) current stage
-                if (chunk.GenerationStage <= terrainGenerationStage)
-                    chunksToGenerate.Add(chunkPos);
+                if (taskQueue.Count == 0)
+                    break;
+
+                workItem = taskQueue.Dequeue();
             }
-            else
-            {
-                // New chunk: always add
-                chunksToGenerate.Add(chunkPos);
-            }
-        }
-    
-        // Sort by distance to centerChunk
-        chunksToGenerate.Sort((a, b) => 
-            (a - centerChunk * ChunkSize).ToVector3().LengthSquared()
-            .CompareTo((b - centerChunk * ChunkSize).ToVector3().LengthSquared())
-        );
-        
-        foreach (var pos in chunksToGenerate)
-        {
-            ThreadPool.QueueUserWorkItem(x =>
+
+            ThreadPool.QueueUserWorkItem(_ =>
             {
                 semaphore.Wait();
-                
+
                 try
                 {
-                    if (!ChunkBuffer.TryGetValue(pos, out var chunk)) // Not in buffer
-                    {
-                        chunk = new Chunk(pos);
-                        ChunkBuffer.TryAdd(pos, chunk);
-                        
-                        // Add new chunk after init and get its stage up to date
-                        if (InitialLoadDone && addAfterInitial)
-                        {
-                            while (chunk.GenerationStage <= terrainGenerationStage)
-                                proccesChunkStage(chunk);
-                        }
-                        else // Generate initial stage from Uninitialized > Islands (increment only)
-                            proccesChunkStage(chunk);
-                    }
-                    else // In buffer
-                    {
-                        // Update pre-existing chunk to next stage(s)
-                        while (chunk.GenerationStage <= terrainGenerationStage)
-                            proccesChunkStage(chunk);
-                    }
+                    if (ChunkBuffer.TryGetValue(workItem.pos, out var chunk) && !chunk.IsFrozen)
+                        AdvanceChunk(chunk, workItem.target);
                 }
-                finally { semaphore.Release(); }
+                finally
+                {
+                    semaphore.Release();
+                }
             });
         }
     }
-
-    private void proccesChunkStage(Chunk chunk)
+    
+    private void AdvanceChunk(Chunk chunk, ChunkGenerationStage target)
     {
-        switch (chunk.GenerationStage)
+        while (chunk.GenerationStage < target && !chunk.IsFrozen)
         {
-            case ChunkGenerationStage.Uninitialized:
+            var next = chunk.GenerationStage + 1;
+
+            if (DependenciesMet(chunk, next))
             {
-                chunk.GenerationStage++;
-                break;
+                ProcessStage(chunk, next);
+                chunk.GenerationStage = next;
             }
+            else
+            {
+                // Requeue to try later; keep target same
+                var playerChunk = lastCameraChunk;
+                EnqueueAdvance(chunk.Position, target, playerChunk);
+                return;
+            }
+        }
+    }
+
+    private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
+    {
+        if (stage == ChunkGenerationStage.Lighting || stage == ChunkGenerationStage.Meshing)
+        {
+            foreach (var offset in getNeighborOffsets())
+            {
+                var nPos = chunk.Position + offset;
+
+                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                {
+                    if (nChunk.GenerationStage < stage - 1)
+                        return false;
+                }
+                else
+                {
+                    // Neighbor missing; ensure it gets queued
+                    EnqueueAdvance(nPos, stage - 1, lastCameraChunk);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+    
+    private void ProcessStage(Chunk chunk, ChunkGenerationStage stage)
+    {
+        switch (stage)
+        {
             case ChunkGenerationStage.Islands:
             {
                 if (!chunk.IsModified)
                     Islands.Generate(chunk);
                 
-                chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Surface:
@@ -247,7 +304,6 @@ public class TerrainGeneration
                 if (!chunk.IsModified)
                     Surface.Generate(chunk);
                 
-                chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Decorations:
@@ -255,65 +311,31 @@ public class TerrainGeneration
                 if (!chunk.IsModified)
                     Decorations.Generate(chunk);
                 
-                chunk.GenerationStage++;
                 break;
             }
             case ChunkGenerationStage.Lighting:
             {
                 Lighting.Generate(chunk);
-                chunk.GenerationStage++;
+
+                // Optional: hint neighbors on lighting boundary updates
+                foreach (var offset in getNeighborOffsets())
+                {
+                    var nPos = chunk.Position + offset;
+
+                    if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                    {
+                        // Ensure neighbor reaches Lighting too
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                    }
+                }
+                
                 break;
             }
             case ChunkGenerationStage.Meshing:
             {
                 Mesh.Generate(chunk);
-                chunk.GenerationStage++;
                 break;
             }
-        }
-    }
-    
-    private void unloadDistantChunks(Vector3Int centerChunk)
-    {
-        List<Vector3Int> chunksToRemove = new List<Vector3Int>();
-
-        foreach (var chunk in ChunkBuffer)
-        {
-            // Convert world-space key to chunk coordinates
-            int chunkX = chunk.Key.X / ChunkSize;
-            int chunkY = chunk.Key.Y / ChunkSize;
-            int chunkZ = chunk.Key.Z / ChunkSize;
-            
-            int centerX = centerChunk.X;
-            int centerY = centerChunk.Y;
-            int centerZ = centerChunk.Z;
-
-            int dx = Math.Abs(chunkX - centerX);
-            int dy = Math.Abs(chunkY - centerY);
-            int dz = Math.Abs(chunkZ - centerZ);
-        
-            if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
-                chunksToRemove.Add(chunk.Key);
-        }
-
-        foreach (var coord in chunksToRemove)
-        {
-            // Opaque model
-            if (Mesh.OpaqueModels.TryGetValue(coord, out var oModel) && oModel != null)
-            {
-                oModel.Dispose();
-                Mesh.OpaqueModels.Remove(coord);
-            }
-
-            // Transparent model
-            if (Mesh.TransparentModels.TryGetValue(coord, out var tModel) &&  tModel != null)
-            {
-                tModel.Dispose();
-                Mesh.TransparentModels.Remove(coord);
-            }
-            
-            if (ChunkBuffer.TryGetValue(coord, out var chunk))
-                chunk.GenerationStage = ChunkGenerationStage.Lighting;
         }
     }
     

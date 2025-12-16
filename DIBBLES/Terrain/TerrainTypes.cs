@@ -43,6 +43,7 @@ public class Chunk
     public byte[] LightLevels;
     public byte[] Biomes;
     
+    public bool IsFrozen = false;
     public bool IsModified = false;
     public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
     
@@ -324,5 +325,10 @@ public class Chunk
             return;
 
         chunk.SetLightLevelAt(localX, localY, localZ, lightLevel);
+    }
+    
+    public void ResetToStage(ChunkGenerationStage stage)
+    {
+        GenerationStage = stage;
     }
 }

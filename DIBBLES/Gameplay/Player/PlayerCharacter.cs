@@ -57,8 +57,7 @@ public class PlayerCharacter
         get { return IsUIFrozen || IsDead; }
     }
     
-    public bool ShouldUpdate = false;
-    
+    public bool ShouldUpdate = true;
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
