@@ -258,6 +258,7 @@ public class TerrainGeneration
                 // Requeue to try later; keep target same
                 var playerChunk = lastCameraChunk;
                 EnqueueAdvance(chunk.Position, target, playerChunk);
+                
                 return;
             }
         }
@@ -265,6 +266,26 @@ public class TerrainGeneration
 
     private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
     {
+        // Require the above (+Y) neighbor to have at least Islands before doing Surface
+        if (stage == ChunkGenerationStage.Surface)
+        {
+            var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
+
+            if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
+            {
+                // Not ready yet
+                if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
+                    return false;
+            }
+            else
+            {
+                // Above chunk missing: ensure it gets queued to Islands, and block until it is
+                EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
+                return false;
+            }
+        }
+
+        // Existing neighbor requirements for later stages
         if (stage == ChunkGenerationStage.Lighting || stage == ChunkGenerationStage.Meshing)
         {
             foreach (var offset in getNeighborOffsets())
