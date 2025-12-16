@@ -287,7 +287,8 @@ public class WorldSave
                     chunk.SetBiomeAt(x, y, z, biome);
                 }
                 
-                chunk.GenerationStage = ChunkGenerationStage.Lighting;
+                // Set stage to just before lighting
+                chunk.GenerationStage = ChunkGenerationStage.Decorations;
                 chunk.IsModified = true;
     
                 Data.ModifiedChunks.Add(chunk.Position, chunk);
