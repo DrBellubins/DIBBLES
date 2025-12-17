@@ -119,13 +119,12 @@ public class TerrainGeneration
         
         if (!InitialLoadDone)
         {
-            int total = progressViewChunks.Count;
-            int ready = countChunksLit(progressViewChunks);
+            // Use the actual render cube (activeViewChunks), not the inset, for progress
+            int total = activeViewChunks.Count;
+            int ready = countChunksReady(activeViewChunks);
 
             InitialLoadProgress = (total > 0) ? (ready / (float)total) : 0f;
 
-            Debug.Draw2DText($"chunks lit: {ready}, total: {total}", Color.Azure);
-            
             if (total > 0 && ready == total)
             {
                 InitialLoadDone = true;
@@ -155,6 +154,11 @@ public class TerrainGeneration
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
         }
+    }
+    
+    private bool IsInsideActiveView(Vector3Int pos)
+    {
+        return activeViewChunks.Contains(pos);
     }
     
     private void QueueChunksInView(Vector3Int center)
@@ -279,41 +283,55 @@ public class TerrainGeneration
 
     private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
     {
-        // Require the above (+Y) neighbor to have at least Islands before doing Surface
+        // Surface: only enforce +Y dependency if the above chunk is inside the active view.
         if (stage == ChunkGenerationStage.Surface)
         {
             var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
-
-            if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
+    
+            if (IsInsideActiveView(abovePos))
             {
-                // Not ready yet
-                if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
+                if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
+                {
+                    if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
+                        return false;
+                }
+                else
+                {
+                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
                     return false;
+                }
             }
             else
             {
-                // Above chunk missing: ensure it gets queued to Islands, and block until it is
-                EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
-                return false;
+                // Optional nudge for out-of-view above, but do not block
+                if (!ChunkBuffer.ContainsKey(abovePos))
+                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
             }
         }
-
-        // Relaxed neighbor requirements for Lighting
+    
+        // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
         if (stage == ChunkGenerationStage.Lighting)
         {
             foreach (var offset in getNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
-
+    
+                if (!IsInsideActiveView(nPos))
+                {
+                    // Optional nudge for out-of-view neighbor, but do not block
+                    if (!ChunkBuffer.ContainsKey(nPos))
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+    
+                    continue;
+                }
+    
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Require neighbor to have at least terrain populated
                     if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
                         return false;
                 }
                 else
                 {
-                    // Bring neighbor up to Decorations so lighting has stable geometry
                     EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
                     return false;
                 }
@@ -324,10 +342,18 @@ public class TerrainGeneration
             foreach (var offset in getNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
-
+    
+                if (!IsInsideActiveView(nPos))
+                {
+                    // Optional nudge for out-of-view neighbor, but do not block
+                    if (!ChunkBuffer.ContainsKey(nPos))
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+    
+                    continue;
+                }
+    
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Require neighbors to be lit before meshing to avoid border seams
                     if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                         return false;
                 }
@@ -338,7 +364,7 @@ public class TerrainGeneration
                 }
             }
         }
-
+    
         return true;
     }
     
@@ -437,21 +463,36 @@ public class TerrainGeneration
                 progressViewChunks.Add(pos);
         }
     }
-
-    private int countChunksLit(HashSet<Vector3Int> set)
+    
+    private int countChunksReady(HashSet<Vector3Int> set)
     {
         int ready = 0;
 
         foreach (var pos in set)
         {
-            if (ChunkBuffer.TryGetValue(pos, out var chunk) &&
-                chunk.GenerationStage >= ChunkGenerationStage.Lighting)
-            {
+            if (isChunkReadyForProgress(pos))
                 ready++;
-            }
         }
 
         return ready;
+    }
+    
+    private bool isChunkReadyForProgress(Vector3Int pos)
+    {
+        // Primary threshold: Lighting
+        if (ChunkBuffer.TryGetValue(pos, out var chunk))
+        {
+            if (chunk.GenerationStage >= ChunkGenerationStage.Lighting)
+                return true;
+        }
+
+        // Fallback: if meshes are already uploaded (stage may lag or be reset),
+        // treat the chunk as ready so the player can be unfrozen.
+        // Either opaque or transparent presence counts.
+        if (Mesh.OpaqueModels.ContainsKey(pos) || Mesh.TransparentModels.ContainsKey(pos))
+            return true;
+
+        return false;
     }
     
     public void Draw()
