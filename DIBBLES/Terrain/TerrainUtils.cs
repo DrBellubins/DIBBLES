@@ -233,7 +233,7 @@ public static class FaceUtils
         {
             lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
         }
-        /*else
+        else
         {
             // Cross-chunk read: convert to world pos and use global helper
             var worldPos = new Vector3Int(
@@ -243,7 +243,7 @@ public static class FaceUtils
             );
 
             lightLevel = GetLightLevelAtWorldPos(worldPos);
-        }*/
+        }
 
         // Normalize to [0..1]
         return lightLevel / 15f;
