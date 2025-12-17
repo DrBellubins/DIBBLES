@@ -73,8 +73,10 @@ public class TerrainGameplay
 
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
             var smoothStepDist = GMath.Smoothstep(dist * 0.2f);
+            
+            var faceSelectionColor = new Color(0, 0, 0, MathF.Max(0.2f, smoothStepDist));
 
-            var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
+            //var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
 
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
             Primatives3D.DrawCubeWiresThick(
