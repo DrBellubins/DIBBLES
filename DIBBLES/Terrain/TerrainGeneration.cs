@@ -42,7 +42,11 @@ public class TerrainGeneration
     public static Vector3Int SelectedNormal;
 
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
-    private int chunksLoaded = 0;
+    
+    private readonly HashSet<Vector3Int> activeViewChunks = new HashSet<Vector3Int>();
+    
+    // Exposed progress [0..1]
+    public float InitialLoadProgress { get; private set; } = 0f;
     
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -51,7 +55,8 @@ public class TerrainGeneration
     private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue
         = new PriorityQueue<(Vector3Int, ChunkGenerationStage), int>();
     
-    private static readonly ChunkGenerationStage FreezeStage = ChunkGenerationStage.Surface;
+    private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
+    
     
     private static Vector3Int[] getNeighborOffsets()
     {
@@ -99,7 +104,8 @@ public class TerrainGeneration
         if (centerChunk != lastCameraChunk)
         {
             lastCameraChunk = centerChunk;
-            chunksLoaded = 0;
+            
+            rebuildActiveView(centerChunk);
 
             // Start chunk queue
             QueueChunksInView(centerChunk);
@@ -108,17 +114,26 @@ public class TerrainGeneration
         
         ProcessTaskQueue();
 
-        //Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
+        Debug.Draw2DText($"Initial load: {InitialLoadProgress * 100f}%", Color.Azure);
         
         float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
-        // TODO: Sometimes doesn't run???
-        // After all chunk data in render distance has loaded in
-        if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
+        if (!InitialLoadDone)
         {
-            //playerCharacter.ShouldUpdate = true;
-            //playerCharacter.FreeCamEnabled = false;
-            InitialLoadDone = true;
+            int total = activeViewChunks.Count;
+            int ready = countActiveChunksLit();
+
+            InitialLoadProgress = (total > 0) ? (ready / (float)total) : 0f;
+
+            // Gate: reach 100% when all active chunks are >= Lighting
+            if (total > 0 && ready == total)
+            {
+                InitialLoadDone = true;
+
+                // Unfreeze the player here if desired:
+                playerCharacter.ShouldUpdate = true;
+                playerCharacter.FreeCamEnabled = false;
+            }
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -140,7 +155,6 @@ public class TerrainGeneration
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
-            chunksLoaded++;
         }
     }
     
@@ -180,8 +194,8 @@ public class TerrainGeneration
             {
                 var chunk = kv.Value;
 
-                if (chunk.GenerationStage > FreezeStage)
-                    chunk.ResetToStage(FreezeStage);
+                if (chunk.GenerationStage > freezeStage)
+                    chunk.ResetToStage(freezeStage);
 
                 chunk.IsFrozen = true;
 
@@ -389,6 +403,48 @@ public class TerrainGeneration
                 break;
             }
         }
+    }
+    
+    private void rebuildActiveView(Vector3Int centerChunk)
+    {
+        activeViewChunks.Clear();
+
+        int half = RenderDistance / 2;
+
+        for (int cx = centerChunk.X - half; cx <= centerChunk.X + half; cx++)
+        for (int cy = centerChunk.Y - half; cy <= centerChunk.Y + half; cy++)
+        for (int cz = centerChunk.Z - half; cz <= centerChunk.Z + half; cz++)
+        {
+            // Store chunk base positions (the keys used in ChunkBuffer)
+            var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
+            activeViewChunks.Add(pos);
+        }
+    }
+
+    private int countActiveChunksLit()
+    {
+        int ready = 0;
+
+        foreach (var pos in activeViewChunks)
+        {
+            if (ChunkBuffer.TryGetValue(pos, out var chunk) &&
+                chunk.GenerationStage >= ChunkGenerationStage.Lighting)
+            {
+                ready++;
+            }
+        }
+
+        return ready;
+    }
+
+    private bool allActiveChunksLit()
+    {
+        int total = activeViewChunks.Count;
+
+        if (total == 0)
+            return false;
+
+        return countActiveChunksLit() == total;
     }
     
     public void Draw()

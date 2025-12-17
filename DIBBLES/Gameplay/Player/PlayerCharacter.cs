@@ -46,7 +46,7 @@ public class PlayerCharacter
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
     
-    public bool FreeCamEnabled = true;
+    public bool FreeCamEnabled = false;
     public Freecam freecam = new();
 
     public bool IsDead = false;
@@ -57,7 +57,7 @@ public class PlayerCharacter
         get { return IsUIFrozen || IsDead; }
     }
     
-    public bool ShouldUpdate = true;
+    public bool ShouldUpdate = false;
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
