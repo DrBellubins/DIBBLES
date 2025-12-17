@@ -43,8 +43,7 @@ public class TerrainGeneration
 
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     
-    private readonly HashSet<Vector3Int> activeViewChunks = new HashSet<Vector3Int>();
-    private readonly HashSet<Vector3Int> progressViewChunks = new HashSet<Vector3Int>();
+    private readonly HashSet<Vector3Int> activeViewChunks = new();
     
     // Exposed progress [0..1]
     public float VisualLoadProgress { get; private set; } = 0f;
@@ -116,7 +115,7 @@ public class TerrainGeneration
         ProcessTaskQueue();
         VisualLoadProgress = computeVisualProgress(activeViewChunks);
 
-        Debug.Draw2DText($"Initial load: {VisualLoadProgress * 100f}%", Color.Azure);
+        Debug.Draw2DText($"Load progress: {VisualLoadProgress * 100f}%", Color.Azure);
         
         if (!InitialLoadDone)
         {
@@ -432,7 +431,6 @@ public class TerrainGeneration
     private void rebuildActiveView(Vector3Int centerChunk)
     {
         activeViewChunks.Clear();
-        progressViewChunks.Clear();
 
         int half = RenderDistance / 2;
 
@@ -457,9 +455,6 @@ public class TerrainGeneration
                     break;
                 }
             }
-
-            if (allNeighborsInside)
-                progressViewChunks.Add(pos);
         }
     }
     
