@@ -63,7 +63,6 @@ public class GameScene : Scene
         SkyColor = Color.FromNonPremultiplied(new Vector4(skyColorVec.X, skyColorVec.Y, skyColorVec.Z, 1.0f));
         
         TerrainGen.Start(); // Initial terrain generation
-        TerrainGeneration.Gameplay.Start();
         Inventory.Start();
         PlayerCharacter.Start(); // Must be started after terrain
         gameChat.Start();
@@ -147,8 +146,6 @@ public class GameScene : Scene
         Debug.Clear2D();
         
         UIBatch.End();
-        
-        TerrainGeneration.Gameplay.Apply();
         
         graphics.SetRenderTarget(null);
         

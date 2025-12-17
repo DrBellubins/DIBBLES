@@ -11,37 +11,6 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    private Effect inverseUIEffect; 
-    private RenderTarget2D inverseUITarget;
-    
-    private BlendState mrtMaskWrite;
-
-    public void Start()
-    {
-        inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
-    
-        inverseUITarget = new RenderTarget2D
-        (
-            Engine.Graphics,
-            Engine.ScreenWidth,
-            Engine.ScreenHeight,
-            false,
-            SurfaceFormat.Color,
-            DepthFormat.Depth24
-        );
-
-        mrtMaskWrite = new BlendState
-        {
-            ColorWriteChannels = ColorWriteChannels.None,
-            ColorWriteChannels1 = ColorWriteChannels.All,
-            AlphaSourceBlend = Blend.One,
-            ColorSourceBlend = Blend.One,
-            AlphaDestinationBlend = Blend.InverseSourceAlpha,
-            ColorDestinationBlend = Blend.InverseSourceAlpha
-        };
-    }
-
-    
     public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
@@ -51,85 +20,19 @@ public class TerrainGameplay
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
     public void Draw()
     {
-        var graphics = Engine.Graphics;
-
-        // Clear mask (safe now that BackBuffer preserves contents)
-        graphics.SetRenderTarget(inverseUITarget);
-        graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Transparent, 1f, 0);
-
-        graphics.SetRenderTargets(
-            new RenderTargetBinding(GameScene.BackBuffer),
-            new RenderTargetBinding(inverseUITarget)
-        );
-
-        graphics.BlendState = mrtMaskWrite;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullNone;
-
         if (SelectedBlock.Type != BlockType.Air)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
 
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
-            var smoothStepDist = GMath.Smoothstep(dist * 0.2f);
-            
-            var faceSelectionColor = new Color(0, 0, 0, MathF.Max(0.2f, smoothStepDist));
-
-            //var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
+            var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
+            var faceSelectionColor = new Color(1f, 1f, 1f, smoothStepDist * 0.35f);
 
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
             Primatives3D.DrawCubeWiresThick(
                 SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
                 1f, 1f, 1f, Color.Black, 0.025f);
-        }
-
-        graphics.SetRenderTarget(GameScene.BackBuffer);
-
-        // Restore original world states (match GameScene world draw)
-        graphics.BlendState = BlendState.NonPremultiplied;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-    }
-
-    public void Apply()
-    {
-        // Composite: take BackBuffer, invert to grayscale, multiply by inverseUITarget alpha,
-        // and draw result into UIBuffer as an overlay.
-        var graphics = Engine.Graphics;
-
-        graphics.SetRenderTarget(GameScene.UIBuffer);
-
-        graphics.BlendState = BlendState.AlphaBlend;
-        graphics.RasterizerState = RasterizerState.CullNone;
-        graphics.DepthStencilState = DepthStencilState.None;
-        graphics.SamplerStates[0] = SamplerState.LinearClamp;
-        graphics.SamplerStates[1] = SamplerState.LinearClamp;
-
-        inverseUIEffect.Parameters["Texture"]?.SetValue(GameScene.BackBuffer);
-        inverseUIEffect.Parameters["MaskTexture"]?.SetValue(inverseUITarget);
-        inverseUIEffect.Parameters["MatrixTransform"]?.SetValue(
-            Matrix.CreateOrthographicOffCenter(0, Engine.ScreenWidth, Engine.ScreenHeight, 0, 0, 1));
-
-        // Fullscreen quad (screen-space positions, 0..width/height)
-        var verts = new VertexPositionColorTexture[4]
-        {
-            new (new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
-            new (new Vector3(Engine.ScreenWidth, 0, 0), Color.White, new Vector2(1, 0)),
-            new (new Vector3(Engine.ScreenWidth, Engine.ScreenHeight, 0), Color.White, new Vector2(1, 1)),
-            new (new Vector3(0, Engine.ScreenHeight, 0), Color.White, new Vector2(0, 1)),
-        };
-
-        var indices = new short[6] { 0, 1, 2, 0, 2, 3 };
-
-        foreach (var pass in inverseUIEffect.CurrentTechnique.Passes)
-        {
-            pass.Apply();
-            
-            graphics.DrawUserIndexedPrimitives(
-                PrimitiveType.TriangleList,
-                verts, 0, 4,
-                indices, 0, 2);
         }
     }
     
