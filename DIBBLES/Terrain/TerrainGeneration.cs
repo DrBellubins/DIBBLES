@@ -285,7 +285,8 @@ public class TerrainGeneration
             }
         }
 
-        // Existing neighbor requirements for later stages
+        // Lighting must wait until ALL 6 neighbors have completed Lighting.
+        // Meshing must also wait until neighbors have completed Lighting (to avoid border seams from lighting reads).
         if (stage == ChunkGenerationStage.Lighting || stage == ChunkGenerationStage.Meshing)
         {
             foreach (var offset in getNeighborOffsets())
@@ -294,13 +295,14 @@ public class TerrainGeneration
 
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    if (nChunk.GenerationStage < stage - 1)
+                    // Require neighbor to be at least Lighting before we proceed
+                    if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                         return false;
                 }
                 else
                 {
-                    // Neighbor missing; ensure it gets queued
-                    EnqueueAdvance(nPos, stage - 1, lastCameraChunk);
+                    // Neighbor missing; ensure it gets queued up to Lighting
+                    EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
                     return false;
                 }
             }
@@ -338,18 +340,29 @@ public class TerrainGeneration
             {
                 Lighting.Generate(chunk);
 
-                // Optional: hint neighbors on lighting boundary updates
+                // After finishing lighting, nudge neighbors to Lighting (if they aren't yet),
+                // and optionally nudge both this chunk and neighbors toward Meshing.
                 foreach (var offset in getNeighborOffsets())
                 {
                     var nPos = chunk.Position + offset;
 
                     if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                     {
-                        // Ensure neighbor reaches Lighting too
+                        if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                    
+                        // Optional: if both are lit, ensure meshing gets queued soon
+                        if (nChunk.GenerationStage >= ChunkGenerationStage.Lighting)
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
+                    }
+                    else
+                    {
                         EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
                     }
                 }
-                
+
+                // Also ensure this chunk proceeds to meshing after lighting
+                EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
                 break;
             }
             case ChunkGenerationStage.Meshing:
