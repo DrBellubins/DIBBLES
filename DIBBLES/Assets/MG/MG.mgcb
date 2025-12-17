@@ -16,3 +16,6 @@
 
 # Build the UI blur shader
 /build:Shaders/UIBlur.fx
+
+# Build the block highlight shader
+/build:Shaders/InverseUIEffect.fx

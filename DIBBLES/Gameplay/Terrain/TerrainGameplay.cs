@@ -11,12 +11,12 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    private Effect inverseUIEffect; 
+    //private Effect inverseUIEffect; 
     private RenderTarget2D inverseUITarget;
 
     public void Start()
     {
-        inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
+        //inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
         inverseUITarget = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
     }
     
@@ -29,6 +29,11 @@ public class TerrainGameplay
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
     public void Draw()
     {
+        Apply();
+        
+        Engine.Graphics.SetRenderTarget(inverseUITarget);
+        Engine.Graphics.Clear(Color.Transparent);
+        
         if (SelectedBlock.Type != BlockType.Air)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
@@ -41,16 +46,25 @@ public class TerrainGameplay
             var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
             var faceSelectionColor = new Color(1, 1, 1, smoothStepDist * 0.2f);
             
-            Engine.Graphics.SetRenderTarget(inverseUITarget);
-            
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
             
             // Draw block selection overlay
             Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 
                 1f, 1f, 1f, Color.Black, 0.025f);
-            
-            Engine.Graphics.SetRenderTarget(null);
         }
+        
+        Engine.Graphics.SetRenderTarget(null);
+        
+        UIBatch.Begin();
+        
+        UIBatch.Draw(inverseUITarget, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        
+        UIBatch.End();
+    }
+
+    public void Apply()
+    {
+        var graphics = Engine.Graphics;
     }
     
     private (Block, Vector3Int) selectBlock(Camera3D camera)
