@@ -121,8 +121,8 @@ public class TerrainGeneration
             InitialLoadDone = true;
 
             // If you want to unfreeze player here:
-            playerCharacter.FreeCamEnabled = false;
-            playerCharacter.ShouldUpdate = true;
+            //playerCharacter.FreeCamEnabled = false;
+            //playerCharacter.ShouldUpdate = true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -319,20 +319,31 @@ public class TerrainGeneration
             foreach (var offset in getNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
-
+        
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Do not block on neighbors deliberately frozen outside the view
+                    // Skip neighbors we intentionally froze
                     if (nChunk.IsFrozen)
+                    {
                         continue;
-
-                    // Require neighbors that exist and are active to have terrain populated
+                    }
+        
+                    // Ensure neighbor is progressing and only block if it’s inside the active view set
                     if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
-                        return false;
+                    {
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+        
+                        if (activeViewChunks.Contains(nPos))
+                        {
+                            return false; // Block on in-view neighbors only
+                        }
+        
+                        continue; // Don’t block on out-of-view neighbors
+                    }
                 }
                 else
                 {
-                    // Nudge neighbor up, but do not block current chunk
+                    // Missing neighbor: nudge and don’t block
                     EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
                 }
             }
@@ -342,20 +353,30 @@ public class TerrainGeneration
             foreach (var offset in getNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
-
+        
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Do not block on frozen neighbors just outside the view
                     if (nChunk.IsFrozen)
+                    {
                         continue;
-
-                    // Only block on neighbors that exist and are active but not yet lit
+                    }
+        
+                    // Ensure neighbor is progressing and only block if it’s inside the active view set
                     if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
-                        return false;
+                    {
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+        
+                        if (activeViewChunks.Contains(nPos))
+                        {
+                            return false; // Block on in-view neighbors only
+                        }
+        
+                        continue; // Don’t block on out-of-view neighbors
+                    }
                 }
                 else
                 {
-                    // Nudge neighbor up, but do not block current chunk
+                    // Missing neighbor: nudge and don’t block
                     EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
                 }
             }
