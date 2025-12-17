@@ -285,9 +285,11 @@ public class TerrainGeneration
             }
         }
 
-        // Lighting must wait until ALL 6 neighbors have completed Lighting.
-        // Meshing must also wait until neighbors have completed Lighting (to avoid border seams from lighting reads).
-        if (stage == ChunkGenerationStage.Lighting || stage == ChunkGenerationStage.Meshing)
+        // Relaxed neighbor requirements for Lighting:
+        // - Lighting may start once neighbors have finished terrain content (Decorations or earlier),
+        //   so cross-chunk reads have stable block/types, but we don't block on neighbors being lit.
+        // - Meshing should wait until neighbors are lit to avoid seams from light sampling.
+        if (stage == ChunkGenerationStage.Lighting)
         {
             foreach (var offset in getNeighborOffsets())
             {
@@ -295,13 +297,32 @@ public class TerrainGeneration
 
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Require neighbor to be at least Lighting before we proceed
+                    // Require neighbor to have at least terrain populated
+                    if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
+                        return false;
+                }
+                else
+                {
+                    // Bring neighbor up to Decorations so lighting has stable geometry
+                    EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+                    return false;
+                }
+            }
+        }
+        else if (stage == ChunkGenerationStage.Meshing)
+        {
+            foreach (var offset in getNeighborOffsets())
+            {
+                var nPos = chunk.Position + offset;
+
+                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                {
+                    // Require neighbors to be lit before meshing to avoid border seams
                     if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                         return false;
                 }
                 else
                 {
-                    // Neighbor missing; ensure it gets queued up to Lighting
                     EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
                     return false;
                 }
