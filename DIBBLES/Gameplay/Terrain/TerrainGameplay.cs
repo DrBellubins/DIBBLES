@@ -11,13 +11,21 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
-    //private Effect inverseUIEffect; 
+    private Effect inverseUIEffect; 
     private RenderTarget2D inverseUITarget;
 
     public void Start()
     {
-        //inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
-        inverseUITarget = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
+        inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
+        
+        inverseUITarget = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None
+        );
     }
     
     public void Update(Camera3D camera)
@@ -29,10 +37,10 @@ public class TerrainGameplay
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
     public void Draw()
     {
-        Apply();
+        var graphics = Engine.Graphics;
         
-        Engine.Graphics.SetRenderTarget(inverseUITarget);
-        Engine.Graphics.Clear(Color.Transparent);
+        graphics.SetRenderTarget(inverseUITarget);
+        graphics.Clear(Color.Transparent);
         
         if (SelectedBlock.Type != BlockType.Air)
         {
@@ -43,8 +51,8 @@ public class TerrainGameplay
             
             // Face selection overlay
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
-            var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
-            var faceSelectionColor = new Color(1, 1, 1, smoothStepDist * 0.2f);
+            var smoothStepDist = GMath.Smoothstep(dist * 0.2f);
+            var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
             
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
             
@@ -53,18 +61,49 @@ public class TerrainGameplay
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
         
-        Engine.Graphics.SetRenderTarget(null);
-        
-        UIBatch.Begin();
-        
-        UIBatch.Draw(inverseUITarget, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
-        
-        UIBatch.End();
+        graphics.SetRenderTarget(null);
     }
 
     public void Apply()
     {
+        // Composite: take BackBuffer, invert to grayscale, multiply by inverseUITarget alpha,
+        // and draw result into UIBuffer as an overlay.
         var graphics = Engine.Graphics;
+
+        graphics.SetRenderTarget(GameScene.UIBuffer);
+
+        graphics.BlendState = BlendState.AlphaBlend;
+        graphics.RasterizerState = RasterizerState.CullNone;
+        graphics.DepthStencilState = DepthStencilState.None;
+        graphics.SamplerStates[0] = SamplerState.LinearClamp; // Scene sampler
+        graphics.SamplerStates[1] = SamplerState.LinearClamp; // Mask sampler
+
+        // Set effect params
+        inverseUIEffect.Parameters["Texture"]?.SetValue(GameScene.BackBuffer);
+        inverseUIEffect.Parameters["MaskTexture"]?.SetValue(inverseUITarget);
+        inverseUIEffect.Parameters["MatrixTransform"]?.SetValue(
+            Matrix.CreateOrthographicOffCenter(0, Engine.ScreenWidth, Engine.ScreenHeight, 0, 0, 1));
+
+        // Fullscreen quad (screen-space positions, 0..width/height)
+        var verts = new VertexPositionColorTexture[4]
+        {
+            new (new Vector3(0, 0, 0), Color.White, new Vector2(0, 0)),
+            new (new Vector3(Engine.ScreenWidth, 0, 0), Color.White, new Vector2(1, 0)),
+            new (new Vector3(Engine.ScreenWidth, Engine.ScreenHeight, 0), Color.White, new Vector2(1, 1)),
+            new (new Vector3(0, Engine.ScreenHeight, 0), Color.White, new Vector2(0, 1)),
+        };
+
+        var indices = new short[6] { 0, 1, 2, 0, 2, 3 };
+
+        foreach (var pass in inverseUIEffect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            
+            graphics.DrawUserIndexedPrimitives(
+                PrimitiveType.TriangleList,
+                verts, 0, 4,
+                indices, 0, 2);
+        }
     }
     
     private (Block, Vector3Int) selectBlock(Camera3D camera)

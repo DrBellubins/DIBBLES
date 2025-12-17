@@ -131,6 +131,8 @@ public class GameScene : Scene
         
         UIBatch.End();
         
+        TerrainGeneration.Gameplay.Apply();
+        
         graphics.SetRenderTarget(null);
         
         uiBlur.Apply(BackBuffer, UIBuffer);
