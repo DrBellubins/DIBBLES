@@ -53,6 +53,7 @@ public class TerrainGameplay
     {
         var graphics = Engine.Graphics;
 
+        // Clear mask (safe now that BackBuffer preserves contents)
         graphics.SetRenderTarget(inverseUITarget);
         graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Transparent, 1f, 0);
 
@@ -81,11 +82,10 @@ public class TerrainGameplay
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
 
-        // Unbind MRT, go back to BackBuffer for the rest of the world/UI
         graphics.SetRenderTarget(GameScene.BackBuffer);
 
-        // IMPORTANT: restore common states so later draws aren’t accidentally masked
-        graphics.BlendState = BlendState.Opaque;              // world rendering default
+        // Restore original world states (match GameScene world draw)
+        graphics.BlendState = BlendState.NonPremultiplied;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
     }

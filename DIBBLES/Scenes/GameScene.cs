@@ -31,10 +31,27 @@ public class GameScene : Scene
     
     public override void Start()
     {
-        BackBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight, false, 
-            SurfaceFormat.Color, DepthFormat.Depth24);
-        
-        UIBuffer = new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight);
+        BackBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
+        );
+
+        UIBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
+        );
         
         UIBatch.Initialize();
         Primatives3D.Initialize();

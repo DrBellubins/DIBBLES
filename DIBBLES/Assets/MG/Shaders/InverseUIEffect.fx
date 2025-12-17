@@ -1,5 +1,5 @@
 // InverseUIEffect.fx
-// Samples BackBuffer, inverts to grayscale, multiplies by mask alpha, writes premultiplied output.
+// Bind samplers to effect parameters so they sample the textures you set from C#.
 
 float4x4 MatrixTransform;
 
@@ -61,8 +61,7 @@ float4 PSMain(VS_OUTPUT input) : COLOR0
 
     float maskA = tex2D(MaskSampler, input.TexCoord).a;
 
-    // Premultiply for SpriteBatch/AlphaBlend
-    float3 outRGB = invGray.xxx * maskA;
+    float3 outRGB = invGray.xxx * maskA; // premultiply
 
     return float4(outRGB, maskA);
 }
