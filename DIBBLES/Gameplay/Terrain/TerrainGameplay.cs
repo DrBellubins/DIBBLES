@@ -19,26 +19,28 @@ public class TerrainGameplay
     public void Start()
     {
         inverseUIEffect = Engine.Instance.Content.Load<Effect>("Shaders/InverseUIEffect");
-        
-        inverseUITarget = new RenderTarget2D(
+    
+        inverseUITarget = new RenderTarget2D
+        (
             Engine.Graphics,
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.None
+            DepthFormat.Depth24
         );
-        
+
         mrtMaskWrite = new BlendState
         {
-            ColorWriteChannels = ColorWriteChannels.None, // Do not write to RT0 (BackBuffer) color during mask draw
-            ColorWriteChannels1 = ColorWriteChannels.All, // Write to RT1 (inverseUITarget)
-            AlphaSourceBlend = Blend.One, // Default blending (premultiplied) for subsequent passes
+            ColorWriteChannels = ColorWriteChannels.None,
+            ColorWriteChannels1 = ColorWriteChannels.All,
+            AlphaSourceBlend = Blend.One,
             ColorSourceBlend = Blend.One,
             AlphaDestinationBlend = Blend.InverseSourceAlpha,
             ColorDestinationBlend = Blend.InverseSourceAlpha
         };
     }
+
     
     public void Update(Camera3D camera)
     {
@@ -51,12 +53,9 @@ public class TerrainGameplay
     {
         var graphics = Engine.Graphics;
 
-        // 1) Clear the mask RT (including its depth)
         graphics.SetRenderTarget(inverseUITarget);
         graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Transparent, 1f, 0);
 
-        // 2) Bind MRT: RT0 = BackBuffer (keeps its depth contents), RT1 = inverseUITarget
-        // The depth buffer used will be the one associated with RT0 (BackBuffer), preserving terrain depth.
         graphics.SetRenderTargets(
             new RenderTargetBinding(GameScene.BackBuffer),
             new RenderTargetBinding(inverseUITarget)
@@ -74,7 +73,6 @@ public class TerrainGameplay
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
             var smoothStepDist = GMath.Smoothstep(dist * 0.2f);
 
-            // Mask uses alpha only; color can stay black
             var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
 
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
@@ -83,8 +81,13 @@ public class TerrainGameplay
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
 
-        // 3) Restore to only BackBuffer so the rest of world draw continues unaffected
+        // Unbind MRT, go back to BackBuffer for the rest of the world/UI
         graphics.SetRenderTarget(GameScene.BackBuffer);
+
+        // IMPORTANT: restore common states so later draws aren’t accidentally masked
+        graphics.BlendState = BlendState.Opaque;              // world rendering default
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
     }
 
     public void Apply()
@@ -98,10 +101,9 @@ public class TerrainGameplay
         graphics.BlendState = BlendState.AlphaBlend;
         graphics.RasterizerState = RasterizerState.CullNone;
         graphics.DepthStencilState = DepthStencilState.None;
-        graphics.SamplerStates[0] = SamplerState.LinearClamp; // Scene sampler
-        graphics.SamplerStates[1] = SamplerState.LinearClamp; // Mask sampler
+        graphics.SamplerStates[0] = SamplerState.LinearClamp;
+        graphics.SamplerStates[1] = SamplerState.LinearClamp;
 
-        // Set effect params
         inverseUIEffect.Parameters["Texture"]?.SetValue(GameScene.BackBuffer);
         inverseUIEffect.Parameters["MaskTexture"]?.SetValue(inverseUITarget);
         inverseUIEffect.Parameters["MatrixTransform"]?.SetValue(

@@ -1,6 +1,5 @@
 // InverseUIEffect.fx
-// Fixed samplers binding to the provided Effect parameters. Samples the BackBuffer,
-// inverts to grayscale, and multiplies by the inverseUITarget alpha.
+// Samples BackBuffer, inverts to grayscale, multiplies by mask alpha, writes premultiplied output.
 
 float4x4 MatrixTransform;
 
@@ -62,7 +61,7 @@ float4 PSMain(VS_OUTPUT input) : COLOR0
 
     float maskA = tex2D(MaskSampler, input.TexCoord).a;
 
-    // Premultiply for BlendState.AlphaBlend
+    // Premultiply for SpriteBatch/AlphaBlend
     float3 outRGB = invGray.xxx * maskA;
 
     return float4(outRGB, maskA);
