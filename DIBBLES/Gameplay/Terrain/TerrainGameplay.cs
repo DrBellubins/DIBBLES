@@ -13,6 +13,8 @@ public class TerrainGameplay
 {
     private Effect inverseUIEffect; 
     private RenderTarget2D inverseUITarget;
+    
+    private BlendState mrtMaskWrite;
 
     public void Start()
     {
@@ -26,6 +28,16 @@ public class TerrainGameplay
             SurfaceFormat.Color,
             DepthFormat.None
         );
+        
+        mrtMaskWrite = new BlendState
+        {
+            ColorWriteChannels = ColorWriteChannels.None, // Do not write to RT0 (BackBuffer) color during mask draw
+            ColorWriteChannels1 = ColorWriteChannels.All, // Write to RT1 (inverseUITarget)
+            AlphaSourceBlend = Blend.One, // Default blending (premultiplied) for subsequent passes
+            ColorSourceBlend = Blend.One,
+            AlphaDestinationBlend = Blend.InverseSourceAlpha,
+            ColorDestinationBlend = Blend.InverseSourceAlpha
+        };
     }
     
     public void Update(Camera3D camera)
@@ -38,30 +50,41 @@ public class TerrainGameplay
     public void Draw()
     {
         var graphics = Engine.Graphics;
-        
+
+        // 1) Clear the mask RT (including its depth)
         graphics.SetRenderTarget(inverseUITarget);
-        graphics.Clear(Color.Transparent);
-        
+        graphics.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Transparent, 1f, 0);
+
+        // 2) Bind MRT: RT0 = BackBuffer (keeps its depth contents), RT1 = inverseUITarget
+        // The depth buffer used will be the one associated with RT0 (BackBuffer), preserving terrain depth.
+        graphics.SetRenderTargets(
+            new RenderTargetBinding(GameScene.BackBuffer),
+            new RenderTargetBinding(inverseUITarget)
+        );
+
+        graphics.BlendState = mrtMaskWrite;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullNone;
+
         if (SelectedBlock.Type != BlockType.Air)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
-            
-            // Offset by half a block in the direction of the normal
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
-            
-            // Face selection overlay
+
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
             var smoothStepDist = GMath.Smoothstep(dist * 0.2f);
+
+            // Mask uses alpha only; color can stay black
             var faceSelectionColor = new Color(0, 0, 0, smoothStepDist);
-            
+
             Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
-            
-            // Draw block selection overlay
-            Primatives3D.DrawCubeWiresThick(SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), 
+            Primatives3D.DrawCubeWiresThick(
+                SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
-        
-        graphics.SetRenderTarget(null);
+
+        // 3) Restore to only BackBuffer so the rest of world draw continues unaffected
+        graphics.SetRenderTarget(GameScene.BackBuffer);
     }
 
     public void Apply()
