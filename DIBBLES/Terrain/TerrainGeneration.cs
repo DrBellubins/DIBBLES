@@ -47,7 +47,7 @@ public class TerrainGeneration
     private readonly HashSet<Vector3Int> progressViewChunks = new HashSet<Vector3Int>();
     
     // Exposed progress [0..1]
-    public float InitialLoadProgress { get; private set; } = 0f;
+    public float VisualLoadProgress { get; private set; } = 0f;
     
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -114,16 +114,15 @@ public class TerrainGeneration
         }
         
         ProcessTaskQueue();
+        VisualLoadProgress = computeVisualProgress(activeViewChunks);
 
-        Debug.Draw2DText($"Initial load: {InitialLoadProgress * 100f}%", Color.Azure);
+        Debug.Draw2DText($"Initial load: {VisualLoadProgress * 100f}%", Color.Azure);
         
         if (!InitialLoadDone)
         {
             // Use the actual render cube (activeViewChunks), not the inset, for progress
             int total = activeViewChunks.Count;
             int ready = countChunksReady(activeViewChunks);
-
-            InitialLoadProgress = (total > 0) ? (ready / (float)total) : 0f;
 
             if (total > 0 && ready == total)
             {
@@ -486,13 +485,49 @@ public class TerrainGeneration
                 return true;
         }
 
-        // Fallback: if meshes are already uploaded (stage may lag or be reset),
-        // treat the chunk as ready so the player can be unfrozen.
-        // Either opaque or transparent presence counts.
+        // Fallback: Treat meshes upload as ready
         if (Mesh.OpaqueModels.ContainsKey(pos) || Mesh.TransparentModels.ContainsKey(pos))
             return true;
 
         return false;
+    }
+    
+    private float stageToProgress(ChunkGenerationStage stage)
+    {
+        // Normalize stages to [0..1]: Uninitialized=0, Islands=0.2, ..., Meshing=1.0
+        int max = (int)ChunkGenerationStage.Meshing;
+        int s = Math.Clamp((int)stage, 0, max);
+        
+        return s / (float)max;
+    }
+
+    private float computeVisualProgress(HashSet<Vector3Int> set)
+    {
+        if (set.Count == 0)
+            return 0f;
+
+        float sum = 0f;
+
+        foreach (var pos in set)
+        {
+            float p = 0f;
+
+            if (ChunkBuffer.TryGetValue(pos, out var chunk))
+            {
+                // Primary: stage-based progress (starts at Islands)
+                p = stageToProgress(chunk.GenerationStage);
+
+                // If models are uploaded, treat as fully done visually
+                if (Mesh.OpaqueModels.ContainsKey(pos) || Mesh.TransparentModels.ContainsKey(pos))
+                {
+                    p = 1f;
+                }
+            }
+
+            sum += p;
+        }
+
+        return sum / set.Count;
     }
     
     public void Draw()
