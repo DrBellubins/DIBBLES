@@ -285,10 +285,7 @@ public class TerrainGeneration
             }
         }
 
-        // Relaxed neighbor requirements for Lighting:
-        // - Lighting may start once neighbors have finished terrain content (Decorations or earlier),
-        //   so cross-chunk reads have stable block/types, but we don't block on neighbors being lit.
-        // - Meshing should wait until neighbors are lit to avoid seams from light sampling.
+        // Relaxed neighbor requirements for Lighting
         if (stage == ChunkGenerationStage.Lighting)
         {
             foreach (var offset in getNeighborOffsets())
