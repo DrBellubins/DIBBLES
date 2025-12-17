@@ -44,6 +44,7 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     
     private readonly HashSet<Vector3Int> activeViewChunks = new HashSet<Vector3Int>();
+    private readonly HashSet<Vector3Int> progressViewChunks = new HashSet<Vector3Int>();
     
     // Exposed progress [0..1]
     public float InitialLoadProgress { get; private set; } = 0f;
@@ -116,21 +117,19 @@ public class TerrainGeneration
 
         Debug.Draw2DText($"Initial load: {InitialLoadProgress * 100f}%", Color.Azure);
         
-        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
-        
         if (!InitialLoadDone)
         {
-            int total = activeViewChunks.Count;
-            int ready = countActiveChunksLit();
+            int total = progressViewChunks.Count;
+            int ready = countChunksLit(progressViewChunks);
 
             InitialLoadProgress = (total > 0) ? (ready / (float)total) : 0f;
 
-            // Gate: reach 100% when all active chunks are >= Lighting
+            Debug.Draw2DText($"chunks lit: {ready}, total: {total}", Color.Azure);
+            
             if (total > 0 && ready == total)
             {
                 InitialLoadDone = true;
 
-                // Unfreeze the player here if desired:
                 playerCharacter.ShouldUpdate = true;
                 playerCharacter.FreeCamEnabled = false;
             }
@@ -408,6 +407,7 @@ public class TerrainGeneration
     private void rebuildActiveView(Vector3Int centerChunk)
     {
         activeViewChunks.Clear();
+        progressViewChunks.Clear();
 
         int half = RenderDistance / 2;
 
@@ -415,17 +415,34 @@ public class TerrainGeneration
         for (int cy = centerChunk.Y - half; cy <= centerChunk.Y + half; cy++)
         for (int cz = centerChunk.Z - half; cz <= centerChunk.Z + half; cz++)
         {
-            // Store chunk base positions (the keys used in ChunkBuffer)
             var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
             activeViewChunks.Add(pos);
         }
+
+        // Build inset set: only chunks whose 6 neighbors are also inside the view cube.
+        foreach (var pos in activeViewChunks)
+        {
+            bool allNeighborsInside = true;
+
+            foreach (var off in getNeighborOffsets())
+            {
+                if (!activeViewChunks.Contains(pos + off))
+                {
+                    allNeighborsInside = false;
+                    break;
+                }
+            }
+
+            if (allNeighborsInside)
+                progressViewChunks.Add(pos);
+        }
     }
 
-    private int countActiveChunksLit()
+    private int countChunksLit(HashSet<Vector3Int> set)
     {
         int ready = 0;
 
-        foreach (var pos in activeViewChunks)
+        foreach (var pos in set)
         {
             if (ChunkBuffer.TryGetValue(pos, out var chunk) &&
                 chunk.GenerationStage >= ChunkGenerationStage.Lighting)
@@ -435,16 +452,6 @@ public class TerrainGeneration
         }
 
         return ready;
-    }
-
-    private bool allActiveChunksLit()
-    {
-        int total = activeViewChunks.Count;
-
-        if (total == 0)
-            return false;
-
-        return countActiveChunksLit() == total;
     }
     
     public void Draw()
