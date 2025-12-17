@@ -32,6 +32,7 @@ public class Hotbar
             HotBarSelectionIndex = WorldSave.Data.HotbarPosition;
 
         Resize();
+        updateSelectionRect();
     }
 
     public void Update(bool isPlayerDead, bool isFrozen)
@@ -80,7 +81,12 @@ public class Hotbar
             }
         }
         
-        // Selection rectangle centered in current slot
+        updateSelectionRect();
+    }
+
+    // Selection rectangle centered in current slot
+    private void updateSelectionRect()
+    {
         var hotbarSlots = GameScene.Inventory.PlayerInventory.HotBarSlots;
         
         float slotSize = hotbarRect.Height;
