@@ -194,6 +194,9 @@ public class TerrainGeneration
 
     private void UnloadAndFreezeDistant(Vector3Int center)
     {
+        // One-chunk safety margin outside the view cube
+        int safeRadius = (RenderDistance / 2) + 1;
+        
         foreach (var kv in ChunkBuffer)
         {
             var pos = kv.Key;
@@ -201,7 +204,7 @@ public class TerrainGeneration
             int dy = Math.Abs((pos.Y / ChunkSize) - center.Y);
             int dz = Math.Abs((pos.Z / ChunkSize) - center.Z);
 
-            if (dx > RenderDistance / 2 || dy > RenderDistance / 2 || dz > RenderDistance / 2)
+            if (dx > safeRadius || dy > safeRadius || dz > safeRadius)
             {
                 var chunk = kv.Value;
 
@@ -319,15 +322,18 @@ public class TerrainGeneration
 
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Require neighbor to have at least terrain populated
+                    // Do not block on neighbors deliberately frozen outside the view
+                    if (nChunk.IsFrozen)
+                        continue;
+
+                    // Require neighbors that exist and are active to have terrain populated
                     if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
                         return false;
                 }
                 else
                 {
-                    // Bring neighbor up to Decorations so lighting has stable geometry
+                    // Nudge neighbor up, but do not block current chunk
                     EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-                    return false;
                 }
             }
         }
@@ -339,14 +345,18 @@ public class TerrainGeneration
 
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
-                    // Require neighbors to be lit before meshing to avoid border seams
+                    // Do not block on frozen neighbors just outside the view
+                    if (nChunk.IsFrozen)
+                        continue;
+
+                    // Only block on neighbors that exist and are active but not yet lit
                     if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                         return false;
                 }
                 else
                 {
+                    // Nudge neighbor up, but do not block current chunk
                     EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                    return false;
                 }
             }
         }
