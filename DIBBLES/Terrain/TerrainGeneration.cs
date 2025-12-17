@@ -42,8 +42,7 @@ public class TerrainGeneration
     public static Vector3Int SelectedNormal;
 
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
-    
-    private readonly HashSet<Vector3Int> activeViewChunks = new();
+    private int chunksLoaded = 0;
     
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
@@ -52,8 +51,7 @@ public class TerrainGeneration
     private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue
         = new PriorityQueue<(Vector3Int, ChunkGenerationStage), int>();
     
-    private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
-    private const ChunkGenerationStage initialLoadGateStage = ChunkGenerationStage.Lighting;
+    private static readonly ChunkGenerationStage FreezeStage = ChunkGenerationStage.Surface;
     
     private static Vector3Int[] getNeighborOffsets()
     {
@@ -101,8 +99,7 @@ public class TerrainGeneration
         if (centerChunk != lastCameraChunk)
         {
             lastCameraChunk = centerChunk;
-            
-            BuildActiveView(centerChunk);
+            chunksLoaded = 0;
 
             // Start chunk queue
             QueueChunksInView(centerChunk);
@@ -112,17 +109,16 @@ public class TerrainGeneration
         ProcessTaskQueue();
 
         //Debug.Draw2DText($"TerrainGenerationStage: {terrainGenerationStage}", Color.Azure);
-        Debug.Draw2DText($"Initial load:  {InitialLoadProgress * 100f}%");
+        
+        float expectedChunkCount = (RenderDistance + 1f) * (RenderDistance + 1f) * (RenderDistance + 1f);
         
         // TODO: Sometimes doesn't run???
         // After all chunk data in render distance has loaded in
-        if (!InitialLoadDone && AllActiveChunksReady())
+        if (chunksLoaded >= expectedChunkCount && !InitialLoadDone)
         {
+            //playerCharacter.ShouldUpdate = true;
+            //playerCharacter.FreeCamEnabled = false;
             InitialLoadDone = true;
-
-            // If you want to unfreeze player here:
-            playerCharacter.FreeCamEnabled = false;
-            playerCharacter.ShouldUpdate = true;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
@@ -144,28 +140,7 @@ public class TerrainGeneration
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
-        }
-    }
-    
-    // Expose a progress metric [0..1]g.
-    public float InitialLoadProgress
-    {
-        get
-        {
-            int total = activeViewChunks.Count;
-
-            if (total == 0)
-                return 0f;
-
-            int ready = 0;
-
-            foreach (var pos in activeViewChunks)
-            {
-                if (IsChunkReadyForPlay(pos))
-                    ready++;
-            }
-
-            return ready / (float)total;
+            chunksLoaded++;
         }
     }
     
@@ -205,8 +180,8 @@ public class TerrainGeneration
             {
                 var chunk = kv.Value;
 
-                if (chunk.GenerationStage > freezeStage)
-                    chunk.ResetToStage(freezeStage);
+                if (chunk.GenerationStage > FreezeStage)
+                    chunk.ResetToStage(FreezeStage);
 
                 chunk.IsFrozen = true;
 
@@ -414,54 +389,6 @@ public class TerrainGeneration
                 break;
             }
         }
-    }
-    
-    private void BuildActiveView(Vector3Int center)
-    {
-        activeViewChunks.Clear();
-
-        int half = RenderDistance / 2;
-
-        for (int cx = center.X - half; cx <= center.X + half; cx++)
-        for (int cy = center.Y - half; cy <= center.Y + half; cy++)
-        for (int cz = center.Z - half; cz <= center.Z + half; cz++)
-        {
-            var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            activeViewChunks.Add(pos);
-        }
-    }
-    
-    private bool IsChunkReadyForPlay(Vector3Int pos)
-    {
-        if (!ChunkBuffer.TryGetValue(pos, out var chunk) || chunk.IsFrozen)
-            return false;
-
-        if (initialLoadGateStage == ChunkGenerationStage.Meshing)
-        {
-            bool opaqueUploaded = Mesh.OpaqueModels.ContainsKey(pos);
-            bool transparentUploaded = Mesh.TransparentModels.ContainsKey(pos);
-
-            return chunk.GenerationStage >= ChunkGenerationStage.Meshing
-                   && opaqueUploaded
-                   && transparentUploaded;
-        }
-
-        // Lighting (or lower) gate
-        return chunk.GenerationStage >= initialLoadGateStage;
-    }
-
-    private bool AllActiveChunksReady()
-    {
-        if (activeViewChunks.Count == 0)
-            return false;
-
-        foreach (var pos in activeViewChunks)
-        {
-            if (!IsChunkReadyForPlay(pos))
-                return false;
-        }
-
-        return true;
     }
     
     public void Draw()

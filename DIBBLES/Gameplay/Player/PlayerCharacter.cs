@@ -46,7 +46,7 @@ public class PlayerCharacter
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
     
-    public bool FreeCamEnabled = false;
+    public bool FreeCamEnabled = true;
     public Freecam freecam = new();
 
     public bool IsDead = false;
@@ -57,7 +57,7 @@ public class PlayerCharacter
         get { return IsUIFrozen || IsDead; }
     }
     
-    public bool ShouldUpdate = false;
+    public bool ShouldUpdate = true;
     
     public float CameraPitch = 0f;
     public float CameraYaw = 0f;
@@ -126,10 +126,10 @@ public class PlayerCharacter
         Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
         
+        hotbar.Update(IsDead, IsFrozen);
+        
         if (!ShouldUpdate)
             return;
-        
-        hotbar.Update(IsDead, IsFrozen);
         
         // --- Block breaking and placing ---
         if (!IsFrozen)
