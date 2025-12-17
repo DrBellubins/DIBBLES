@@ -106,9 +106,6 @@ public class TerrainGeneration
             lastCameraChunk = centerChunk;
             
             rebuildActiveView(centerChunk);
-            
-            // Re-score any pending work around the new center so closer chunks keep priority
-            reprioritizeQueue(centerChunk);
 
             // Start chunk queue
             QueueChunksInView(centerChunk);
@@ -221,12 +218,12 @@ public class TerrainGeneration
     
     private void EnqueueAdvance(Vector3Int pos, ChunkGenerationStage target, Vector3Int centerChunk)
     {
-        int priority = distancePriority(pos, centerChunk);
+        int dist2 = (int)Vector3.DistanceSquared(new Vector3(pos.X / (float)ChunkSize,
+                pos.Y / (float)ChunkSize, pos.Z / (float)ChunkSize),
+                new Vector3(centerChunk.X, centerChunk.Y, centerChunk.Z));
 
         lock (_pqLock)
-        {
-            taskQueue.Enqueue((pos, target), priority);
-        }
+            taskQueue.Enqueue((pos, target), dist2);
     }
     
     private void ProcessTaskQueue()
@@ -526,37 +523,6 @@ public class TerrainGeneration
         }
 
         return sum / set.Count;
-    }
-    
-    private static int distancePriority(Vector3Int chunkBasePos, Vector3Int centerChunk)
-    {
-        int cx = chunkBasePos.X / ChunkSize;
-        int cy = chunkBasePos.Y / ChunkSize;
-        int cz = chunkBasePos.Z / ChunkSize;
-
-        int dx = cx - centerChunk.X;
-        int dy = cy - centerChunk.Y;
-        int dz = cz - centerChunk.Z;
-
-        return dx * dx + dy * dy + dz * dz;
-    }
-
-    // Add this helper to re-score the queue when center changes
-    private void reprioritizeQueue(Vector3Int centerChunk)
-    {
-        lock (_pqLock)
-        {
-            if (taskQueue.Count == 0)
-                return;
-
-            var buffer = new List<(Vector3Int pos, ChunkGenerationStage target)>(taskQueue.Count);
-
-            while (taskQueue.TryDequeue(out var elem, out _))
-                buffer.Add(elem);
-
-            foreach (var item in buffer)
-                taskQueue.Enqueue(item, distancePriority(item.pos, centerChunk));
-        }
     }
     
     public void Draw()
