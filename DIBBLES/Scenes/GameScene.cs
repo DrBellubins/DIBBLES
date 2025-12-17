@@ -92,15 +92,15 @@ public class GameScene : Scene
 
     public override void Draw()
     {
-        var gd = Engine.Graphics;
+        var graphics = Engine.Graphics;
         
-        gd.SetRenderTarget(BackBuffer);
-        gd.Clear(SkyColor);
+        graphics.SetRenderTarget(BackBuffer);
+        graphics.Clear(SkyColor);
         
-        gd.BlendState = BlendState.NonPremultiplied;
-        gd.DepthStencilState = DepthStencilState.Default;
-        gd.RasterizerState = RasterizerState.CullCounterClockwise;
-        gd.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();
@@ -110,11 +110,11 @@ public class GameScene : Scene
         Debug.Draw3D();
         
         if (Input.IsKeyPressed(Keys.F2))
-            takeScreenshot(gd);
+            takeScreenshot(graphics);
         
         // Draw UI (UI Batch)
-        gd.SetRenderTarget(UIBuffer);
-        gd.Clear(Color.Transparent);
+        graphics.SetRenderTarget(UIBuffer);
+        graphics.Clear(Color.Transparent);
         
         UIBatch.Begin();
         
@@ -130,7 +130,7 @@ public class GameScene : Scene
         
         UIBatch.End();
         
-        gd.SetRenderTarget(null);
+        graphics.SetRenderTarget(null);
         
         uiBlur.Apply(BackBuffer, UIBuffer);
         
