@@ -52,8 +52,7 @@ public class TerrainGeneration
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
     private readonly object _pqLock = new object();
-    private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue
-        = new PriorityQueue<(Vector3Int, ChunkGenerationStage), int>();
+    private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue = new();
     
     private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
     
