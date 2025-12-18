@@ -12,7 +12,7 @@ public class TerrainLighting
         placeLights(chunk);
         PropagateLight(chunk);
     }
-    
+
     private void placeLights(Chunk chunk)
     {
         for (int x = 0; x < ChunkSize; x++)
@@ -29,11 +29,11 @@ public class TerrainLighting
 
                 chunk.SetLightLevelAt(x, y, z, newLevel);
             }
-            
+
             // IMPORTANT: do NOT write 0 to non-emissive cells here; that would erase cross-chunk propagation
         }
     }
-    
+
     public void PropagateLight(Chunk chunk)
     {
         Queue<(Chunk chunk, Vector3Int pos)> queue = new();
@@ -48,58 +48,115 @@ public class TerrainLighting
                 queue.Enqueue((chunk, new Vector3Int(x, y, z)));
         }
 
+        // Track the last-chunk to avoid rebuilding caches every cell
+        Chunk lastChunk = null;
+        NeighborCache neighborCache = default;
+
+        Vector3Int[] directions =
+        {
+            new Vector3Int(1, 0, 0),
+            new Vector3Int(-1, 0, 0),
+            new Vector3Int(0, 1, 0),
+            new Vector3Int(0, -1, 0),
+            new Vector3Int(0, 0, 1),
+            new Vector3Int(0, 0, -1)
+        };
+
         while (queue.Count > 0)
         {
             var (curChunk, pos) = queue.Dequeue();
+
+            // Rebuild neighbor cache if chunk changed
+            if (!ReferenceEquals(curChunk, lastChunk))
+            {
+                neighborCache = NeighborCache.Build(curChunk);
+                lastChunk = curChunk;
+            }
+
             var lightLevel = curChunk.GetLightLevelAt(pos.X, pos.Y, pos.Z);
 
-            if (lightLevel <= 1) continue;
-
-            Vector3Int[] directions = {
-                new Vector3Int(1, 0, 0),
-                new Vector3Int(-1, 0, 0),
-                new Vector3Int(0, 1, 0),
-                new Vector3Int(0, -1, 0),
-                new Vector3Int(0, 0, 1),
-                new Vector3Int(0, 0, -1)
-            };
+            if (lightLevel <= 1)
+            {
+                continue;
+            }
 
             foreach (var dir in directions)
             {
-                Vector3Int neighborPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
+                // Compute local neighbor
+                Vector3Int localPos = new Vector3Int(pos.X + dir.X, pos.Y + dir.Y, pos.Z + dir.Z);
 
-                Chunk neighborChunk = curChunk;
-                Vector3Int localPos = neighborPos;
+                Chunk targetChunk = curChunk;
 
-                if (localPos.X < 0 || localPos.X >= ChunkSize ||
-                    localPos.Y < 0 || localPos.Y >= ChunkSize ||
-                    localPos.Z < 0 || localPos.Z >= ChunkSize)
+                // Fast wrap without world math or dictionary lookups:
+                // X axis
+                if (localPos.X < 0)
                 {
-                    Vector3Int worldPos = curChunk.Position + neighborPos;
-                    int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
-                    int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
-                    int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
-                    var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-                    if (!ChunkBuffer.TryGetValue(chunkCoord, out neighborChunk))
+                    if (neighborCache.NegX == null)
                         continue;
 
-                    localPos = new Vector3Int(worldPos.X - chunkX, worldPos.Y - chunkY, worldPos.Z - chunkZ);
+                    targetChunk = neighborCache.NegX;
+                    localPos.X += ChunkSize;
+                }
+                else if (localPos.X >= ChunkSize)
+                {
+                    if (neighborCache.PosX == null)
+                        continue;
+
+                    targetChunk = neighborCache.PosX;
+                    localPos.X -= ChunkSize;
                 }
 
-                var neighborBlockType = neighborChunk.GetTypeAt(localPos.X, localPos.Y, localPos.Z);
-                var neighborBlockInfo = neighborChunk.GetInfoAt(localPos.X, localPos.Y, localPos.Z);
-                var neighborBlockLightLevel = neighborChunk.GetLightLevelAt(localPos.X, localPos.Y, localPos.Z);
+                // Y axis
+                if (localPos.Y < 0)
+                {
+                    if (neighborCache.NegY == null)
+                        continue;
 
+                    targetChunk = neighborCache.NegY;
+                    localPos.Y += ChunkSize;
+                }
+                else if (localPos.Y >= ChunkSize)
+                {
+                    if (neighborCache.PosY == null)
+                        continue;
+
+                    targetChunk = neighborCache.PosY;
+                    localPos.Y -= ChunkSize;
+                }
+
+                // Z axis
+                if (localPos.Z < 0)
+                {
+                    if (neighborCache.NegZ == null)
+                        continue;
+
+                    targetChunk = neighborCache.NegZ;
+                    localPos.Z += ChunkSize;
+                }
+                else if (localPos.Z >= ChunkSize)
+                {
+                    if (neighborCache.PosZ == null)
+                        continue;
+
+                    targetChunk = neighborCache.PosZ;
+                    localPos.Z -= ChunkSize;
+                }
+
+                // Inner-chunk path stays on curChunk; cross-chunk path uses targetChunk
+                var neighborBlockType = targetChunk.GetTypeAt(localPos.X, localPos.Y, localPos.Z);
+                var neighborBlockInfo = targetChunk.GetInfoAt(localPos.X, localPos.Y, localPos.Z);
+                var neighborBlockLightLevel = targetChunk.GetLightLevelAt(localPos.X, localPos.Y, localPos.Z);
+
+                // Transparent or air lets light propagate (except leaves special-case)
                 if (neighborBlockType == BlockType.Air ||
                     (neighborBlockType != BlockType.Leaves && neighborBlockInfo.IsTransparent))
                 {
                     byte newLight = (byte)(lightLevel - 1);
-                    
+
                     if (newLight > neighborBlockLightLevel)
                     {
-                        neighborChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
-                        queue.Enqueue((neighborChunk, localPos));
+                        targetChunk.SetLightLevelAt(localPos.X, localPos.Y, localPos.Z, newLight);
+                        queue.Enqueue((targetChunk, localPos));
                     }
                 }
             }

@@ -14,8 +14,6 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true; // Flat lighting doesn't work, don't care to fix it
-    
-    public HashSet<Vector3Int> RecentlyRemeshedNeighbors = new();
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
@@ -100,6 +98,8 @@ public class TerrainMesh
     {
         var cameraPosition = GameScene.PlayerCharacter.Camera.Position.ToVector3();
         
+        var neighborCache = NeighborCache.Build(chunk);
+        
         List<(float dist, FaceData face)> transparentFaces = new();
         List<Vector3> vertices = [];
         List<int> indices = [];
@@ -136,7 +136,7 @@ public class TerrainMesh
         
                 var rng = new SeededRandom(chunkSeed);
                 
-                if (!isVoxelSolid(chunk, nx, ny, nz))
+                if (!isVoxelSolid(chunk, nx, ny, nz, neighborCache))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
@@ -312,15 +312,6 @@ public class TerrainMesh
         }
     }
     
-    public void RemeshAllTransparentChunks()
-    {
-        foreach (var chunk in ChunkBuffer.Values)
-        {
-            var tMeshData = Mesh.GenerateMeshData(chunk, true);
-            Mesh.TransparentModels[chunk.Position] = Mesh.UploadMesh(tMeshData);
-        }
-    }
-    
     // Main-thread only: allocates Raylib Mesh, uploads data, returns Model
     public RuntimeModel UploadMesh(MeshData data)
     {
@@ -383,9 +374,9 @@ public class TerrainMesh
     }
     
     // Helper to check if neighbor block is solid, including across chunk boundaries
-    private static bool isVoxelSolid(Chunk currentChunk, int x, int y, int z)
+    private static bool isVoxelSolid(Chunk currentChunk, int x, int y, int z, NeighborCache cache)
     {
-        // Fast check: within current chunk bounds
+        // Fast in-chunk path
         if (x >= 0 && x < ChunkSize &&
             y >= 0 && y < ChunkSize &&
             z >= 0 && z < ChunkSize)
@@ -394,31 +385,74 @@ public class TerrainMesh
             return currentChunk.GetTypeAt(x, y, z) != BlockType.Air && !info.IsTransparent;
         }
 
-        // Otherwise, need to look up neighbor chunk
-        int worldX = currentChunk.Position.X + x;
-        int worldY = currentChunk.Position.Y + y;
-        int worldZ = currentChunk.Position.Z + z;
+        // Only axial neighbors are queried by meshing; if more than one axis is out, treat as non-solid
+        int crosses =
+            (x < 0 || x >= ChunkSize ? 1 : 0) +
+            (y < 0 || y >= ChunkSize ? 1 : 0) +
+            (z < 0 || z >= ChunkSize ? 1 : 0);
 
-        // Find the neighbor chunk's base position
-        int neighborChunkX = (int)Math.Floor((float)worldX / ChunkSize) * ChunkSize;
-        int neighborChunkY = (int)Math.Floor((float)worldY / ChunkSize) * ChunkSize;
-        int neighborChunkZ = (int)Math.Floor((float)worldZ / ChunkSize) * ChunkSize;
+        if (crosses > 1)
+            return false;
 
-        var neighborChunkPos = new Vector3Int(neighborChunkX, neighborChunkY, neighborChunkZ);
+        Chunk target = currentChunk;
+        int lx = x, ly = y, lz = z;
 
-        if (ChunkBuffer.TryGetValue(neighborChunkPos, out var neighborChunk))
+        // X axis wrap
+        if (lx < 0)
         {
-            int localX = worldX - neighborChunkX;
-            int localY = worldY - neighborChunkY;
-            int localZ = worldZ - neighborChunkZ;
+            if (cache.NegX == null)
+                return false;
 
-            var info = neighborChunk.GetInfoAt(localX, localY, localZ);
-            
-            return neighborChunk.GetTypeAt(localX, localY, localZ) != BlockType.Air && !info.IsTransparent;
+            target = cache.NegX;
+            lx += ChunkSize;
+        }
+        else if (lx >= ChunkSize)
+        {
+            if (cache.PosX == null)
+                return false;
+
+            target = cache.PosX;
+            lx -= ChunkSize;
         }
 
-        // If neighbor chunk not loaded, treat as air (or optionally skip meshing)
-        return false;
+        // Y axis wrap
+        if (ly < 0)
+        {
+            if (cache.NegY == null)
+                return false;
+
+            target = cache.NegY;
+            ly += ChunkSize;
+        }
+        else if (ly >= ChunkSize)
+        {
+            if (cache.PosY == null)
+                return false;
+
+            target = cache.PosY;
+            ly -= ChunkSize;
+        }
+
+        // Z axis wrap
+        if (lz < 0)
+        {
+            if (cache.NegZ == null)
+                return false;
+
+            target = cache.NegZ;
+            lz += ChunkSize;
+        }
+        else if (lz >= ChunkSize)
+        {
+            if (cache.PosZ == null)
+                return false;
+
+            target = cache.PosZ;
+            lz -= ChunkSize;
+        }
+
+        var nInfo = target.GetInfoAt(lx, ly, lz);
+        return target.GetTypeAt(lx, ly, lz) != BlockType.Air && !nInfo.IsTransparent;
     }
 }
 
