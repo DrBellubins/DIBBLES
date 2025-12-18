@@ -19,18 +19,21 @@ public class TerrainLighting
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
+            // Existing block light emission
             var emission = chunk.GetInfoAt(x, y, z).LightEmission;
 
-            if (emission > 0)
-            {
-                // Preserve any previously propagated light: take the max of existing and emission
-                var current = chunk.GetLightLevelAt(x, y, z);
-                var newLevel = (byte)Math.Max(current, emission);
+            // Current block light level (from previous propagation/emission)
+            byte current = chunk.GetLightLevelAt(x, y, z);
 
-                chunk.SetLightLevelAt(x, y, z, newLevel);
-            }
+            // Sky light level produced by TerrainSkyfill (air/transparent exposure)
+            byte sky = chunk.GetSkyLevelAt(x, y, z);
 
-            // IMPORTANT: do NOT write 0 to non-emissive cells here; that would erase cross-chunk propagation
+            // Combine: max of current, emission, and sky
+            byte combined = Math.Max(current, Math.Max(emission, sky));
+
+            // Only write if we are increasing the level; do not write zeros
+            if (combined > current)
+                chunk.SetLightLevelAt(x, y, z, combined);
         }
     }
 

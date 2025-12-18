@@ -24,6 +24,7 @@ public class TerrainGeneration
     
     // Generation engine
     public static TerrainMesh Mesh = new();
+    public TerrainSkyfill Skyfill = new();
     public static TerrainLighting Lighting = new();
     
     // Features
@@ -307,22 +308,21 @@ public class TerrainGeneration
             }
         }
     
-        // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
-        if (stage == ChunkGenerationStage.Lighting)
+        if (stage == ChunkGenerationStage.Skyfill)
         {
+            // Require neighbors (only those in active view) to have stable terrain (>= Decorations)
             foreach (var offset in getNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
-    
+
                 if (!IsInsideActiveView(nPos))
                 {
-                    // Optional nudge for out-of-view neighbor, but do not block
                     if (!ChunkBuffer.ContainsKey(nPos))
                         EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-    
+
                     continue;
                 }
-    
+
                 if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                 {
                     if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
@@ -331,6 +331,33 @@ public class TerrainGeneration
                 else
                 {
                     EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+                    return false;
+                }
+            }
+        }
+        else if (stage == ChunkGenerationStage.Lighting)
+        {
+            // Lighting now depends on neighbors having completed Skyfill
+            foreach (var offset in getNeighborOffsets())
+            {
+                var nPos = chunk.Position + offset;
+
+                if (!IsInsideActiveView(nPos))
+                {
+                    if (!ChunkBuffer.ContainsKey(nPos))
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Skyfill, lastCameraChunk);
+
+                    continue;
+                }
+
+                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                {
+                    if (nChunk.GenerationStage < ChunkGenerationStage.Skyfill)
+                        return false;
+                }
+                else
+                {
+                    EnqueueAdvance(nPos, ChunkGenerationStage.Skyfill, lastCameraChunk);
                     return false;
                 }
             }
@@ -391,6 +418,29 @@ public class TerrainGeneration
                 
                 break;
             }
+            case ChunkGenerationStage.Skyfill:
+            {
+                // Run skylight flood fill prior to Lighting
+                Skyfill.Generate(chunk);
+
+                // Nudge neighbors to also run Skyfill, ensuring cross-chunk consistency
+                foreach (var offset in getNeighborOffsets())
+                {
+                    var nPos = chunk.Position + offset;
+
+                    if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                    {
+                        if (nChunk.GenerationStage < ChunkGenerationStage.Skyfill)
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Skyfill, lastCameraChunk);
+                    }
+                    else
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Skyfill, lastCameraChunk);
+                }
+
+                // Proceed to Lighting next
+                EnqueueAdvance(chunk.Position, ChunkGenerationStage.Lighting, lastCameraChunk);
+                break;
+            }
             case ChunkGenerationStage.Lighting:
             {
                 Lighting.Generate(chunk);
@@ -411,9 +461,7 @@ public class TerrainGeneration
                             EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
                     }
                     else
-                    {
                         EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                    }
                 }
 
                 // Also ensure this chunk proceeds to meshing after lighting
