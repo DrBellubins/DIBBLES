@@ -49,9 +49,12 @@ public class TerrainIsland
                         
                         // Carve caves: flip to air when cave noise exceeds threshold
                         float cave = caveNoise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-                        
+
                         if (cave > caveThreshold)
+                        {
                             chunk.SetTypeAt(x, y, z, BlockType.Air);
+                            chunk.SetCaveAt(x, y, z, true);
+                        }
                     }
                     else
                         chunk.SetTypeAt(x, y, z, BlockType.Air);

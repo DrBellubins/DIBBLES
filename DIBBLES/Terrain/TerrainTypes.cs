@@ -45,11 +45,13 @@ public class Chunk
     public byte[] LightLevels;
     public byte[] Biomes;
     
+    public bool[] Caves;
+    
     public bool IsFrozen = false;
     public bool IsModified = false;
     public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
     
-    private readonly object _skyLock = new object();
+    private readonly object _skyLock = new();
     private readonly object _lightLock = new();
     
     public Chunk(Vector3Int pos)
@@ -60,6 +62,8 @@ public class Chunk
         SkyLevels =  new byte[ChunkSize * ChunkSize * ChunkSize];
         LightLevels =  new byte[ChunkSize * ChunkSize * ChunkSize];
         Biomes =  new byte[ChunkSize * ChunkSize * ChunkSize];
+        
+        Caves =  new bool[ChunkSize * ChunkSize * ChunkSize];
     }
 
     // Helper for flat indexing
@@ -165,6 +169,16 @@ public class Chunk
         return (TerrainBiome)Biomes[ToIndex(x, y, z)];
     }
     
+    public bool GetCaveAt(int x, int y, int z)
+    {
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
+            return false;
+        
+        return Caves[ToIndex(x, y, z)];
+    }
+    
     public BlockInfo GetInfoAt(int x, int y, int z)
     {
         if (x < 0 || x >= ChunkSize ||
@@ -223,6 +237,17 @@ public class Chunk
         
         var index = ToIndex(x, y, z);
         Biomes[index] = (byte)biome;
+    }
+    
+    public void SetCaveAt(int x, int y, int z, bool isCave)
+    {
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
+            return;
+        
+        var  index = ToIndex(x, y, z);
+        Caves[index] = isCave;
     }
 
     public bool IsInBounds(int x, int y, int z)
@@ -334,6 +359,28 @@ public class Chunk
         return chunk.GetLightLevelAt(localX, localY, localZ);
     }
     
+    public static bool GetCaveGlobal(Vector3Int worldPos)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            return false;
+
+        int localX = worldPos.X - chunkX;
+        int localY = worldPos.Y - chunkY;
+        int localZ = worldPos.Z - chunkZ;
+
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
+            return false;
+
+        return chunk.GetCaveAt(localX, localY, localZ);
+    }
+    
     public static void SetBlockTypeGlobal(Vector3Int worldPos, BlockType type)
     {
         int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
@@ -377,6 +424,29 @@ public class Chunk
             return;
 
         chunk.SetLightLevelAt(localX, localY, localZ, lightLevel);
+    }
+    
+    public static void SetCaveGlobal(Vector3Int worldPos, bool isCave)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+            return;
+
+        int localX = worldPos.X - chunkX;
+        int localY = worldPos.Y - chunkY;
+        int localZ = worldPos.Z - chunkZ;
+
+        if (localX < 0 || localX >= ChunkSize ||
+            localY < 0 || localY >= ChunkSize ||
+            localZ < 0 || localZ >= ChunkSize)
+            return;
+
+        chunk.SetCaveAt(localX, localY, localZ, isCave);
     }
     
     public void ResetToStage(ChunkGenerationStage stage)
