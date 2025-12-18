@@ -11,16 +11,17 @@ public class TerrainIsland
         
         // Cave noise: low frequency 3D OpenSimplex, independent seed
         var caveNoise = new FastNoiseLite();
-        caveNoise.SetSeed(Seed + 1337);
-        caveNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
-        caveNoise.SetFractalType(FastNoiseLite.FractalType.FBm);
-        caveNoise.SetFractalOctaves(3);
-        caveNoise.SetFractalLacunarity(2.0f);
-        caveNoise.SetFractalGain(0.5f);
-        caveNoise.SetFrequency(0.03f); // Larger structures; tweak 0.02–0.04
+        caveNoise.SetSeed(Seed + 424242);
+        caveNoise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
+        caveNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean); // or Manhattan for blockier
+        caveNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.Distance2Sub);
+        caveNoise.SetCellularJitter(1.0f);
+        caveNoise.SetFrequency(0.025f); // cell size/spacing of tunnels
         
         const float islandThreshold = 0.6f;
-        const float caveThreshold = 0.64f; // Higher = fewer caves
+        
+        // Band thickness around the Voronoi ridge (value ≈ 0). Increase for thicker tunnels.
+        const float wormBand = 0.022f;
         
         for (int x = 0; x < ChunkSize; x++)
         {
@@ -47,10 +48,10 @@ public class TerrainIsland
                         // Start as stone
                         chunk.SetTypeAt(x, y, z, BlockType.Stone);
                         
-                        // Carve caves: flip to air when cave noise exceeds threshold
-                        float cave = caveNoise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
-
-                        if (cave > caveThreshold)
+                        // Carve "worms" where Distance2 - Distance1 is near zero (cell borders)
+                        float cave = caveNoise.GetNoise(worldX, worldY, worldZ); // centered ~0 near borders
+                    
+                        if (MathF.Abs(cave) < wormBand)
                         {
                             chunk.SetTypeAt(x, y, z, BlockType.Air);
                             chunk.SetCaveAt(x, y, z, true);
