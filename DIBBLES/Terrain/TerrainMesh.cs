@@ -147,6 +147,22 @@ public class TerrainMesh
                     Color[] faceColors = SmoothLighting
                         ? FaceUtils.GetFaceColors(chunk, pos, faceIdx)
                         : new[] { flatColor, flatColor, flatColor, flatColor };
+                    
+                    float[] ao = FaceUtils.GetFaceAmbientOcclusion(chunk, neighborCache, pos, faceIdx); // AO factors [0..1]
+                    
+                    // Multiply AO into vertex colors
+                    for (int vi = 0; vi < 4; vi++)
+                    {
+                        var c = faceColors[vi];
+                        float f = ao[vi];
+
+                        faceColors[vi] = new Color(
+                            (byte)(c.R * f),
+                            (byte)(c.G * f),
+                            (byte)(c.B * f),
+                            c.A
+                        );
+                    }
 
                     var rndOffset = (int)(rng.NextFloat() * ChunkSize);
                     var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);

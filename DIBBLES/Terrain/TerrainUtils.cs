@@ -198,7 +198,8 @@ public static class FaceUtils
     // Helper: map [0,1] to Color
     public static Color ToColor(float light)
     {
-        light = MathF.Max(0.1f, light); // Prevent fully dark
+        //light = MathF.Max(0.1f, light); // Prevent fully dark
+        light = MathF.Max(1f, light); // TEMP FULLBRIGHT
         
         var color = (byte)(255f * light);
         
@@ -328,6 +329,146 @@ public static class FaceUtils
         }
 
         return total / (count * 15f); // Normalize to [0,1]
+    }
+    
+    public static float[] GetFaceAmbientOcclusion(Chunk chunk, NeighborCache cache, Vector3Int pos, int faceIdx)
+    {
+        // AO strength per occluder (0..1). 0.18–0.25 looks good; lower is more subtle.
+        const float AoStep = 0.18f;
+    
+        // World-space base for this block
+        Vector3Int baseWorld = chunk.Position + pos;
+    
+        // For each face, define plane offset and per-vertex signs along the two in-plane axes.
+        // Axes mapping:
+        //  - Z faces:   u = X, v = Y
+        //  - X faces:   u = Z, v = Y
+        //  - Y faces:   u = X, v = Z
+        Vector3Int planeOffset;
+        (int u, int v)[] signs;
+    
+        switch (faceIdx)
+        {
+            case 0: // Front (-Z), plane at z
+            {
+                planeOffset = new Vector3Int(0, 0, 0);
+                signs = new (int, int)[] { (-1, -1), (-1, +1), (+1, +1), (+1, -1) };
+                break;
+            }
+            case 1: // Back (+Z), plane at z+1
+            {
+                planeOffset = new Vector3Int(0, 0, 1);
+                signs = new (int, int)[] { (+1, -1), (+1, +1), (-1, +1), (-1, -1) };
+                break;
+            }
+            case 2: // Left (-X), plane at x, u=z v=y
+            {
+                planeOffset = new Vector3Int(0, 0, 0);
+                signs = new (int, int)[] { (+1, -1), (+1, +1), (-1, +1), (-1, -1) };
+                break;
+            }
+            case 3: // Right (+X), plane at x+1, u=z v=y
+            {
+                planeOffset = new Vector3Int(1, 0, 0);
+                signs = new (int, int)[] { (-1, -1), (-1, +1), (+1, +1), (+1, -1) };
+                break;
+            }
+            case 4: // Bottom (-Y), plane at y, u=x v=z
+            {
+                planeOffset = new Vector3Int(0, 0, 0);
+                signs = new (int, int)[] { (-1, +1), (-1, -1), (+1, -1), (+1, +1) };
+                break;
+            }
+            case 5: // Top (+Y), plane at y+1, u=x v=z
+            {
+                planeOffset = new Vector3Int(0, 1, 0);
+                signs = new (int, int)[] { (-1, -1), (-1, +1), (+1, +1), (+1, -1) };
+                break;
+            }
+            default:
+            {
+                return new float[] { 1f, 1f, 1f, 1f };
+            }
+        }
+    
+        // Helper to resolve solids fast across chunk borders; leaves do not occlude
+        static bool IsSolidAt(Chunk baseChunk, NeighborCache nc, Vector3Int worldPos)
+        {
+            var type = NeighborCache.GetBlockTypeFast(worldPos, baseChunk, nc);
+            if (type == BlockType.Air || type == BlockType.Leaves)
+                return false;
+    
+            var info = BlockData.Prefabs[type];
+            return !info.IsTransparent;
+        }
+    
+        float[] ao = new float[4];
+    
+        for (int i = 0; i < 4; i++)
+        {
+            int su = signs[i].u;
+            int sv = signs[i].v;
+    
+            // Map u/v axes per face to world offsets
+            Vector3Int uAxis, vAxis;
+    
+            switch (faceIdx)
+            {
+                case 0: // Z faces: u=X, v=Y
+                case 1:
+                {
+                    uAxis = new Vector3Int(1, 0, 0);
+                    vAxis = new Vector3Int(0, 1, 0);
+                    break;
+                }
+                case 2: // X faces: u=Z, v=Y
+                case 3:
+                {
+                    uAxis = new Vector3Int(0, 0, 1);
+                    vAxis = new Vector3Int(0, 1, 0);
+                    break;
+                }
+                case 4: // Y faces: u=X, v=Z
+                case 5:
+                {
+                    uAxis = new Vector3Int(1, 0, 0);
+                    vAxis = new Vector3Int(0, 0, 1);
+                    break;
+                }
+                default:
+                {
+                    uAxis = Vector3Int.Zero;
+                    vAxis = Vector3Int.Zero;
+                    break;
+                }
+            }
+    
+            // Sample positions on the face plane around the vertex:
+            // two orthogonal sides (sideU/sideV) and their diagonal (corner).
+            Vector3Int planeBase = baseWorld + planeOffset;
+    
+            Vector3Int sideU   = planeBase + (su * uAxis);
+            Vector3Int sideV   = planeBase + (sv * vAxis);
+            Vector3Int corner  = planeBase + (su * uAxis) + (sv * vAxis);
+    
+            bool sU = IsSolidAt(chunk, cache, sideU);
+            bool sV = IsSolidAt(chunk, cache, sideV);
+            bool c  = IsSolidAt(chunk, cache, corner);
+    
+            int occ = 0;
+            if (sU) occ++;
+            if (sV) occ++;
+    
+            // Corner only contributes if not both sides are already solid
+            if (!(sU && sV) && c)
+                occ++;
+    
+            // Map occluders (0..3) to AO factor (1..(1-3*AoStep))
+            float factor = 1f - (AoStep * occ);
+            ao[i] = MathF.Max(0.0f, factor);
+        }
+    
+        return ao;
     }
     
     public static byte GetLightLevelAtWorldPos(Vector3Int worldPos)
