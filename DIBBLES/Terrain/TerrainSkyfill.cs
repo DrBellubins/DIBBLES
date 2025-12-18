@@ -1,4 +1,4 @@
-using DIBBLES.Utils;
+/*using DIBBLES.Utils;
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain;
@@ -127,14 +127,19 @@ public class TerrainSkyfill
 
                 var nType = targetChunk.GetTypeAt(nPos.X, nPos.Y, nPos.Z);
                 var nInfo = targetChunk.GetInfoAt(nPos.X, nPos.Y, nPos.Z);
+                
+                var currentSky = curChunk.GetSkyLevelAt(pos.X, pos.Y, pos.Z);
+                
+                if (currentSky <= 1)
+                    continue;
 
-                if (nType == BlockType.Air || nInfo.IsTransparent)
+                byte attenSky = (byte)(currentSky - 1);
+
+                if ((nType == BlockType.Air || nInfo.IsTransparent) &&
+                    attenSky > targetChunk.GetSkyLevelAt(nPos.X, nPos.Y, nPos.Z))
                 {
-                    if (targetChunk.GetSkyLevelAt(nPos.X, nPos.Y, nPos.Z) < 15)
-                    {
-                        targetChunk.SetSkyLevelAt(nPos.X, nPos.Y, nPos.Z, 15);
-                        queue.Enqueue((targetChunk, nPos));
-                    }
+                    targetChunk.SetSkyLevelAt(nPos.X, nPos.Y, nPos.Z, attenSky);
+                    queue.Enqueue((targetChunk, nPos));
                 }
             }
         }
@@ -203,4 +208,4 @@ public class TerrainSkyfill
 
         return false;
     }
-}
+}*/

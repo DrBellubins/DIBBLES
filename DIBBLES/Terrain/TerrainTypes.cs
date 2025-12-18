@@ -31,7 +31,6 @@ public enum ChunkGenerationStage
     Islands,
     Surface,
     Decorations,
-    Skyfill,
     Lighting,
     Meshing
 }
@@ -41,7 +40,6 @@ public class Chunk
     public Vector3Int Position;
 
     public byte[] BlockTypes;
-    public byte[] SkyLevels;
     public byte[] LightLevels;
     public byte[] Biomes;
     
@@ -59,7 +57,6 @@ public class Chunk
         Position = pos;
         
         BlockTypes =  new byte[ChunkSize * ChunkSize * ChunkSize];
-        SkyLevels =  new byte[ChunkSize * ChunkSize * ChunkSize];
         LightLevels =  new byte[ChunkSize * ChunkSize * ChunkSize];
         Biomes =  new byte[ChunkSize * ChunkSize * ChunkSize];
         
@@ -132,19 +129,6 @@ public class Chunk
         
         return (BlockType)BlockTypes[ToIndex(x, y, z)];
     }
-    
-    public byte GetSkyLevelAt(int x, int y, int z)
-    {
-        if (x < 0 || x >= ChunkSize ||
-            y < 0 || y >= ChunkSize ||
-            z < 0 || z >= ChunkSize)
-            return 0;
-
-        lock (_skyLock)
-        {
-            return SkyLevels[ToIndex(x, y, z)];
-        }
-    }
 
     public byte GetLightLevelAt(int x, int y, int z)
     {
@@ -200,19 +184,6 @@ public class Chunk
         
         var  index = ToIndex(x, y, z);
         BlockTypes[index] = (byte)type;
-    }
-    
-    public void SetSkyLevelAt(int x, int y, int z, byte skyLevel)
-    {
-        if (x < 0 || x >= ChunkSize ||
-            y < 0 || y >= ChunkSize ||
-            z < 0 || z >= ChunkSize)
-            return;
-
-        lock (_skyLock)
-        {
-            SkyLevels[ToIndex(x, y, z)] = skyLevel;
-        }
     }
 
     public void SetLightLevelAt(int x, int y, int z, byte lightLevel)
@@ -313,28 +284,6 @@ public class Chunk
             return BlockData.Prefabs[BlockType.Air];
 
         return chunk.GetInfoAt(localX, localY, localZ);
-    }
-    
-    public static byte GetSkyLevelGlobal(Vector3Int worldPos)
-    {
-        int chunkX = (int)Math.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
-        int chunkY = (int)Math.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
-        int chunkZ = (int)Math.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
-        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-            return 0;
-
-        int localX = worldPos.X - chunkX;
-        int localY = worldPos.Y - chunkY;
-        int localZ = worldPos.Z - chunkZ;
-
-        if (localX < 0 || localX >= ChunkSize ||
-            localY < 0 || localY >= ChunkSize ||
-            localZ < 0 || localZ >= ChunkSize)
-            return 0;
-
-        return chunk.GetSkyLevelAt(localX, localY, localZ);
     }
     
     public static byte GetLightLevelGlobal(Vector3Int worldPos)
