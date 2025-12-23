@@ -76,9 +76,7 @@ public class TerrainLighting
             var lightLevel = curChunk.GetLightLevelAt(pos.X, pos.Y, pos.Z);
 
             if (lightLevel <= 1)
-            {
                 continue;
-            }
 
             foreach (var dir in directions)
             {

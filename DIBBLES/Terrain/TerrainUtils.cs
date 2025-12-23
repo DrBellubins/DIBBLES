@@ -198,8 +198,8 @@ public static class FaceUtils
     // Helper: map [0,1] to Color
     public static Color ToColor(float light)
     {
-        //light = MathF.Max(0.1f, light); // Prevent fully dark
-        light = MathF.Max(1f, light); // TEMP FULLBRIGHT
+        light = MathF.Max(0.1f, light); // Prevent fully dark
+        //light = MathF.Max(1f, light); // TEMP FULLBRIGHT
         
         var color = (byte)(255f * light);
         
