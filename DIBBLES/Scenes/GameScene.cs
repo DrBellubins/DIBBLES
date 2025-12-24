@@ -24,6 +24,9 @@ public class GameScene : Scene
     
     // Buffers
     public static RenderTarget2D BackBuffer;
+    public static RenderTarget2D NormalBuffer;
+    public static RenderTarget2D DepthBuffer;
+    
     public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
@@ -40,6 +43,28 @@ public class GameScene : Scene
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
+        );
+        
+        NormalBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+
+        DepthBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Single, // float depth encoding
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
         );
 
         UIBuffer = new RenderTarget2D(
@@ -68,6 +93,9 @@ public class GameScene : Scene
         gameChat.Start();
         
         uiBlur.Start();
+
+        // Start all post processing effects
+        PostProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
         Commands.RegisterCommand("db", "Toggle debug information", Debug.ToggleDebug);
@@ -111,7 +139,12 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
-        graphics.SetRenderTarget(BackBuffer);
+        graphics.SetRenderTargets(
+            new RenderTargetBinding(BackBuffer),
+            new RenderTargetBinding(NormalBuffer),
+            new RenderTargetBinding(DepthBuffer)
+        );
+        
         graphics.Clear(SkyColor);
         
         graphics.BlendState = BlendState.NonPremultiplied;
@@ -151,10 +184,17 @@ public class GameScene : Scene
         
         uiBlur.Apply(BackBuffer, UIBuffer);
         
+        // Apply all registered post-processing effects, sampling color/normal/depth
+        PostProcessingManager.ApplyAll(BackBuffer, NormalBuffer, DepthBuffer);
+        
         UIBatch.Begin();
         
         // Draw buffers
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        
+        // Composite all post-processing outputs
+        PostProcessingManager.Draw();
+        
         uiBlur.Draw();
         UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
