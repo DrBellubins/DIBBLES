@@ -94,7 +94,9 @@ public class GameScene : Scene
         
         uiBlur.Start();
 
-        // Start all post processing effects
+        // Initialize all post processing effects before PostProcessingManager.Initialize!
+        var testPostProcess = new TestPostProcess();
+        
         PostProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
