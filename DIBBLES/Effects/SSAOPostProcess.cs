@@ -50,6 +50,12 @@ namespace DIBBLES.Effects
             _effect.Parameters["DepthTex"]?.SetValue(DepthBuffer);
             _effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
 
+            // Simple, deterministic SSAO tuning (no random noise)
+            _effect.Parameters["AORadius"]?.SetValue(4.0f);       // 4 pixels
+            _effect.Parameters["AOBias"]?.SetValue(0.005f);       // small depth bias
+            _effect.Parameters["AOIntensity"]?.SetValue(1.0f);    // strength scaler
+            _effect.Parameters["NormalWeight"]?.SetValue(0.15f);  // very subtle normal influence
+
             Graphics.SetVertexBuffer(_vb);
             Graphics.Indices = _ib;
 
