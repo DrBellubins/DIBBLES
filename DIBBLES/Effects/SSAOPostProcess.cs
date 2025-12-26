@@ -77,17 +77,21 @@ namespace DIBBLES.Effects
             _effect.Parameters["CameraFar"]?.SetValue(cam.FarPlane);
             _effect.Parameters["CameraAspect"]?.SetValue(cam.AspectRatio);
             _effect.Parameters["TanHalfFov"]?.SetValue((float)Math.Tan(MathHelper.ToRadians(cam.Fov * 0.5f)));
-        
-            // SSAO tuning
-            _effect.Parameters["AORadiusPx"]?.SetValue(6.0f);    // kernel size in pixels
-            _effect.Parameters["AOBiasZ"]?.SetValue(0.02f);      // meters
-            _effect.Parameters["DepthThresholdZ"]?.SetValue(2.0f);
+
+            // nvpro-style ProjScale: height / (tan(fov/2) * 2)
+            float projScale = Engine.ScreenHeight / ((float)Math.Tan(MathHelper.ToRadians(cam.Fov * 0.5f)) * 2.0f);
+            _effect.Parameters["ProjScale"]?.SetValue(projScale);
+
+            // SSAO tuning (world-space)
+            _effect.Parameters["AORadiusWorld"]?.SetValue(0.6f);   // meters; constant with distance
+            _effect.Parameters["AOBiasZ"]?.SetValue(0.03f);        // meters
+            _effect.Parameters["DepthThresholdZ"]?.SetValue(2.0f); // meters
             _effect.Parameters["AOIntensity"]?.SetValue(1.2f);
             _effect.Parameters["NormalWeight"]?.SetValue(0.10f);
-        
-            // Blur tuning
-            _effect.Parameters["BlurSigmaPx"]?.SetValue(1.5f);
-            _effect.Parameters["DepthSigmaZ"]?.SetValue(2.0f);
+
+            // Blur tuning (slightly stronger to suppress banding)
+            _effect.Parameters["BlurSigmaPx"]?.SetValue(1.75f);
+            _effect.Parameters["DepthSigmaZ"]?.SetValue(2.5f);
             _effect.Parameters["NormalPow"]?.SetValue(4.0f);
         
             Graphics.SetVertexBuffer(_vb);

@@ -4,29 +4,28 @@ float2 ScreenSize;
 float CameraNear;
 float CameraFar;
 float CameraAspect;
-float TanHalfFov;    // tan(FOV * 0.5) in radians
+float TanHalfFov;
 
-// SSAO params
-float AORadiusPx;        // nominal kernel radius in pixels
+// nvpro-style projection scale: height / (tan(fov/2) * 2)
+float ProjScale;
+
+// SSAO params (world-space)
+float AORadiusWorld;     // meters
 float AOBiasZ;           // small view-space z bias (meters)
 float DepthThresholdZ;   // bilateral gate threshold (meters)
-float AOIntensity;       // overall strength
+float AOIntensity;       // strength
 float NormalWeight;      // subtle weighting
 
 // Bilateral blur params
-float BlurSigmaPx;       // gaussian sigma in pixels (e.g. 1.0–2.0)
-float DepthSigmaZ;       // depth similarity sigma in meters (e.g. 2.0)
-float NormalPow;         // normal similarity power (e.g. 4.0)
+float BlurSigmaPx;       // gaussian sigma in pixels
+float DepthSigmaZ;       // depth similarity sigma in meters
+float NormalPow;         // normal similarity power
 
-// Textures
 texture ColorTex;
 texture NormalTex;
 texture DepthTex;
-
-// SSAO output texture for blur passes
 texture AOTex;
 
-// Samplers
 sampler ColorSampler = sampler_state
 {
     Texture = <ColorTex>;
@@ -100,7 +99,7 @@ static const float2 SampleOffsets[SampleCount] =
 };
 
 static const int RingCount = 2;
-static const float RingScale[RingCount] = { 1.0f, 2.3f }; // non-integer outer ring to break grid aliasing
+static const float RingScale[RingCount] = { 1.0f, 2.3f };
 
 // Depth is linear [0..1]. Convert to view-space Z
 float DepthLinToViewZ(float dlin)
@@ -113,27 +112,21 @@ float3 ReconstructVSPos(float2 uv, float dlin)
 {
     float z = DepthLinToViewZ(dlin);
 
-    // NDC from uv (Y flipped because our fullscreen quad uses top-left origin UVs)
+    // NDC from uv (no Y flip here; our fullscreen quad uses the same UV orientation in all passes)
     float2 ndc;
     ndc.x = uv.x * 2.0f - 1.0f;
-    ndc.y = (1.0f - uv.y) * 2.0f - 1.0f;
+    ndc.y = uv.y * 2.0f - 1.0f;
 
-    // Symmetric perspective reconstruction
     float x = ndc.x * z * CameraAspect * TanHalfFov;
     float y = ndc.y * z * TanHalfFov;
 
     return float3(x, y, z);
 }
 
-// Perspective-correct pixel-to-uv scaling for a view-space offset (meters) at depth z
-float2 VSOffsetToUV(float2 vsXY, float z)
+// nvpro-style: pixels = (R * 0.5 * ProjScale) / z
+float RadiusPixelsAtDepth(float z)
 {
-    // ndc = vs / (z * (tanHalfFov * {aspect or 1}))
-    float ndcX = vsXY.x / (z * CameraAspect * TanHalfFov);
-    float ndcY = vsXY.y / (z * TanHalfFov);
-
-    // uv = (ndc + 1) * 0.5, so d_uv = d_ndc * 0.5
-    return 0.5f * float2(ndcX, ndcY);
+    return (AORadiusWorld * 0.5f * ProjScale) / max(z, 1e-3f);
 }
 
 float ComputeAO(float2 uv, float3 normalRGB)
@@ -150,28 +143,20 @@ float ComputeAO(float2 uv, float3 normalRGB)
 
     float nInfl = saturate(NormalWeight);
 
-    // Base view-space radius from pixel radius (convert 1px in screen to meters at z, then scale)
-    // One pixel in uv is 1/ScreenSize; convert that to view-space along x at z:
-    // vsPerPixelX = z * Aspect * TanHalfFov * (2 / ScreenSize.x)
-    float vsPerPixelX = pVS.z * CameraAspect * TanHalfFov * (2.0f / ScreenSize.x);
-    float vsPerPixelY = pVS.z * TanHalfFov * (2.0f / ScreenSize.y);
-
-    // Use average of axes to get a view-space radius roughly matching AORadiusPx at the current depth
-    float baseVSRadius = 0.5f * (vsPerPixelX + vsPerPixelY) * AORadiusPx;
+    float baseRadiusPx = RadiusPixelsAtDepth(pVS.z);
 
     [unroll]
     for (int r = 0; r < RingCount; r++)
     {
-        float ringR = baseVSRadius * RingScale[r];
+        float ringPx = baseRadiusPx * RingScale[r];
 
         [unroll]
         for (int i = 0; i < SampleCount; i++)
         {
-            // Tangent-plane move in view-space XY
-            float2 vsOffset = ringR * normalize(SampleOffsets[i]);
+            float2 dir2D = normalize(SampleOffsets[i]);
 
-            // Convert view-space XY offset to uv delta at current z
-            float2 uvOff = VSOffsetToUV(vsOffset, pVS.z);
+            // Convert pixel offsets to uv
+            float2 uvOff = (dir2D * ringPx) / ScreenSize;
             float2 uvSamp = uv + uvOff;
 
             float dLinN = tex2D(DepthSampler, uvSamp).r;
@@ -187,18 +172,18 @@ float ComputeAO(float2 uv, float3 normalRGB)
             if (ddZ <= AOBiasZ || ddZ > DepthThresholdZ)
                 continue;
 
-            // Hemisphere check (normal-facing)
+            // Hemisphere check: require a reasonable alignment with the surface normal
             float3 vdir = normalize(pNVS - pVS);
-            float hemi = saturate(dot(n, vdir));
-            if (hemi <= 0.0f)
+            float hemi = dot(n, vdir);
+            if (hemi <= 0.2f)   // stricter than 0 to avoid face-wide occlusion
                 continue;
 
-            // Distance falloff in view-space (xy distance)
+            // Distance falloff in view-space (xy distance), normalized by ring radius in meters
             float distVS = length(pNVS.xy - pVS.xy);
-            float falloff = saturate(1.0f - distVS / (ringR * 1.5f));
+            float ringVS = (AORadiusWorld * RingScale[r]);
+            float falloff = saturate(1.0f - distVS / max(ringVS, 1e-4f));
 
             // Slight directional weighting to avoid grazing directions
-            float2 dir2D = normalize(SampleOffsets[i]);
             float3 dir3D = normalize(float3(dir2D.xy, 0.0f));
             float nWeight = 1.0f - nInfl * saturate(1.0f - dot(n, dir3D));
 
@@ -222,11 +207,10 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
 }
 
 // Gaussian weights for 5-tap blur
-static const float w0 = 0.4026f; // center
-static const float w1 = 0.2442f; // +/-1
-static const float w2 = 0.0545f; // +/-2
+static const float w0 = 0.4026f;
+static const float w1 = 0.2442f;
+static const float w2 = 0.0545f;
 
-// Similarity helpers
 float DepthSimilarity(float zc, float zn)
 {
     float dz = abs(zn - zc);
@@ -251,7 +235,6 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     float sum = w0 * aoC;
     float wsum = w0;
 
-    // +/-1
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
@@ -265,7 +248,6 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
         wsum += w;
     }
 
-    // +/-2
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
@@ -295,7 +277,6 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     float sum = w0 * aoC;
     float wsum = w0;
 
-    // +/-1
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
@@ -309,7 +290,6 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
         wsum += w;
     }
 
-    // +/-2
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
