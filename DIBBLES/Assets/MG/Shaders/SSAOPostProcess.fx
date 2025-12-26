@@ -1,158 +1,195 @@
-float2 ScreenSize; // Screen dimensions in pixels
+float2 ScreenSize;
 
-// Simple SSAO parameters (set from C#)
-float AORadius;        // Radius in pixels for sampling
-float AOBias;          // Tiny depth bias in normalized [0..1] depth to avoid self-occlusion
-float AOIntensity;     // Scales depth occlusion strength
-float NormalWeight;    // Subtle orientation influence factor
-float AOEdgeStrength;  // Weights normal-contrast edge term for crease detection
+// Camera params for view-space reconstruction
+float CameraNear;
+float CameraFar;
+float CameraAspect;
+float TanHalfFov;    // tan(FOV * 0.5) in radians
 
-texture ColorTex; // Input color texture
+// SSAO params (world-space)
+float AORadiusPx;        // nominal radius in pixels
+float AOBiasZ;           // small bias in view-space units (meters)
+float DepthThresholdZ;   // bilateral gate threshold in view-space units
+float AOIntensity;       // strength scaler
+float NormalWeight;      // subtle influence
+
+texture ColorTex;
 sampler ColorSampler = sampler_state
 {
-    Texture = <ColorTex>; // Bound texture
-    MinFilter = POINT;    // Point filtering for minification
-    MagFilter = POINT;    // Point filtering for magnification
-    MipFilter = POINT;    // Point filtering for mipmaps
-    AddressU = CLAMP;     // Clamp addressing for U coordinate
-    AddressV = CLAMP;     // Clamp addressing for V coordinate
+    Texture = <ColorTex>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
 };
 
-texture NormalTex; // Input normal texture
+texture NormalTex;
 sampler NormalSampler = sampler_state
 {
-    Texture = <NormalTex>; // Bound texture
-    MinFilter = POINT;     // Point filtering for minification
-    MagFilter = POINT;     // Point filtering for magnification
-    MipFilter = POINT;     // Point filtering for mipmaps
-    AddressU = BORDER;     // Border addressing for U coordinate (changed for off-screen handling)
-    AddressV = BORDER;     // Border addressing for V coordinate (changed for off-screen handling)
+    Texture = <NormalTex>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = BORDER;
+    AddressV = BORDER;
 };
 
-texture DepthTex; // Input depth texture
+texture DepthTex;
 sampler DepthSampler = sampler_state
 {
-    Texture = <DepthTex>; // Bound texture
-    MinFilter = POINT;    // Point filtering for minification
-    MagFilter = POINT;    // Point filtering for magnification
-    MipFilter = POINT;    // Point filtering for mipmaps
-    AddressU = BORDER;    // Border addressing for U coordinate (changed for off-screen handling)
-    AddressV = BORDER;    // Border addressing for V coordinate (changed for off-screen handling)
+    Texture = <DepthTex>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = BORDER;
+    AddressV = BORDER;
 };
 
-struct VSInput // Vertex shader input
+struct VSInput
 {
-    float3 Position : POSITION0; // Vertex position
-    float2 TexCoord : TEXCOORD0; // Texture coordinates
+    float3 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
 };
 
-struct VSOutput // Vertex shader output
+struct VSOutput
 {
-    float4 Position : SV_Position; // Transformed position
-    float2 TexCoord : TEXCOORD0;   // Passed texture coordinates
+    float4 Position : SV_Position;
+    float2 TexCoord : TEXCOORD0;
 };
 
-VSOutput VSMain(VSInput input) // Vertex shader main function
+VSOutput VSMain(VSInput input)
 {
-    VSOutput output;                    // Create output struct
-    output.Position = float4(input.Position, 1.0f); // Set position with w=1.0
-    output.TexCoord = input.TexCoord;   // Pass through texture coords
-    return output;                      // Return output
+    VSOutput o;
+    o.Position = float4(input.Position, 1.0f);
+    o.TexCoord = input.TexCoord;
+    return o;
 }
 
-// Fixed ring offsets (no random noise) for consistent sampling
-static const int SampleCount = 12; // Number of samples
+// Fixed, deterministic kernel (no random rotation)
+static const int SampleCount = 12;
 static const float2 SampleOffsets[SampleCount] =
 {
-    float2( 1,  0),  // Right
-    float2(-1,  0),  // Left
-    float2( 0,  1),  // Up
-    float2( 0, -1),  // Down
-    float2( 1,  1),  // Up-right
-    float2( 1, -1),  // Down-right
-    float2(-1,  1),  // Up-left
-    float2(-1, -1),  // Down-left
-    float2( 2,  0),  // Further right
-    float2(-2,  0),  // Further left
-    float2( 0,  2),  // Further up
-    float2( 0, -2)   // Further down
+    float2( 1,  0), float2(-1,  0),
+    float2( 0,  1), float2( 0, -1),
+    float2( 1,  1), float2( 1, -1),
+    float2(-1,  1), float2(-1, -1),
+    float2( 2,  0), float2(-2,  0),
+    float2( 0,  2), float2( 0, -2)
 };
 
-// Simple SSAO: combine depth deltas and normal contrast around the pixel
-float ComputeAO(float2 uv, float3 normal, float centerDepth) // Compute ambient occlusion factor
+// Depth is linear [0..1]. Convert to view-space Z
+float DepthLinToViewZ(float dlin)
 {
-    // If the center is sky/far, no occlusion
-    if (centerDepth >= 0.999f) // Check if center depth is near far plane
-        return 1.0f;           // Return no occlusion
+    return lerp(CameraNear, CameraFar, dlin);
+}
 
-    float aoAccum = 0.0f; // Accumulator for occlusion
-    float valid = 0.0f;   // Counter for valid samples
+// Reconstruct view-space position from uv and linear depth
+float3 ReconstructVSPos(float2 uv, float dlin)
+{
+    float z = DepthLinToViewZ(dlin);
 
-    float nInfluence = saturate(NormalWeight); // Saturate normal weight to [0..1]
+    // NDC from uv (MonoGame default quad flips Y in our setup)
+    float2 ndc;
+    ndc.x = uv.x * 2.0f - 1.0f;
+    ndc.y = (1.0f - uv.y) * 2.0f - 1.0f;
 
-    // Constant screen-space radius (stable for debug)
-    float scaledRadius = AORadius; // Use parameter radius directly
+    // Symmetric perspective reconstruction
+    float x = ndc.x * z * CameraAspect * TanHalfFov;
+    float y = ndc.y * z * TanHalfFov;
 
-    for (int i = 0; i < SampleCount; i++) // Loop over each sample
+    return float3(x, y, z);
+}
+
+// Pixel-to-view-space scale at current depth (approx)
+float2 PixelToVS(float viewZ)
+{
+    float sx = (2.0f * viewZ * CameraAspect * TanHalfFov) / ScreenSize.x;
+    float sy = (2.0f * viewZ * TanHalfFov)               / ScreenSize.y;
+    return float2(sx, sy);
+}
+
+float ComputeAO(float2 uv, float3 normalEnc)
+{
+    float dCenterLin = tex2D(DepthSampler, uv).r;
+    if (dCenterLin >= 0.999f)
+        return 1.0f;
+
+    float3 n = normalize(normalEnc * 2.0f - 1.0f);
+
+    float3 pVS = ReconstructVSPos(uv, dCenterLin);
+    float2 px2vs = PixelToVS(pVS.z);
+
+    // Perspective scale radius into uv space (pixels -> uv delta)
+    float scaledRadiusPx = AORadiusPx;
+    float2 radiusUV = float2((scaledRadiusPx * px2vs.x) / (px2vs.x * ScreenSize.x),
+                             (scaledRadiusPx * px2vs.y) / (px2vs.y * ScreenSize.y));
+
+    float occlusionAccum = 0.0f;
+    float valid = 0.0f;
+
+    float nInfl = saturate(NormalWeight);
+
+    [unroll]
+    for (int i = 0; i < SampleCount; i++)
     {
-        float2 sampleUV = uv + (SampleOffsets[i] * scaledRadius) / ScreenSize; // Compute sample UV offset
+        // UV offset in pixels converted to uv units
+        float2 uvOff = (SampleOffsets[i] * scaledRadiusPx) / ScreenSize;
+        float2 uvSamp = uv + uvOff;
 
-        // Sample neighbor depth/normal
-        float neighborDepth = tex2D(DepthSampler, sampleUV).r; // Sample depth at offset
+        float dLinN = tex2D(DepthSampler, uvSamp).r;
+        if (dLinN >= 0.999f)
+            continue;
 
-        // Skip invalid/sky samples
-        if (neighborDepth >= 0.999f) // Check if neighbor is sky/far
-            continue;                // Skip this sample
+        float3 pNVS = ReconstructVSPos(uvSamp, dLinN);
 
-        float3 neighborNormalRGB = tex2D(NormalSampler, sampleUV).rgb; // Sample normal at offset
-        float3 nSample = normalize(neighborNormalRGB * 2.0f - 1.0f);   // Decode normal to [-1..1]
+        // View-space depth delta (positive when neighbor is closer to camera)
+        float ddZ = (pVS.z - pNVS.z);
 
-        // Depth deltas are tiny in normalized [0..1] for your far=1000 setup.
-        float dd = neighborDepth - centerDepth; // Compute depth difference
+        // Bilateral gate to reject silhouettes and large discontinuities
+        if (ddZ <= AOBiasZ || ddZ > DepthThresholdZ)
+            continue;
 
-        // Skip samples with large depth discontinuities (e.g., edges)
-        if (abs(dd) > 0.005f) // Check absolute depth diff against threshold (tune as needed)
-            continue;         // Skip this sample
+        // Hemisphere check: only consider geometry in the direction of the surface normal
+        float3 vdir = normalize(pNVS - pVS);
+        float hemi = saturate(dot(n, vdir));   // >0 means within upper hemisphere
 
-        // Only count closer neighbors as occluders (negative dd) with bias
-        float closerTerm = saturate((-dd - AOBias) * AOIntensity); // Compute closer occlusion term (removed deeperTerm)
+        if (hemi <= 0.0f)
+            continue;
 
-        // Edge term from normal contrast to reveal creases/corners
-        float edgeTerm = AOEdgeStrength * saturate(1.0f - dot(normal, nSample)); // Compute edge based on normal dot product
+        // Distance falloff in view-space (using xy delta)
+        float distVS = length((pNVS.xy - pVS.xy));
+        float falloff = saturate(1.0f - distVS / (DepthThresholdZ * 1.5f));
 
-        // Hemisphere bias: weight higher for samples in front relative to normal
-        float2 dir2D = normalize(SampleOffsets[i]); // Normalize 2D direction
-        float3 dir3D = normalize(float3(dir2D.xy, 0.0f)); // Extend to 3D (flat)
-        float nWeight = saturate(dot(normal, dir3D) + 0.2f); // Compute weight with bias (changed for hemisphere enforcement)
+        // Slight directional weighting to avoid grazing directions
+        float2 dir2D = normalize(SampleOffsets[i]);
+        float3 dir3D = normalize(float3(dir2D.xy, 0.0f));
+        float nWeight = 1.0f - nInfl * saturate(1.0f - dot(n, dir3D));
 
-        // Accumulate
-        aoAccum += (closerTerm) * nWeight + edgeTerm; // Add weighted closer term and edge term
-        valid += 1.0f; // Increment valid count
+        float contrib = AOIntensity * (ddZ / DepthThresholdZ) * falloff * hemi * nWeight;
+
+        occlusionAccum += contrib;
+        valid += 1.0f;
     }
 
-    float occlusion = (valid > 0.0f) ? (aoAccum / valid) : 0.0f; // Average occlusion if valid samples exist
+    float occ = (valid > 0.0f) ? occlusionAccum / valid : 0.0f;
 
-    // AO factor [0..1], where 1 = no occlusion
-    return saturate(1.0f - occlusion); // Return saturated AO factor
+    // AO factor: 1 = no occlusion, 0 = full
+    return saturate(1.0f - occ);
 }
 
-float4 PSMain(VSOutput input) : SV_Target0 // Pixel shader main function
+float4 PSMain(VSOutput input) : SV_Target0
 {
-    float4 sceneCol = tex2D(ColorSampler,  input.TexCoord); // Sample scene color
-    float3 normalRGB = tex2D(NormalSampler, input.TexCoord).rgb; // Sample normal
-    float  depth     = tex2D(DepthSampler,  input.TexCoord).r; // Sample depth
+    float4 sceneCol = tex2D(ColorSampler,  input.TexCoord);
+    float3 normalRGB = tex2D(NormalSampler, input.TexCoord).rgb;
 
-    // Decode normal from [0..1] to [-1..1]
-    float3 normal = normalize(normalRGB * 2.0f - 1.0f); // Decode and normalize normal
+    float ao = ComputeAO(input.TexCoord, normalRGB);
 
-    // Compute AO factor
-    float ao = ComputeAO(input.TexCoord, normal, depth); // Call AO computation
-
-    // Debug: AO as grayscale
-    return float4(ao, ao, ao, sceneCol.a); // Return AO in RGB, preserve alpha
+    // Debug output: AO grayscale
+    return float4(ao, ao, ao, sceneCol.a);
 }
 
-technique TestPostProcess // Technique definition
+technique TestPostProcess
 {
     pass P0
     {

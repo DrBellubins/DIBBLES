@@ -38,35 +38,51 @@ namespace DIBBLES.Effects
         {
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Transparent);
-
+        
             Graphics.BlendState = BlendState.Opaque;
             Graphics.DepthStencilState = DepthStencilState.None;
             Graphics.RasterizerState = RasterizerState.CullNone;
+        
+            // Samplers
+            Graphics.SamplerStates[0] = SamplerState.PointClamp;
+            Graphics.SamplerStates[1] = new SamplerState
+            {
+                Filter = TextureFilter.Point,
+                AddressU = TextureAddressMode.Border,
+                AddressV = TextureAddressMode.Border,
+                BorderColor = Color.Black
+            };
             
-            // Create custom sampler states with point filtering and border addressing
-            var pointClamp = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Clamp, AddressV = TextureAddressMode.Clamp }; // Clamp for color
-            var pointBorderNormal = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Border, AddressV = TextureAddressMode.Border, BorderColor = Color.Black }; // Border for normals (neutral normal)
-            var pointBorderDepth = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Border, AddressV = TextureAddressMode.Border, BorderColor = Color.White }; // Border for depth (far depth ~1.0)
-
-            Graphics.SamplerStates[0] = pointClamp; // Color sampler: clamp
-            Graphics.SamplerStates[1] = pointBorderNormal; // Normal sampler: border
-            Graphics.SamplerStates[2] = pointBorderDepth; // Depth sampler: border
-
+            Graphics.SamplerStates[2] = new SamplerState
+            {
+                Filter = TextureFilter.Point,
+                AddressU = TextureAddressMode.Border,
+                AddressV = TextureAddressMode.Border,
+                BorderColor = Color.White
+            };
+        
             _effect.Parameters["ColorTex"]?.SetValue(ColorBuffer);
             _effect.Parameters["NormalTex"]?.SetValue(NormalBuffer);
             _effect.Parameters["DepthTex"]?.SetValue(DepthBuffer);
             _effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
-
-            // Tuned for your normalized depth [0..1] (near=0.01, far=1000)
-            _effect.Parameters["AORadius"]?.SetValue(6.0f);         // constant screen-space radius
-            _effect.Parameters["AOBias"]?.SetValue(0.00015f);       // extremely small bias (normalized depth)
-            _effect.Parameters["AOIntensity"]?.SetValue(18.0f);     // strong scale for tiny deltas
-            _effect.Parameters["NormalWeight"]?.SetValue(0.10f);    // subtle orientation weight
-            _effect.Parameters["AOEdgeStrength"]?.SetValue(0.35f);  // crease edge darkening
-
+        
+            // Camera params for reconstruction (nvpro-style)
+            var cam = Scenes.GameScene.PlayerCharacter.Camera;
+            _effect.Parameters["CameraNear"]?.SetValue(cam.NearPlane);
+            _effect.Parameters["CameraFar"]?.SetValue(cam.FarPlane);
+            _effect.Parameters["CameraAspect"]?.SetValue(cam.AspectRatio);
+            _effect.Parameters["TanHalfFov"]?.SetValue((float)Math.Tan(MathHelper.ToRadians(cam.Fov * 0.5f)));
+        
+            // SSAO tuning (world-space)
+            _effect.Parameters["AORadiusPx"]?.SetValue(6.0f);        // kernel size in pixels
+            _effect.Parameters["AOBiasZ"]?.SetValue(0.03f);           // prevents self-occlusion at flat surfaces
+            _effect.Parameters["DepthThresholdZ"]?.SetValue(2.0f);    // gate large z jumps (kills silhouettes)
+            _effect.Parameters["AOIntensity"]?.SetValue(1.2f);        // overall strength
+            _effect.Parameters["NormalWeight"]?.SetValue(0.10f);      // subtle influence
+        
             Graphics.SetVertexBuffer(_vb);
             Graphics.Indices = _ib;
-
+        
             foreach (var pass in _effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
