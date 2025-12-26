@@ -42,9 +42,15 @@ namespace DIBBLES.Effects
             Graphics.BlendState = BlendState.Opaque;
             Graphics.DepthStencilState = DepthStencilState.None;
             Graphics.RasterizerState = RasterizerState.CullNone;
-            Graphics.SamplerStates[0] = SamplerState.PointClamp;
-            Graphics.SamplerStates[1] = SamplerState.PointClamp;
-            Graphics.SamplerStates[2] = SamplerState.PointClamp;
+            
+            // Create custom sampler states with point filtering and border addressing
+            var pointClamp = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Clamp, AddressV = TextureAddressMode.Clamp }; // Clamp for color
+            var pointBorderNormal = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Border, AddressV = TextureAddressMode.Border, BorderColor = Color.Black }; // Border for normals (neutral normal)
+            var pointBorderDepth = new SamplerState { Filter = TextureFilter.Point, AddressU = TextureAddressMode.Border, AddressV = TextureAddressMode.Border, BorderColor = Color.White }; // Border for depth (far depth ~1.0)
+
+            Graphics.SamplerStates[0] = pointClamp; // Color sampler: clamp
+            Graphics.SamplerStates[1] = pointBorderNormal; // Normal sampler: border
+            Graphics.SamplerStates[2] = pointBorderDepth; // Depth sampler: border
 
             _effect.Parameters["ColorTex"]?.SetValue(ColorBuffer);
             _effect.Parameters["NormalTex"]?.SetValue(NormalBuffer);

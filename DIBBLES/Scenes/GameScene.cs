@@ -24,6 +24,8 @@ public class GameScene : Scene
 
     public static Color SkyColor = new Color(0.4f, 0.7f, 1.0f, 1.0f);
     
+    public static bool UIEnabled = true;
+    
     // Buffers
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D NormalBuffer;
@@ -103,6 +105,7 @@ public class GameScene : Scene
         Commands.RegisterCommand("db", "Toggle debug information", Debug.ToggleDebug);
         Commands.RegisterCommand("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
         Commands.RegisterCommand("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
+        Commands.RegisterCommand("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
     }
 
     private int fpsCounter;
@@ -168,30 +171,30 @@ public class GameScene : Scene
         
         Debug.Draw3D();
         
-        if (Input.IsKeyPressed(Keys.F2))
-            takeScreenshot(graphics);
-        
         // Draw UI (UI Batch)
-        graphics.SetRenderTarget(UIBuffer);
-        graphics.Clear(Color.Transparent);
+        if (UIEnabled)
+        {
+            graphics.SetRenderTarget(UIBuffer);
+            graphics.Clear(Color.Transparent);
         
-        UIBatch.Begin();
+            UIBatch.Begin();
         
-        PlayerCharacter.DrawUI();
+            PlayerCharacter.DrawUI();
         
-        Inventory.Draw();
+            Inventory.Draw();
         
-        gameChat.DrawBG();
-        gameChat.Draw();
+            gameChat.DrawBG();
+            gameChat.Draw();
         
-        Debug.Draw2D();
-        Debug.Clear2D();
+            Debug.Draw2D();
+            Debug.Clear2D();
         
-        UIBatch.End();
+            UIBatch.End();
         
-        graphics.SetRenderTarget(null);
+            graphics.SetRenderTarget(null);
         
-        uiBlur.Apply(BackBuffer, UIBuffer);
+            uiBlur.Apply(BackBuffer, UIBuffer);
+        }
         
         // Apply all registered post-processing effects, sampling color/normal/depth
         postProcessingManager.ApplyAll(BackBuffer, NormalBuffer, DepthBuffer);
@@ -203,11 +206,24 @@ public class GameScene : Scene
         
         // Composite all post-processing outputs
         postProcessingManager.Draw();
-        
-        uiBlur.Draw();
-        UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+
+        if (UIEnabled)
+        {
+            uiBlur.Draw();
+            UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        }
         
         UIBatch.End();
+        
+        // Take screenshot after full scene composite, but before UI
+        if (Input.IsKeyPressed(Keys.F2))
+            takeScreenshot(graphics);
+    }
+
+    private void toggleUICMD(string[] args)
+    {
+        UIEnabled = !UIEnabled;
+        Chat.Write($"Toggle UI: {UIEnabled}", ChatMessageType.Command);
     }
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
@@ -218,10 +234,21 @@ public class GameScene : Scene
         if (!Directory.Exists(folder))
             Directory.CreateDirectory(folder);
 
-        using (var outputStream = new FileStream(Path.Combine(folder, "Output.png"), FileMode.Create))
-            graphicsDevice.Textures[0]
-            //BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-        
+        // Capture final on-screen output (backbuffer) including UI and post-processing
+        int width = Engine.ScreenWidth;
+        int height = Engine.ScreenHeight;
+
+        Color[] pixels = new Color[width * height];
+        graphicsDevice.GetBackBufferData(pixels);
+
+        using (var outputTex = new Texture2D(graphicsDevice, width, height, false, SurfaceFormat.Color))
+        {
+            outputTex.SetData(pixels);
+
+            using (var outputStream = new FileStream(Path.Combine(folder, "Output.png"), FileMode.Create))
+                outputTex.SaveAsPng(outputStream, width, height);
+        }
+
         // Save color buffer
         using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
             BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
@@ -235,6 +262,7 @@ public class GameScene : Scene
             DepthBuffer.SaveAsPng(depthStream, DepthBuffer.Width, DepthBuffer.Height);
 
         var outputString = $"Saved buffers to: {folder}";
+        
         Console.WriteLine(outputString);
         Chat.Write(outputString, ChatMessageType.Command);
     }
