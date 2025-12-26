@@ -14,9 +14,13 @@ float FogFar;
 float4 FogColor;
 
 sampler2D TextureSampler = sampler_state
-
 {
     Texture = <Texture0>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = POINT;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
 };
 
 // Normal and view-depth to PixelInput, and return multiple render targets
@@ -76,7 +80,7 @@ PSOutput PS(PixelInput input)
     float4 texColor   = tex2D(TextureSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
-    clip(blockColor.a - AlphaCutoff);
+    //clip(blockColor.a - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
