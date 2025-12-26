@@ -15,7 +15,7 @@ float4 FogColor;
 
 sampler2D TextureSampler = sampler_state
 {
-    Texture = <Texture0>;
+    Texture = <Texture0>;  // bind the atlas
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;
@@ -80,7 +80,8 @@ PSOutput PS(PixelInput input)
     float4 texColor   = tex2D(TextureSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
-    //clip(blockColor.a - AlphaCutoff);
+    // Hard cutouts: use texture alpha (not multiplied color)
+    //clip(texColor.a - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));

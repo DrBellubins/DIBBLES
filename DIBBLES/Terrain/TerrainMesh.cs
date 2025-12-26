@@ -59,6 +59,9 @@ public class TerrainMesh
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
                 
+                // Explicitly select the technique to avoid null CurrentTechnique on cloned effects
+                shader.CurrentTechnique = shader.Techniques["Terrain"];
+    
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
@@ -94,6 +97,9 @@ public class TerrainMesh
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
                 
+                // Explicitly select the technique to avoid null CurrentTechnique on cloned effects
+                shader.CurrentTechnique = shader.Techniques["Terrain"];
+    
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
