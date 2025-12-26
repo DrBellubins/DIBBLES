@@ -218,6 +218,10 @@ public class GameScene : Scene
         if (!Directory.Exists(folder))
             Directory.CreateDirectory(folder);
 
+        using (var outputStream = new FileStream(Path.Combine(folder, "Output.png"), FileMode.Create))
+            graphicsDevice.Textures[0]
+            //BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        
         // Save color buffer
         using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
             BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
