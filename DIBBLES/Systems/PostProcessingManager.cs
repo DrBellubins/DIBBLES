@@ -4,16 +4,20 @@ using DIBBLES.Systems;
 
 namespace DIBBLES.Effects;
 
-public static class PostProcessingManager
+public class PostProcessingManager
 {
-    public static void Initialize(int width, int height)
+    //private TestPostProcess testPostProcess = new();
+    
+    public void Initialize(int width, int height)
     {
+        //testPostProcess.Start(width, height);
+        
         foreach (var effect in PostProcessingEffect.All)
             effect.Start(width, height);
     }
 
     // Pass the G-buffer textures to each effect and allow them to render to their backbuffer
-    public static void ApplyAll(RenderTarget2D color, RenderTarget2D normal, RenderTarget2D depth)
+    public void ApplyAll(RenderTarget2D color, RenderTarget2D normal, RenderTarget2D depth)
     {
         foreach (var effect in PostProcessingEffect.All)
         {
@@ -26,7 +30,7 @@ public static class PostProcessingManager
     }
 
     // Composite all effects' outputs over the scene (caller should enclose in a UIBatch)
-    public static void Draw()
+    public void Draw()
     {
         foreach (var effect in PostProcessingEffect.All)
         {

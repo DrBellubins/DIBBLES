@@ -17,6 +17,8 @@ public class GameScene : Scene
     public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
     public static InventorySystem Inventory = new();
+    
+    public static PostProcessingManager postProcessingManager = new();
 
     public static List<BlockLogic> BlockLogicList = new();
 
@@ -61,7 +63,7 @@ public class GameScene : Scene
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
-            SurfaceFormat.Single, // float depth encoding
+            SurfaceFormat.Color, // was SurfaceFormat.Single
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
@@ -95,9 +97,9 @@ public class GameScene : Scene
         uiBlur.Start();
 
         // Initialize all post processing effects before PostProcessingManager.Initialize!
-        var testPostProcess = new TestPostProcess();
         
-        PostProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
+        
+        postProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
         Commands.RegisterCommand("db", "Toggle debug information", Debug.ToggleDebug);
@@ -187,7 +189,7 @@ public class GameScene : Scene
         uiBlur.Apply(BackBuffer, UIBuffer);
         
         // Apply all registered post-processing effects, sampling color/normal/depth
-        PostProcessingManager.ApplyAll(BackBuffer, NormalBuffer, DepthBuffer);
+        postProcessingManager.ApplyAll(BackBuffer, NormalBuffer, DepthBuffer);
         
         UIBatch.Begin();
         
@@ -195,7 +197,7 @@ public class GameScene : Scene
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         // Composite all post-processing outputs
-        PostProcessingManager.Draw();
+        postProcessingManager.Draw();
         
         uiBlur.Draw();
         UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
