@@ -1,7 +1,7 @@
 float2 ScreenSize;
 
 // Simple SSAO parameters (set from C#)
-float AORadius;      // in pixels
+float AORadius;      // nominal radius in pixels (will be scaled by perspective)
 float AOBias;        // small depth bias to avoid self-occlusion
 float AOIntensity;   // scales occlusion strength
 float NormalWeight;  // optional normal influence (kept minimal)
@@ -60,7 +60,7 @@ VSOutput VSMain(VSInput input)
 }
 
 // Fixed ring offsets (no random noise)
-static const int SampleCount = 8;
+static const int SampleCount = 12;
 static const float2 SampleOffsets[SampleCount] =
 {
     float2( 1,  0),
@@ -70,40 +70,57 @@ static const float2 SampleOffsets[SampleCount] =
     float2( 1,  1),
     float2( 1, -1),
     float2(-1,  1),
-    float2(-1, -1)
+    float2(-1, -1),
+    float2( 2,  0),
+    float2(-2,  0),
+    float2( 0,  2),
+    float2( 0, -2)
 };
 
-// Very simple depth-only SSAO: neighbors closer than current pixel contribute occlusion
+// Very simple depth-only SSAO: neighbors deeper than current pixel contribute occlusion
 float ComputeAO(float2 uv, float3 normal, float centerDepth)
 {
-    float aoAccum = 0.0f;
+    // If the center is sky/far, no occlusion
+    if (centerDepth >= 0.999f)
+        return 1.0f;
 
-    // Optional very light normal influence (kept subtle)
+    float aoAccum = 0.0f;
+    float valid = 0.0f;
+
     float nInfluence = saturate(NormalWeight);
+
+    // Perspective-scale the sampling radius to approximate a constant world radius
+    float perspScale = 1.0f / max(centerDepth, 0.2f);
+    float scaledRadius = AORadius * perspScale;
 
     for (int i = 0; i < SampleCount; i++)
     {
-        float2 sampleUV = uv + (SampleOffsets[i] * AORadius) / ScreenSize;
+        float2 sampleUV = uv + (SampleOffsets[i] * scaledRadius) / ScreenSize;
 
         // Sample neighbor depth
         float neighborDepth = tex2D(DepthSampler, sampleUV).r;
 
-        // Depth difference (negative means neighbor is closer to camera)
+        // Skip invalid/sky samples
+        if (neighborDepth >= 0.999f)
+            continue;
+
+        // Positive means neighbor is farther (deeper) than center; that should occlude
         float dd = neighborDepth - centerDepth;
 
-        // Contribution when neighbor is closer than bias
-        float contrib = saturate((-dd - AOBias) * AOIntensity);
+        // Contribution when neighbor is deeper than bias
+        float contrib = saturate((dd - AOBias) * AOIntensity);
 
-        // Slightly reduce occlusion when normal faces away from sample direction
+        // Slight normal influence
         float2 dir2D = normalize(SampleOffsets[i]);
         float3 dir3D = normalize(float3(dir2D.xy, 0.0f));
         float nWeight = 1.0f - nInfluence * saturate(dot(normalize(normal), dir3D));
 
         aoAccum += contrib * nWeight;
+        valid += 1.0f;
     }
 
     // Normalize and convert to AO factor [0..1], where 1 = no occlusion
-    float occlusion = aoAccum / SampleCount;
+    float occlusion = (valid > 0.0f) ? (aoAccum / valid) : 0.0f;
     return saturate(1.0f - occlusion);
 }
 
@@ -119,10 +136,8 @@ float4 PSMain(VSOutput input) : SV_Target0
     // Compute simple AO factor
     float ao = ComputeAO(input.TexCoord, normal, depth);
 
-    float3 aoDebug = float3(ao, ao, ao);
-
-    // Multiply scene color by AO
-    return float4(aoDebug.rgb, sceneCol.a);
+    // Debug: output AO as grayscale
+    return float4(ao, ao, ao, sceneCol.a);
 }
 
 technique TestPostProcess
