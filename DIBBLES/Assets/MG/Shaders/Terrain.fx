@@ -76,20 +76,18 @@ PSOutput PS(PixelInput input)
     float4 texColor   = tex2D(TextureSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
-    // Alpha test for hard cutouts: discard holes so G-buffer isn’t corrupted
     clip(blockColor.a - AlphaCutoff);
 
-    // Fog
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
 
-    // Encode normal to [0..1] WITHOUT alpha influence
-    float3 normal = normalize(input.WorldNormal);
-    float3 normalEnc = normal * 0.5f + 0.5f;
+    // Encode VIEW-SPACE normal to [0..1]
+    // This aligns the hemisphere check in SSAO with the reconstructed view-space positions.
+    float3 viewNormal = normalize(mul(float4(input.WorldNormal, 0.0f), View).xyz);
+    float3 normalEnc = viewNormal * 0.5f + 0.5f;
 
-    // Normalize linear view depth using camera near/far, NOT fog
     float depthLin = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
 
     PSOutput output;

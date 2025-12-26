@@ -83,15 +83,15 @@ namespace DIBBLES.Effects
             _effect.Parameters["ProjScale"]?.SetValue(projScale);
 
             // SSAO tuning (world-space)
-            _effect.Parameters["AORadiusWorld"]?.SetValue(0.6f);   // meters; constant with distance
-            _effect.Parameters["AOBiasZ"]?.SetValue(0.03f);        // meters
-            _effect.Parameters["DepthThresholdZ"]?.SetValue(2.0f); // meters
-            _effect.Parameters["AOIntensity"]?.SetValue(1.2f);
+            _effect.Parameters["AORadiusWorld"]?.SetValue(0.7f);
+            _effect.Parameters["AOBiasZ"]?.SetValue(0.02f);
+            _effect.Parameters["DepthThresholdZ"]?.SetValue(1.2f);
+            _effect.Parameters["AOIntensity"]?.SetValue(1.4f);
             _effect.Parameters["NormalWeight"]?.SetValue(0.10f);
 
-            // Blur tuning (slightly stronger to suppress banding)
-            _effect.Parameters["BlurSigmaPx"]?.SetValue(1.75f);
-            _effect.Parameters["DepthSigmaZ"]?.SetValue(2.5f);
+            // Blur tuning
+            _effect.Parameters["BlurSigmaPx"]?.SetValue(1.5f);
+            _effect.Parameters["DepthSigmaZ"]?.SetValue(1.5f);
             _effect.Parameters["NormalPow"]?.SetValue(4.0f);
         
             Graphics.SetVertexBuffer(_vb);

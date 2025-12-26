@@ -107,15 +107,15 @@ float DepthLinToViewZ(float dlin)
     return lerp(CameraNear, CameraFar, dlin);
 }
 
-// Reconstruct view-space position from uv and linear depth
+// ReconstructVSPos(): fix NDC Y to match fullscreen quad UV orientation
 float3 ReconstructVSPos(float2 uv, float dlin)
 {
     float z = DepthLinToViewZ(dlin);
 
-    // NDC from uv (no Y flip here; our fullscreen quad uses the same UV orientation in all passes)
+    // Use NDC.y = (1 - uv.y)*2 - 1 because the fullscreen quad provides top-left origin UVs.
     float2 ndc;
     ndc.x = uv.x * 2.0f - 1.0f;
-    ndc.y = uv.y * 2.0f - 1.0f;
+    ndc.y = (1.0f - uv.y) * 2.0f - 1.0f;
 
     float x = ndc.x * z * CameraAspect * TanHalfFov;
     float y = ndc.y * z * TanHalfFov;
@@ -129,12 +129,14 @@ float RadiusPixelsAtDepth(float z)
     return (AORadiusWorld * 0.5f * ProjScale) / max(z, 1e-3f);
 }
 
+// ComputeAO(): hemisphere uses view-space normal now; keep stricter gate to avoid silhouette AO
 float ComputeAO(float2 uv, float3 normalRGB)
 {
     float dCenterLin = tex2D(DepthSampler, uv).r;
     if (dCenterLin >= 0.999f)
         return 1.0f;
 
+    // normalRGB encodes VIEW-SPACE normal in [0..1]
     float3 n = normalize(normalRGB * 2.0f - 1.0f);
     float3 pVS = ReconstructVSPos(uv, dCenterLin);
 
@@ -142,7 +144,6 @@ float ComputeAO(float2 uv, float3 normalRGB)
     float samples = 0.0f;
 
     float nInfl = saturate(NormalWeight);
-
     float baseRadiusPx = RadiusPixelsAtDepth(pVS.z);
 
     [unroll]
@@ -154,8 +155,6 @@ float ComputeAO(float2 uv, float3 normalRGB)
         for (int i = 0; i < SampleCount; i++)
         {
             float2 dir2D = normalize(SampleOffsets[i]);
-
-            // Convert pixel offsets to uv
             float2 uvOff = (dir2D * ringPx) / ScreenSize;
             float2 uvSamp = uv + uvOff;
 
@@ -165,25 +164,19 @@ float ComputeAO(float2 uv, float3 normalRGB)
 
             float3 pNVS = ReconstructVSPos(uvSamp, dLinN);
 
-            // View-space z delta: positive when neighbor is closer (occluder)
-            float ddZ = pVS.z - pNVS.z;
-
-            // Bilateral gate to reject silhouettes and large discontinuities
+            float ddZ = pVS.z - pNVS.z; // neighbor slightly closer => occlusion
             if (ddZ <= AOBiasZ || ddZ > DepthThresholdZ)
                 continue;
 
-            // Hemisphere check: require a reasonable alignment with the surface normal
             float3 vdir = normalize(pNVS - pVS);
             float hemi = dot(n, vdir);
-            if (hemi <= 0.2f)   // stricter than 0 to avoid face-wide occlusion
+            if (hemi <= 0.2f)
                 continue;
 
-            // Distance falloff in view-space (xy distance), normalized by ring radius in meters
             float distVS = length(pNVS.xy - pVS.xy);
             float ringVS = (AORadiusWorld * RingScale[r]);
             float falloff = saturate(1.0f - distVS / max(ringVS, 1e-4f));
 
-            // Slight directional weighting to avoid grazing directions
             float3 dir3D = normalize(float3(dir2D.xy, 0.0f));
             float nWeight = 1.0f - nInfl * saturate(1.0f - dot(n, dir3D));
 
