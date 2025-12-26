@@ -63,7 +63,7 @@ public class GameScene : Scene
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
-            SurfaceFormat.Color, // was SurfaceFormat.Single
+            SurfaceFormat.Single, // Back to SurfaceFormat.Single
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
@@ -97,8 +97,6 @@ public class GameScene : Scene
         uiBlur.Start();
 
         // Initialize all post processing effects before PostProcessingManager.Initialize!
-        
-        
         postProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
         Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
@@ -207,35 +205,25 @@ public class GameScene : Scene
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
     {
-        int width = graphicsDevice.PresentationParameters.BackBufferWidth;
-        int height = graphicsDevice.PresentationParameters.BackBufferHeight;
+        string timestamp = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+        string folder = $"Screenshot-{timestamp}";
 
-        // Read backbuffer
-        int[] pixelData = new int[width * height];
-        graphicsDevice.GetBackBufferData(pixelData);
+        if (!Directory.Exists(folder))
+            Directory.CreateDirectory(folder);
 
-        // Flip vertically: swap rows in-place
-        int rowStride = width;
-        
-        for (int y = 0; y < height / 2; y++)
-        {
-            int topIdx = y * rowStride;
-            int bottomIdx = (height - 1 - y) * rowStride;
+        // Save color buffer
+        using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
+            BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
 
-            for (int x = 0; x < rowStride; x++)
-                (pixelData[topIdx + x], pixelData[bottomIdx + x]) = (pixelData[bottomIdx + x], pixelData[topIdx + x]);
-        }
+        // Save normal buffer
+        using (var normalStream = new FileStream(Path.Combine(folder, "Normal.png"), FileMode.Create))
+            NormalBuffer.SaveAsPng(normalStream, NormalBuffer.Width, NormalBuffer.Height);
 
-        // Create texture and write flipped data
-        using var screenshot = new Texture2D(graphicsDevice, width, height, false, SurfaceFormat.Color);
-        screenshot.SetData(pixelData);
+        // Save depth buffer
+        using (var depthStream = new FileStream(Path.Combine(folder, "Depth.png"), FileMode.Create))
+            DepthBuffer.SaveAsPng(depthStream, DepthBuffer.Width, DepthBuffer.Height);
 
-        string path = $"Screenshot-{DateTime.Now:yyyy-MM-dd-HH-mm-ss}.png";
-        
-        using (var fileStream = new FileStream(path, FileMode.Create))
-            screenshot.SaveAsPng(fileStream, width, height);
-
-        var outputString = $"Saved screenshot: {path}";
+        var outputString = $"Saved buffers to: {folder}";
         Console.WriteLine(outputString);
         Chat.Write(outputString, ChatMessageType.Command);
     }

@@ -1,13 +1,17 @@
+texture Texture0;
+
 float4x4 World;
 float4x4 View;
 float4x4 Projection;
-
 float3 CameraPos;
+
+float CameraNear;
+float CameraFar;
+float AlphaCutoff;
+
 float FogNear;
 float FogFar;
 float4 FogColor;
-
-texture Texture0;
 
 sampler2D TextureSampler = sampler_state
 
@@ -67,36 +71,31 @@ PixelInput VS(VertexInput input)
     return output;
 }
 
-// Change PS signature to return PSOutput and write to COLOR0/1/2
 PSOutput PS(PixelInput input)
 {
     float4 texColor   = tex2D(TextureSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
-    // Existing fog factor based on world distance
+    // Alpha test for hard cutouts: discard holes so G-buffer isn’t corrupted
+    clip(blockColor.a - AlphaCutoff);
+
+    // Fog
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
 
-    // Encode normals to [0,1]
+    // Encode normal to [0..1] WITHOUT alpha influence
     float3 normal = normalize(input.WorldNormal);
     float3 normalEnc = normal * 0.5f + 0.5f;
 
-    // Linear depth normalized using FogNear/FogFar (or your camera near/far if available)
-    float depthLin = saturate((input.ViewDepth - FogNear) / (FogFar - FogNear));
-
-    // Optional: attenuate normal/depth by alpha for transparent blocks
-    float alpha = blockColor.a;
-    normalEnc *= alpha;
-    depthLin *= alpha;
+    // Normalize linear view depth using camera near/far, NOT fog
+    float depthLin = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
 
     PSOutput output;
-
-    output.Color0 = finalColor;
+    output.Color0   = finalColor;
     output.NormalRT = float4(normalEnc, 1.0f);
-    output.DepthRT = float4(depthLin, depthLin, depthLin, 1.0f);
-
+    output.DepthRT  = float4(depthLin, depthLin, depthLin, 1.0f);
     return output;
 }
 

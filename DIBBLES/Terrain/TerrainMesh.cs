@@ -44,11 +44,17 @@ public class TerrainMesh
                 
                 var shader = oModel.Value.Shader;
                 
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
                 shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                
+                shader.Parameters["CameraNear"].SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+                shader.Parameters["CameraFar"].SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+                shader.Parameters["AlphaCutoff"].SetValue(0.5f); // hard cutouts for leaves/glass
+                
                 shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
@@ -73,11 +79,17 @@ public class TerrainMesh
                 
                 var shader = tModel.Value.Shader;
                 
+                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
                 shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                
+                shader.Parameters["CameraNear"].SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+                shader.Parameters["CameraFar"].SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+                shader.Parameters["AlphaCutoff"].SetValue(0.5f); // hard cutouts for leaves/glass
+                
                 shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());

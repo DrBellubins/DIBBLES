@@ -119,8 +119,10 @@ float4 PSMain(VSOutput input) : SV_Target0
     // Compute simple AO factor
     float ao = ComputeAO(input.TexCoord, normal, depth);
 
+    float3 aoDebug = float3(ao, ao, ao);
+
     // Multiply scene color by AO
-    return float4(sceneCol.rgb * ao, sceneCol.a);
+    return float4(aoDebug.rgb, sceneCol.a);
 }
 
 technique TestPostProcess
