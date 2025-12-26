@@ -56,7 +56,6 @@ public class TerrainGeneration
     
     private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
     
-    
     private static Vector3Int[] getNeighborOffsets()
     {
         return new[]

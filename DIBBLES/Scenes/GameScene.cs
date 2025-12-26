@@ -95,7 +95,7 @@ public class GameScene : Scene
         uiBlur.Start();
 
         // Initialize all post processing effects before PostProcessingManager.Initialize!
-        //var testPostProcess = new TestPostProcess();
+        var testPostProcess = new TestPostProcess();
         
         PostProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
