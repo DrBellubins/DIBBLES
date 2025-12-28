@@ -12,6 +12,11 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
+sampler2D AtlasSampler = sampler_state
+{
+    Texture = <Texture0>;
+};
+
 struct VertexInput
 {
     float3 Position : POSITION0;
@@ -28,6 +33,7 @@ struct PixelInput
     float4 Color    : COLOR0;
     float3 WorldPos : TEXCOORD1;
     float3 NormalVS : TEXCOORD2; // view-space normal
+    float  ViewZ    : TEXCOORD3; // positive view-space Z (distance along camera forward)
 };
 
 PixelInput VS(VertexInput input)
@@ -46,6 +52,10 @@ PixelInput VS(VertexInput input)
     output.Color    = input.Color;
     output.WorldPos = worldPos.xyz;
     output.NormalVS = nView;
+
+    // Make view-space Z positive in front of the camera
+    // XNA/MonoGame view space typically looks down -Z, so negate
+    output.ViewZ = -viewPos.z;
 
     return output;
 }
@@ -67,12 +77,22 @@ float4 PS_Color(PixelInput input) : COLOR0
 
 float4 PS_Normal(PixelInput input) : COLOR0
 {
-    // Draw view-space normal raw with range -1 to 1
+    // Encode view-space normal from [-1..1] to [0..1] for storage
+    float3 nVS = normalize(input.NormalVS);
+    float3 enc = nVS * 0.5f + 0.5f;
+    return float4(enc, 1.0f);
 }
 
 float4 PS_Depth(PixelInput input) : COLOR0
 {
-    // Draw linearized depth 0..1
+    // Linear depth in [0..1], near=0, far=1
+    float z = input.ViewZ;
+
+    // Guard against negative or zero z (behind camera), clamp to near
+    z = max(z, CameraNear);
+
+    float dlin = saturate((z - CameraNear) / (CameraFar - CameraNear));
+    return float4(dlin, dlin, dlin, 1.0f);
 }
 
 technique TerrainOpaque

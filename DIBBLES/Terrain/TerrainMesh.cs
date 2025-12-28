@@ -58,6 +58,8 @@ public class TerrainMesh
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
                 
                 shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+                shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
                 
                 shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
