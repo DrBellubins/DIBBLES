@@ -160,7 +160,7 @@ public class GameScene : Scene
             new RenderTargetBinding(DepthBuffer)
         );
         
-        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
