@@ -90,7 +90,11 @@ PSOutput PS(PixelInput input)
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
-    finalColor.a = blockColor.a;
+
+    //finalColor.a = blockColor.a;
+
+    // For opaque voxels, make sure alpha is 1 so blending can’t suppress writes if state changes.
+    finalColor.a = 1.0f;
 
     // Encode VIEW-SPACE normal to [0..1]
     // This aligns the hemisphere check in SSAO with the reconstructed view-space positions.
