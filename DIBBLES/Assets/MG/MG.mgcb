@@ -17,5 +17,8 @@
 # Build the UI blur shader
 /build:Shaders/UIBlur.fx
 
+# Build the depth prepass shader
+/build:Shaders/DepthPrepass.fx
+
 # Build the ssao processing shader
 /build:Shaders/SSAOPostProcess.fx

@@ -28,6 +28,8 @@ public class GameScene : Scene
     
     // Buffers
     public static RenderTarget2D BackBuffer;
+    public static RenderTarget2D DepthBuffer;
+    
     public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
@@ -44,6 +46,17 @@ public class GameScene : Scene
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
+        );
+        
+        DepthBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Single,   // 32-bit float
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PreserveContents
         );
 
         UIBuffer = new RenderTarget2D(
@@ -113,6 +126,13 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
+        // Depth pre-pass: write linear depth to DepthBuffer
+        graphics.SetRenderTarget(DepthBuffer);
+        graphics.Clear(Color.White); // far = 1
+        
+        TerrainGen.DrawDepthPrepass();
+
+        // Color pass
         graphics.SetRenderTarget(BackBuffer);
         graphics.Clear(SkyColor);
         

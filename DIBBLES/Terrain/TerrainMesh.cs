@@ -32,6 +32,72 @@ public class TerrainMesh
         TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
     }
     
+    public void DrawDepthPrepass()
+    {
+        var graphics = Engine.Graphics;
+    
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
+    
+        var effect = TerrainGeneration.terrainDepthShader;
+    
+        // Draw opaque meshes into depth texture
+        foreach (var kv in Mesh.OpaqueModels)
+        {
+            var chunkPos = kv.Key;
+            var model = kv.Value;
+    
+            if (model == null)
+                continue;
+    
+            var world = Matrix.CreateTranslation(chunkPos.ToVector3());
+    
+            effect.Parameters["World"]?.SetValue(world);
+            effect.Parameters["View"]?.SetValue(GameScene.PlayerCharacter.Camera.View);
+            effect.Parameters["Projection"]?.SetValue(GameScene.PlayerCharacter.Camera.Projection);
+            effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+            effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+    
+            graphics.SetVertexBuffer(model.VertexBuffer);
+            graphics.Indices = model.IndexBuffer;
+    
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, model.TriangleCount);
+            }
+        }
+    
+        // Optional: include transparent meshes if they should contribute to occlusion
+        foreach (var kv in Mesh.TransparentModels)
+        {
+            var chunkPos = kv.Key;
+            var model = kv.Value;
+    
+            if (model == null)
+                continue;
+    
+            var world = Matrix.CreateTranslation(chunkPos.ToVector3());
+    
+            effect.Parameters["World"]?.SetValue(world);
+            effect.Parameters["View"]?.SetValue(GameScene.PlayerCharacter.Camera.View);
+            effect.Parameters["Projection"]?.SetValue(GameScene.PlayerCharacter.Camera.Projection);
+            effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+            effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+    
+            graphics.SetVertexBuffer(model.VertexBuffer);
+            graphics.Indices = model.IndexBuffer;
+    
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, model.TriangleCount);
+            }
+        }
+    }
+    
     public void DrawOpaque()
     {
         var graphics = Engine.Graphics;

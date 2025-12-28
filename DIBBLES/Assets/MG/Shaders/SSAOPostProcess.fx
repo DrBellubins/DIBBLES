@@ -1,59 +1,60 @@
+// Pure depth-based SSAO inspired by normal_from_depth.glsl
+// - Reconstructs normals from depth alone using finite differences
+// - Hemispherical sampling oriented by a screen-space random vector
+// - Optional bilateral blur using depth + normals reconstructed from depth
+//
+// Required effect params to set from C#:
+//   ScreenSize         : float2(width, height)
+//   DepthTex           : Texture containing depth (0..1) sampled as .r
+//   RandomTex          : Noise texture (RGB), any small-tile blue-noise works
+//   AOTex              : Intermediate AO texture for blur passes (set by the effect code)
+//
+// Notes:
+// - This implementation expects a readable depth texture. If you only have the default depth buffer,
+//   you must render scene depth to a texture first (e.g., via a depth pre-pass or MRT).
+// - RandomTex can be a small blue/noise texture; it is sampled at 4x UV scale like the reference.
+//
+// Techniques:
+//   SSAO   : Produces AO into AOTex
+//   BlurH  : Horizontal bilateral blur (depth + reconstructed normals)
+//   BlurV  : Vertical bilateral blur
+
 float2 ScreenSize;
 
-// Camera params for view-space reconstruction
-float CameraNear;
-float CameraFar;
-float CameraAspect;
-float TanHalfFov;
+// Tunable parameters (match the reference behavior)
+float total_strength = 1.0f;
+float base_ao        = 0.2f;
+float area           = 0.0075f;
+float falloff        = 0.000001f;
+float radius         = 0.0002f;
 
-// nvpro-style projection scale: height / (tan(fov/2) * 2)
-float ProjScale;
+// Sample kernel (reference 16-sample sphere)
+static const int samples = 16;
+static const float3 sample_sphere[samples] =
+{
+    float3( 0.5381, 0.1856,-0.4319), float3( 0.1379, 0.2486, 0.4430),
+    float3( 0.3371, 0.5679,-0.0057), float3(-0.6999,-0.0451,-0.0019),
+    float3( 0.0689,-0.1598,-0.8547), float3( 0.0560, 0.0069,-0.1843),
+    float3(-0.0146, 0.1402, 0.0762), float3( 0.0100,-0.1924,-0.0344),
+    float3(-0.3577,-0.5301,-0.4358), float3(-0.3169, 0.1063, 0.0158),
+    float3( 0.0103,-0.5869, 0.0046), float3(-0.0897,-0.4940, 0.3287),
+    float3( 0.7119,-0.0154,-0.0918), float3(-0.0533, 0.0596,-0.5411),
+    float3( 0.0352,-0.0631, 0.5460), float3(-0.4776, 0.2847,-0.0271)
+};
 
-// SSAO params (world-space)
-float AORadiusWorld;     // meters
-float AOBiasZ;           // small view-space z bias (meters)
-float DepthThresholdZ;   // bilateral gate threshold (meters)
-float AOIntensity;       // strength
-float NormalWeight;      // subtle weighting
-
-// Bilateral blur params
-float BlurSigmaPx;       // gaussian sigma in pixels
-float DepthSigmaZ;       // depth similarity sigma in meters
-float NormalPow;         // normal similarity power
-
-texture ColorTex;
-texture NormalTex;
+// Inputs
 texture DepthTex;
 texture AOTex;
 
-sampler ColorSampler = sampler_state
-{
-    Texture = <ColorTex>;
-    MinFilter = POINT;
-    MagFilter = POINT;
-    MipFilter = POINT;
-    AddressU = CLAMP;
-    AddressV = CLAMP;
-};
-
-sampler NormalSampler = sampler_state
-{
-    Texture = <NormalTex>;
-    MinFilter = POINT;
-    MagFilter = POINT;
-    MipFilter = POINT;
-    AddressU = BORDER;
-    AddressV = BORDER;
-};
-
+// Samplers (textures must be bound from C#)
 sampler DepthSampler = sampler_state
 {
     Texture = <DepthTex>;
     MinFilter = POINT;
     MagFilter = POINT;
-    MipFilter = POINT;
-    AddressU = BORDER;
-    AddressV = BORDER;
+    MipFilter = NONE;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
 };
 
 sampler AOSamplerLinear = sampler_state
@@ -66,6 +67,7 @@ sampler AOSamplerLinear = sampler_state
     AddressV = CLAMP;
 };
 
+// VS/PS structs
 struct VSInput
 {
     float3 Position : POSITION0;
@@ -86,134 +88,105 @@ VSOutput VSMain(VSInput input)
     return o;
 }
 
-// Deterministic kernel (no random rotation)
-static const int SampleCount = 12;
-static const float2 SampleOffsets[SampleCount] =
+// Utility functions (GLSL equivalents)
+float step(float edge, float x)
 {
-    float2( 1,  0), float2(-1,  0),
-    float2( 0,  1), float2( 0, -1),
-    float2( 1,  1), float2( 1, -1),
-    float2(-1,  1), float2(-1, -1),
-    float2( 2,  0), float2(-2,  0),
-    float2( 0,  2), float2( 0, -2)
-};
-
-static const int RingCount = 2;
-static const float RingScale[RingCount] = { 1.0f, 2.3f };
-
-// Depth is linear [0..1]. Convert to view-space Z
-float DepthLinToViewZ(float dlin)
-{
-    return lerp(CameraNear, CameraFar, dlin);
+    return x >= edge ? 1.0f : 0.0f;
 }
 
-// ReconstructVSPos(): fix NDC Y to match fullscreen quad UV orientation
-float3 ReconstructVSPos(float2 uv, float dlin)
+float smoothstep(float minv, float maxv, float x)
 {
-    float z = DepthLinToViewZ(dlin);
-
-    // Use NDC.y = (1 - uv.y)*2 - 1 because the fullscreen quad provides top-left origin UVs.
-    float2 ndc;
-    ndc.x = uv.x * 2.0f - 1.0f;
-    ndc.y = (1.0f - uv.y) * 2.0f - 1.0f;
-
-    float x = ndc.x * z * CameraAspect * TanHalfFov;
-    float y = ndc.y * z * TanHalfFov;
-
-    return float3(x, y, z);
+    float t = saturate((x - minv) / (maxv - minv));
+    return t * t * (3.0f - 2.0f * t);
 }
 
-// nvpro-style: pixels = (R * 0.5 * ProjScale) / z
-float RadiusPixelsAtDepth(float z)
+float randomNumber(in float2 uv)
 {
-    return (AORadiusWorld * 0.5f * ProjScale) / max(z, 1e-3f);
+    float2 noise = (frac(sin(dot(uv ,float2(12.9898,78.233)*2.0)) * 43758.5453));
+    return abs(noise.x + noise.y) * 0.5;
 }
 
-// ComputeAO(): hemisphere uses view-space normal now; keep stricter gate to avoid silhouette AO
-float ComputeAO(float2 uv, float3 normalRGB)
+// Reconstruct screen-space normal from depth using finite differences.
+// Uses 1-pixel offsets scaled by ScreenSize instead of fixed 0.001.
+float3 NormalFromDepth(float depth, float2 uv)
 {
-    float dCenterLin = tex2D(DepthSampler, uv).r;
-    if (dCenterLin >= 0.999f)
-        return 1.0f;
+    float2 texel = 1.0f / ScreenSize;
 
-    // normalRGB encodes VIEW-SPACE normal in [0..1]
-    float3 n = normalize(normalRGB * 2.0f - 1.0f);
-    float3 pVS = ReconstructVSPos(uv, dCenterLin);
+    float depth1 = tex2D(DepthSampler, uv + float2(0.0f, texel.y)).r;
+    float depth2 = tex2D(DepthSampler, uv + float2(texel.x, 0.0f)).r;
 
-    float occlusion = 0.0f;
-    float samples = 0.0f;
+    float3 p1 = float3(0.0f, texel.y, depth1 - depth);
+    float3 p2 = float3(texel.x, 0.0f, depth2 - depth);
 
-    float nInfl = saturate(NormalWeight);
-    float baseRadiusPx = RadiusPixelsAtDepth(pVS.z);
+    float3 n = cross(p1, p2);
+    n.z = -n.z;
 
-    [unroll]
-    for (int r = 0; r < RingCount; r++)
+    return normalize(n);
+}
+
+// Compute reference-style SSAO from pure depth
+float ComputeAO(float2 uv)
+{
+    float depth = tex2D(DepthSampler, uv).r;
+
+    // Treat near-1 (far) depth as no occlusion
+    if (depth >= 0.999f)
     {
-        float ringPx = baseRadiusPx * RingScale[r];
-
-        [unroll]
-        for (int i = 0; i < SampleCount; i++)
-        {
-            float2 dir2D = normalize(SampleOffsets[i]);
-            float2 uvOff = (dir2D * ringPx) / ScreenSize;
-            float2 uvSamp = uv + uvOff;
-
-            float dLinN = tex2D(DepthSampler, uvSamp).r;
-            if (dLinN >= 0.999f)
-                continue;
-
-            float3 pNVS = ReconstructVSPos(uvSamp, dLinN);
-
-            float ddZ = pVS.z - pNVS.z; // neighbor slightly closer => occlusion
-            if (ddZ <= AOBiasZ || ddZ > DepthThresholdZ)
-                continue;
-
-            float3 vdir = normalize(pNVS - pVS);
-            float hemi = dot(n, vdir);
-            if (hemi <= 0.2f)
-                continue;
-
-            float distVS = length(pNVS.xy - pVS.xy);
-            float ringVS = (AORadiusWorld * RingScale[r]);
-            float falloff = saturate(1.0f - distVS / max(ringVS, 1e-4f));
-
-            float3 dir3D = normalize(float3(dir2D.xy, 0.0f));
-            float nWeight = 1.0f - nInfl * saturate(1.0f - dot(n, dir3D));
-
-            float contrib = AOIntensity * (ddZ / DepthThresholdZ) * falloff * hemi * nWeight;
-
-            occlusion += contrib;
-            samples += 1.0f;
-        }
+        return 1.0f;
     }
 
-    float occ = (samples > 0.0f) ? occlusion / samples : 0.0f;
-    return saturate(1.0f - occ);
+    float3 position = float3(uv, depth);
+    float3 normal   = NormalFromDepth(depth, uv);
+
+    // Random orientation vector from noise
+    //float3 random = normalize(tex2D(RandomSampler, uv * 4.0f).rgb * 2.0f - 1.0f);
+    float3 random = normalize(float3(randomNumber(uv), randomNumber(uv * 3.0), randomNumber(uv * 5.0)) * 2.0f - 1.0f);
+
+    float radius_depth = radius / max(depth, 1e-5f);
+    float occlusion    = 0.0f;
+
+    [unroll]
+    for (int i = 0; i < samples; i++)
+    {
+        float3 ray = radius_depth * reflect(sample_sphere[i], random);
+        float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
+
+        float2 uvSamp = saturate(hemi_ray.xy);
+        float occ_depth = tex2D(DepthSampler, uvSamp).r;
+
+        float difference = depth - occ_depth;
+
+        occlusion += step(falloff, difference) * (1.0f - smoothstep(falloff, area, difference));
+    }
+
+    float ao = 1.0f - total_strength * occlusion * (1.0f / samples);
+    return saturate(ao + base_ao);
 }
 
 // Pass 1: SSAO to texture
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    float3 normalRGB = tex2D(NormalSampler, input.TexCoord).rgb;
-    float ao = ComputeAO(input.TexCoord, normalRGB);
+    float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
 }
 
-// Gaussian weights for 5-tap blur
+// Gaussian weights for 5-tap blur (same as previous implementation)
 static const float w0 = 0.4026f;
 static const float w1 = 0.2442f;
 static const float w2 = 0.0545f;
 
-float DepthSimilarity(float zc, float zn)
+// Depth similarity (use raw depth, not linearized; simple bilateral gate)
+float DepthSimilarity(float zc, float zn, float sigma)
 {
     float dz = abs(zn - zc);
-    return exp(-(dz * dz) / (2.0f * DepthSigmaZ * DepthSigmaZ));
+    return exp(-(dz * dz) / (2.0f * sigma * sigma));
 }
 
-float NormalSimilarity(float3 nc, float3 nn)
+// Optional normal similarity using normals reconstructed from depth
+float NormalSimilarity(float3 nc, float3 nn, float normalPow)
 {
     float d = saturate(dot(nc, nn));
-    return pow(d, NormalPow);
+    return pow(d, normalPow);
 }
 
 // Pass 2: Horizontal bilateral blur of AO
@@ -222,35 +195,43 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     float2 texel = float2(1.0f / ScreenSize.x, 0.0f);
 
     float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-    float zC = DepthLinToViewZ(tex2D(DepthSampler, input.TexCoord).r);
-    float3 nC = normalize(tex2D(NormalSampler, input.TexCoord).rgb * 2.0f - 1.0f);
+    float zC  = tex2D(DepthSampler, input.TexCoord).r;
+    float3 nC = NormalFromDepth(zC, input.TexCoord);
 
-    float sum = w0 * aoC;
+    float sum  = w0 * aoC;
     float wsum = w0;
 
+    // +/- 1 sigma taps
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
-        float2 uv = input.TexCoord + texel * (s * BlurSigmaPx);
+        float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
-        float zN = DepthLinToViewZ(tex2D(DepthSampler, uv).r);
-        float3 nN = normalize(tex2D(NormalSampler, uv).rgb * 2.0f - 1.0f);
+        float zN  = tex2D(DepthSampler, uv).r;
+        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w1 * DepthSimilarity(zC, zN) * NormalSimilarity(nC, nN);
-        sum += w * aoN;
+        float w = w1
+                * DepthSimilarity(zC, zN, 1.5f)
+                * NormalSimilarity(nC, nN, 4.0f);
+
+        sum  += w * aoN;
         wsum += w;
     }
 
+    // +/- 2 sigma taps
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
-        float2 uv = input.TexCoord + texel * (s * BlurSigmaPx);
+        float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
-        float zN = DepthLinToViewZ(tex2D(DepthSampler, uv).r);
-        float3 nN = normalize(tex2D(NormalSampler, uv).rgb * 2.0f - 1.0f);
+        float zN  = tex2D(DepthSampler, uv).r;
+        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w2 * DepthSimilarity(zC, zN) * NormalSimilarity(nC, nN);
-        sum += w * aoN;
+        float w = w2
+                * DepthSimilarity(zC, zN, 1.5f)
+                * NormalSimilarity(nC, nN, 4.0f);
+
+        sum  += w * aoN;
         wsum += w;
     }
 
@@ -264,35 +245,43 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     float2 texel = float2(0.0f, 1.0f / ScreenSize.y);
 
     float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-    float zC = DepthLinToViewZ(tex2D(DepthSampler, input.TexCoord).r);
-    float3 nC = normalize(tex2D(NormalSampler, input.TexCoord).rgb * 2.0f - 1.0f);
+    float zC  = tex2D(DepthSampler, input.TexCoord).r;
+    float3 nC = NormalFromDepth(zC, input.TexCoord);
 
-    float sum = w0 * aoC;
+    float sum  = w0 * aoC;
     float wsum = w0;
 
+    // +/- 1 sigma taps
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
-        float2 uv = input.TexCoord + texel * (s * BlurSigmaPx);
+        float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
-        float zN = DepthLinToViewZ(tex2D(DepthSampler, uv).r);
-        float3 nN = normalize(tex2D(NormalSampler, uv).rgb * 2.0f - 1.0f);
+        float zN  = tex2D(DepthSampler, uv).r;
+        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w1 * DepthSimilarity(zC, zN) * NormalSimilarity(nC, nN);
-        sum += w * aoN;
+        float w = w1
+                * DepthSimilarity(zC, zN, 1.5f)
+                * NormalSimilarity(nC, nN, 4.0f);
+
+        sum  += w * aoN;
         wsum += w;
     }
 
+    // +/- 2 sigma taps
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
-        float2 uv = input.TexCoord + texel * (s * BlurSigmaPx);
+        float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
-        float zN = DepthLinToViewZ(tex2D(DepthSampler, uv).r);
-        float3 nN = normalize(tex2D(NormalSampler, uv).rgb * 2.0f - 1.0f);
+        float zN  = tex2D(DepthSampler, uv).r;
+        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w2 * DepthSimilarity(zC, zN) * NormalSimilarity(nC, nN);
-        sum += w * aoN;
+        float w = w2
+                * DepthSimilarity(zC, zN, 1.5f)
+                * NormalSimilarity(nC, nN, 4.0f);
+
+        sum  += w * aoN;
         wsum += w;
     }
 

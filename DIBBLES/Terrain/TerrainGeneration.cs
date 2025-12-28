@@ -36,6 +36,8 @@ public class TerrainGeneration
     public TerrainCommands Commands = new();
     
     public static Effect terrainShader;
+    public static Effect terrainDepthShader;
+    
     public static bool InitialLoadDone = false;
     
     public static Block SelectedBlock;
@@ -85,6 +87,7 @@ public class TerrainGeneration
             Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
+        terrainDepthShader = Engine.Instance.Content.Load<Effect>("Shaders/DepthPrepass");
         
         Commands.Register();
     }
@@ -521,6 +524,11 @@ public class TerrainGeneration
         }
 
         return sum / set.Count;
+    }
+    
+    public void DrawDepthPrepass()
+    {
+        Mesh.DrawDepthPrepass();
     }
     
     public void Draw()
