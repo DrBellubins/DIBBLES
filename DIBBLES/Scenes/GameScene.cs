@@ -144,12 +144,15 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
-        // Pre-clear G-buffer attachments to neutral values
+        // Clear each target individually
+        graphics.SetRenderTarget(BackBuffer);
+        graphics.Clear(SkyColor);
+
         graphics.SetRenderTarget(NormalBuffer);
-        graphics.Clear(Color.Transparent); // normal = 0, alpha = 0 -> SSAO treats as invalid
+        graphics.Clear(Color.Transparent);
 
         graphics.SetRenderTarget(DepthBuffer);
-        graphics.Clear(Color.White);       // linear depth = 1.0 (far)
+        graphics.Clear(Color.White);
         
         graphics.SetRenderTargets(
             new RenderTargetBinding(BackBuffer),
@@ -157,10 +160,7 @@ public class GameScene : Scene
             new RenderTargetBinding(DepthBuffer)
         );
         
-        graphics.Clear(SkyColor); // This only clears BackBuffer; normals/depth already cleared above
-        
         graphics.BlendState = BlendState.NonPremultiplied;
-        graphics.RasterizerState = RasterizerState.CullNone;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;

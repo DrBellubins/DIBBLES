@@ -81,7 +81,11 @@ PSOutput PS(PixelInput input)
     float4 blockColor = texColor * input.Color;
 
     // Hard cutouts: use texture alpha (not multiplied color)
-    clip(texColor.a - AlphaCutoff);
+    // Only cut out when a threshold is set (transparent pass)
+    if (AlphaCutoff > 0.0f)
+    {
+        clip(texColor.a - AlphaCutoff);
+    }
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
