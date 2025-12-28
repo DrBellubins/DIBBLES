@@ -160,6 +160,7 @@ public class GameScene : Scene
         graphics.Clear(SkyColor); // This only clears BackBuffer; normals/depth already cleared above
         
         graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.RasterizerState = RasterizerState.CullNone;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
