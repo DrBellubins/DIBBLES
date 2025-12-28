@@ -45,8 +45,9 @@ public class TerrainMesh
             if (oModel.Value != null)
             {
                 var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
-                
                 var shader = oModel.Value.Shader;
+                
+                shader.CurrentTechnique = shader.Techniques["TerrainOpaque"];
                 
                 shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
                 
@@ -84,8 +85,9 @@ public class TerrainMesh
             if (tModel.Value != null)
             {
                 var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
-                
                 var shader = tModel.Value.Shader;
+                
+                shader.CurrentTechnique = shader.Techniques["TerrainTransparent"];
                 
                 shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
                 

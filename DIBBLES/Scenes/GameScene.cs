@@ -142,7 +142,7 @@ public class GameScene : Scene
         graphics.SetRenderTarget(BackBuffer);
         graphics.Clear(SkyColor);
 
-        /*graphics.SetRenderTarget(NormalBuffer);
+        graphics.SetRenderTarget(NormalBuffer);
         graphics.Clear(Color.Transparent);
 
         graphics.SetRenderTarget(DepthBuffer);
@@ -152,7 +152,7 @@ public class GameScene : Scene
             new RenderTargetBinding(BackBuffer),
             new RenderTargetBinding(NormalBuffer),
             new RenderTargetBinding(DepthBuffer)
-        );*/
+        );
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();
@@ -160,6 +160,9 @@ public class GameScene : Scene
         PlayerCharacter.Draw();
         
         Debug.Draw3D();
+        
+        // End geometry pass
+        graphics.SetRenderTarget(null);
         
         // Draw UI (UI Batch)
         if (UIEnabled)
