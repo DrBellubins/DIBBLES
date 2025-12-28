@@ -130,4 +130,12 @@ public class Engine : Game
         // TODO: Port resource cleanup
         base.UnloadContent();
     }
+
+    public static void ResetRasterizerState()
+    {
+        Graphics.BlendState = BlendState.Opaque;
+        Graphics.DepthStencilState = DepthStencilState.Default;
+        Graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        Graphics.SamplerStates[0] = SamplerState.PointClamp;
+    }
 }

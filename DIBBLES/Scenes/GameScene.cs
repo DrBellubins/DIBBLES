@@ -44,7 +44,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.None,
+            DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
         );
@@ -55,7 +55,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.None,
+            DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents
         );
@@ -66,7 +66,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color, // I keep changing this between single and color...
-            DepthFormat.None,
+            DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents
         );
@@ -77,7 +77,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.None,
+            DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
         );
@@ -142,7 +142,7 @@ public class GameScene : Scene
         graphics.SetRenderTarget(BackBuffer);
         graphics.Clear(SkyColor);
 
-        graphics.SetRenderTarget(NormalBuffer);
+        /*graphics.SetRenderTarget(NormalBuffer);
         graphics.Clear(Color.Transparent);
 
         graphics.SetRenderTarget(DepthBuffer);
@@ -152,12 +152,7 @@ public class GameScene : Scene
             new RenderTargetBinding(BackBuffer),
             new RenderTargetBinding(NormalBuffer),
             new RenderTargetBinding(DepthBuffer)
-        );
-        
-        graphics.BlendState = BlendState.NonPremultiplied;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        graphics.SamplerStates[0] = SamplerState.PointClamp;
+        );*/
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();

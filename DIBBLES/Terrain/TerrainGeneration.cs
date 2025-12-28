@@ -526,7 +526,8 @@ public class TerrainGeneration
     public void Draw()
     {
         // Draw every mesh in the mesh queue
-        Mesh.DrawAllMeshes();
+        Mesh.DrawOpaque();
+        Mesh.DrawTransparent();
         
         // Chunk border debug
         if (Debug.ShowChunkDebug)

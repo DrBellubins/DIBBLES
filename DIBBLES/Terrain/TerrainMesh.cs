@@ -31,10 +31,14 @@ public class TerrainMesh
         MeshUploadQueue.Enqueue((chunk.Position, meshData));
         TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
     }
-
-    public void DrawAllMeshes()
+    
+    public void DrawOpaque()
     {
-        // Draw opaque
+        Engine.Graphics.BlendState = BlendState.Opaque;
+        Engine.Graphics.DepthStencilState = DepthStencilState.Default;
+        Engine.Graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        Engine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
+        
         foreach (var oModel in Mesh.OpaqueModels)
         {
             // oModel.Value is a RuntimeModel
@@ -49,20 +53,12 @@ public class TerrainMesh
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 
-                shader.Parameters["CameraNear"].SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.Parameters["CameraFar"].SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+                shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 
-                // Disable cutout for opaque pass to avoid discarding everything if atlas alpha==0
-                shader.Parameters["AlphaCutoff"].SetValue(0.0f);
-                
-                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
-                
-                // Explicitly select the technique to avoid null CurrentTechnique on cloned effects
-                shader.CurrentTechnique = shader.Techniques["Terrain"];
+                shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
@@ -73,8 +69,15 @@ public class TerrainMesh
                 );
             }
         }
+    }
+
+    public void DrawTransparent()
+    {
+        Engine.Graphics.BlendState = BlendState.NonPremultiplied;
+        Engine.Graphics.DepthStencilState = DepthStencilState.Default;
+        Engine.Graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        Engine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
         
-        // Draw transparent
         foreach (var tModel in Mesh.TransparentModels)
         {
             // oModel.Value is a RuntimeModel
@@ -89,18 +92,12 @@ public class TerrainMesh
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                shader.Parameters["CameraPos"].SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 
-                shader.Parameters["CameraNear"].SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.Parameters["CameraFar"].SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-                shader.Parameters["AlphaCutoff"].SetValue(0.5f); // hard cutouts for leaves/glass
+                shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
                 
-                shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"].SetValue(FogEffect.FogColor());
-                
-                // Explicitly select the technique to avoid null CurrentTechnique on cloned effects
-                shader.CurrentTechnique = shader.Techniques["Terrain"];
+                shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
+                shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
+                shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
