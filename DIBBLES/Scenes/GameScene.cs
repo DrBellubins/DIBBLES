@@ -139,20 +139,15 @@ public class GameScene : Scene
         var graphics = Engine.Graphics;
         
         // Clear each target individually
-        graphics.SetRenderTarget(BackBuffer);
-        graphics.Clear(SkyColor);
-
         graphics.SetRenderTarget(NormalBuffer);
         graphics.Clear(Color.Transparent);
 
         graphics.SetRenderTarget(DepthBuffer);
         graphics.Clear(Color.White);
         
-        graphics.SetRenderTargets(
-            new RenderTargetBinding(BackBuffer),
-            new RenderTargetBinding(NormalBuffer),
-            new RenderTargetBinding(DepthBuffer)
-        );
+        // Needs to be last, so that we're still rendering to backbuffer by default
+        graphics.SetRenderTarget(BackBuffer);
+        graphics.Clear(SkyColor);
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();
@@ -160,9 +155,6 @@ public class GameScene : Scene
         PlayerCharacter.Draw();
         
         Debug.Draw3D();
-        
-        // End geometry pass
-        graphics.SetRenderTarget(null);
         
         // Draw UI (UI Batch)
         if (UIEnabled)

@@ -34,10 +34,12 @@ public class TerrainMesh
     
     public void DrawOpaque()
     {
-        Engine.Graphics.BlendState = BlendState.Opaque;
-        Engine.Graphics.DepthStencilState = DepthStencilState.Default;
-        Engine.Graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        Engine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
+        var graphics = Engine.Graphics;
+        
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
         
         foreach (var oModel in Mesh.OpaqueModels)
         {
@@ -47,7 +49,9 @@ public class TerrainMesh
                 var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
                 var shader = oModel.Value.Shader;
                 
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.CurrentTechnique = shader.Techniques["TerrainOpaque"];
+                
+                shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
@@ -58,24 +62,37 @@ public class TerrainMesh
                 shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
-    
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                    pass.Apply();
+
+                var view = GameScene.PlayerCharacter.Camera.View;
+                var projection = GameScene.PlayerCharacter.Camera.Projection;
+
+                // Color, we assume we're in backbuffer
+                shader.CurrentTechnique.Passes[0].Apply();
+                oModel.Value.Draw(world, view, projection);
                 
-                oModel.Value.Draw(world,                        // World matrix for chunk position
-                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
-                );
+                // Normal
+                graphics.SetRenderTarget(GameScene.NormalBuffer);
+                shader.CurrentTechnique.Passes[1].Apply();
+                oModel.Value.Draw(world, view, projection);
+                
+                // Depth
+                graphics.SetRenderTarget(GameScene.DepthBuffer);
+                shader.CurrentTechnique.Passes[2].Apply();
+                oModel.Value.Draw(world, view, projection);
+                
+                graphics.SetRenderTarget(GameScene.BackBuffer); // Return to back buffer
             }
         }
     }
 
     public void DrawTransparent()
     {
-        Engine.Graphics.BlendState = BlendState.NonPremultiplied;
-        Engine.Graphics.DepthStencilState = DepthStencilState.Default;
-        Engine.Graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        Engine.Graphics.SamplerStates[0] = SamplerState.PointClamp;
+        var graphics = Engine.Graphics;
+        
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
         
         foreach (var tModel in Mesh.TransparentModels)
         {
@@ -85,7 +102,9 @@ public class TerrainMesh
                 var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
                 var shader = tModel.Value.Shader;
                 
-                shader.Parameters["Texture0"].SetValue(BlockData.TextureAtlas);
+                shader.CurrentTechnique = shader.Techniques["TerrainTransparent"];
+                
+                shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
@@ -97,13 +116,13 @@ public class TerrainMesh
                 shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
                 shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
+                var view = GameScene.PlayerCharacter.Camera.View;
+                var projection = GameScene.PlayerCharacter.Camera.Projection;
+                
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
-                tModel.Value.Draw(world,                        // World matrix for chunk position
-                    GameScene.PlayerCharacter.Camera.View,      // Your camera's view matrix
-                    GameScene.PlayerCharacter.Camera.Projection // Your camera's projection matrix
-                );
+                tModel.Value.Draw(world, view, projection);
             }
         }
     }
