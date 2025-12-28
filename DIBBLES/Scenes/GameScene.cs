@@ -65,7 +65,7 @@ public class GameScene : Scene
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
-            SurfaceFormat.Single, // Back to SurfaceFormat.Single
+            SurfaceFormat.Color, // I keep changing this between single and color...
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
