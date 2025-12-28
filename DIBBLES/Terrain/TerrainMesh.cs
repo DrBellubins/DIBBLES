@@ -53,7 +53,9 @@ public class TerrainMesh
                 
                 shader.Parameters["CameraNear"].SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
                 shader.Parameters["CameraFar"].SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-                shader.Parameters["AlphaCutoff"].SetValue(0.5f); // hard cutouts for leaves/glass
+                
+                // Disable cutout for opaque pass to avoid discarding everything if atlas alpha==0
+                shader.Parameters["AlphaCutoff"].SetValue(0.0f);
                 
                 shader.Parameters["FogNear"].SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"].SetValue(FogEffect.FogFar);
