@@ -17,8 +17,5 @@
 # Build the UI blur shader
 /build:Shaders/UIBlur.fx
 
-# Build the test post processing shader
-/build:Shaders/TestPostProcess.fx
-
 # Build the ssao processing shader
 /build:Shaders/SSAOPostProcess.fx

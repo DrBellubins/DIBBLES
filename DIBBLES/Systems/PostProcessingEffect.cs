@@ -11,8 +11,6 @@ public abstract class PostProcessingEffect
     protected RenderTarget2D _effectBuffer;
 
     protected Texture2D _colorBuffer;
-    protected Texture2D _normalBuffer;
-    protected Texture2D _depthBuffer;
 
     protected GraphicsDevice Graphics
     {
@@ -29,11 +27,9 @@ public abstract class PostProcessingEffect
         get { return _effects; }
     }
 
-    public void SetBuffers(Texture2D color, Texture2D normal, Texture2D depth)
+    public void SetBuffers(Texture2D color)
     {
         _colorBuffer = color;
-        _normalBuffer = normal;
-        _depthBuffer = depth;
     }
 
     public virtual void Start(int width, int height)
@@ -64,16 +60,6 @@ public abstract class PostProcessingEffect
     public Texture2D ColorBuffer
     {
         get { return _colorBuffer; }
-    }
-
-    public Texture2D NormalBuffer
-    {
-        get { return _normalBuffer; }
-    }
-
-    public Texture2D DepthBuffer
-    {
-        get { return _depthBuffer; }
     }
 
     // Begin drawing to the effect's own backbuffer

@@ -20,11 +20,11 @@ public class PostProcessingManager
     }
 
     // Pass the G-buffer textures to each effect and allow them to render to their backbuffer
-    public void ApplyAll(RenderTarget2D color, RenderTarget2D normal, RenderTarget2D depth)
+    public void ApplyAll(RenderTarget2D color)
     {
         foreach (var effect in PostProcessingEffect.All)
         {
-            effect.SetBuffers(color, normal, depth);
+            effect.SetBuffers(color);
             effect.DrawStart();
             
             // Derived effects perform their draw here (override DrawStart/DrawEnd or render between)

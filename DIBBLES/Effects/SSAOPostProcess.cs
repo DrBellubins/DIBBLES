@@ -68,9 +68,6 @@ namespace DIBBLES.Effects
         
             _effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
         
-            _effect.Parameters["NormalTex"]?.SetValue(NormalBuffer);
-            _effect.Parameters["DepthTex"]?.SetValue(DepthBuffer);
-        
             // Camera params for reconstruction
             var cam = Scenes.GameScene.PlayerCharacter.Camera;
             _effect.Parameters["CameraNear"]?.SetValue(cam.NearPlane);

@@ -28,9 +28,6 @@ public class GameScene : Scene
     
     // Buffers
     public static RenderTarget2D BackBuffer;
-    public static RenderTarget2D NormalBuffer;
-    public static RenderTarget2D DepthBuffer;
-    
     public static RenderTarget2D UIBuffer;
     
     private Chat gameChat = new();
@@ -47,28 +44,6 @@ public class GameScene : Scene
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
-        );
-        
-        NormalBuffer = new RenderTarget2D(
-            Engine.Graphics,
-            Engine.ScreenWidth,
-            Engine.ScreenHeight,
-            false,
-            SurfaceFormat.Color,
-            DepthFormat.Depth24,
-            0,
-            RenderTargetUsage.PreserveContents
-        );
-
-        DepthBuffer = new RenderTarget2D(
-            Engine.Graphics,
-            Engine.ScreenWidth,
-            Engine.ScreenHeight,
-            false,
-            SurfaceFormat.Color, // I keep changing this between single and color...
-            DepthFormat.Depth24,
-            0,
-            RenderTargetUsage.PreserveContents
         );
 
         UIBuffer = new RenderTarget2D(
@@ -138,14 +113,6 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
-        // Clear each target individually
-        graphics.SetRenderTarget(NormalBuffer);
-        graphics.Clear(Color.Transparent);
-
-        graphics.SetRenderTarget(DepthBuffer);
-        graphics.Clear(Color.White);
-        
-        // Needs to be last, so that we're still rendering to backbuffer by default
         graphics.SetRenderTarget(BackBuffer);
         graphics.Clear(SkyColor);
         
@@ -182,7 +149,7 @@ public class GameScene : Scene
         }
         
         // Apply all registered post-processing effects, sampling color/normal/depth
-        postProcessingManager.ApplyAll(BackBuffer, NormalBuffer, DepthBuffer);
+        postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
         
@@ -237,14 +204,6 @@ public class GameScene : Scene
         // Save color buffer
         using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
             BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-
-        // Save normal buffer
-        using (var normalStream = new FileStream(Path.Combine(folder, "Normal.png"), FileMode.Create))
-            NormalBuffer.SaveAsPng(normalStream, NormalBuffer.Width, NormalBuffer.Height);
-
-        // Save depth buffer
-        using (var depthStream = new FileStream(Path.Combine(folder, "Depth.png"), FileMode.Create))
-            DepthBuffer.SaveAsPng(depthStream, DepthBuffer.Width, DepthBuffer.Height);
 
         var outputString = $"Saved buffers to: {folder}";
         

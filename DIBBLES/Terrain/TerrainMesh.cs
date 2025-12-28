@@ -49,8 +49,6 @@ public class TerrainMesh
                 var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
                 var shader = oModel.Value.Shader;
                 
-                shader.CurrentTechnique = shader.Techniques["TerrainOpaque"];
-                
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
                 
                 shader.Parameters["World"].SetValue(world);
@@ -58,8 +56,6 @@ public class TerrainMesh
                 shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
                 
                 shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
                 
                 shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
                 shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
@@ -67,22 +63,11 @@ public class TerrainMesh
 
                 var view = GameScene.PlayerCharacter.Camera.View;
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
-
-                // Color, we assume we're in backbuffer
-                shader.CurrentTechnique.Passes[0].Apply();
-                oModel.Value.Draw(world, view, projection);
                 
-                // Normal
-                graphics.SetRenderTarget(GameScene.NormalBuffer);
-                shader.CurrentTechnique.Passes[1].Apply();
-                oModel.Value.Draw(world, view, projection);
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                    pass.Apply();
                 
-                // Depth
-                graphics.SetRenderTarget(GameScene.DepthBuffer);
-                shader.CurrentTechnique.Passes[2].Apply();
                 oModel.Value.Draw(world, view, projection);
-                
-                graphics.SetRenderTarget(GameScene.BackBuffer); // Return to back buffer
             }
         }
     }
@@ -103,8 +88,6 @@ public class TerrainMesh
             {
                 var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
                 var shader = tModel.Value.Shader;
-                
-                shader.CurrentTechnique = shader.Techniques["TerrainTransparent"];
                 
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
                 
