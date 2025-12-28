@@ -22,7 +22,7 @@ public class GameScene : Scene
 
     public static List<BlockLogic> BlockLogicList = new();
 
-    public static Color SkyColor = new Color(0.4f, 0.7f, 1.0f, 1.0f);
+    public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
     
     public static bool UIEnabled = true;
     
@@ -84,12 +84,6 @@ public class GameScene : Scene
         
         UIBatch.Initialize();
         Primatives3D.Initialize();
-
-        var skyColorVec = SkyColor.ToVector3();
-
-        skyColorVec *= 0.2f;
-        
-        SkyColor = Color.FromNonPremultiplied(new Vector4(skyColorVec.X, skyColorVec.Y, skyColorVec.Z, 1.0f));
         
         TerrainGen.Start(); // Initial terrain generation
         Inventory.Start();
