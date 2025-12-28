@@ -104,9 +104,15 @@ PSOutput PS(PixelInput input)
     float depthLin = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
 
     PSOutput output;
-    output.Color0   = finalColor;
-    output.NormalRT = float4(normalEnc, 1.0f);
-    output.DepthRT  = float4(depthLin, depthLin, depthLin, 1.0f);
+
+    output.Color0   = float4(1.0, 0.0, 0.0, 1.0); // Red to primary
+    output.NormalRT = float4(0.0, 1.0, 0.0, 1.0); // Green
+    output.DepthRT  = float4(0.0, 0.0, 1.0, 1.0); // Blue
+
+    //output.Color0   = finalColor;
+    //output.NormalRT = float4(normalEnc, 1.0f);
+    //output.DepthRT  = float4(depthLin, depthLin, depthLin, 1.0f);
+
     return output;
 }
 

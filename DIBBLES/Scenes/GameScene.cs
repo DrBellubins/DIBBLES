@@ -44,7 +44,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.Depth24,
+            DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
         );
@@ -154,7 +154,7 @@ public class GameScene : Scene
             new RenderTargetBinding(DepthBuffer)
         );
         
-        graphics.BlendState = BlendState.Opaque;
+        graphics.BlendState = BlendState.NonPremultiplied;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
