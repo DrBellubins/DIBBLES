@@ -15,7 +15,7 @@ float4 FogColor;
 
 sampler2D TextureSampler = sampler_state
 {
-    Texture = <Texture0>;  // bind the atlas
+    Texture = Texture0;  // bind the atlas
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;

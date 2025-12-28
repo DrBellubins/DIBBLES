@@ -28,7 +28,7 @@ texture AOTex;
 
 sampler ColorSampler = sampler_state
 {
-    Texture = <ColorTex>;
+    Texture = ColorTex;
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;
@@ -38,7 +38,7 @@ sampler ColorSampler = sampler_state
 
 sampler NormalSampler = sampler_state
 {
-    Texture = <NormalTex>;
+    Texture = NormalTex;
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;
@@ -48,7 +48,7 @@ sampler NormalSampler = sampler_state
 
 sampler DepthSampler = sampler_state
 {
-    Texture = <DepthTex>;
+    Texture = DepthTex;
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = POINT;
@@ -58,7 +58,7 @@ sampler DepthSampler = sampler_state
 
 sampler AOSamplerLinear = sampler_state
 {
-    Texture = <AOTex>;
+    Texture = AOTex;
     MinFilter = LINEAR;
     MagFilter = LINEAR;
     MipFilter = NONE;
