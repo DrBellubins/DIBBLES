@@ -151,12 +151,20 @@ float viewZFrom01(float d01)
 // Notes: View forward is -Z, so returned z will be negative for points in front of camera.
 float3 ReconstructViewPos(float2 uv, float depth01)
 {
-    float2 ndc = float2(uv.x * 2.0f - 1.0f, 1.0f - uv.y * 2.0f);
-    float4 h = mul(float4(ndc, 1.0f, 1.0f), InvProjection);
-    float3 ray = normalize(h.xyz / h.w);
+    // Convert UV to NDC:  x [-1,1], y [-1,1] (flip y for D3D convention)
+    float2 ndc = float2(uv.x * 2.0f - 1.0f, (1.0f - uv.y) * 2.0f - 1.0f);
 
-    float viewZ = viewZFrom01(depth01);
-    return ray * viewZ;
+    // Unproject to view space (use z=1 for far plane direction)
+    float4 clipPos = float4(ndc, 1.0f, 1.0f);
+    float4 viewRay = mul(clipPos, InvProjection);
+    float3 ray = viewRay. xyz / viewRay.w;
+
+    // Get linear depth (positive distance from camera)
+    float linearZ = lerp(CameraNear, CameraFar, depth01);
+
+    // Scale ray so that -z equals our depth
+    // In view space, -Z is forward, so ray. z is negative for points in front
+    return ray * (linearZ / -ray.z);
 }
 
 // Project view-space position to screen uv
@@ -194,17 +202,19 @@ float ComputeAO(float2 uv)
     if (depth01 >= 0.999f)
         return 1.0f;
 
-    // View-space center position and normal
+    // View-space center position
     float3 P = ReconstructViewPos(uv, depth01);
-    float centerZ = -P.z; // positive distance
+
+    // P. z is negative (view forward is -Z), so centerZ is positive distance
+    float centerZ = -P.z;
 
     float4 nTex = tex2D(NormalSampler, uv);
-    float3 N = (nTex.a < 0.5f) ? float3(0,0,1) : DecodeNormal01(nTex); // fallback is arbitrary; your normal buffer should be filled
+    float3 N = (nTex.a < 0.5f) ? float3(0, 0, -1) : DecodeNormal01(nTex);
 
     // TBN from N + random tangent
     float3 R = normalize(tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f);
     float3 T = normalize(R - N * dot(R, N));
-    float3 B = normalize(cross(N, T));
+    float3 B = cross(N, T);
     float3x3 TBN = float3x3(T, B, N);
 
     float occlusion = 0.0f;
@@ -212,23 +222,28 @@ float ComputeAO(float2 uv)
     [unroll]
     for (int i = 0; i < samples; i++)
     {
-        float3 dir = mul(sample_sphere[i], TBN);
-        float3 samplePosVS = P + dir * radius;
+        // Orient sample hemisphere around normal
+        float3 sampleOffset = mul(sample_sphere[i], TBN);
+        float3 samplePosVS = P + sampleOffset * radius;
 
         float2 uvSamp;
-        if (!ProjectToUV(samplePosVS, uvSamp))
+        if (! ProjectToUV(samplePosVS, uvSamp))
             continue;
 
+        // Sample scene depth at projected location
         float sampDepth01 = tex2D(DepthSampler, uvSamp).r;
-        float sampViewZ   = viewZFrom01(sampDepth01);
-        float sampleZ     = -samplePosVS.z; // positive distance
+        float sceneZ = lerp(CameraNear, CameraFar, sampDepth01); // positive distance
 
-        float range = RangeWeight(centerZ, sampViewZ, radius);
+        // Our sample point's distance from camera (positive)
+        float sampleZ = -samplePosVS.z;
 
-        // Occlude if geometry is closer than our sample shell + bias
-        float occ = (sampViewZ <= sampleZ + bias) ? 1.0f : 0.0f;
+        // Range check to avoid far-away geometry causing occlusion
+        float rangeCheck = smoothstep(0.0f, 1.0f, radius / max(abs(sceneZ - centerZ), 0.001f));
 
-        occlusion += occ * range;
+        // Occlude if scene geometry is closer than our sample point
+        float occ = (sceneZ < sampleZ - bias) ? 1.0f : 0.0f;
+
+        occlusion += occ * rangeCheck;
     }
 
     float ao = 1.0f - (occlusion / samples) * total_strength;
