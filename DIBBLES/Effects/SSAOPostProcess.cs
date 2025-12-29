@@ -66,85 +66,85 @@ public class SSAOPostProcess : PostProcessingEffect
         indexBuffer.SetData(indices);
     }
 
-public override void DrawStart()
-{
-    // State
-    Graphics.BlendState = BlendState.Opaque;
-    Graphics. DepthStencilState = DepthStencilState.None;
-    Graphics. RasterizerState = RasterizerState.CullNone;
-
-    // Set G-buffer textures
-    effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
-    effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
-    effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
-
-    // Camera params
-    var proj = GameScene.PlayerCharacter.Camera.Projection;
-    var invProj = Matrix.Invert(proj);
-
-    effect.Parameters["Projection"]?.SetValue(proj);
-    effect.Parameters["InvProjection"]?. SetValue(invProj);
-    effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-    effect.Parameters["CameraFar"]?. SetValue(GameScene.PlayerCharacter. Camera.FarPlane);
-    effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
-
-    float tanHalfFovY = 1.0f / proj.M22;
-    float aspectRatio = proj.M22 / proj.M11;
-
-    effect.Parameters["TanHalfFovY"]?. SetValue(tanHalfFovY);
-    effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
-
-    var noiseScale = new Vector2(
-        (float)Engine.ScreenWidth / blueNoiseTex.Width,
-        (float)Engine.ScreenHeight / blueNoiseTex.Height
-    );
-
-    effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
-
-    effect.Parameters["radius"]?.SetValue(0.5f);
-    effect.Parameters["bias"]?.SetValue(0.025f);
-    effect.Parameters["total_strength"]?.SetValue(1.5f);
-    effect.Parameters["base_ao"]?.SetValue(0.0f);
-
-    // USE THE PRE-ALLOCATED BUFFERS (like old shader)
-    Graphics.SetVertexBuffer(vertexBuffer);
-    Graphics.Indices = indexBuffer;
-
-    // Pass 1: SSAO
-    Graphics.SetRenderTarget(SSAOTarget);
-    Graphics.Clear(Color. White);
-    effect.CurrentTechnique = effect.Techniques["SSAO"];
-
-    foreach (var pass in effect.CurrentTechnique.Passes)
+    public override void DrawStart()
     {
-        pass.Apply();
-        Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+        // State
+        Graphics.BlendState = BlendState.Opaque;
+        Graphics. DepthStencilState = DepthStencilState.None;
+        Graphics. RasterizerState = RasterizerState.CullNone;
+    
+        // Set G-buffer textures
+        effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
+        effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
+        effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
+    
+        // Camera params
+        var proj = GameScene.PlayerCharacter.Camera.Projection;
+        var invProj = Matrix.Invert(proj);
+    
+        effect.Parameters["Projection"]?.SetValue(proj);
+        effect.Parameters["InvProjection"]?. SetValue(invProj);
+        effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+        effect.Parameters["CameraFar"]?. SetValue(GameScene.PlayerCharacter. Camera.FarPlane);
+        effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
+    
+        float tanHalfFovY = 1.0f / proj.M22;
+        float aspectRatio = proj.M22 / proj.M11;
+    
+        effect.Parameters["TanHalfFovY"]?. SetValue(tanHalfFovY);
+        effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
+    
+        var noiseScale = new Vector2(
+            (float)Engine.ScreenWidth / blueNoiseTex.Width,
+            (float)Engine.ScreenHeight / blueNoiseTex.Height
+        );
+    
+        effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
+    
+        effect.Parameters["radius"]?.SetValue(0.5f);
+        effect.Parameters["bias"]?.SetValue(0.08f);
+        effect.Parameters["total_strength"]?.SetValue(1.0f);
+        effect.Parameters["base_ao"]?.SetValue(0.1f);
+    
+        // USE THE PRE-ALLOCATED BUFFERS (like old shader)
+        Graphics.SetVertexBuffer(vertexBuffer);
+        Graphics.Indices = indexBuffer;
+    
+        // Pass 1: SSAO
+        Graphics.SetRenderTarget(SSAOTarget);
+        Graphics.Clear(Color. White);
+        effect.CurrentTechnique = effect.Techniques["SSAO"];
+    
+        foreach (var pass in effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+        }
+    
+        // Pass 2: BlurH
+        Graphics.SetRenderTarget(SSAOBlurTarget);
+        Graphics.Clear(Color.White);
+        effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
+        effect.CurrentTechnique = effect.Techniques["BlurH"];
+    
+        foreach (var pass in effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+        }
+    
+        // Pass 3: BlurV
+        Graphics. SetRenderTarget(OutputBuffer);
+        Graphics.Clear(Color. Transparent);
+        effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
+        effect.CurrentTechnique = effect. Techniques["BlurV"];
+    
+        foreach (var pass in effect. CurrentTechnique. Passes)
+        {
+            pass. Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType. TriangleList, 0, 0, 2);
+        }
     }
-
-    // Pass 2: BlurH
-    Graphics.SetRenderTarget(SSAOBlurTarget);
-    Graphics.Clear(Color.White);
-    effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
-    effect.CurrentTechnique = effect.Techniques["BlurH"];
-
-    foreach (var pass in effect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
-    }
-
-    // Pass 3: BlurV
-    Graphics. SetRenderTarget(OutputBuffer);
-    Graphics.Clear(Color. Transparent);
-    effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
-    effect.CurrentTechnique = effect. Techniques["BlurV"];
-
-    foreach (var pass in effect. CurrentTechnique. Passes)
-    {
-        pass. Apply();
-        Graphics.DrawIndexedPrimitives(PrimitiveType. TriangleList, 0, 0, 2);
-    }
-}
 
     public override void DrawEnd()
     {

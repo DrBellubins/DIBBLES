@@ -216,47 +216,22 @@ float ComputeAO(float2 uv)
     float3 P = ReconstructViewPos(uv, depth01);
     float centerZ = -P.z;
 
-    // Get normal from G-buffer or use view-space forward as fallback
+    // Get normal from G-buffer
     float4 nTex = tex2D(NormalSampler, uv);
     float3 N;
 
-    if (nTex.a >= 0.5f)
-    {
-        N = DecodeNormal01(nTex);
-    }
-    else
-    {
-        // Reconstruct normal from depth (more reliable than flat fallback)
-        float2 texel = 1.0f / ScreenSize;
+    N = DecodeNormal01(nTex);
 
-        float depthL = tex2D(DepthSampler, uv + float2(-texel.x, 0)).r;
-        float depthR = tex2D(DepthSampler, uv + float2( texel.x, 0)).r;
-        float depthU = tex2D(DepthSampler, uv + float2(0, -texel. y)).r;
-        float depthD = tex2D(DepthSampler, uv + float2(0,  texel.y)).r;
-
-        float3 PL = ReconstructViewPos(uv + float2(-texel.x, 0), depthL);
-        float3 PR = ReconstructViewPos(uv + float2( texel.x, 0), depthR);
-        float3 PU = ReconstructViewPos(uv + float2(0, -texel. y), depthU);
-        float3 PD = ReconstructViewPos(uv + float2(0,  texel. y), depthD);
-
-        float3 dPdx = PR - PL;
-        float3 dPdy = PD - PU;
-
-        N = normalize(cross(dPdy, dPdx));
-    }
-
-    // Robust TBN construction
+    // TBN construction
     float3 R = tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
     R = normalize(R);
 
-    // Gram-Schmidt with fallback for near-parallel vectors
     float3 T = R - N * dot(R, N);
     float tLen = length(T);
 
     if (tLen < 0.001f)
     {
-        // R was parallel to N, pick a different basis
-        float3 up = abs(N. y) < 0.99f ? float3(0, 1, 0) : float3(1, 0, 0);
+        float3 up = abs(N.y) < 0.99f ? float3(0, 1, 0) : float3(1, 0, 0);
         T = normalize(cross(N, up));
     }
     else
@@ -284,7 +259,10 @@ float ComputeAO(float2 uv)
         float sceneZ = lerp(CameraNear, CameraFar, sampDepth01);
         float sampleZ = -samplePosVS.z;
 
-        float rangeCheck = smoothstep(0.0f, 1.0f, radius / max(abs(sceneZ - centerZ), 0.001f));
+        // Improved range check - falloff based on distance from center
+        float rangeCheck = 1.0f - smoothstep(0.0f, radius, abs(sceneZ - centerZ));
+
+        // Occlusion test with bias
         float occ = (sceneZ < sampleZ - bias) ? 1.0f : 0.0f;
 
         occlusion += occ * rangeCheck;
@@ -304,6 +282,25 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
 }
+
+/*float4 PS_SSAO(VSOutput input) : SV_Target0
+{
+    float4 nTex = tex2D(NormalSampler, input. TexCoord);
+
+    // Visualize normals - should show smooth color gradients on surfaces
+    // Red = X, Green = Y, Blue = Z
+
+    if (nTex. a >= 0.5f)
+    {
+        float3 N = DecodeNormal01(nTex);
+        // Remap from [-1,1] to [0,1] for visualization
+        return float4(N * 0.5f + 0.5f, 1.0f);
+    }
+    else
+    {
+        return float4(1.0f, 0.0f, 1.0f, 1.0f); // Magenta for missing normals
+    }
+}*/
 
 // Blur weights
 static const float w0 = 0.4026f;
