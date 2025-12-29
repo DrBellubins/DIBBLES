@@ -305,15 +305,7 @@ float ComputeAO(float2 uv)
 
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
-
-    // Just show raw depth - should be gradient from black (near) to white (far)
-    return float4(depth01, depth01, depth01, 1.0f);
-}
-
-/*float4 PS_SSAO(VSOutput input) : SV_Target0
-{
-    // Hardcode ALL values
+    // Hardcode values
     float tanHalf = 1.0f;
     float aspect = 1.7777778f;
     float cameraNear = 0.01f;
@@ -321,28 +313,63 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
 
     float depth01 = tex2D(DepthSampler, input. TexCoord).r;
 
-    if (depth01 >= 0.999f)
-        return float4(0, 1, 0, 1);  // Green for sky
+    // Test A: Just show the ray X component (should vary left-to-right, centered at 0)
+    float rayX = (input. TexCoord.x * 2.0f - 1.0f) * aspect * tanHalf;
+    // rayX ranges from -aspect*tanHalf to +aspect*tanHalf (about -1.78 to +1.78)
+    // Normalize to [0,1] for display:
+    float rayXNorm = (rayX / (aspect * tanHalf) + 1.0f) * 0.5f;
+    //return float4(rayXNorm, 0.0f, 0.0f, 1.0f);  // Should be red gradient left-to-right
 
-    // Inline reconstruction
-    float rayX = (input.TexCoord.x * 2.0f - 1.0f) * aspect * tanHalf;
+    // Test B: Just show the ray Y component (should vary top-to-bottom)
     float rayY = (1.0f - input.TexCoord.y * 2.0f) * tanHalf;
+    // rayY ranges from -tanHalf to +tanHalf (about -1 to +1)
+    float rayYNorm = (rayY / tanHalf + 1.0f) * 0.5f;
+    //return float4(0.0f, rayYNorm, 0.0f, 1.0f);  // Should be green gradient top-to-bottom
+
+    // Test C: Show linearZ (should match depth visualization)
     float linearZ = lerp(cameraNear, cameraFar, depth01);
+    float linearZNorm = linearZ / cameraFar;
+    //return float4(linearZNorm, linearZNorm, linearZNorm, 1.0f);  // Should look like depth
+
+    // Test D: Show the reconstructed position components
     float3 P = float3(rayX * linearZ, rayY * linearZ, -linearZ);
 
-    // Inline projection
-    float z = -P.z;  // Should equal linearZ
-    float convergenceX = P.x / z;
-    float convergenceY = P.y / z;
-    float convergenceUX = (convergenceX / (aspect * tanHalf) + 1.0f) * 0.5f;
-    float convergenceUY = (1.0f - convergenceY / tanHalf) * 0.5f;
+    // Show P. x normalized (should vary with screen X AND depth)
+    //return float4(saturate(P.x / 100.0f + 0.5f), 0.0f, 0.0f, 1.0f);
 
-    float errX = abs(convergenceUX - input.TexCoord.x);
-    float errY = abs(convergenceUY - input.TexCoord.y);
+    // Show P.y normalized
+    //return float4(0.0f, saturate(P.y / 100.0f + 0.5f), 0.0f, 1.0f);
 
-    // Should show dim green with near-zero red/blue
-    return float4(errX * 100.0f, 0.5f, errY * 100.0f, 1.0f);
-}*/
+    // Show P.z (should be negative, visualize as positive)
+    //return float4(saturate(-P.z / cameraFar), saturate(-P.z / cameraFar), saturate(-P.z / cameraFar), 1.0f);
+
+    // Test E: The division step (this is where it might fail)
+    float z = -P.z;  // This should equal linearZ
+
+    // Check if z equals linearZ (should be 1.0 everywhere = white)
+    float zMatch = (abs(z - linearZ) < 0.001f) ? 1.0f : 0.0f;
+    //return float4(zMatch, zMatch, zMatch, 1.0f);  // Should be WHITE everywhere
+
+    // Test F: The actual UV reconstruction
+    float convergenceX = P.x / z;  // Should equal rayX
+    float convergenceY = P.y / z;  // Should equal rayY
+
+    // Check if convergenceX equals rayX
+    float xMatch = (abs(convergenceX - rayX) < 0.0001f) ? 1.0f : 0.0f;
+    //return float4(xMatch, 0.0f, 0.0f, 1.0f);  // Should be RED everywhere
+
+    // Check if convergenceY equals rayY
+    float yMatch = (abs(convergenceY - rayY) < 0.0001f) ? 1.0f : 0.0f;
+    //return float4(0.0f, yMatch, 0.0f, 1.0f);  // Should be GREEN everywhere
+
+    // Test G: Final UV calculation
+    float finalU = (convergenceX / (aspect * tanHalf) + 1.0f) * 0.5f;
+    float finalV = (1.0f - convergenceY / tanHalf) * 0.5f;
+
+    // Show reconstructed UV as color (R=U, G=V)
+    // Should create a gradient:  red increases left-to-right, green increases top-to-bottom
+    //return float4(finalU, finalV, 0.0f, 1.0f);
+}
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
