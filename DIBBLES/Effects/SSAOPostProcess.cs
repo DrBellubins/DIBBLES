@@ -74,7 +74,7 @@ namespace DIBBLES.Effects
             effect.Parameters["TanHalfFovY"]?.SetValue(tanHalfFovY);
             effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
             
-            Console.WriteLine($"Extracted - TanHalfFovY:  {tanHalfFovY}, AspectRatio: {aspectRatio}");
+            //Console.WriteLine($"Extracted - TanHalfFovY:  {tanHalfFovY}, AspectRatio: {aspectRatio}");
             
             // Tile blue-noise by pixel size
             var noiseScale = new Vector2(

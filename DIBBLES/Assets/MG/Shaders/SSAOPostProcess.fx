@@ -151,49 +151,46 @@ float viewZFrom01(float d01)
 // Reconstruct view-space position from (uv, depth01)
 float3 ReconstructViewPos(float2 uv, float depth01)
 {
-    // Convert UV to view-space ray direction (unnormalized)
-    float2 ndc;
-    ndc.x = (uv. x * 2.0f - 1.0f) * AspectRatio * TanHalfFovY;
-    ndc.y = (1.0f - uv. y * 2.0f) * TanHalfFovY;
+    // Ray direction in view space (not scaled by anything except aspect/fov)
+    float rayX = (uv.x * 2.0f - 1.0f) * AspectRatio * TanHalfFovY;
+    float rayY = (1.0f - uv.y * 2.0f) * TanHalfFovY;
+    float rayZ = -1.0f;  // Camera looks down -Z, so ray. z = -1
 
-    // Linear depth (positive distance from camera)
+    // Linear depth
     float linearZ = lerp(CameraNear, CameraFar, depth01);
 
-    // View-space position (camera looks down -Z, so z is negative)
-    return float3(ndc.x * linearZ, ndc.y * linearZ, -linearZ);
+    // Scale ray so that -ray.z * t = linearZ => t = linearZ
+    return float3(rayX * linearZ, rayY * linearZ, rayZ * linearZ);
 }
 
 // Project view-space position back to UV (exact inverse of ReconstructViewPos)
 bool ProjectToUV(float3 viewPos, out float2 uvOut)
 {
-    // viewPos.z is negative; get positive depth
-    float z = -viewPos.z;
+    // viewPos = (rayX * linearZ, rayY * linearZ, -linearZ)
+    // So: linearZ = -viewPos.z
+    //     rayX = viewPos.x / linearZ
+    //     rayY = viewPos. y / linearZ
 
-    if (z <= 0.0001f)
+    float linearZ = -viewPos.z;
+
+    if (linearZ <= 0.0001f)
     {
         uvOut = float2(0.5f, 0.5f);
         return false;
     }
 
-    // Reverse the reconstruction:
-    // viewPos.x = ndc.x * z  =>  ndc.x = viewPos.x / z
-    // viewPos.y = ndc.y * z  =>  ndc. y = viewPos.y / z
-    // ndc.x = (uv.x * 2 - 1) * AspectRatio * TanHalfFovY
-    // ndc.y = (1 - uv. y * 2) * TanHalfFovY
+    float rayX = viewPos.x / linearZ;
+    float rayY = viewPos.y / linearZ;
 
-    float ndcX = viewPos.x / z;
-    float ndcY = viewPos.y / z;
+    // Reverse: rayX = (uv.x * 2 - 1) * AspectRatio * TanHalfFovY
+    // uv.x = (rayX / (AspectRatio * TanHalfFovY) + 1) * 0.5
+    uvOut.x = (rayX / (AspectRatio * TanHalfFovY) + 1.0f) * 0.5f;
 
-    // Solve for UV:
-    // ndcX = (uv.x * 2 - 1) * AspectRatio * TanHalfFovY
-    // uv.x = (ndcX / (AspectRatio * TanHalfFovY) + 1) / 2
-    uvOut.x = (ndcX / (AspectRatio * TanHalfFovY) + 1.0f) * 0.5f;
+    // Reverse:  rayY = (1 - uv. y * 2) * TanHalfFovY
+    // uv.y = (1 - rayY / TanHalfFovY) * 0.5
+    uvOut.y = (1.0f - rayY / TanHalfFovY) * 0.5f;
 
-    // ndcY = (1 - uv.y * 2) * TanHalfFovY
-    // uv.y = (1 - ndcY / TanHalfFovY) / 2
-    uvOut.y = (1.0f - ndcY / TanHalfFovY) * 0.5f;
-
-    if (uvOut.x < 0.0f || uvOut.x > 1.0f || uvOut.y < 0.0f || uvOut.y > 1.0f)
+    if (uvOut.x < 0.0f || uvOut.x > 1.0f || uvOut. y < 0.0f || uvOut.y > 1.0f)
         return false;
 
     return true;
@@ -308,15 +305,22 @@ float ComputeAO(float2 uv)
 
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    float depth01 = tex2D(DepthSampler, input.TexCoord).r;
-    float3 P = ReconstructViewPos(input.TexCoord, depth01);
+    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
+
+    // Skip sky
+    if (depth01 >= 0.999f)
+        return float4(0, 1, 0, 1); // Green for sky
+
+    float3 P = ReconstructViewPos(input. TexCoord, depth01);
 
     float2 uvTest;
     bool valid = ProjectToUV(P, uvTest);
-    float err = length(uvTest - input.TexCoord);
 
-    // Should be almost entirely green with near-zero red
-    return float4(err * 100.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);
+    // Show difference in x (red) and y (blue)
+    float errX = abs(uvTest.x - input. TexCoord.x);
+    float errY = abs(uvTest.y - input.TexCoord.y);
+
+    return float4(errX * 10.0f, valid ? 0.5f : 0.0f, errY * 10.0f, 1.0f);
 }
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
