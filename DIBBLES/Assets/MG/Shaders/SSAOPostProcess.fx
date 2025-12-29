@@ -148,42 +148,50 @@ float viewZFrom01(float d01)
     return lerp(CameraNear, CameraFar, d01);
 }
 
-// Reconstruct view-space position from (uv, depth01):
+// Reconstruct view-space position from (uv, depth01)
 float3 ReconstructViewPos(float2 uv, float depth01)
 {
-    // Convert UV to normalized device coordinates centered at (0,0)
+    // Convert UV to view-space ray direction (unnormalized)
     float2 ndc;
-    ndc.x = (uv.x * 2.0f - 1.0f) * AspectRatio * TanHalfFovY;
-    ndc.y = (1.0f - uv.y * 2.0f) * TanHalfFovY;
+    ndc.x = (uv. x * 2.0f - 1.0f) * AspectRatio * TanHalfFovY;
+    ndc.y = (1.0f - uv. y * 2.0f) * TanHalfFovY;
 
     // Linear depth (positive distance from camera)
     float linearZ = lerp(CameraNear, CameraFar, depth01);
 
-    // View-space position (camera looks down -Z)
+    // View-space position (camera looks down -Z, so z is negative)
     return float3(ndc.x * linearZ, ndc.y * linearZ, -linearZ);
 }
 
-// Project view-space position to screen uv
+// Project view-space position back to UV (exact inverse of ReconstructViewPos)
 bool ProjectToUV(float3 viewPos, out float2 uvOut)
 {
-    float4 clip = mul(float4(viewPos, 1.0f), Projection);
+    // viewPos.z is negative; get positive depth
+    float z = -viewPos.z;
 
-    if (clip.w <= 0.0001f)
+    if (z <= 0.0001f)
     {
         uvOut = float2(0.5f, 0.5f);
         return false;
     }
 
-    float3 ndc = clip.xyz / clip. w;
+    // Reverse the reconstruction:
+    // viewPos.x = ndc.x * z  =>  ndc.x = viewPos.x / z
+    // viewPos.y = ndc.y * z  =>  ndc. y = viewPos.y / z
+    // ndc.x = (uv.x * 2 - 1) * AspectRatio * TanHalfFovY
+    // ndc.y = (1 - uv. y * 2) * TanHalfFovY
 
-    // Match ReconstructViewPos convention:
-    // ReconstructViewPos: ndc.x = (uv.x * 2 - 1) * aspect * tanHalf
-    //                     ndc.y = (1 - uv.y * 2) * tanHalf
-    // So: uv.x = (ndc. x / (aspect * tanHalf) + 1) / 2 = ndc.x * 0.5 + 0.5  (after perspective divide)
-    //     uv.y = (1 - ndc.y / tanHalf) / 2 = 0.5 - ndc.y * 0.5 = (1 - ndc.y) * 0.5
+    float ndcX = viewPos.x / z;
+    float ndcY = viewPos.y / z;
 
-    uvOut. x = ndc.x * 0.5f + 0.5f;
-    uvOut. y = 0.5f - ndc.y * 0.5f;  // This is the correct flip
+    // Solve for UV:
+    // ndcX = (uv.x * 2 - 1) * AspectRatio * TanHalfFovY
+    // uv.x = (ndcX / (AspectRatio * TanHalfFovY) + 1) / 2
+    uvOut.x = (ndcX / (AspectRatio * TanHalfFovY) + 1.0f) * 0.5f;
+
+    // ndcY = (1 - uv.y * 2) * TanHalfFovY
+    // uv.y = (1 - ndcY / TanHalfFovY) / 2
+    uvOut.y = (1.0f - ndcY / TanHalfFovY) * 0.5f;
 
     if (uvOut.x < 0.0f || uvOut.x > 1.0f || uvOut.y < 0.0f || uvOut.y > 1.0f)
         return false;
@@ -292,10 +300,23 @@ float ComputeAO(float2 uv)
 }
 
 // Pass 1: SSAO
-float4 PS_SSAO(VSOutput input) : SV_Target0
+/*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
     float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
+}*/
+
+float4 PS_SSAO(VSOutput input) : SV_Target0
+{
+    float depth01 = tex2D(DepthSampler, input.TexCoord).r;
+    float3 P = ReconstructViewPos(input.TexCoord, depth01);
+
+    float2 uvTest;
+    bool valid = ProjectToUV(P, uvTest);
+    float err = length(uvTest - input.TexCoord);
+
+    // Should be almost entirely green with near-zero red
+    return float4(err * 100.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);
 }
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
