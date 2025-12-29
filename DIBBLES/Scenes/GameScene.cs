@@ -45,7 +45,7 @@ public class GameScene : Scene
             SurfaceFormat.Color,
             DepthFormat.Depth24,
             0,
-            RenderTargetUsage.PreserveContents // keep color when rebinding in MRT
+            RenderTargetUsage.PreserveContents
         );
         
         DepthBuffer = new RenderTarget2D(
@@ -126,14 +126,7 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
-        // Depth pre-pass: write linear depth to DepthBuffer
-        graphics.SetRenderTarget(DepthBuffer);
-        graphics.Clear(Color.White); // far = 1
-        
-        TerrainGen.DrawDepthPrepass();
-
-        // Color pass
-        graphics.SetRenderTarget(BackBuffer);
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer);
         graphics.Clear(SkyColor);
         
         TerrainGen.Draw();
@@ -142,6 +135,9 @@ public class GameScene : Scene
         PlayerCharacter.Draw();
         
         Debug.Draw3D();
+        
+        // Restore to single target for UI and post
+        graphics.SetRenderTarget(null);
         
         // Draw UI (UI Batch)
         if (UIEnabled)
@@ -220,10 +216,21 @@ public class GameScene : Scene
             using (var outputStream = new FileStream(Path.Combine(folder, "Output.png"), FileMode.Create))
                 outputTex.SaveAsPng(outputStream, width, height);
         }
-
+        
         // Save color buffer
         using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
             BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        
+        // Save depth buffer
+        using (var colorStream = new FileStream(Path.Combine(folder, "Depth.png"), FileMode.Create))
+            DepthBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        
+        // Save Ambient Occlusion buffer
+        using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
+        {
+            var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            aoBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        }
 
         var outputString = $"Saved buffers to: {folder}";
         

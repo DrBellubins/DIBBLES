@@ -43,10 +43,21 @@ static const float3 sample_sphere[samples] =
 };
 
 // Inputs
+texture ColorTex;
 texture DepthTex;
 texture AOTex;
 
 // Samplers (textures must be bound from C#)
+sampler ColorSampler = sampler_state
+{
+    Texture = <ColorTex>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
 sampler DepthSampler = sampler_state
 {
     Texture = <DepthTex>;
@@ -286,7 +297,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     }
 
     float ao = sum / max(wsum, 1e-4f);
-    return float4(ao, ao, ao, 1.0f);
+
+    float4 color = tex2D(ColorSampler, input.TexCoord);
+
+    return float4(color.r * ao, color.g * ao, color.b * ao, 1.0f);
 }
 
 technique SSAO
