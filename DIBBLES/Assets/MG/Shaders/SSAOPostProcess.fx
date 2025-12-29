@@ -421,6 +421,14 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     return float4(ao, ao, ao, 1.0f);
 }
 
+float4 PS_Composite(VSOutput input) : SV_Target0
+{
+    float ao = tex2D(AOSamplerLinear, input.TexCoord).r;
+    float4 color = tex2D(ColorSampler, input.TexCoord);
+
+    return float4(color.rgb * ao, color.a);
+}
+
 technique SSAO
 {
     pass AO
@@ -445,5 +453,14 @@ technique BlurV
     {
         VertexShader = compile vs_3_0 VSMain();
         PixelShader  = compile ps_3_0 PS_BlurV();
+    }
+}
+
+technique Composite
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 VSMain();
+        PixelShader  = compile ps_3_0 PS_Composite();
     }
 }

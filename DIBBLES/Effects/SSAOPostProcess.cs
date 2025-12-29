@@ -101,10 +101,10 @@ public class SSAOPostProcess : PostProcessingEffect
     
         effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
     
-        effect.Parameters["radius"]?.SetValue(0.5f);
-        effect.Parameters["bias"]?.SetValue(0.08f);
-        effect.Parameters["total_strength"]?.SetValue(1.0f);
-        effect.Parameters["base_ao"]?.SetValue(0.1f);
+        effect.Parameters["radius"]?.SetValue(0.35f);
+        effect.Parameters["bias"]?.SetValue(0.1f);
+        effect.Parameters["total_strength"]?.SetValue(1.2f);
+        effect.Parameters["base_ao"]?.SetValue(0.05f);
     
         // USE THE PRE-ALLOCATED BUFFERS (like old shader)
         Graphics.SetVertexBuffer(vertexBuffer);
@@ -143,6 +143,19 @@ public class SSAOPostProcess : PostProcessingEffect
         {
             pass. Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType. TriangleList, 0, 0, 2);
+        }
+        
+        // Pass 4: Composite (AO * Color -> OutputBuffer)
+        Graphics.SetRenderTarget(OutputBuffer);
+        Graphics.Clear(Color.Transparent);
+        effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
+        effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
+        effect.CurrentTechnique = effect. Techniques["Composite"];
+
+        foreach (var pass in effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
     }
 
