@@ -33,6 +33,8 @@ public class GameScene : Scene
     
     public static RenderTarget2D UIBuffer;
     
+    private bool backBuffersDebug = false;
+    
     private Chat gameChat = new();
     private UIBlur uiBlur = new();
     
@@ -100,6 +102,7 @@ public class GameScene : Scene
         Commands.RegisterCommand("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
         Commands.RegisterCommand("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
         Commands.RegisterCommand("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
+        Commands.RegisterCommand("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
     }
 
     private int fpsCounter;
@@ -207,6 +210,18 @@ public class GameScene : Scene
             uiBlur.Draw();
             UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         }
+
+        if (backBuffersDebug)
+        {
+            var bufferWidth = Engine.ScreenWidth / 4.0f;
+            var bufferHeight = Engine.ScreenHeight / 4.0f;
+            
+            UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
+            
+            UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
+        }
         
         UIBatch.End();
         
@@ -218,7 +233,13 @@ public class GameScene : Scene
     private void toggleUICMD(string[] args)
     {
         UIEnabled = !UIEnabled;
-        Chat.Write($"Toggle UI: {UIEnabled}", ChatMessageType.Command);
+        Chat.Write($"Toggled UI: {UIEnabled}", ChatMessageType.Command);
+    }
+    
+    private void toggleBBDCMD(string[] args)
+    {
+        backBuffersDebug = !backBuffersDebug;
+        Chat.Write($"Toggled back buffer debug: {backBuffersDebug}", ChatMessageType.Command);
     }
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)

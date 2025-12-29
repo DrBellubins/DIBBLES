@@ -91,7 +91,7 @@ sampler2D AOSamplerLinear = sampler_state
     AddressV = CLAMP;
 };
 
-sampler RandomSampler = sampler_state
+sampler2D RandomSampler = sampler_state
 {
     Texture = <RandomTex>;
     MinFilter = POINT;
@@ -180,7 +180,7 @@ float ComputeAO(float2 uv)
     float4 nTex = tex2D(NormalSampler, uv);
     float3 normal = (nTex.a < 0.5f) ? NormalFromDepth(depth, uv) : DecodeNormal01(nTex);
 
-    float3 random = normalize(tex2D(RandomSampler, uv * 4.0f).rgb * 2.0f - 1.0f);
+    float3 random = normalize(tex2D(RandomSampler, uv * 40.0f).rgb * 2.0f - 1.0f);
 
     float radius_depth = radius / max(depth, 1e-5f);
     float occlusion = 0.0f;
