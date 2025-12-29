@@ -52,11 +52,11 @@ namespace DIBBLES.Effects
             Graphics.SamplerStates[1] = SamplerState.LinearClamp;  // AOSamplerLinear (s1)
             Graphics.SamplerStates[2] = SamplerState.LinearClamp;  // ColorSampler (s2)
             
-            effect.Parameters["total_strength"]?.SetValue(1.5f);
-            effect.Parameters["base_ao"]?.SetValue(0.0f);
-            effect.Parameters["area"]?.SetValue(0.02f);
+            effect.Parameters["total_strength"]?.SetValue(1.0f);
+            effect.Parameters["base_ao"]?.SetValue(0.2f);
+            effect.Parameters["area"]?.SetValue(0.0075f);
             effect.Parameters["falloff"]?.SetValue(0.000001f);
-            effect.Parameters["radius"]?.SetValue(0.002f);
+            effect.Parameters["radius"]?.SetValue(0.0002f);
 
             // Required params for pure depth SSAO
             effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));

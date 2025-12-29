@@ -126,8 +126,15 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
-        graphics.SetRenderTargets(BackBuffer, DepthBuffer);
-        graphics.Clear(SkyColor);
+        graphics.SetRenderTargets(
+            new RenderTargetBinding(BackBuffer),   // Color output  -> SV_Target0
+            new RenderTargetBinding(DepthBuffer)   // Depth output -> SV_Target1
+        );
+        
+        graphics.Clear(SkyColor); // BackBuffer
+        graphics.SetRenderTarget(DepthBuffer);
+        graphics.Clear(Color.White); // DepthBuffer far = 1.0
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer); // rebind MRT
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();

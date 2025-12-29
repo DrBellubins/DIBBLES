@@ -526,11 +526,6 @@ public class TerrainGeneration
         return sum / set.Count;
     }
     
-    public void DrawDepthPrepass()
-    {
-        Mesh.DrawDepthPrepass();
-    }
-    
     public void Draw()
     {
         // Draw every mesh in the mesh queue
