@@ -151,38 +151,41 @@ float viewZFrom01(float d01)
 // Notes: View forward is -Z, so returned z will be negative for points in front of camera.
 float3 ReconstructViewPos(float2 uv, float depth01)
 {
-    // Convert UV to NDC:  x [-1,1], y [-1,1] (flip y for D3D convention)
-    float2 ndc = float2(uv.x * 2.0f - 1.0f, (1.0f - uv.y) * 2.0f - 1.0f);
+    // NDC:  x,y in [-1,1], with Y flipped for D3D
+    float2 ndc = float2(uv.x * 2.0f - 1.0f, (1.0f - uv. y) * 2.0f - 1.0f);
 
-    // Unproject to view space (use z=1 for far plane direction)
+    // Unproject a point on the far plane to get the view ray direction
     float4 clipPos = float4(ndc, 1.0f, 1.0f);
     float4 viewRay = mul(clipPos, InvProjection);
-    float3 ray = viewRay. xyz / viewRay.w;
+    float3 rayDir = viewRay.xyz / viewRay.w;
 
-    // Get linear depth (positive distance from camera)
+    // Linear depth (positive distance from camera)
     float linearZ = lerp(CameraNear, CameraFar, depth01);
 
-    // Scale ray so that -z equals our depth
-    // In view space, -Z is forward, so ray. z is negative for points in front
-    return ray * (linearZ / -ray.z);
+    // In view space, camera looks down -Z, so rayDir. z is negative
+    // Scale ray so its length along -Z equals linearZ
+    float t = linearZ / abs(rayDir.z);
+
+    return rayDir * t;
 }
 
 // Project view-space position to screen uv
 bool ProjectToUV(float3 viewPos, out float2 uvOut)
 {
     float4 clip = mul(float4(viewPos, 1.0f), Projection);
-    float w = clip.w;
 
-    if (w <= 0.0f)
+    if (clip.w <= 0.0f)
     {
         uvOut = float2(0.0f, 0.0f);
         return false;
     }
 
-    float2 ndc = clip.xy / w;
-    uvOut = ndc * 0.5f + 0.5f;
+    float2 ndc = clip.xy / clip. w;
 
-    // OOB reject
+    // Convert NDC to UV, with Y flip
+    uvOut. x = ndc.x * 0.5f + 0.5f;
+    uvOut. y = (-ndc.y) * 0.5f + 0.5f;  // Flip Y back
+
     return (uvOut.x >= 0.0f && uvOut.x <= 1.0f && uvOut.y >= 0.0f && uvOut.y <= 1.0f);
 }
 
@@ -251,10 +254,50 @@ float ComputeAO(float2 uv)
 }
 
 // Pass 1: SSAO
-float4 PS_SSAO(VSOutput input) : SV_Target0
+/*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
     float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
+}*/
+
+float4 PS_SSAO(VSOutput input) : SV_Target0
+{
+    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
+
+    // Test 1: Is depth being read?  (should see gradient)
+    return float4(depth01, depth01, depth01, 1.0f); // works fine
+
+    // Test 2: Is reconstruction working? (should see smooth gradient, not all black/white)
+    float3 P = ReconstructViewPos(input.TexCoord, depth01);
+    float vizZ = saturate(-P. z / CameraFar);
+    //return float4(vizZ, vizZ, vizZ, 1.0f); // all black
+
+    // Test 3: Does projection round-trip work?  (should see roughly white everywhere except edges)
+    float2 uvTest;
+    bool valid = ProjectToUV(P, uvTest);
+    float err = length(uvTest - input.TexCoord);
+    //return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Weird black dot in top left corner
+
+    // Test 4: Are samples landing on screen? Count valid samples
+    float4 nTex = tex2D(NormalSampler, input.TexCoord);
+    float3 N = (nTex.a < 0.5f) ? float3(0, 0, -1) : DecodeNormal01(nTex);
+    float3 R = normalize(tex2D(RandomSampler, input.TexCoord * NoiseScale).rgb * 2.0f - 1.0f);
+    float3 T = normalize(R - N * dot(R, N));
+    float3 B = cross(N, T);
+    float3x3 TBN = float3x3(T, B, N);
+
+    int validCount = 0;
+    for (int i = 0; i < samples; i++)
+    {
+        float3 sampleOffset = mul(sample_sphere[i], TBN);
+        float3 samplePosVS = P + sampleOffset * radius;
+        float2 uvSamp;
+        if (ProjectToUV(samplePosVS, uvSamp))
+            validCount++;
+    }
+
+    float ratio = (float)validCount / (float)samples;
+    //return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
 }
 
 // Blur weights
@@ -373,9 +416,7 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     }
 
     float ao = sum / max(wsum, 1e-4f);
-
-    float4 color = tex2D(ColorSampler, input.TexCoord);
-    return float4(color.rgb * ao, 1.0f);
+    return float4(ao, ao, ao, 1.0f);
 }
 
 technique SSAO

@@ -13,7 +13,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainMesh
 {
-    public const bool SmoothLighting = true; // Flat lighting doesn't work, don't care to fix it
+    public const bool SmoothLighting = false;
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();

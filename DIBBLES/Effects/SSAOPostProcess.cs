@@ -53,7 +53,7 @@ namespace DIBBLES.Effects
             Graphics.RasterizerState = RasterizerState.CullNone;
         
             // Set G-buffer textures
-            effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
+            //effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
             effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
             effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
             effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
