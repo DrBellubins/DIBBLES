@@ -22,11 +22,11 @@
 float2 ScreenSize;
 
 // Tunable parameters (match the reference behavior)
-float total_strength = 1.0f;
-float base_ao        = 0.2f;
-float area           = 0.0075f;
-float falloff        = 0.000001f;
-float radius         = 0.0002f;
+float total_strength;
+float base_ao;
+float area;
+float falloff;
+float radius;
 
 // Sample kernel (reference 16-sample sphere)
 static const int samples = 16;
@@ -48,7 +48,7 @@ texture DepthTex;
 texture AOTex;
 
 // Samplers (textures must be bound from C#)
-sampler ColorSampler = sampler_state
+sampler2D ColorSampler = sampler_state
 {
     Texture = <ColorTex>;
     MinFilter = Linear;
@@ -58,7 +58,7 @@ sampler ColorSampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler DepthSampler = sampler_state
+sampler2D DepthSampler = sampler_state
 {
     Texture = <DepthTex>;
     MinFilter = POINT;
@@ -68,7 +68,7 @@ sampler DepthSampler = sampler_state
     AddressV = CLAMP;
 };
 
-sampler AOSamplerLinear = sampler_state
+sampler2D AOSamplerLinear = sampler_state
 {
     Texture = <AOTex>;
     MinFilter = LINEAR;

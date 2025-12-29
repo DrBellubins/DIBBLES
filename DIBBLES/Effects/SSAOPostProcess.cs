@@ -47,7 +47,16 @@ namespace DIBBLES.Effects
             Graphics.BlendState = BlendState.Opaque;
             Graphics.DepthStencilState = DepthStencilState.None;
             Graphics.RasterizerState = RasterizerState.CullNone;
-            Graphics.SamplerStates[0] = SamplerState.PointClamp;
+            
+            Graphics.SamplerStates[0] = SamplerState.PointClamp;   // DepthSampler (s0)
+            Graphics.SamplerStates[1] = SamplerState.LinearClamp;  // AOSamplerLinear (s1)
+            Graphics.SamplerStates[2] = SamplerState.LinearClamp;  // ColorSampler (s2)
+            
+            effect.Parameters["total_strength"]?.SetValue(1.5f);
+            effect.Parameters["base_ao"]?.SetValue(0.0f);
+            effect.Parameters["area"]?.SetValue(0.02f);
+            effect.Parameters["falloff"]?.SetValue(0.000001f);
+            effect.Parameters["radius"]?.SetValue(0.002f);
 
             // Required params for pure depth SSAO
             effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
