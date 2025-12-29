@@ -30,11 +30,12 @@ struct VertexInput
 
 struct PixelInput
 {
-    float4 Position : POSITION0;
-    float2 TexCoord : TEXCOORD0;
-    float4 Color    : COLOR0;
-    float3 WorldPos : TEXCOORD1;
-    float  ViewZ    : TEXCOORD2;   // +Z forward distance in view space
+    float4 Position     : POSITION0;
+    float2 TexCoord     : TEXCOORD0;
+    float4 Color        : COLOR0;
+    float3 WorldPos     : TEXCOORD1;
+    float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
+    float3 ViewNormal   : TEXCOORD3;
 };
 
 PixelInput VS(VertexInput input)
@@ -42,15 +43,21 @@ PixelInput VS(VertexInput input)
     PixelInput output;
 
     float4 worldPos = mul(float4(input.Position, 1), World);
-    float4 viewPos  = mul(worldPos, View);
+    float4 viewPos = mul(worldPos, View);
 
     output.Position = mul(viewPos, Projection);
     output.TexCoord = input.TexCoord;
-    output.Color    = input.Color;
+    output.Color = input.Color;
     output.WorldPos = worldPos.xyz;
 
     // View-space forward is -Z; use -viewPos.z for positive distance
-    output.ViewZ = -viewPos.z;
+    output.ViewDepth = -viewPos.z;
+
+    // Compute view-space normal (assumes uniform scaling; use inverse-transpose for non-uniform)
+    float3 worldNormal = mul(float4(input.Normal, 0), World).xyz;
+    float3 viewNormal = mul(float4(worldNormal, 0), View).xyz;
+
+    output.ViewNormal = normalize(viewNormal);
 
     return output;
 }
@@ -59,11 +66,12 @@ struct PixelOutput
 {
     float4 Color0 : COLOR0; // scene color
     float4 Color1 : COLOR1; // linear depth in [0..1]
+    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
 };
 
 PixelOutput PS_Color(PixelInput input)
 {
-    float4 texColor  = tex2D(AtlasSampler, input.TexCoord);
+    float4 texColor = tex2D(AtlasSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
     // Fog
@@ -73,12 +81,17 @@ PixelOutput PS_Color(PixelInput input)
     finalColor.a = blockColor.a;
 
     // Normalized linear depth (near=0, far=1)
-    float depth01 = saturate((input.ViewZ - CameraNear) / (CameraFar - CameraNear));
+    float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
+
+    // Encode view-space normal from [-1,1] to [0,1]
+    float3 normal = normalize(input.ViewNormal);
+    float3 normal01 = normal * 0.5f + 0.5f;
 
     PixelOutput output;
 
     output.Color0 = finalColor;
     output.Color1 = float4(depth01, depth01, depth01, 1.0f); // SSAO samples .r
+    output.Color2 = float4(normal01, 1.0f);
 
     return output;
 }

@@ -29,6 +29,7 @@ public class GameScene : Scene
     // Buffers
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
+    public static RenderTarget2D NormalBuffer;
     
     public static RenderTarget2D UIBuffer;
     
@@ -54,6 +55,17 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Single,   // 32-bit float
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+        
+        NormalBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents
@@ -128,13 +140,21 @@ public class GameScene : Scene
         
         graphics.SetRenderTargets(
             new RenderTargetBinding(BackBuffer),   // Color output  -> SV_Target0
-            new RenderTargetBinding(DepthBuffer)   // Depth output -> SV_Target1
+            new RenderTargetBinding(DepthBuffer),  // Depth output -> SV_Target1
+            new RenderTargetBinding(NormalBuffer)  // Normal output -> SV_Target2
         );
         
-        graphics.Clear(SkyColor); // BackBuffer
+        graphics.Clear(SkyColor); // Clear backbuffer ahead of time.
+        
+        // Set depth, clear it to white
         graphics.SetRenderTarget(DepthBuffer);
-        graphics.Clear(Color.White); // DepthBuffer far = 1.0
-        graphics.SetRenderTargets(BackBuffer, DepthBuffer); // rebind MRT
+        graphics.Clear(Color.White); // far = 1.0
+        
+        // Set normal, clear it to transparent
+        graphics.SetRenderTarget(NormalBuffer);
+        graphics.Clear(Color.Transparent);
+        
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer); // rebind MRT
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();
@@ -231,6 +251,10 @@ public class GameScene : Scene
         // Save depth buffer
         using (var colorStream = new FileStream(Path.Combine(folder, "Depth.png"), FileMode.Create))
             DepthBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        
+        // Save normal buffer
+        using (var colorStream = new FileStream(Path.Combine(folder, "Normal.png"), FileMode.Create))
+            NormalBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
         
         // Save Ambient Occlusion buffer
         /*using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
