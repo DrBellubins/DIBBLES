@@ -3,13 +3,16 @@
 /intermediateDir:obj
 /platform:DesktopGL
 /config:
-/profile:Reach
+/profile:HiDef
 /compress:False
 
 #----------------------------- Content ----------------------------#
 
 # Build the MainFont.spritefont as a SpriteFont
 /build:Fonts/MainFont.spritefont
+
+# Build the blue noise texture for SSAO
+/build:Textures/BlueNoise.png
 
 # Build the terrain shader
 /build:Shaders/Terrain.fx

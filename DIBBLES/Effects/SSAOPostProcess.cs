@@ -8,6 +8,9 @@ namespace DIBBLES.Effects
     public class SSAOPostProcess : PostProcessingEffect
     {
         private Effect effect;
+
+        private Texture2D blueNoiseTex;
+        
         private VertexBuffer vertexBuffer;
         private IndexBuffer indexBuffer;
         
@@ -19,6 +22,7 @@ namespace DIBBLES.Effects
             base.Start(width, height);
 
             effect = Engine.Instance.Content.Load<Effect>("Shaders/SSAOPostProcess");
+            blueNoiseTex = Engine.Instance.Content.Load<Texture2D>("Textures/BlueNoise");
 
             // Allocate intermediate AO buffers
             SSAOTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
@@ -48,9 +52,7 @@ namespace DIBBLES.Effects
             Graphics.DepthStencilState = DepthStencilState.None;
             Graphics.RasterizerState = RasterizerState.CullNone;
             
-            Graphics.SamplerStates[0] = SamplerState.PointClamp;   // DepthSampler (s0)
-            Graphics.SamplerStates[1] = SamplerState.LinearClamp;  // AOSamplerLinear (s1)
-            Graphics.SamplerStates[2] = SamplerState.LinearClamp;  // ColorSampler (s2)
+            //effect.Parameters["RandomTex"].SetValue(blueNoiseTex);
             
             effect.Parameters["total_strength"]?.SetValue(1.0f);
             effect.Parameters["base_ao"]?.SetValue(0.2f);

@@ -46,6 +46,7 @@ static const float3 sample_sphere[samples] =
 texture ColorTex;
 texture DepthTex;
 texture AOTex;
+texture RandomTex;
 
 // Samplers (textures must be bound from C#)
 sampler2D ColorSampler = sampler_state
@@ -76,6 +77,16 @@ sampler2D AOSamplerLinear = sampler_state
     MipFilter = NONE;
     AddressU = CLAMP;
     AddressV = CLAMP;
+};
+
+sampler RandomSampler = sampler_state
+{
+    Texture = <RandomTex>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = NONE;
+    AddressU = WRAP;
+    AddressV = WRAP;
 };
 
 // VS/PS structs
@@ -150,8 +161,7 @@ float ComputeAO(float2 uv)
     float3 normal   = NormalFromDepth(depth, uv);
 
     // Random orientation vector from noise
-    //float3 random = normalize(tex2D(RandomSampler, uv * 4.0f).rgb * 2.0f - 1.0f);
-    float3 random = normalize(float3(randomNumber(uv), randomNumber(uv * 3.0), randomNumber(uv * 5.0)) * 2.0f - 1.0f);
+    float3 random = normalize(tex2D(RandomSampler, uv * 4.0f).rgb * 2.0f - 1.0f);
 
     float radius_depth = radius / max(depth, 1e-5f);
     float occlusion    = 0.0f;
@@ -159,7 +169,8 @@ float ComputeAO(float2 uv)
     [unroll]
     for (int i = 0; i < samples; i++)
     {
-        float3 ray = radius_depth * reflect(sample_sphere[i], random);
+        //float3 ray = radius_depth * reflect(sample_sphere[i], random);
+        float3 ray = radius_depth * sample_sphere[i];
         float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
 
         float2 uvSamp = saturate(hemi_ray.xy);
