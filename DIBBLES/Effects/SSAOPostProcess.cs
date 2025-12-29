@@ -1,178 +1,162 @@
+using System.Runtime.InteropServices;
 using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
 
-namespace DIBBLES.Effects
+namespace DIBBLES.Effects;
+
+[StructLayout(LayoutKind.Sequential)]
+public struct VertexPositionTexCoord :  IVertexType
 {
-    public class SSAOPostProcess : PostProcessingEffect
+    public Vector3 Position;
+    public Vector2 TexCoord;
+
+    public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration(
+        new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+        new VertexElement(12, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0)
+    );
+
+    VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
+
+    public VertexPositionTexCoord(Vector3 position, Vector2 texCoord)
     {
-        private Effect effect;
+        Position = position;
+        TexCoord = texCoord;
+    }
+}
 
-        private Texture2D blueNoiseTex;
-        
-        private VertexBuffer vertexBuffer;
-        private IndexBuffer indexBuffer;
-        
-        public RenderTarget2D SSAOTarget;
-        public RenderTarget2D SSAOBlurTarget;
+public class SSAOPostProcess : PostProcessingEffect
+{
+    private Effect effect;
 
-        public override void Start(int width, int height)
+    private Texture2D blueNoiseTex;
+    
+    private VertexBuffer vertexBuffer;
+    private IndexBuffer indexBuffer;
+    
+    public RenderTarget2D SSAOTarget;
+    public RenderTarget2D SSAOBlurTarget;
+
+    public override void Start(int width, int height)
+    {
+        base.Start(width, height);
+
+        effect = Engine.Instance.Content.Load<Effect>("Shaders/SSAOPostProcess");
+        blueNoiseTex = Engine.Instance.Content.Load<Texture2D>("Textures/BlueNoise");
+
+        // Allocate intermediate AO buffers
+        SSAOTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+        SSAOBlurTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+        
+        var verts = new VertexPositionTexture[]
         {
-            base.Start(width, height);
+            new VertexPositionTexture(new Vector3(-1f, -1f, 0f), new Vector2(0f, 1f)),
+            new VertexPositionTexture(new Vector3(-1f,  1f, 0f), new Vector2(0f, 0f)),
+            new VertexPositionTexture(new Vector3( 1f,  1f, 0f), new Vector2(1f, 0f)),
+            new VertexPositionTexture(new Vector3( 1f, -1f, 0f), new Vector2(1f, 1f))
+        };
 
-            effect = Engine.Instance.Content.Load<Effect>("Shaders/SSAOPostProcess");
-            blueNoiseTex = Engine.Instance.Content.Load<Texture2D>("Textures/BlueNoise");
+        vertexBuffer = new VertexBuffer(Graphics, typeof(VertexPositionTexture), verts.Length, BufferUsage.WriteOnly);
+        vertexBuffer.SetData(verts);
 
-            // Allocate intermediate AO buffers
-            SSAOTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
-            SSAOBlurTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
-            
-            var verts = new VertexPositionTexture[]
-            {
-                new VertexPositionTexture(new Vector3(-1f, -1f, 0f), new Vector2(0f, 1f)),
-                new VertexPositionTexture(new Vector3(-1f,  1f, 0f), new Vector2(0f, 0f)),
-                new VertexPositionTexture(new Vector3( 1f,  1f, 0f), new Vector2(1f, 0f)),
-                new VertexPositionTexture(new Vector3( 1f, -1f, 0f), new Vector2(1f, 1f))
-            };
+        var indices = new short[] { 0, 1, 2, 0, 2, 3 };
 
-            vertexBuffer = new VertexBuffer(Graphics, typeof(VertexPositionTexture), verts.Length, BufferUsage.WriteOnly);
-            vertexBuffer.SetData(verts);
+        indexBuffer = new IndexBuffer(Graphics, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
+        indexBuffer.SetData(indices);
+    }
 
-            var indices = new short[] { 0, 1, 2, 0, 2, 3 };
+public override void DrawStart()
+{
+    // State
+    Graphics.BlendState = BlendState.Opaque;
+    Graphics. DepthStencilState = DepthStencilState.None;
+    Graphics. RasterizerState = RasterizerState.CullNone;
 
-            indexBuffer = new IndexBuffer(Graphics, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
-            indexBuffer.SetData(indices);
-        }
+    // Set G-buffer textures
+    effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
+    effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
+    effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
 
-        public override void DrawStart()
-        {
-            // State
-            Graphics.BlendState = BlendState.Opaque;
-            Graphics.DepthStencilState = DepthStencilState.None;
-            Graphics.RasterizerState = RasterizerState.CullNone;
-        
-            // Set G-buffer textures
-            //effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
-            effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
-            effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
-            effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
-        
-            // Camera params
-            var proj = GameScene.PlayerCharacter.Camera.Projection;
-            var invProj = Matrix.Invert(proj);
-        
-            effect.Parameters["Projection"]?.SetValue(proj);
-            effect.Parameters["InvProjection"]?.SetValue(invProj);
-            effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-            effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-            effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
-        
-            float tanHalfFovY = 1.0f / proj. M22;
-            float aspectRatio = proj.M22 / proj.M11;
+    // Camera params
+    var proj = GameScene.PlayerCharacter.Camera.Projection;
+    var invProj = Matrix.Invert(proj);
 
-            effect.Parameters["TanHalfFovY"]?.SetValue(tanHalfFovY);
-            effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
-            
-            //Console.WriteLine($"Extracted - TanHalfFovY:  {tanHalfFovY}, AspectRatio: {aspectRatio}");
-            
-            // Tile blue-noise by pixel size
-            var noiseScale = new Vector2(
-                (float)Engine.ScreenWidth / blueNoiseTex.Width,
-                (float)Engine.ScreenHeight / blueNoiseTex.Height
-            );
-            
-            effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
-        
-            // SSAO tuning (view-space)
-            effect.Parameters["radius"]?.SetValue(0.5f);       // try 0.5–1.0
-            effect.Parameters["bias"]?.SetValue(0.025f);         // try 0.02–0.08
-            effect.Parameters["total_strength"]?.SetValue(1.5f);
-            effect.Parameters["base_ao"]?.SetValue(0.0f);
-        
-            // Define fullscreen quad inline
-            var verts = new VertexPositionTexture[]
-            {
-                new VertexPositionTexture(new Vector3(-1f, -1f, 0f), new Vector2(0f, 1f)),
-                new VertexPositionTexture(new Vector3(-1f,  1f, 0f), new Vector2(0f, 0f)),
-                new VertexPositionTexture(new Vector3( 1f,  1f, 0f), new Vector2(1f, 0f)),
-                new VertexPositionTexture(new Vector3( 1f, -1f, 0f), new Vector2(1f, 1f))
-            };
+    effect.Parameters["Projection"]?.SetValue(proj);
+    effect.Parameters["InvProjection"]?. SetValue(invProj);
+    effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+    effect.Parameters["CameraFar"]?. SetValue(GameScene.PlayerCharacter. Camera.FarPlane);
+    effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
 
-            var indices = new short[] { 0, 1, 2, 0, 2, 3 };
+    float tanHalfFovY = 1.0f / proj.M22;
+    float aspectRatio = proj.M22 / proj.M11;
 
-            // Pass 1: SSAO
-            Graphics.SetRenderTarget(SSAOTarget);
-            Graphics.Clear(Color.White);
-            effect.CurrentTechnique = effect.Techniques["SSAO"];
+    effect.Parameters["TanHalfFovY"]?. SetValue(tanHalfFovY);
+    effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
 
-            foreach (var pass in effect.CurrentTechnique.Passes)
-            {
-                pass. Apply();
-                Graphics.DrawUserIndexedPrimitives(
-                    PrimitiveType. TriangleList,
-                    verts,
-                    0,
-                    4,
-                    indices,
-                    0,
-                    2
-                );
-            }
+    var noiseScale = new Vector2(
+        (float)Engine.ScreenWidth / blueNoiseTex.Width,
+        (float)Engine.ScreenHeight / blueNoiseTex.Height
+    );
 
-            // Pass 2: BlurH
-            Graphics.SetRenderTarget(SSAOBlurTarget);
-            Graphics.Clear(Color. White);
-            effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
-            effect.CurrentTechnique = effect. Techniques["BlurH"];
+    effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
 
-            foreach (var pass in effect. CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                Graphics.DrawUserIndexedPrimitives(
-                    PrimitiveType.TriangleList,
-                    verts,
-                    0,
-                    4,
-                    indices,
-                    0,
-                    2
-                );
-            }
+    effect.Parameters["radius"]?.SetValue(0.5f);
+    effect.Parameters["bias"]?.SetValue(0.025f);
+    effect.Parameters["total_strength"]?.SetValue(1.5f);
+    effect.Parameters["base_ao"]?.SetValue(0.0f);
 
-            // Pass 3: BlurV + composite
-            Graphics.SetRenderTarget(OutputBuffer);
-            Graphics.Clear(Color.Transparent);
-            effect.Parameters["AOTex"]?. SetValue(SSAOBlurTarget);
-            effect.CurrentTechnique = effect.Techniques["BlurV"];
+    // USE THE PRE-ALLOCATED BUFFERS (like old shader)
+    Graphics.SetVertexBuffer(vertexBuffer);
+    Graphics.Indices = indexBuffer;
 
-            foreach (var pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
-                Graphics.DrawUserIndexedPrimitives(
-                    PrimitiveType.TriangleList,
-                    verts,
-                    0,
-                    4,
-                    indices,
-                    0,
-                    2
-                );
-            }
-        }
+    // Pass 1: SSAO
+    Graphics.SetRenderTarget(SSAOTarget);
+    Graphics.Clear(Color. White);
+    effect.CurrentTechnique = effect.Techniques["SSAO"];
 
-        public override void DrawEnd()
-        {
-            Graphics.SetRenderTarget(null);
-        }
+    foreach (var pass in effect.CurrentTechnique.Passes)
+    {
+        pass.Apply();
+        Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+    }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-            SSAOTarget?.Dispose();
-            SSAOBlurTarget?.Dispose();
-            SSAOTarget = null;
-            SSAOBlurTarget = null;
-        }
+    // Pass 2: BlurH
+    Graphics.SetRenderTarget(SSAOBlurTarget);
+    Graphics.Clear(Color.White);
+    effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
+    effect.CurrentTechnique = effect.Techniques["BlurH"];
+
+    foreach (var pass in effect.CurrentTechnique.Passes)
+    {
+        pass.Apply();
+        Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+    }
+
+    // Pass 3: BlurV
+    Graphics. SetRenderTarget(OutputBuffer);
+    Graphics.Clear(Color. Transparent);
+    effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
+    effect.CurrentTechnique = effect. Techniques["BlurV"];
+
+    foreach (var pass in effect. CurrentTechnique. Passes)
+    {
+        pass. Apply();
+        Graphics.DrawIndexedPrimitives(PrimitiveType. TriangleList, 0, 0, 2);
+    }
+}
+
+    public override void DrawEnd()
+    {
+        Graphics.SetRenderTarget(null);
+    }
+
+    public override void Dispose()
+    {
+        base.Dispose();
+        SSAOTarget?.Dispose();
+        SSAOBlurTarget?.Dispose();
+        SSAOTarget = null;
+        SSAOBlurTarget = null;
     }
 }

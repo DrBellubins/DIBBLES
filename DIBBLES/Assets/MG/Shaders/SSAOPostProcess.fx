@@ -114,16 +114,17 @@ sampler2D RandomSampler = sampler_state
     AddressV = WRAP;
 };
 
-// VS/PS
 struct VSInput
 {
-    float3 Position : POSITION0;
-    float2 TexCoord : TEXCOORD0;
+    float3 Position :  POSITION0;
+    float4 Color    : COLOR0;
+    float2 TexCoord :  TEXCOORD0;
 };
 
 struct VSOutput
 {
-    float4 Position : SV_Position;
+    float4 Position :  SV_Position;
+    float4 Color    : COLOR0;
     float2 TexCoord : TEXCOORD0;
 };
 
@@ -131,7 +132,8 @@ VSOutput VSMain(VSInput input)
 {
     VSOutput o;
     o.Position = float4(input.Position, 1.0f);
-    o.TexCoord = input.TexCoord;
+    o.Color = input.Color;
+    o. TexCoord = input.TexCoord;
     return o;
 }
 
@@ -297,124 +299,11 @@ float ComputeAO(float2 uv)
 }
 
 // Pass 1: SSAO
-/*float4 PS_SSAO(VSOutput input) : SV_Target0
+float4 PS_SSAO(VSOutput input) : SV_Target0
 {
     float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
-}*/
-
-float4 PS_SSAO(VSOutput input) : SV_Target0
-{
-    return float4(input.TexCoord.x, input.TexCoord.y, 0.0f, 1.0f);
 }
-
-/*float4 PS_SSAO(VSOutput input) : SV_Target0
-{
-    // Hardcode values
-    float tanHalf = 1.0f;
-    float aspect = 1.7777778f;
-    float cameraNear = 0.01f;
-    float cameraFar = 200.0f;
-
-    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
-
-    // Test A: Just show the ray X component (should vary left-to-right, centered at 0)
-    float rayX = (input. TexCoord.x * 2.0f - 1.0f) * aspect * tanHalf;
-    // rayX ranges from -aspect*tanHalf to +aspect*tanHalf (about -1.78 to +1.78)
-    // Normalize to [0,1] for display:
-    float rayXNorm = (rayX / (aspect * tanHalf) + 1.0f) * 0.5f;
-    //return float4(rayXNorm, 0.0f, 0.0f, 1.0f);  // Should be red gradient left-to-right
-
-    // Test B: Just show the ray Y component (should vary top-to-bottom)
-    float rayY = (1.0f - input.TexCoord.y * 2.0f) * tanHalf;
-    // rayY ranges from -tanHalf to +tanHalf (about -1 to +1)
-    float rayYNorm = (rayY / tanHalf + 1.0f) * 0.5f;
-    //return float4(0.0f, rayYNorm, 0.0f, 1.0f);  // Should be green gradient top-to-bottom
-
-    // Test C: Show linearZ (should match depth visualization)
-    float linearZ = lerp(cameraNear, cameraFar, depth01);
-    float linearZNorm = linearZ / cameraFar;
-    //return float4(linearZNorm, linearZNorm, linearZNorm, 1.0f);  // Should look like depth
-
-    // Test D: Show the reconstructed position components
-    float3 P = float3(rayX * linearZ, rayY * linearZ, -linearZ);
-
-    // Show P. x normalized (should vary with screen X AND depth)
-    //return float4(saturate(P.x / 100.0f + 0.5f), 0.0f, 0.0f, 1.0f);
-
-    // Show P.y normalized
-    //return float4(0.0f, saturate(P.y / 100.0f + 0.5f), 0.0f, 1.0f);
-
-    // Show P.z (should be negative, visualize as positive)
-    //return float4(saturate(-P.z / cameraFar), saturate(-P.z / cameraFar), saturate(-P.z / cameraFar), 1.0f);
-
-    // Test E: The division step (this is where it might fail)
-    float z = -P.z;  // This should equal linearZ
-
-    // Check if z equals linearZ (should be 1.0 everywhere = white)
-    float zMatch = (abs(z - linearZ) < 0.001f) ? 1.0f : 0.0f;
-    //return float4(zMatch, zMatch, zMatch, 1.0f);  // Should be WHITE everywhere
-
-    // Test F: The actual UV reconstruction
-    float convergenceX = P.x / z;  // Should equal rayX
-    float convergenceY = P.y / z;  // Should equal rayY
-
-    // Check if convergenceX equals rayX
-    float xMatch = (abs(convergenceX - rayX) < 0.0001f) ? 1.0f : 0.0f;
-    //return float4(xMatch, 0.0f, 0.0f, 1.0f);  // Should be RED everywhere
-
-    // Check if convergenceY equals rayY
-    float yMatch = (abs(convergenceY - rayY) < 0.0001f) ? 1.0f : 0.0f;
-    //return float4(0.0f, yMatch, 0.0f, 1.0f);  // Should be GREEN everywhere
-
-    // Test G: Final UV calculation
-    float finalU = (convergenceX / (aspect * tanHalf) + 1.0f) * 0.5f;
-    float finalV = (1.0f - convergenceY / tanHalf) * 0.5f;
-
-    // Show reconstructed UV as color (R=U, G=V)
-    // Should create a gradient:  red increases left-to-right, green increases top-to-bottom
-    //return float4(finalU, finalV, 0.0f, 1.0f);
-}*/
-
-/*float4 PS_SSAO(VSOutput input) : SV_Target0
-{
-    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
-
-    // Test 1: Is depth being read?  (should see gradient)
-    //return float4(depth01, depth01, depth01, 1.0f); // works fine
-
-    // Test 2: Is reconstruction working? (should see smooth gradient, not all black/white)
-    float3 P = ReconstructViewPos(input.TexCoord, depth01);
-    float vizZ = saturate(-P. z / CameraFar);
-    //return float4(vizZ, vizZ, vizZ, 1.0f); // smooth gradient looks like depth01
-
-    // Test 3: Does projection round-trip work?  (should see roughly white everywhere except edges)
-    float2 uvTest;
-    bool valid = ProjectToUV(P, uvTest);
-    float err = length(uvTest - input.TexCoord);
-    return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Still weird black dot in top left corner
-
-    // Test 4: Are samples landing on screen? Count valid samples
-    float4 nTex = tex2D(NormalSampler, input.TexCoord);
-    float3 N = (nTex.a < 0.5f) ? float3(0, 0, -1) : DecodeNormal01(nTex);
-    float3 R = normalize(tex2D(RandomSampler, input.TexCoord * NoiseScale).rgb * 2.0f - 1.0f);
-    float3 T = normalize(R - N * dot(R, N));
-    float3 B = cross(N, T);
-    float3x3 TBN = float3x3(T, B, N);
-
-    int validCount = 0;
-    for (int i = 0; i < samples; i++)
-    {
-        float3 sampleOffset = mul(sample_sphere[i], TBN);
-        float3 samplePosVS = P + sampleOffset * radius;
-        float2 uvSamp;
-        if (ProjectToUV(samplePosVS, uvSamp))
-            validCount++;
-    }
-
-    float ratio = (float)validCount / (float)samples;
-    //return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
-}*/
 
 // Blur weights
 static const float w0 = 0.4026f;
