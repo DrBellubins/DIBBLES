@@ -84,9 +84,9 @@ namespace DIBBLES.Effects
             effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
         
             // SSAO tuning (view-space)
-            effect.Parameters["radius"]?.SetValue(0.75f);       // try 0.5–1.0
-            effect.Parameters["bias"]?.SetValue(0.05f);         // try 0.02–0.08
-            effect.Parameters["total_strength"]?.SetValue(1.0f);
+            effect.Parameters["radius"]?.SetValue(0.5f);       // try 0.5–1.0
+            effect.Parameters["bias"]?.SetValue(0.025f);         // try 0.02–0.08
+            effect.Parameters["total_strength"]?.SetValue(1.5f);
             effect.Parameters["base_ao"]?.SetValue(0.0f);
         
             // Fullscreen quad

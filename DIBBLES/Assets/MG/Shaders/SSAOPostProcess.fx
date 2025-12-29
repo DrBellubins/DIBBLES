@@ -168,19 +168,27 @@ bool ProjectToUV(float3 viewPos, out float2 uvOut)
 {
     float4 clip = mul(float4(viewPos, 1.0f), Projection);
 
-    if (clip.w <= 0.0f)
+    if (clip.w <= 0.0001f)
     {
-        uvOut = float2(0.0f, 0.0f);
+        uvOut = float2(0.5f, 0.5f);
         return false;
     }
 
-    float2 ndc = clip.xy / clip. w;
+    float3 ndc = clip.xyz / clip. w;
 
-    // Convert NDC to UV, with Y flip
+    // Match ReconstructViewPos convention:
+    // ReconstructViewPos: ndc.x = (uv.x * 2 - 1) * aspect * tanHalf
+    //                     ndc.y = (1 - uv.y * 2) * tanHalf
+    // So: uv.x = (ndc. x / (aspect * tanHalf) + 1) / 2 = ndc.x * 0.5 + 0.5  (after perspective divide)
+    //     uv.y = (1 - ndc.y / tanHalf) / 2 = 0.5 - ndc.y * 0.5 = (1 - ndc.y) * 0.5
+
     uvOut. x = ndc.x * 0.5f + 0.5f;
-    uvOut. y = (-ndc.y) * 0.5f + 0.5f;  // Flip Y back
+    uvOut. y = 0.5f - ndc.y * 0.5f;  // This is the correct flip
 
-    return (uvOut.x >= 0.0f && uvOut.x <= 1.0f && uvOut.y >= 0.0f && uvOut.y <= 1.0f);
+    if (uvOut.x < 0.0f || uvOut.x > 1.0f || uvOut.y < 0.0f || uvOut.y > 1.0f)
+        return false;
+
+    return true;
 }
 
 // Range check weight (Chapman)
@@ -195,31 +203,69 @@ float ComputeAO(float2 uv)
 {
     float depth01 = tex2D(DepthSampler, uv).r;
 
-    // Sky / no geometry
     if (depth01 >= 0.999f)
         return 1.0f;
 
-    // View-space center position
     float3 P = ReconstructViewPos(uv, depth01);
-
-    // P. z is negative (view forward is -Z), so centerZ is positive distance
     float centerZ = -P.z;
 
+    // Get normal from G-buffer or use view-space forward as fallback
     float4 nTex = tex2D(NormalSampler, uv);
-    float3 N = (nTex.a < 0.5f) ? float3(0, 0, -1) : DecodeNormal01(nTex);
+    float3 N;
 
-    // TBN from N + random tangent
-    float3 R = normalize(tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f);
-    float3 T = normalize(R - N * dot(R, N));
+    if (nTex.a >= 0.5f)
+    {
+        N = DecodeNormal01(nTex);
+    }
+    else
+    {
+        // Reconstruct normal from depth (more reliable than flat fallback)
+        float2 texel = 1.0f / ScreenSize;
+
+        float depthL = tex2D(DepthSampler, uv + float2(-texel.x, 0)).r;
+        float depthR = tex2D(DepthSampler, uv + float2( texel.x, 0)).r;
+        float depthU = tex2D(DepthSampler, uv + float2(0, -texel. y)).r;
+        float depthD = tex2D(DepthSampler, uv + float2(0,  texel.y)).r;
+
+        float3 PL = ReconstructViewPos(uv + float2(-texel.x, 0), depthL);
+        float3 PR = ReconstructViewPos(uv + float2( texel.x, 0), depthR);
+        float3 PU = ReconstructViewPos(uv + float2(0, -texel. y), depthU);
+        float3 PD = ReconstructViewPos(uv + float2(0,  texel. y), depthD);
+
+        float3 dPdx = PR - PL;
+        float3 dPdy = PD - PU;
+
+        N = normalize(cross(dPdy, dPdx));
+    }
+
+    // Robust TBN construction
+    float3 R = tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
+    R = normalize(R);
+
+    // Gram-Schmidt with fallback for near-parallel vectors
+    float3 T = R - N * dot(R, N);
+    float tLen = length(T);
+
+    if (tLen < 0.001f)
+    {
+        // R was parallel to N, pick a different basis
+        float3 up = abs(N. y) < 0.99f ? float3(0, 1, 0) : float3(1, 0, 0);
+        T = normalize(cross(N, up));
+    }
+    else
+    {
+        T = T / tLen;
+    }
+
     float3 B = cross(N, T);
     float3x3 TBN = float3x3(T, B, N);
 
     float occlusion = 0.0f;
+    int validSamples = 0;
 
     [unroll]
     for (int i = 0; i < samples; i++)
     {
-        // Orient sample hemisphere around normal
         float3 sampleOffset = mul(sample_sphere[i], TBN);
         float3 samplePosVS = P + sampleOffset * radius;
 
@@ -227,34 +273,32 @@ float ComputeAO(float2 uv)
         if (! ProjectToUV(samplePosVS, uvSamp))
             continue;
 
-        // Sample scene depth at projected location
         float sampDepth01 = tex2D(DepthSampler, uvSamp).r;
-        float sceneZ = lerp(CameraNear, CameraFar, sampDepth01); // positive distance
-
-        // Our sample point's distance from camera (positive)
+        float sceneZ = lerp(CameraNear, CameraFar, sampDepth01);
         float sampleZ = -samplePosVS.z;
 
-        // Range check to avoid far-away geometry causing occlusion
         float rangeCheck = smoothstep(0.0f, 1.0f, radius / max(abs(sceneZ - centerZ), 0.001f));
-
-        // Occlude if scene geometry is closer than our sample point
         float occ = (sceneZ < sampleZ - bias) ? 1.0f : 0.0f;
 
         occlusion += occ * rangeCheck;
+        validSamples++;
     }
 
-    float ao = 1.0f - (occlusion / samples) * total_strength;
+    if (validSamples == 0)
+        return 1.0f;
+
+    float ao = 1.0f - (occlusion / (float)validSamples) * total_strength;
     return saturate(ao + base_ao);
 }
 
 // Pass 1: SSAO
-/*float4 PS_SSAO(VSOutput input) : SV_Target0
+float4 PS_SSAO(VSOutput input) : SV_Target0
 {
     float ao = ComputeAO(input.TexCoord);
     return float4(ao, ao, ao, 1.0f);
-}*/
+}
 
-float4 PS_SSAO(VSOutput input) : SV_Target0
+/*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
     float depth01 = tex2D(DepthSampler, input. TexCoord).r;
 
@@ -270,7 +314,7 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     float2 uvTest;
     bool valid = ProjectToUV(P, uvTest);
     float err = length(uvTest - input.TexCoord);
-    //return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Still weird black dot in top left corner
+    return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Still weird black dot in top left corner
 
     // Test 4: Are samples landing on screen? Count valid samples
     float4 nTex = tex2D(NormalSampler, input.TexCoord);
@@ -291,8 +335,8 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     }
 
     float ratio = (float)validCount / (float)samples;
-    return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
-}
+    //return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
+}*/
 
 // Blur weights
 static const float w0 = 0.4026f;
