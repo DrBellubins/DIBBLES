@@ -52,7 +52,7 @@ namespace DIBBLES.Effects
             Graphics.DepthStencilState = DepthStencilState.None;
             Graphics.RasterizerState = RasterizerState.CullNone;
             
-            //effect.Parameters["RandomTex"].SetValue(blueNoiseTex);
+            effect.Parameters["RandomTex"].SetValue(blueNoiseTex);
             
             effect.Parameters["total_strength"]?.SetValue(1.0f);
             effect.Parameters["base_ao"]?.SetValue(0.2f);
@@ -65,6 +65,7 @@ namespace DIBBLES.Effects
             
             effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
             effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
+            effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
 
             // Fullscreen quad
             Graphics.SetVertexBuffer(vertexBuffer);

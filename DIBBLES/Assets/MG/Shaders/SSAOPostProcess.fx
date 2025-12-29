@@ -45,6 +45,8 @@ static const float3 sample_sphere[samples] =
 // Inputs
 texture ColorTex;
 texture DepthTex;
+texture NormalTex;
+
 texture AOTex;
 texture RandomTex;
 
@@ -62,6 +64,16 @@ sampler2D ColorSampler = sampler_state
 sampler2D DepthSampler = sampler_state
 {
     Texture = <DepthTex>;
+    MinFilter = POINT;
+    MagFilter = POINT;
+    MipFilter = NONE;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
+};
+
+sampler2D NormalSampler = sampler_state
+{
+    Texture = <NormalTex>;
     MinFilter = POINT;
     MagFilter = POINT;
     MipFilter = NONE;
@@ -111,6 +123,13 @@ VSOutput VSMain(VSInput input)
 }
 
 // Utility functions (GLSL equivalents)
+float3 DecodeNormal01(float4 nTex)
+{
+    float3 n = nTex.rgb * 2.0f - 1.0f;
+    float len = max(length(n), 1e-5f);
+    return n / len;
+}
+
 float step(float edge, float x)
 {
     return x >= edge ? 1.0f : 0.0f;
@@ -146,31 +165,30 @@ float3 NormalFromDepth(float depth, float2 uv)
     return normalize(n);
 }
 
-// Compute reference-style SSAO from pure depth
+// Use MRT normals (with alpha guard) in ComputeAO
 float ComputeAO(float2 uv)
 {
     float depth = tex2D(DepthSampler, uv).r;
 
-    // Treat near-1 (far) depth as no occlusion
     if (depth >= 0.999f)
     {
         return 1.0f;
     }
 
     float3 position = float3(uv, depth);
-    float3 normal   = NormalFromDepth(depth, uv);
 
-    // Random orientation vector from noise
+    float4 nTex = tex2D(NormalSampler, uv);
+    float3 normal = (nTex.a < 0.5f) ? NormalFromDepth(depth, uv) : DecodeNormal01(nTex);
+
     float3 random = normalize(tex2D(RandomSampler, uv * 4.0f).rgb * 2.0f - 1.0f);
 
     float radius_depth = radius / max(depth, 1e-5f);
-    float occlusion    = 0.0f;
+    float occlusion = 0.0f;
 
     [unroll]
     for (int i = 0; i < samples; i++)
     {
-        //float3 ray = radius_depth * reflect(sample_sphere[i], random);
-        float3 ray = radius_depth * sample_sphere[i];
+        float3 ray = radius_depth * reflect(sample_sphere[i], random);
         float3 hemi_ray = position + sign(dot(ray, normal)) * ray;
 
         float2 uvSamp = saturate(hemi_ray.xy);
@@ -211,47 +229,47 @@ float NormalSimilarity(float3 nc, float3 nn, float normalPow)
     return pow(d, normalPow);
 }
 
-// Pass 2: Horizontal bilateral blur of AO
+// Horizontal blur: Use MRT normals in BlurH
 float4 PS_BlurH(VSOutput input) : SV_Target0
 {
     float2 texel = float2(1.0f / ScreenSize.x, 0.0f);
 
     float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
     float zC  = tex2D(DepthSampler, input.TexCoord).r;
-    float3 nC = NormalFromDepth(zC, input.TexCoord);
+
+    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float3 nC = (nCtex.a < 0.5f) ? NormalFromDepth(zC, input.TexCoord) : DecodeNormal01(nCtex);
 
     float sum  = w0 * aoC;
     float wsum = w0;
 
-    // +/- 1 sigma taps
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
         float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
         float zN  = tex2D(DepthSampler, uv).r;
-        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w1
-                * DepthSimilarity(zC, zN, 1.5f)
-                * NormalSimilarity(nC, nN, 4.0f);
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? NormalFromDepth(zN, uv) : DecodeNormal01(nNtex);
+
+        float w = w1 * DepthSimilarity(zC, zN, 1.5f) * NormalSimilarity(nC, nN, 4.0f);
 
         sum  += w * aoN;
         wsum += w;
     }
 
-    // +/- 2 sigma taps
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
         float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
         float zN  = tex2D(DepthSampler, uv).r;
-        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w2
-                * DepthSimilarity(zC, zN, 1.5f)
-                * NormalSimilarity(nC, nN, 4.0f);
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? NormalFromDepth(zN, uv) : DecodeNormal01(nNtex);
+
+        float w = w2 * DepthSimilarity(zC, zN, 1.5f) * NormalSimilarity(nC, nN, 4.0f);
 
         sum  += w * aoN;
         wsum += w;
@@ -261,47 +279,47 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     return float4(ao, ao, ao, 1.0f);
 }
 
-// Pass 3: Vertical bilateral blur of AO
+// Vertical blur: Use MRT normals in BlurV
 float4 PS_BlurV(VSOutput input) : SV_Target0
 {
     float2 texel = float2(0.0f, 1.0f / ScreenSize.y);
 
     float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
     float zC  = tex2D(DepthSampler, input.TexCoord).r;
-    float3 nC = NormalFromDepth(zC, input.TexCoord);
+
+    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float3 nC = (nCtex.a < 0.5f) ? NormalFromDepth(zC, input.TexCoord) : DecodeNormal01(nCtex);
 
     float sum  = w0 * aoC;
     float wsum = w0;
 
-    // +/- 1 sigma taps
     [unroll]
     for (int s = -1; s <= 1; s += 2)
     {
         float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
         float zN  = tex2D(DepthSampler, uv).r;
-        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w1
-                * DepthSimilarity(zC, zN, 1.5f)
-                * NormalSimilarity(nC, nN, 4.0f);
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? NormalFromDepth(zN, uv) : DecodeNormal01(nNtex);
+
+        float w = w1 * DepthSimilarity(zC, zN, 1.5f) * NormalSimilarity(nC, nN, 4.0f);
 
         sum  += w * aoN;
         wsum += w;
     }
 
-    // +/- 2 sigma taps
     [unroll]
     for (int s = -2; s <= 2; s += 4)
     {
         float2 uv = input.TexCoord + texel * s;
         float aoN = tex2D(AOSamplerLinear, uv).r;
         float zN  = tex2D(DepthSampler, uv).r;
-        float3 nN = NormalFromDepth(zN, uv);
 
-        float w = w2
-                * DepthSimilarity(zC, zN, 1.5f)
-                * NormalSimilarity(nC, nN, 4.0f);
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? NormalFromDepth(zN, uv) : DecodeNormal01(nNtex);
+
+        float w = w2 * DepthSimilarity(zC, zN, 1.5f) * NormalSimilarity(nC, nN, 4.0f);
 
         sum  += w * aoN;
         wsum += w;
@@ -310,7 +328,6 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     float ao = sum / max(wsum, 1e-4f);
 
     float4 color = tex2D(ColorSampler, input.TexCoord);
-
     return float4(color.r * ao, color.g * ao, color.b * ao, 1.0f);
 }
 

@@ -257,11 +257,11 @@ public class GameScene : Scene
             NormalBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
         
         // Save Ambient Occlusion buffer
-        /*using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
+        using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
         {
             var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
             aoBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-        }*/
+        }
 
         var outputString = $"Saved buffers to: {folder}";
         
