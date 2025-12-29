@@ -67,12 +67,6 @@ namespace DIBBLES.Effects
             effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
             effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
             effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
-            
-            var nearParam = effect.Parameters["CameraNear"];
-            var farParam = effect.Parameters["CameraFar"];
-
-            Console.WriteLine($"CameraNear param exists: {nearParam != null}");
-            Console.WriteLine($"CameraFar param exists: {farParam != null}");
         
             float tanHalfFovY = 1.0f / proj. M22;
             float aspectRatio = proj.M22 / proj.M11;
@@ -96,43 +90,74 @@ namespace DIBBLES.Effects
             effect.Parameters["total_strength"]?.SetValue(1.5f);
             effect.Parameters["base_ao"]?.SetValue(0.0f);
         
-            // Fullscreen quad
-            Graphics.SetVertexBuffer(vertexBuffer);
-            Graphics.Indices = indexBuffer;
-        
+            // Define fullscreen quad inline
+            var verts = new VertexPositionTexture[]
+            {
+                new VertexPositionTexture(new Vector3(-1f, -1f, 0f), new Vector2(0f, 1f)),
+                new VertexPositionTexture(new Vector3(-1f,  1f, 0f), new Vector2(0f, 0f)),
+                new VertexPositionTexture(new Vector3( 1f,  1f, 0f), new Vector2(1f, 0f)),
+                new VertexPositionTexture(new Vector3( 1f, -1f, 0f), new Vector2(1f, 1f))
+            };
+
+            var indices = new short[] { 0, 1, 2, 0, 2, 3 };
+
             // Pass 1: SSAO
             Graphics.SetRenderTarget(SSAOTarget);
             Graphics.Clear(Color.White);
             effect.CurrentTechnique = effect.Techniques["SSAO"];
-        
+
             foreach (var pass in effect.CurrentTechnique.Passes)
             {
-                pass.Apply();
-                Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+                pass. Apply();
+                Graphics.DrawUserIndexedPrimitives(
+                    PrimitiveType. TriangleList,
+                    verts,
+                    0,
+                    4,
+                    indices,
+                    0,
+                    2
+                );
             }
-        
+
             // Pass 2: BlurH
             Graphics.SetRenderTarget(SSAOBlurTarget);
-            Graphics.Clear(Color.White);
+            Graphics.Clear(Color. White);
             effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
-            effect.CurrentTechnique = effect.Techniques["BlurH"];
-        
-            foreach (var pass in effect.CurrentTechnique.Passes)
+            effect.CurrentTechnique = effect. Techniques["BlurH"];
+
+            foreach (var pass in effect. CurrentTechnique.Passes)
             {
                 pass.Apply();
-                Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+                Graphics.DrawUserIndexedPrimitives(
+                    PrimitiveType.TriangleList,
+                    verts,
+                    0,
+                    4,
+                    indices,
+                    0,
+                    2
+                );
             }
-        
+
             // Pass 3: BlurV + composite
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Transparent);
-            effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
+            effect.Parameters["AOTex"]?. SetValue(SSAOBlurTarget);
             effect.CurrentTechnique = effect.Techniques["BlurV"];
-        
+
             foreach (var pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+                Graphics.DrawUserIndexedPrimitives(
+                    PrimitiveType.TriangleList,
+                    verts,
+                    0,
+                    4,
+                    indices,
+                    0,
+                    2
+                );
             }
         }
 

@@ -305,9 +305,6 @@ float ComputeAO(float2 uv)
 
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    // Directly output the UV coordinates as colors
-    // Red = U (should gradient left-to-right)
-    // Green = V (should gradient top-to-bottom)
     return float4(input.TexCoord.x, input.TexCoord.y, 0.0f, 1.0f);
 }
 
