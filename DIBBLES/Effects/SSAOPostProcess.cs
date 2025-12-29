@@ -68,6 +68,13 @@ namespace DIBBLES.Effects
             effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
             effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
         
+            float fovRadians = MathHelper.ToRadians(GameScene.PlayerCharacter.Camera. Fov);
+            float tanHalfFov = (float)Math.Tan(fovRadians * 0.5f);
+            float aspectRatio = (float)Engine.ScreenWidth / Engine. ScreenHeight;
+
+            effect.Parameters["TanHalfFovY"]?.SetValue(tanHalfFov);
+            effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
+            
             // Tile blue-noise by pixel size
             var noiseScale = new Vector2(
                 (float)Engine.ScreenWidth / blueNoiseTex.Width,

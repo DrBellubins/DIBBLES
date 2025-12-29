@@ -31,6 +31,9 @@ float4x4 InvProjection;
 float CameraNear;
 float CameraFar;
 
+float TanHalfFovY;  // tan(fov * 0.5)
+float AspectRatio;  // width / height
+
 float2 NoiseScale;
 
 // Tuning
@@ -146,27 +149,18 @@ float viewZFrom01(float d01)
 }
 
 // Reconstruct view-space position from (uv, depth01):
-// 1) Build a view ray via InvProjection using ndc=(x,y,1,1)
-// 2) Normalize ray and scale by viewZ.
-// Notes: View forward is -Z, so returned z will be negative for points in front of camera.
 float3 ReconstructViewPos(float2 uv, float depth01)
 {
-    // NDC:  x,y in [-1,1], with Y flipped for D3D
-    float2 ndc = float2(uv.x * 2.0f - 1.0f, (1.0f - uv. y) * 2.0f - 1.0f);
-
-    // Unproject a point on the far plane to get the view ray direction
-    float4 clipPos = float4(ndc, 1.0f, 1.0f);
-    float4 viewRay = mul(clipPos, InvProjection);
-    float3 rayDir = viewRay.xyz / viewRay.w;
+    // Convert UV to normalized device coordinates centered at (0,0)
+    float2 ndc;
+    ndc.x = (uv.x * 2.0f - 1.0f) * AspectRatio * TanHalfFovY;
+    ndc.y = (1.0f - uv.y * 2.0f) * TanHalfFovY;
 
     // Linear depth (positive distance from camera)
     float linearZ = lerp(CameraNear, CameraFar, depth01);
 
-    // In view space, camera looks down -Z, so rayDir. z is negative
-    // Scale ray so its length along -Z equals linearZ
-    float t = linearZ / abs(rayDir.z);
-
-    return rayDir * t;
+    // View-space position (camera looks down -Z)
+    return float3(ndc.x * linearZ, ndc.y * linearZ, -linearZ);
 }
 
 // Project view-space position to screen uv
@@ -265,18 +259,18 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     float depth01 = tex2D(DepthSampler, input. TexCoord).r;
 
     // Test 1: Is depth being read?  (should see gradient)
-    return float4(depth01, depth01, depth01, 1.0f); // works fine
+    //return float4(depth01, depth01, depth01, 1.0f); // works fine
 
     // Test 2: Is reconstruction working? (should see smooth gradient, not all black/white)
     float3 P = ReconstructViewPos(input.TexCoord, depth01);
     float vizZ = saturate(-P. z / CameraFar);
-    //return float4(vizZ, vizZ, vizZ, 1.0f); // all black
+    //return float4(vizZ, vizZ, vizZ, 1.0f); // smooth gradient looks like depth01
 
     // Test 3: Does projection round-trip work?  (should see roughly white everywhere except edges)
     float2 uvTest;
     bool valid = ProjectToUV(P, uvTest);
     float err = length(uvTest - input.TexCoord);
-    //return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Weird black dot in top left corner
+    //return float4(err * 10.0f, valid ? 1.0f : 0.0f, 0.0f, 1.0f);  // Green if valid, red = error magnitude: Still weird black dot in top left corner
 
     // Test 4: Are samples landing on screen? Count valid samples
     float4 nTex = tex2D(NormalSampler, input.TexCoord);
@@ -297,7 +291,7 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     }
 
     float ratio = (float)validCount / (float)samples;
-    //return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
+    return float4(ratio, ratio, ratio, 1.0f);  // Should be mostly white (most samples valid)
 }
 
 // Blur weights
