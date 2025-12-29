@@ -12,7 +12,7 @@ public class Camera3D
     public float Fov = 90f;
     public float AspectRatio = (float)Engine.ScreenWidth / Engine.ScreenHeight;
     public float NearPlane = 0.01f;
-    public float FarPlane = 1000f;
+    public float FarPlane = 200f;
 
     public Matrix View => Matrix.CreateLookAt(Position.ToVector3(), Target, Up);
     public Matrix Projection { get; private set; }
