@@ -67,6 +67,12 @@ namespace DIBBLES.Effects
             effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
             effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
             effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
+            
+            var nearParam = effect.Parameters["CameraNear"];
+            var farParam = effect.Parameters["CameraFar"];
+
+            Console.WriteLine($"CameraNear param exists: {nearParam != null}");
+            Console.WriteLine($"CameraFar param exists: {farParam != null}");
         
             float tanHalfFovY = 1.0f / proj. M22;
             float aspectRatio = proj.M22 / proj.M11;

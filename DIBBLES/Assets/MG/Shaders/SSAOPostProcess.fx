@@ -305,23 +305,33 @@ float ComputeAO(float2 uv)
 
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    // Hardcode the values we expect
-    float tanHalf = 1.0f;       // tan(45°) for 90° FOV
-    float aspect = 1.7777778f;  // 16: 9
+    float depth01 = tex2D(DepthSampler, input. TexCoord).r;
+
+    // Just show raw depth - should be gradient from black (near) to white (far)
+    return float4(depth01, depth01, depth01, 1.0f);
+}
+
+/*float4 PS_SSAO(VSOutput input) : SV_Target0
+{
+    // Hardcode ALL values
+    float tanHalf = 1.0f;
+    float aspect = 1.7777778f;
+    float cameraNear = 0.01f;
+    float cameraFar = 200.0f;
 
     float depth01 = tex2D(DepthSampler, input. TexCoord).r;
 
     if (depth01 >= 0.999f)
-        return float4(0, 1, 0, 1);
+        return float4(0, 1, 0, 1);  // Green for sky
 
-    // Inline reconstruction with hardcoded values
+    // Inline reconstruction
     float rayX = (input.TexCoord.x * 2.0f - 1.0f) * aspect * tanHalf;
     float rayY = (1.0f - input.TexCoord.y * 2.0f) * tanHalf;
-    float linearZ = lerp(CameraNear, CameraFar, depth01);
+    float linearZ = lerp(cameraNear, cameraFar, depth01);
     float3 P = float3(rayX * linearZ, rayY * linearZ, -linearZ);
 
-    // Inline projection with hardcoded values
-    float z = -P.z;
+    // Inline projection
+    float z = -P.z;  // Should equal linearZ
     float convergenceX = P.x / z;
     float convergenceY = P.y / z;
     float convergenceUX = (convergenceX / (aspect * tanHalf) + 1.0f) * 0.5f;
@@ -330,9 +340,9 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
     float errX = abs(convergenceUX - input.TexCoord.x);
     float errY = abs(convergenceUY - input.TexCoord.y);
 
-    // Should show green (valid=true always here) with near-zero red/blue
+    // Should show dim green with near-zero red/blue
     return float4(errX * 100.0f, 0.5f, errY * 100.0f, 1.0f);
-}
+}*/
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
