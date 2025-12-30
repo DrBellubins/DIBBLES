@@ -22,14 +22,33 @@ public class TerrainMesh
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
     
+    // Fast scan of chunk's block types to see if any are transparent
+    private static bool chunkContainsTransparent(Chunk chunk)
+    {
+        var types = chunk.BlockTypes;
+
+        for (int i = 0; i < types.Length; i++)
+        {
+            var type = (BlockType)types[i];
+            var info = BlockData.Prefabs[type];
+
+            if (info.IsTransparent && type != BlockType.Air)
+                return true;
+        }
+
+        return false;
+    }
+    
     public void Generate(Chunk chunk)
     {
         var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true);
-        
-        // Enqueue for main thread mesh upload
         MeshUploadQueue.Enqueue((chunk.Position, meshData));
-        TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
+
+        if (chunkContainsTransparent(chunk))
+        {
+            var tMeshData = Mesh.GenerateMeshData(chunk, true);
+            TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
+        }
     }
     
     public void DrawOpaque()

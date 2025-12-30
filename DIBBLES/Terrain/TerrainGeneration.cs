@@ -46,6 +46,7 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     
     private readonly HashSet<Vector3Int> activeViewChunks = new();
+    private readonly HashSet<Vector3Int> extendedViewChunks = new();
     
     // Exposed progress [0..1]
     public float VisualLoadProgress { get; private set; } = 0f;
@@ -342,20 +343,27 @@ public class TerrainGeneration
            foreach (var offset in getNeighborOffsets())
            {
                var nPos = chunk.Position + offset;
-   
-               // Ensure neighbor chunk exists in the buffer
+
+               // Only gate on neighbors that are inside the extended view (view cube + 1-ring)
+               if (!IsInsideExtendedView(nPos))
+               {
+                   // Optional: nudge neighbor minimally so it exists if needed later
+                   if (!ChunkBuffer.ContainsKey(nPos))
+                       EnqueueAdvance(nPos, ChunkGenerationStage.Islands, lastCameraChunk);
+
+                   continue;
+               }
+
+               // Ensure neighbor chunk exists and can advance
                if (!ChunkBuffer.TryGetValue(nPos, out var nChunk))
                {
                    nChunk = new Chunk(nPos);
-                   nChunk.IsFrozen = false; // make sure it can advance to Lighting
+                   nChunk.IsFrozen = false;
                    ChunkBuffer[nPos] = nChunk;
                }
                else if (nChunk.IsFrozen)
-               {
-                   // Unfreeze neighbors required for meshing so they can advance lighting
                    nChunk.IsFrozen = false;
-               }
-   
+
                // Gate until neighbor reaches Lighting
                if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                {
@@ -397,9 +405,6 @@ public class TerrainGeneration
             {
                 Lighting.Generate(chunk);
 
-                // After finishing lighting, handle neighbors:
-                // - If neighbor is lit, remesh it too (both sides of the seam)
-                // - Otherwise, nudge it toward Lighting
                 foreach (var offset in getNeighborOffsets())
                 {
                     var nPos = chunk.Position + offset;
@@ -408,26 +413,17 @@ public class TerrainGeneration
                     {
                         if (nChunk.GenerationStage >= ChunkGenerationStage.Lighting)
                         {
-                            // Neighbor is lit: remesh neighbor so both sides reflect updated light
-                            Mesh.Generate(nChunk);
+                            // Avoid immediate Mesh.Generate to reduce duplicate work; enqueue meshing
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
                         }
                         else
-                        {
-                            // Neighbor not lit yet: nudge toward Lighting
                             EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                        }
-
-                        // Also ensure neighbor gets queued toward meshing soon
-                        EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
                     }
                     else
-                    {
-                        // Missing neighbor: create/advance it so it can reach lighting and be meshed
                         EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                    }
                 }
 
-                // Ensure this chunk proceeds to meshing after lighting
+                // Proceed this chunk to meshing
                 EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
                 break;
             }
@@ -442,6 +438,7 @@ public class TerrainGeneration
     private void rebuildActiveView(Vector3Int centerChunk)
     {
         activeViewChunks.Clear();
+        extendedViewChunks.Clear();
 
         int half = RenderDistance / 2;
 
@@ -451,6 +448,14 @@ public class TerrainGeneration
         {
             var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
             activeViewChunks.Add(pos);
+            extendedViewChunks.Add(pos);
+        }
+
+        // Add the 1-chunk outer ring
+        foreach (var pos in activeViewChunks)
+        {
+            foreach (var off in getNeighborOffsets())
+                extendedViewChunks.Add(pos + off);
         }
 
         // Build inset set: only chunks whose 6 neighbors are also inside the view cube.
@@ -467,6 +472,11 @@ public class TerrainGeneration
                 }
             }
         }
+    }
+    
+    private bool IsInsideExtendedView(Vector3Int pos)
+    {
+        return extendedViewChunks.Contains(pos);
     }
     
     private int countChunksReady(HashSet<Vector3Int> set)
