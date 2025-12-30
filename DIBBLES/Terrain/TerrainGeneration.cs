@@ -280,92 +280,93 @@ public class TerrainGeneration
         }
     }
 
-    private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
-    {
-        // Surface: only enforce +Y dependency if the above chunk is inside the active view.
-        if (stage == ChunkGenerationStage.Surface)
-        {
-            var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
-    
-            if (IsInsideActiveView(abovePos))
-            {
-                if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
-                {
-                    if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
-                        return false;
-                }
-                else
-                {
-                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
-                    return false;
-                }
-            }
-            else
-            {
-                // Optional nudge for out-of-view above, but do not block
-                if (!ChunkBuffer.ContainsKey(abovePos))
-                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
-            }
-        }
-    
-        // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
-        if (stage == ChunkGenerationStage.Lighting)
-        {
-            foreach (var offset in getNeighborOffsets())
-            {
-                var nPos = chunk.Position + offset;
-    
-                if (!IsInsideActiveView(nPos))
-                {
-                    // Optional nudge for out-of-view neighbor, but do not block
-                    if (!ChunkBuffer.ContainsKey(nPos))
-                        EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-    
-                    continue;
-                }
-    
-                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
-                {
-                    if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
-                        return false;
-                }
-                else
-                {
-                    EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-                    return false;
-                }
-            }
-        }
-        else if (stage == ChunkGenerationStage.Meshing)
-        {
-            foreach (var offset in getNeighborOffsets())
-            {
-                var nPos = chunk.Position + offset;
-    
-                if (!IsInsideActiveView(nPos))
-                {
-                    // Optional nudge for out-of-view neighbor, but do not block
-                    if (!ChunkBuffer.ContainsKey(nPos))
-                        EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-    
-                    continue;
-                }
-    
-                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
-                {
-                    if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
-                        return false;
-                }
-                else
-                {
-                    EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                    return false;
-                }
-            }
-        }
-    
-        return true;
-    }
+   private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
+   {
+       // Surface: only enforce +Y dependency if the above chunk is inside the active view.
+       if (stage == ChunkGenerationStage.Surface)
+       {
+           var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
+   
+           if (IsInsideActiveView(abovePos))
+           {
+               if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
+               {
+                   if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
+                       return false;
+               }
+               else
+               {
+                   EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
+                   return false;
+               }
+           }
+           else
+           {
+               // Optional nudge for out-of-view above, but do not block
+               if (!ChunkBuffer.ContainsKey(abovePos))
+                   EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
+           }
+       }
+   
+       // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
+       if (stage == ChunkGenerationStage.Lighting)
+       {
+           foreach (var offset in getNeighborOffsets())
+           {
+               var nPos = chunk.Position + offset;
+   
+               if (!IsInsideActiveView(nPos))
+               {
+                   // Optional nudge for out-of-view neighbor, but do not block
+                   if (!ChunkBuffer.ContainsKey(nPos))
+                       EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+   
+                   continue;
+               }
+   
+               if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+               {
+                   if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
+                       return false;
+               }
+               else
+               {
+                   EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+                   return false;
+               }
+           }
+       }
+       // Meshing: require ALL 6 neighbors to have reached Lighting, regardless of view.
+       else if (stage == ChunkGenerationStage.Meshing)
+       {
+           foreach (var offset in getNeighborOffsets())
+           {
+               var nPos = chunk.Position + offset;
+   
+               // Ensure neighbor chunk exists in the buffer
+               if (!ChunkBuffer.TryGetValue(nPos, out var nChunk))
+               {
+                   nChunk = new Chunk(nPos);
+                   nChunk.IsFrozen = false; // make sure it can advance to Lighting
+                   ChunkBuffer[nPos] = nChunk;
+               }
+               else if (nChunk.IsFrozen)
+               {
+                   // Unfreeze neighbors required for meshing so they can advance lighting
+                   nChunk.IsFrozen = false;
+               }
+   
+               // Gate until neighbor reaches Lighting
+               if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
+               {
+                   EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                   return false;
+               }
+           }
+       }
+   
+       return true;
+   }
     
     private void ProcessStage(Chunk chunk, ChunkGenerationStage stage)
     {
@@ -396,28 +397,37 @@ public class TerrainGeneration
             {
                 Lighting.Generate(chunk);
 
-                // After finishing lighting, nudge neighbors to Lighting (if they aren't yet),
-                // and optionally nudge both this chunk and neighbors toward Meshing.
+                // After finishing lighting, handle neighbors:
+                // - If neighbor is lit, remesh it too (both sides of the seam)
+                // - Otherwise, nudge it toward Lighting
                 foreach (var offset in getNeighborOffsets())
                 {
                     var nPos = chunk.Position + offset;
 
                     if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                     {
-                        if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
-                            EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                    
-                        // Optional: if both are lit, ensure meshing gets queued soon
                         if (nChunk.GenerationStage >= ChunkGenerationStage.Lighting)
-                            EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
+                        {
+                            // Neighbor is lit: remesh neighbor so both sides reflect updated light
+                            Mesh.Generate(nChunk);
+                        }
+                        else
+                        {
+                            // Neighbor not lit yet: nudge toward Lighting
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                        }
+
+                        // Also ensure neighbor gets queued toward meshing soon
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
                     }
                     else
                     {
+                        // Missing neighbor: create/advance it so it can reach lighting and be meshed
                         EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
                     }
                 }
 
-                // Also ensure this chunk proceeds to meshing after lighting
+                // Ensure this chunk proceeds to meshing after lighting
                 EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
                 break;
             }
