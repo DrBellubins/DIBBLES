@@ -46,7 +46,6 @@ public class TerrainGeneration
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     
     private readonly HashSet<Vector3Int> activeViewChunks = new();
-    private readonly HashSet<Vector3Int> extendedViewChunks = new();
     
     // Exposed progress [0..1]
     public float VisualLoadProgress { get; private set; } = 0f;
@@ -281,100 +280,92 @@ public class TerrainGeneration
         }
     }
 
-   private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
-   {
-       // Surface: only enforce +Y dependency if the above chunk is inside the active view.
-       if (stage == ChunkGenerationStage.Surface)
-       {
-           var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
-   
-           if (IsInsideActiveView(abovePos))
-           {
-               if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
-               {
-                   if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
-                       return false;
-               }
-               else
-               {
-                   EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
-                   return false;
-               }
-           }
-           else
-           {
-               // Optional nudge for out-of-view above, but do not block
-               if (!ChunkBuffer.ContainsKey(abovePos))
-                   EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
-           }
-       }
-   
-       // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
-       if (stage == ChunkGenerationStage.Lighting)
-       {
-           foreach (var offset in getNeighborOffsets())
-           {
-               var nPos = chunk.Position + offset;
-   
-               if (!IsInsideActiveView(nPos))
-               {
-                   // Optional nudge for out-of-view neighbor, but do not block
-                   if (!ChunkBuffer.ContainsKey(nPos))
-                       EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-   
-                   continue;
-               }
-   
-               if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
-               {
-                   if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
-                       return false;
-               }
-               else
-               {
-                   EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
-                   return false;
-               }
-           }
-       }
-       // Meshing: require ALL 6 neighbors to have reached Lighting, regardless of view.
-       else if (stage == ChunkGenerationStage.Meshing)
-       {
-           foreach (var offset in getNeighborOffsets())
-           {
-               var nPos = chunk.Position + offset;
-
-               // Only gate on neighbors that are inside the extended view (view cube + 1-ring)
-               if (!IsInsideExtendedView(nPos))
-               {
-                   // Optional: nudge neighbor minimally so it exists if needed later
-                   if (!ChunkBuffer.ContainsKey(nPos))
-                       EnqueueAdvance(nPos, ChunkGenerationStage.Islands, lastCameraChunk);
-
-                   continue;
-               }
-
-               // Ensure neighbor chunk exists and can advance
-               if (!ChunkBuffer.TryGetValue(nPos, out var nChunk))
-               {
-                   nChunk = new Chunk(nPos);
-                   nChunk.IsFrozen = false;
-                   ChunkBuffer[nPos] = nChunk;
-               }
-               else if (nChunk.IsFrozen)
-                   nChunk.IsFrozen = false;
-
-               // Gate until neighbor reaches Lighting
-               if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
-               {
-                   EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
-                   return false;
-               }
-           }
-       }
-   
-       return true;
-   }
+    private bool DependenciesMet(Chunk chunk, ChunkGenerationStage stage)
+    {
+        // Surface: only enforce +Y dependency if the above chunk is inside the active view.
+        if (stage == ChunkGenerationStage.Surface)
+        {
+            var abovePos = chunk.Position + new Vector3Int(0, ChunkSize, 0);
+    
+            if (IsInsideActiveView(abovePos))
+            {
+                if (ChunkBuffer.TryGetValue(abovePos, out var aboveChunk))
+                {
+                    if (aboveChunk.GenerationStage < ChunkGenerationStage.Islands)
+                        return false;
+                }
+                else
+                {
+                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
+                    return false;
+                }
+            }
+            else
+            {
+                // Optional nudge for out-of-view above, but do not block
+                if (!ChunkBuffer.ContainsKey(abovePos))
+                    EnqueueAdvance(abovePos, ChunkGenerationStage.Islands, lastCameraChunk);
+            }
+        }
+    
+        // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
+        if (stage == ChunkGenerationStage.Lighting)
+        {
+            foreach (var offset in getNeighborOffsets())
+            {
+                var nPos = chunk.Position + offset;
+    
+                if (!IsInsideActiveView(nPos))
+                {
+                    // Optional nudge for out-of-view neighbor, but do not block
+                    if (!ChunkBuffer.ContainsKey(nPos))
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+    
+                    continue;
+                }
+    
+                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                {
+                    if (nChunk.GenerationStage < ChunkGenerationStage.Decorations)
+                        return false;
+                }
+                else
+                {
+                    EnqueueAdvance(nPos, ChunkGenerationStage.Decorations, lastCameraChunk);
+                    return false;
+                }
+            }
+        }
+        else if (stage == ChunkGenerationStage.Meshing)
+        {
+            foreach (var offset in getNeighborOffsets())
+            {
+                var nPos = chunk.Position + offset;
+    
+                if (!IsInsideActiveView(nPos))
+                {
+                    // Optional nudge for out-of-view neighbor, but do not block
+                    if (!ChunkBuffer.ContainsKey(nPos))
+                        EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+    
+                    continue;
+                }
+    
+                if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
+                {
+                    if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
+                        return false;
+                }
+                else
+                {
+                    EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                    return false;
+                }
+            }
+        }
+    
+        return true;
+    }
     
     private void ProcessStage(Chunk chunk, ChunkGenerationStage stage)
     {
@@ -405,25 +396,28 @@ public class TerrainGeneration
             {
                 Lighting.Generate(chunk);
 
+                // After finishing lighting, nudge neighbors to Lighting (if they aren't yet),
+                // and optionally nudge both this chunk and neighbors toward Meshing.
                 foreach (var offset in getNeighborOffsets())
                 {
                     var nPos = chunk.Position + offset;
 
                     if (ChunkBuffer.TryGetValue(nPos, out var nChunk))
                     {
-                        if (nChunk.GenerationStage >= ChunkGenerationStage.Lighting)
-                        {
-                            // Avoid immediate Mesh.Generate to reduce duplicate work; enqueue meshing
-                            EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
-                        }
-                        else
+                        if (nChunk.GenerationStage < ChunkGenerationStage.Lighting)
                             EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                    
+                        // Optional: if both are lit, ensure meshing gets queued soon
+                        if (nChunk.GenerationStage >= ChunkGenerationStage.Lighting)
+                            EnqueueAdvance(nPos, ChunkGenerationStage.Meshing, lastCameraChunk);
                     }
                     else
+                    {
                         EnqueueAdvance(nPos, ChunkGenerationStage.Lighting, lastCameraChunk);
+                    }
                 }
 
-                // Proceed this chunk to meshing
+                // Also ensure this chunk proceeds to meshing after lighting
                 EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
                 break;
             }
@@ -438,7 +432,6 @@ public class TerrainGeneration
     private void rebuildActiveView(Vector3Int centerChunk)
     {
         activeViewChunks.Clear();
-        extendedViewChunks.Clear();
 
         int half = RenderDistance / 2;
 
@@ -448,14 +441,6 @@ public class TerrainGeneration
         {
             var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
             activeViewChunks.Add(pos);
-            extendedViewChunks.Add(pos);
-        }
-
-        // Add the 1-chunk outer ring
-        foreach (var pos in activeViewChunks)
-        {
-            foreach (var off in getNeighborOffsets())
-                extendedViewChunks.Add(pos + off);
         }
 
         // Build inset set: only chunks whose 6 neighbors are also inside the view cube.
@@ -472,11 +457,6 @@ public class TerrainGeneration
                 }
             }
         }
-    }
-    
-    private bool IsInsideExtendedView(Vector3Int pos)
-    {
-        return extendedViewChunks.Contains(pos);
     }
     
     private int countChunksReady(HashSet<Vector3Int> set)

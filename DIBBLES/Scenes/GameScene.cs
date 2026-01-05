@@ -215,9 +215,9 @@ public class GameScene : Scene
         {
             var bufferWidth = Engine.ScreenWidth / 4.0f;
             var bufferHeight = Engine.ScreenHeight / 4.0f;
-            var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            //var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
             
-            UIBatch.Draw(aoBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
+            UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
             
             UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
@@ -279,11 +279,11 @@ public class GameScene : Scene
             NormalBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
         
         // Save Ambient Occlusion buffer
-        using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
+        /*using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
         {
             var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
             aoBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-        }
+        }*/
 
         var outputString = $"Saved buffers to: {folder}";
         
