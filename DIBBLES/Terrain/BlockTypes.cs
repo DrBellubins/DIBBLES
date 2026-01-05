@@ -14,5 +14,6 @@ public enum BlockType
     WoodLog,
     Leaves,
     Glass,
-    Feeb
+    Feeb,
+    GrassBlades
 }

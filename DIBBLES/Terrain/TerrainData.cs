@@ -23,13 +23,16 @@ public struct BlockInfo
     public bool AntiTileUVsHorizontally;
     public bool AntiTileUVsVertically;
     
-    public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0)
+    public bool IsBillboard;
+    
+    public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0, bool isBillboard = false)
     {
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
         IsTransparent = isTransparent;
         LightEmission = lightEmission;
+        IsBillboard = isBillboard;
     }
 }
 
@@ -227,10 +230,12 @@ public class BlockData
             int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 0;
             bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
-            bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? (bool)table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
-            bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? (bool)table["AntiTileUVsVertically"].AsBoolean.Value : true;
+            bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
+            bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? table["AntiTileUVsVertically"].AsBoolean.Value : true;
+            bool isBillboard = table.HasKey("IsBillboard") ? table["IsBillboard"].AsBoolean.Value : false;
             
-            var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission);
+            
+            var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission, isBillboard);
             blockInfo.AntiTileUVsHorizontally =  antiTileUVsHorizontally;
             blockInfo.AntiTileUVsVertically = antiTileUVsVertically;
             

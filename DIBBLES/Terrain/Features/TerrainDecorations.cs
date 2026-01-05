@@ -32,6 +32,17 @@ public class TerrainDecorations
 
                 if (currentBlockType == BlockType.Grass)
                 {
+                    // Grass blades/flowers
+                    if (rng.NextChance(15f))
+                    {
+                        var worldAbove = chunk.Position + pos + new Vector3Int(0, 1, 0);
+                        var aboveType = Chunk.GetBlockTypeGlobal(worldAbove);
+
+                        if (aboveType.Item1 == BlockType.Air)
+                            Chunk.SetBlockTypeGlobal(worldAbove, BlockType.GrassBlades);
+                    }
+                    
+                    // Trees
                     if (rng.NextChance(0.5f))
                         decorations.GenerateTrees(pos, chunk);
                 }

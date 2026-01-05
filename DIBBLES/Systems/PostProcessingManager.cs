@@ -6,12 +6,12 @@ namespace DIBBLES.Effects;
 
 public class PostProcessingManager
 {
-    //public SSAOPostProcess ssaoPostProcess = new();
+    public SSAOPostProcess ssaoPostProcess = new();
     
     public void Initialize(int width, int height)
     {
         // Start every post processing effect in order here!
-        //ssaoPostProcess.Start(width, height);
+        ssaoPostProcess.Start(width, height);
         
         foreach (var effect in PostProcessingEffect.All)
             effect.Start(width, height);

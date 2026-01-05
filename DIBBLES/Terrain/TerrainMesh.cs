@@ -99,8 +99,10 @@ public class TerrainMesh
         
         graphics.BlendState = BlendState.NonPremultiplied;
         graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
+        
+        // Disable culling so billboards render double-sided
+        graphics.RasterizerState = RasterizerState.CullNone;
         
         foreach (var tModel in Mesh.TransparentModels)
         {
@@ -156,6 +158,77 @@ public class TerrainMesh
             var pos = new Vector3Int(x, y, z);
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
+            
+            // Billboard path for transparent mesh
+            if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
+            {
+                // Centered in block; bottom at block Y
+                var center = pos.ToVector3() + new Vector3(0.5f, 0.0f, 0.5f);
+                float halfW = 0.5f;
+                float height = 1.0f;
+            
+                // Deterministic rotation per block for variety
+                long seed = Seed
+                            ^ (pos.X * 73428767L)
+                            ^ (pos.Y * 9127841L)
+                            ^ (pos.Z * 192837465L);
+                
+                var rng = new SeededRandom(seed);
+                float angle = rng.NextFloat() * MathF.PI; // [0..pi] enough with 2-quads
+            
+                // Two crossed quads around Y
+                Vector3 right0 = new Vector3(MathF.Cos(angle), 0f, MathF.Sin(angle));
+                Vector3 right1 = new Vector3(-MathF.Sin(angle), 0f, MathF.Cos(angle));
+            
+                // Build vertex arrays
+                var quad0 = makeBillboardQuad(center, right0, halfW, height);
+                var quad1 = makeBillboardQuad(center, right1, halfW, height);
+            
+                // UVs from atlas (any face index, use 0)
+                var uv0 = FaceUtils.GetFaceUVs(blockType, 0);
+                var uv1 = uv0;
+            
+                // Simple lighting from top neighbor
+                float light = FaceUtils.GetFaceLightFlat(chunk, pos, 5);
+                var color = FaceUtils.ToColor(light);
+            
+                // Normal: use Up for billboard
+                var n = Vector3.Up;
+            
+                // Push both quads as transparent faces for sorting
+                {
+                    var faceCenter = (quad0[0] + quad0[1] + quad0[2] + quad0[3]) / 4f;
+                    var dist = Vector3.Distance(cameraPosition, faceCenter);
+                    
+                    transparentFaces.Add((dist, new FaceData
+                    {
+                        Verts = quad0,
+                        Normal = n,
+                        UVs = uv0,
+                        Colors = new[] { color, color, color, color },
+                        VertexOffset = 0,
+                        CenterDistance = dist
+                    }));
+                }
+            
+                {
+                    var faceCenter = (quad1[0] + quad1[1] + quad1[2] + quad1[3]) / 4f;
+                    var dist = Vector3.Distance(cameraPosition, faceCenter);
+                    
+                    transparentFaces.Add((dist, new FaceData
+                    {
+                        Verts = quad1,
+                        Normal = n,
+                        UVs = uv1,
+                        Colors = new[] { color, color, color, color },
+                        VertexOffset = 0,
+                        CenterDistance = dist
+                    }));
+                }
+            
+                // Skip default cube meshing for billboard blocks
+                continue;
+            }
             
             // Opaque mesh pass: skip transparent and air blocks
             if (!isTransparencyPass && (blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
@@ -512,6 +585,23 @@ public class TerrainMesh
 
         var nInfo = target.GetInfoAt(lx, ly, lz);
         return target.GetTypeAt(lx, ly, lz) != BlockType.Air && !nInfo.IsTransparent;
+    }
+    
+    private static Vector3[] makeBillboardQuad(Vector3 center, Vector3 right, float halfWidth, float height)
+    {
+        Vector3 up = Vector3.Up * height;
+
+        Vector3 pL = center - (right * halfWidth);
+        Vector3 pR = center + (right * halfWidth);
+
+        // Order: bottom-left, top-left, top-right, bottom-right
+        return new Vector3[]
+        {
+            pL,
+            pL + up,
+            pR + up,
+            pR
+        };
     }
 }
 
