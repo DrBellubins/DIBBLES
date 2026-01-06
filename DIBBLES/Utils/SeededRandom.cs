@@ -75,6 +75,22 @@ public class SeededRandom
         return min + (max - min) * NextFloat();
     }
 
+    public double NextDouble()
+    {
+        long bits = ((long)Next(26) << 27) + Next(27);
+        return bits / (double)(1L << 53);
+    }
+    
+    public double NextDouble(double min, double max)
+    {
+        if (min >= max)
+            throw new ArgumentException("min must be less than max");
+
+        return min + (max - min) * NextDouble();
+    }
+
+    
+    
     // Generate a random long
     public long NextLong()
     {

@@ -719,23 +719,6 @@ public class TerrainMesh
 
         return false;
     }
-    
-    private static Vector3[] makeBillboardQuad(Vector3 center, Vector3 right, float halfWidth, float height)
-    {
-        Vector3 up = Vector3.Up * height;
-
-        Vector3 pL = center - (right * halfWidth);
-        Vector3 pR = center + (right * halfWidth);
-
-        // Order: bottom-left, top-left, top-right, bottom-right
-        return new Vector3[]
-        {
-            pL,
-            pL + up,
-            pR + up,
-            pR
-        };
-    }
 }
 
 // Define a custom vertex struct with Position, Normal, Texcoord, Color

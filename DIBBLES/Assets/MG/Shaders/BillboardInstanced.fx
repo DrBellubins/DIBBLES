@@ -19,19 +19,20 @@ static const float AlphaCutoff = 0.35f;
 
 // Wind parameters (set from C# as needed; keep simple and fast)
 // Time drives advection of a coherent world-space field.
-// WindDir is XZ direction, is set at runtime periodically in a random direction.
+// WindDir is XZ direction, is set at runtime, rotates slowly at WindDirRotationSpeed
 // WindFrequency controls spatial scale.
 // WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
 // SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
 float2 WindDir = float2(0.0f, 0.0f);
 
-static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.01f;
-static const float  WindAmplitude = 0.15f;
-static const float  BendExponent = 2.0f;
-static const float  SideCurlAmount = 0.45f;
-static const float  SideCurlExponent = 1.2f;
+static const float WindSpeed = 0.6f;
+static const float WindFrequency = 0.01f;
+static const float WindAmplitude = 0.15f;
+static const float WindDirRotationSpeed = 0.4f;
+static const float BendExponent = 2.0f;
+static const float SideCurlAmount = 0.45f;
+static const float SideCurlExponent = 1.2f;
 
 // Band-limited sinusoid field settings (2–3 harmonics)
 // Spatial wavevectors (in 2D XZ); magnitudes are later scaled by WindFrequency
