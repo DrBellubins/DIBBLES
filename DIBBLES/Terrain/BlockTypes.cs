@@ -15,5 +15,7 @@ public enum BlockType
     Leaves,
     Glass,
     Feeb,
-    GrassBlades
+    GrassBlades,
+    RedFlower,
+    BlueFlower
 }

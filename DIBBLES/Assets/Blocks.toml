@@ -112,7 +112,23 @@ AntiTileUVsHorizontally = false
 AntiTileUVsVertically = false
 
 [GrassBlades]
-Hardness = 10
+Hardness = 1
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = true
+LightEmission = 0
+IsBillboard = true
+
+[RedFlower]
+Hardness = 1
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = true
+LightEmission = 0
+IsBillboard = true
+
+[BlueFlower]
+Hardness = 1
 Thickness = 0.0
 MaxStack = 64
 IsTransparent = true
