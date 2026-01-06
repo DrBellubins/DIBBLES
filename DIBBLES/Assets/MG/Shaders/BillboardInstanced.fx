@@ -20,16 +20,24 @@ static const float AlphaCutoff = 0.35f;
 // Wind parameters (set from C#)
 // Time: seconds since start
 // WindDir: normalized XZ direction of wind
-// WindSpeed: how fast the noise field advects along WindDir
-// WindFrequency: spatial frequency of noise (larger = tighter features)
-// WindAmplitude: max bend distance in world units
-// BendExponent: controls how strongly bend increases near the tip (>=1)
+// WindSpeed: advection speed for the low-frequency field
+// WindFrequency: spatial frequency for the low-frequency field
+// WindAmplitude: max lateral bend for the low-frequency field
+// BendExponent: how quickly bend increases toward the tip
+// TurbulenceFrequency/Amplitude: small high-frequency wobble per blade
+// CurlAmount/CurlExponent: gentle downward curl toward the tip
+// SideCurlAmount: inward pull of the blade sides for “bend in on itself”
 float Time;
 static const float2 WindDir = float2(1.0f, 0.0f);
 static const float WindSpeed = 0.6f;
 static const float WindFrequency = 0.1f;
-static const float WindAmplitude = 0.5f;
+static const float WindAmplitude = 0.0f;
 static const float BendExponent = 2.5f;
+static const float TurbulenceFrequency = 0.25f;
+static const float TurbulenceAmplitude = 0.2f;
+static const float CurlAmount = 0.05f;
+static const float CurlExponent = 1.2f;
+static const float SideCurlAmount = 0.5f;
 
 sampler2D AtlasSampler = sampler_state
 {
@@ -136,24 +144,44 @@ PixelInput VS(VertexInput input)
     // ------------------------------
     // Wind bend in vertex shader
     // ------------------------------
-    // World-space pos before wind
     float3 worldPosNoWind = input.Center + rotated;
 
-    // Advected sample position: flow = WindDir * Time * WindSpeed
-    float3 flow = float3(WindDir.x, 0.0f, WindDir.y) * Time * WindSpeed;
+    // Normalize wind dir to be safe
+    float2 wdir2 = normalize(WindDir);
+    float3 wdir3 = float3(wdir2.x, 0.0f, wdir2.y);
+    float3 perp3 = float3(-wdir2.y, 0.0f, wdir2.x);
 
-    // Spatially coherent 3D FBM in world space
-    float n = fbm3(worldPosNoWind * WindFrequency + flow); // [0..1]
-    float sway = (n * 2.0f - 1.0f) * WindAmplitude;        // [-amp..amp]
+    // Advected sample position for coherent flow
+    float3 flow = wdir3 * (Time * WindSpeed);
 
-    // Height-weighted bend (anchor base, bend tip)
-    // rotated.y is in [0..height]; normalize by Size.y
-    float bendMask = saturate(rotated.y / max(input.Size.y, 1e-4));
-    bendMask = pow(bendMask, BendExponent);
+    // Low-frequency sway (coherent across space)
+    float low = fbm3(worldPosNoWind * WindFrequency + flow); // [0..1]
+    float sway = (low * 2.0f - 1.0f) * WindAmplitude;        // [-amp..amp]
 
-    // Apply lateral displacement along wind direction
-    rotated.x += WindDir.x * (sway * bendMask);
-    rotated.z += WindDir.y * (sway * bendMask);
+    // Per-blade turbulence: seed from Center for independence, still advected
+    float instRand = hash3(input.Center * 0.123f);
+    float3 highP = worldPosNoWind * TurbulenceFrequency + flow * 0.5f + instRand;
+    float high = fbm3(highP);                                 // [0..1]
+    float turb = (high * 2.0f - 1.0f) * TurbulenceAmplitude;  // small wobble
+
+    // Height-normalized bend mask so base stays anchored
+    float t = saturate(rotated.y / max(input.Size.y, 1e-4));
+    float bendMask = pow(t, BendExponent);
+
+    // Lateral displacement along wind dir
+    float lateral = (sway + turb) * bendMask;
+
+    // Side curl uses local U across the quad: [-1..+1] centered
+    float u = input.Tex.x * 2.0f - 1.0f;
+    float sideCurl = u * SideCurlAmount * pow(t, 1.15f);
+
+    // Gentle downward curl (droop) toward the tip
+    float droop = CurlAmount * pow(t, CurlExponent);
+
+    // Apply displacements
+    rotated.xyz += wdir3 * lateral;    // main bend
+    rotated.xyz += perp3 * sideCurl;   // inward curl
+    rotated.y   -= droop;              // tip droop
 
     float3 worldPos = input.Center + rotated;
 
