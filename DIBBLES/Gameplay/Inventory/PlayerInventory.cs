@@ -64,8 +64,8 @@ public class PlayerInventory : InventoryBase
             HotBarSlots[i].Rect.Y = hotRectY;
         }
         
-        Commands.RegisterCommand("give", "Give yourself a block: /give blocktype", giveCMD);
-        Commands.RegisterCommand("clear", "Clears your entire inventory", clearCMD);
+        Commands.Register("give", "Give yourself a block: /give blocktype", giveCMD);
+        Commands.Register("clear", "Clears your entire inventory", clearCMD);
     }
 
     public override void Update()

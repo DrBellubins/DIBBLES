@@ -102,11 +102,11 @@ public class PlayerCharacter
         
         Spawn();
         
-        Commands.RegisterCommand("kill", "Kills the player", killCMD);
-        Commands.RegisterCommand("spawn", "Respawns player at spawn point",  respawnCMD);
-        Commands.RegisterCommand("heal", "Heals the player: /heal for full health", healCMD);
-        Commands.RegisterCommand("tp", "Teleport to a position: /teleport x y z", teleportCMD);
-        Commands.RegisterCommand("gm", "Toggle gamemode between creative and survival", gameModeCMD);
+        Commands.Register("kill", "Kills the player", killCMD);
+        Commands.Register("spawn", "Respawns player at spawn point",  respawnCMD);
+        Commands.Register("heal", "Heals the player: /heal for full health", healCMD);
+        Commands.Register("tp", "Teleport to a position: /teleport x y z", teleportCMD);
+        Commands.Register("gm", "Toggle gamemode between creative and survival", gameModeCMD);
         
         CursorManager.LockCursor();
 

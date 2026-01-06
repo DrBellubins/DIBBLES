@@ -11,8 +11,8 @@ public class TerrainCommands
 {
     public void Register()
     {
-        Commands.RegisterCommand("cyl", "Creates a cylinder beneath the player", cylinderCMD);
-        Commands.RegisterCommand("seed", "Displays seed in chat, and saves to txt file.", seedCmd);
+        Commands.Register("cyl", "Creates a cylinder beneath the player", cylinderCMD);
+        Commands.Register("seed", "Displays seed in chat, and saves to txt file.", seedCmd);
     }
     
     private void cylinderCMD(string[] args)

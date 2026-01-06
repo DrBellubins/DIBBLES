@@ -31,6 +31,22 @@ static const float  BendExponent = 2.0f;
 static const float  SideCurlAmount = 0.45f;
 static const float  SideCurlExponent = 1.2f;
 
+// Band-limited sinusoid field settings (2–3 harmonics)
+// Spatial wavevectors (in 2D XZ); magnitudes are later scaled by WindFrequency
+static const float2 K1 = float2(0.8f, 0.3f);
+static const float2 K2 = float2(-0.4f, 1.1f);
+static const float2 K3 = float2(0.2f, -0.7f);
+
+// Temporal angular frequencies (radians/sec), modestly separated bands
+static const float W1 = 0.9f;
+static const float W2 = 1.6f;
+static const float W3 = 2.3f;
+
+// Harmonic weights (must sum <= 1 to keep [-1,1] range)
+static const float A1 = 0.6f;
+static const float A2 = 0.3f;
+static const float A3 = 0.1f;
+
 sampler2D AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
@@ -59,58 +75,10 @@ struct PixelInput
     float3 ViewNorm : TEXCOORD3;
 };
 
-// ------------------------------
-// Fast hash and 3D value noise
-// ------------------------------
-float hash3(float3 p)
+// Small per-instance phase jitter derived from Angle
+float hash1(float x)
 {
-    // Cheap hash: sine-based; good enough for vegetation sway
-    return frac(sin(dot(p, float3(12.9898, 78.233, 37.719))) * 43758.5453);
-}
-
-float valueNoise3D(float3 p)
-{
-    float3 i = floor(p);
-    float3 f = frac(p);
-
-    // Quintic smoothstep for better continuity
-    float3 u = f * f * (3.0 - 2.0 * f);
-
-    // 8 corners
-    float n000 = hash3(i + float3(0,0,0));
-    float n100 = hash3(i + float3(1,0,0));
-    float n010 = hash3(i + float3(0,1,0));
-    float n110 = hash3(i + float3(1,1,0));
-    float n001 = hash3(i + float3(0,0,1));
-    float n101 = hash3(i + float3(1,0,1));
-    float n011 = hash3(i + float3(0,1,1));
-    float n111 = hash3(i + float3(1,1,1));
-
-    // Trilinear interpolation
-    float nx00 = lerp(n000, n100, u.x);
-    float nx10 = lerp(n010, n110, u.x);
-    float nx01 = lerp(n001, n101, u.x);
-    float nx11 = lerp(n011, n111, u.x);
-
-    float nxy0 = lerp(nx00, nx10, u.y);
-    float nxy1 = lerp(nx01, nx11, u.y);
-
-    float nxyz = lerp(nxy0, nxy1, u.z);
-    return nxyz; // [0..1]
-}
-
-float fbm3(float3 p)
-{
-    // 2 octaves for cost reasons: cheap but lively
-    float v = 0.0;
-    float a = 0.5;
-
-    v += a * valueNoise3D(p);
-    p *= 2.0;
-    a *= 0.5;
-
-    v += a * valueNoise3D(p);
-    return v; // [0..1]
+    return frac(sin(x * 12.9898f) * 43758.5453f);
 }
 
 PixelInput VS(VertexInput input)
@@ -134,7 +102,7 @@ PixelInput VS(VertexInput input)
     rotated.z *= (input.Size.x / 0.5f);
 
     // ------------------------------
-    // Wind bend & curl (single coherent field)
+    // Wind bend & curl (band-limited sinusoids)
     // ------------------------------
     float3 worldPosNoWind = input.Center + rotated;
 
@@ -146,22 +114,35 @@ PixelInput VS(VertexInput input)
     // Advected sample position for coherent flow
     float3 flow = wdir3 * (Time * WindSpeed);
 
-    // Single FBM field drives both sway and curl
-    float low = fbm3(worldPosNoWind * WindFrequency + flow); // [0..1]
-    float low01 = saturate(low);
-    float low11 = (low01 * 2.0f - 1.0f);                     // [-1..1]
-    float gust = abs(low11);                                  // [0..1] stronger fold on gusts
+    // 2D field input (XZ) scaled by WindFrequency and advected along wind
+    float2 p = (worldPosNoWind.xz * WindFrequency) + flow.xz;
+
+    // Per-instance phase offsets (stable across time, varies per instance)
+    float phi1 = hash1(input.Angle * 17.0f) * 6.2831853f;
+    float phi2 = hash1(input.Angle * -31.0f) * 6.2831853f;
+    float phi3 = hash1(input.Angle * 59.0f) * 6.2831853f;
+
+    // Band-limited sum of sinusoids (smooth C∞ field), roughly in [-1,1]
+    float sinusoids =
+        A1 * sin(dot(p, K1) + W1 * Time + phi1) +
+        A2 * sin(dot(p, K2) + W2 * Time + phi2) +
+        A3 * sin(dot(p, K3) + W3 * Time + phi3);
+
+    // Main sway signal in [-1,1]
+    float low11 = saturate((sinusoids + 1.0f) * 0.5f) * 2.0f - 1.0f;
+
+    // Smooth “gust” measure: squared amplitude avoids abs() cusp
+    float gust = saturate(sinusoids * sinusoids);
 
     // Height-normalized bend mask so base stays anchored
-    float t = saturate(rotated.y / max(input.Size.y, 1e-4));
+    float t = saturate(rotated.y / max(input.Size.y, 1e-4f));
     float bendMask = pow(t, BendExponent);
 
     // Lateral displacement along wind direction
     float lateral = low11 * WindAmplitude * bendMask;
 
     // Side curl: fold inward across the blade width, modulated by gusts and height
-    // u = local horizontal across quad in [-1..1] so left/right sides move toward center
-    float u = input.Tex.x * 2.0f - 1.0f;
+    float u = input.Tex.x * 2.0f - 1.0f; // -1..1 across quad
     float sideCurl = u * SideCurlAmount * pow(t, SideCurlExponent) * gust;
 
     // Apply displacements

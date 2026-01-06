@@ -97,12 +97,12 @@ public class GameScene : Scene
         // Initialize all post processing effects before PostProcessingManager.Initialize!
         postProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
-        Commands.RegisterCommand("help", "Lists all available commands", Chat.WriteHelp);
-        Commands.RegisterCommand("db", "Toggle debug information", Debug.ToggleDebug);
-        Commands.RegisterCommand("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
-        Commands.RegisterCommand("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
-        Commands.RegisterCommand("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
-        Commands.RegisterCommand("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
+        Commands.Register("help", "Lists all available commands", Chat.WriteHelp);
+        Commands.Register("db", "Toggle debug information", Debug.ToggleDebug);
+        Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
+        Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
+        Commands.Register("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
+        Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
     }
 
     private int fpsCounter;

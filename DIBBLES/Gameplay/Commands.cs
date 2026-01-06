@@ -11,7 +11,7 @@ public static class Commands
 {
     public static Dictionary<string, Command> Registry = new();
 
-    public static void RegisterCommand(string command, string description, Action<string[]> handler)
+    public static void Register(string command, string description, Action<string[]> handler)
     {
         Registry[command.ToLower()] = new Command(command, description, handler);
     }
