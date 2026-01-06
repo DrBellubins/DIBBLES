@@ -140,25 +140,27 @@ public class TerrainMesh
         graphics.RasterizerState = RasterizerState.CullNone;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
     
-        var shader = TerrainGeneration.billboardShader;
-        var view = DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.View;
-        var proj = DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.Projection;
+        var shader = billboardShader;
+        var view = GameScene.PlayerCharacter.Camera.View;
+        var proj = GameScene.PlayerCharacter.Camera.Projection;
     
         shader.Parameters["AtlasTex"]?.SetValue(BlockData.TextureAtlas);
         shader.Parameters["View"]?.SetValue(view);
         shader.Parameters["Projection"]?.SetValue(proj);
     
-        shader.Parameters["CameraPos"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        shader.Parameters["CameraNear"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.NearPlane);
-        shader.Parameters["CameraFar"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.FarPlane);
+        shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+        shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
     
-        shader.Parameters["FogNear"]?.SetValue(DIBBLES.Effects.FogEffect.FogNear);
-        shader.Parameters["FogFar"]?.SetValue(DIBBLES.Effects.FogEffect.FogFar);
-        shader.Parameters["FogColor"]?.SetValue(DIBBLES.Effects.FogEffect.FogColor());
+        shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
+        shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
+        shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
         // Atlas UV rect for GrassBlades tile
         var rect = BlockData.AtlasUVs[(BlockType.GrassBlades, 0)];
         shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
+        
+        shader.Parameters["Time"]?.SetValue(Time.time);
     
         foreach (var kv in BillboardBatches)
         {

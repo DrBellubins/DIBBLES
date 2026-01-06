@@ -68,10 +68,10 @@ public class TerrainGeneration
         foreach (var kv in WorldSave.Data.ModifiedChunks)
             ChunkBuffer[kv.Key] = kv.Value;
         
-        if (WorldSave.Exists)
+        /*if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
         billboardShader = Engine.Instance.Content.Load<Effect>("Shaders/BillboardInstanced");

@@ -33,7 +33,7 @@ public class TerrainDecorations
                 if (currentBlockType == BlockType.Grass)
                 {
                     // Grass blades/flowers
-                    if (rng.NextChance(15f))
+                    if (rng.NextChance(35f))
                     {
                         var worldAbove = chunk.Position + pos + new Vector3Int(0, 1, 0);
                         var aboveType = Chunk.GetBlockTypeGlobal(worldAbove);

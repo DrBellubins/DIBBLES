@@ -29,7 +29,9 @@ public class TerrainGameplay
             var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
             var faceSelectionColor = new Color(1f, 1f, 1f, smoothStepDist * 0.35f);
 
-            Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
+            if (!SelectedBlock.Info.IsBillboard)
+                Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
+            
             Primatives3D.DrawCubeWiresThick(
                 SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
                 1f, 1f, 1f, Color.Black, 0.025f);
