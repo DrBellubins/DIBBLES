@@ -18,12 +18,12 @@ public class TerrainMesh
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
     
-    public Dictionary<Vector3Int, (VertexBuffer InstanceBuffer, int InstanceCount)> BillboardBatches = new();
+    public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
 
     // Main-thread mesh upload queue
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
-    public readonly ConcurrentQueue<(Vector3Int chunkPos, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, BlockType type, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
     
     private VertexBuffer _billboardVB;
     private IndexBuffer _billboardIB;
@@ -39,8 +39,10 @@ public class TerrainMesh
             TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
         }
         
-        var billboardInstances = GenerateBillboardInstances(chunk);
-        BillboardUploadQueue.Enqueue((chunk.Position, billboardInstances));
+        var billboardInstancesByType = GenerateBillboardInstances(chunk);
+
+        foreach (var kv in billboardInstancesByType)
+            BillboardUploadQueue.Enqueue((chunk.Position, kv.Key, kv.Value));
     }
     
     public void DrawOpaque()
@@ -156,31 +158,36 @@ public class TerrainMesh
         shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
         shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
-        // Atlas UV rect for GrassBlades tile
-        var rect = BlockData.AtlasUVs[(BlockType.GrassBlades, 0)];
-        shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
-        
         shader.Parameters["Time"]?.SetValue(Time.time);
     
         foreach (var kv in BillboardBatches)
         {
-            var batch = kv.Value;
+            var batchesByType = kv.Value;
     
-            if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
-                continue;
-    
-            graphics.SetVertexBuffers
-            (
-                new VertexBufferBinding(_billboardVB, 0, 0),
-                new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
-            );
-    
-            graphics.Indices = _billboardIB;
-    
-            foreach (var pass in shader.CurrentTechnique.Passes)
+            foreach (var typeBatch in batchesByType)
             {
-                pass.Apply();
-                graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
+                var type = typeBatch.Key;
+                var batch = typeBatch.Value;
+    
+                if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
+                    continue;
+    
+                var rect = BlockData.AtlasUVs[(type, 0)];
+                shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
+    
+                graphics.SetVertexBuffers
+                (
+                    new VertexBufferBinding(_billboardVB, 0, 0),
+                    new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
+                );
+    
+                graphics.Indices = _billboardIB;
+    
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
+                }
             }
         }
     
@@ -391,9 +398,7 @@ public class TerrainMesh
         }
         
         for (int i = 0; i < indices.Count; i++)
-        {
             meshData.Indices[i] = (ushort)indices[i];
-        }
 
         return meshData;
     }
@@ -575,9 +580,9 @@ public class TerrainMesh
     }
     
     // Per-chunk billboard instance data
-    public VertexBillboardInstance[] GenerateBillboardInstances(Chunk chunk)
+    public Dictionary<BlockType, VertexBillboardInstance[]> GenerateBillboardInstances(Chunk chunk)
     {
-        var instances = new List<VertexBillboardInstance>();
+        var grouped = new Dictionary<BlockType, List<VertexBillboardInstance>>();
 
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
@@ -603,16 +608,36 @@ public class TerrainMesh
             float light = FaceUtils.GetFaceLightFlat(chunk, new Vector3Int(x, y, z), 5);
             var color = FaceUtils.ToColor(light);
 
-            instances.Add(new VertexBillboardInstance
+            // Optional: different size per type (keep same if unsure)
+            var size = type == BlockType.GrassBlades
+                ? new Vector2(0.5f, 1.0f)
+                : new Vector2(0.5f, 0.8f);
+
+            var inst = new VertexBillboardInstance
             {
                 Center = worldCenter,
                 Angle = angle,
-                Size = new Vector2(0.5f, 1.0f),
+                Size = size,
                 Color = color
-            });
+            };
+
+            if (!grouped.TryGetValue(type, out var list))
+            {
+                list = new List<VertexBillboardInstance>();
+                grouped[type] = list;
+            }
+
+            list.Add(inst);
         }
 
-        return instances.ToArray();
+        var result = new Dictionary<BlockType, VertexBillboardInstance[]>();
+
+        foreach (var kv in grouped)
+        {
+            result[kv.Key] = kv.Value.ToArray();
+        }
+
+        return result;
     }
     
     // Create shared crossed-quad mesh (two quads, 8 verts, 12 indices)

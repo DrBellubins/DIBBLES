@@ -40,14 +40,12 @@ public class TerrainDecorations
 
                         if (aboveType.Item1 == BlockType.Air)
                         {
-                            Chunk.SetBlockTypeGlobal(worldAbove, BlockType.RedFlower);
-                            
-                            /*if (rng.NextChance(0.5f))
+                            if (rng.NextChance(0.75f))
                                 Chunk.SetBlockTypeGlobal(worldAbove, BlockType.RedFlower);
-                            else if(rng.NextChance(0.5f))
+                            else if(rng.NextChance(0.75f))
                                 Chunk.SetBlockTypeGlobal(worldAbove, BlockType.BlueFlower);
                             else
-                                Chunk.SetBlockTypeGlobal(worldAbove, BlockType.GrassBlades);*/
+                                Chunk.SetBlockTypeGlobal(worldAbove, BlockType.GrassBlades);
                         }
                             
                     }
