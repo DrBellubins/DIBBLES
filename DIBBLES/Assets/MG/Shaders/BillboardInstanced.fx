@@ -19,13 +19,15 @@ static const float AlphaCutoff = 0.35f;
 
 // Wind parameters (set from C# as needed; keep simple and fast)
 // Time drives advection of a coherent world-space field.
-// WindDir is XZ direction; WindFrequency controls spatial scale.
+// WindDir is XZ direction, is set at runtime periodically in a random direction.
+// WindFrequency controls spatial scale.
 // WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
 // SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
-static const float2 WindDir = float2(1.0f, 0.0f);
+float2 WindDir = float2(0.0f, 0.0f);
+
 static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.04f;
+static const float  WindFrequency = 0.01f;
 static const float  WindAmplitude = 0.15f;
 static const float  BendExponent = 2.0f;
 static const float  SideCurlAmount = 0.45f;
@@ -169,6 +171,13 @@ PixelInput VS(VertexInput input)
     uv.y = UVRect.y + input.Tex.y * UVRect.w;
 
     o.Tex   = uv;
+
+    // Wind debug
+    /*float3 colRGB = input.InstanceCol.rgb * sinusoids;
+    float4 outputCol = float4(colRGB, input.InstanceCol.a);
+
+    o.Color = outputCol;*/
+
     o.Color = input.InstanceCol;
 
     return o;
