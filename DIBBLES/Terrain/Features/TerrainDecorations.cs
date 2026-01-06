@@ -40,14 +40,19 @@ public class TerrainDecorations
 
                         if (aboveType.Item1 == BlockType.Air)
                         {
-                            if (rng.NextChance(0.75f))
-                                Chunk.SetBlockTypeGlobal(worldAbove, BlockType.RedFlower);
-                            else if(rng.NextChance(0.75f))
-                                Chunk.SetBlockTypeGlobal(worldAbove, BlockType.BlueFlower);
-                            else
+                            float pick = rng.NextFloat(); // [0,1)
+
+                            if (pick < 0.85f)
                                 Chunk.SetBlockTypeGlobal(worldAbove, BlockType.GrassBlades);
+                            else
+                            {
+                                // Remaining 15%: 50-50 between red and blue
+                                if (rng.NextChance(50f))
+                                    Chunk.SetBlockTypeGlobal(worldAbove, BlockType.RedFlower);
+                                else
+                                    Chunk.SetBlockTypeGlobal(worldAbove, BlockType.BlueFlower);
+                            };
                         }
-                            
                     }
                     
                     // Trees
@@ -132,6 +137,10 @@ public class TerrainDecorations
                 return false; // Out of chunk bounds
 
             var block = chunk.GetTypeAt(localX, localY, localZ);
+
+            // Count billboards as free space.
+            if (BlockData.Prefabs[block].IsBillboard)
+                return true;
             
             if (block != BlockType.Air)
                 return false; // Space is not empty
