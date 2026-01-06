@@ -17,27 +17,19 @@ float4 UVRect;
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
-// Wind parameters (set from C#)
-// Time: seconds since start
-// WindDir: normalized XZ direction of wind
-// WindSpeed: advection speed for the low-frequency field
-// WindFrequency: spatial frequency for the low-frequency field
-// WindAmplitude: max lateral bend for the low-frequency field
-// BendExponent: how quickly bend increases toward the tip
-// TurbulenceFrequency/Amplitude: small high-frequency wobble per blade
-// CurlAmount/CurlExponent: gentle downward curl toward the tip
-// SideCurlAmount: inward pull of the blade sides for “bend in on itself”
+// Wind parameters (set from C# as needed; keep simple and fast)
+// Time drives advection of a coherent world-space field.
+// WindDir is XZ direction; WindFrequency controls spatial scale.
+// WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
+// SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
 static const float2 WindDir = float2(1.0f, 0.0f);
-static const float WindSpeed = 0.6f;
-static const float WindFrequency = 0.1f;
-static const float WindAmplitude = 0.0f;
-static const float BendExponent = 2.5f;
-static const float TurbulenceFrequency = 0.25f;
-static const float TurbulenceAmplitude = 0.2f;
-static const float CurlAmount = 0.05f;
-static const float CurlExponent = 1.2f;
-static const float SideCurlAmount = 0.5f;
+static const float  WindSpeed = 0.6f;
+static const float  WindFrequency = 0.08f;
+static const float  WindAmplitude = 0.35f;
+static const float  BendExponent = 2.0f;
+static const float  SideCurlAmount = 0.45f;
+static const float  SideCurlExponent = 1.2f;
 
 sampler2D AtlasSampler = sampler_state
 {
@@ -142,11 +134,11 @@ PixelInput VS(VertexInput input)
     rotated.z *= (input.Size.x / 0.5f);
 
     // ------------------------------
-    // Wind bend in vertex shader
+    // Wind bend & curl (single coherent field)
     // ------------------------------
     float3 worldPosNoWind = input.Center + rotated;
 
-    // Normalize wind dir to be safe
+    // Wind dirs
     float2 wdir2 = normalize(WindDir);
     float3 wdir3 = float3(wdir2.x, 0.0f, wdir2.y);
     float3 perp3 = float3(-wdir2.y, 0.0f, wdir2.x);
@@ -154,34 +146,27 @@ PixelInput VS(VertexInput input)
     // Advected sample position for coherent flow
     float3 flow = wdir3 * (Time * WindSpeed);
 
-    // Low-frequency sway (coherent across space)
+    // Single FBM field drives both sway and curl
     float low = fbm3(worldPosNoWind * WindFrequency + flow); // [0..1]
-    float sway = (low * 2.0f - 1.0f) * WindAmplitude;        // [-amp..amp]
-
-    // Per-blade turbulence: seed from Center for independence, still advected
-    float instRand = hash3(input.Center * 0.123f);
-    float3 highP = worldPosNoWind * TurbulenceFrequency + flow * 0.5f + instRand;
-    float high = fbm3(highP);                                 // [0..1]
-    float turb = (high * 2.0f - 1.0f) * TurbulenceAmplitude;  // small wobble
+    float low01 = saturate(low);
+    float low11 = (low01 * 2.0f - 1.0f);                     // [-1..1]
+    float gust = abs(low11);                                  // [0..1] stronger fold on gusts
 
     // Height-normalized bend mask so base stays anchored
     float t = saturate(rotated.y / max(input.Size.y, 1e-4));
     float bendMask = pow(t, BendExponent);
 
-    // Lateral displacement along wind dir
-    float lateral = (sway + turb) * bendMask;
+    // Lateral displacement along wind direction
+    float lateral = low11 * WindAmplitude * bendMask;
 
-    // Side curl uses local U across the quad: [-1..+1] centered
+    // Side curl: fold inward across the blade width, modulated by gusts and height
+    // u = local horizontal across quad in [-1..1] so left/right sides move toward center
     float u = input.Tex.x * 2.0f - 1.0f;
-    float sideCurl = u * SideCurlAmount * pow(t, 1.15f);
-
-    // Gentle downward curl (droop) toward the tip
-    float droop = CurlAmount * pow(t, CurlExponent);
+    float sideCurl = u * SideCurlAmount * pow(t, SideCurlExponent) * gust;
 
     // Apply displacements
-    rotated.xyz += wdir3 * lateral;    // main bend
-    rotated.xyz += perp3 * sideCurl;   // inward curl
-    rotated.y   -= droop;              // tip droop
+    rotated.xyz += wdir3 * lateral;   // main bend with wind
+    rotated.xyz += perp3 * sideCurl;  // inward curl that strengthens on gusts
 
     float3 worldPos = input.Center + rotated;
 
