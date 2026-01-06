@@ -109,8 +109,15 @@ PixelInput VS(VertexInput input)
     // ------------------------------
     float3 worldPosNoWind = input.Center + rotated;
 
-    // Wind dirs
-    float2 wdir2 = normalize(WindDir);
+    // Wind dirs (rotate base WindDir smoothly in-shader)
+    float theta = Time * WindDirRotationSpeed;
+    float cs = cos(theta);
+    float sn = sin(theta);
+
+    float2 baseDir = (dot(WindDir, WindDir) > 1e-6f) ? normalize(WindDir) : float2(1.0f, 0.0f);
+
+    float2 wdir2 = normalize(float2(baseDir.x * cs - baseDir.y * sn,
+                                    baseDir.x * sn + baseDir.y * cs));
     float3 wdir3 = float3(wdir2.x, 0.0f, wdir2.y);
     float3 perp3 = float3(-wdir2.y, 0.0f, wdir2.x);
 
