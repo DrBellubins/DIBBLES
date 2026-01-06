@@ -25,8 +25,8 @@ static const float AlphaCutoff = 0.35f;
 float Time;
 static const float2 WindDir = float2(1.0f, 0.0f);
 static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.08f;
-static const float  WindAmplitude = 0.35f;
+static const float  WindFrequency = 0.04f;
+static const float  WindAmplitude = 0.15f;
 static const float  BendExponent = 2.0f;
 static const float  SideCurlAmount = 0.45f;
 static const float  SideCurlExponent = 1.2f;
@@ -118,9 +118,14 @@ PixelInput VS(VertexInput input)
     float2 p = (worldPosNoWind.xz * WindFrequency) + flow.xz;
 
     // Per-instance phase offsets (stable across time, varies per instance)
-    float phi1 = hash1(input.Angle * 17.0f) * 6.2831853f;
+    /*float phi1 = hash1(input.Angle * 17.0f) * 6.2831853f;
     float phi2 = hash1(input.Angle * -31.0f) * 6.2831853f;
-    float phi3 = hash1(input.Angle * 59.0f) * 6.2831853f;
+    float phi3 = hash1(input.Angle * 59.0f) * 6.2831853f;*/
+
+    // Disable per-instance phase offset for smoother, natrual look.
+    float phi1 = hash1(input.Angle) * 6.2831853f;
+    float phi2 = hash1(input.Angle) * 6.2831853f;
+    float phi3 = hash1(input.Angle) * 6.2831853f;
 
     // Band-limited sum of sinusoids (smooth C∞ field), roughly in [-1,1]
     float sinusoids =
