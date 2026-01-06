@@ -14,6 +14,9 @@ float4 FogColor;
 // Atlas tile rect for GrassBlades: (x,y,w,h) in [0..1] atlas UV space
 float4 UVRect;
 
+// Alpha cutoff for foliage cutout; pixels below this alpha are discarded
+static const float AlphaCutoff = 0.35f;
+
 sampler2D AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
@@ -93,6 +96,11 @@ PixelOutput PS_Color(PixelInput input)
 {
     float4 texColor  = tex2D(AtlasSampler, input.Tex);
     float4 blockColor = texColor * input.Color;
+
+    // Hard alpha cutout to prevent transparent texels from writing depth
+    // Discards pixels with alpha below threshold so they don't occlude behind billboards.
+    float alpha = blockColor.a;
+    clip(alpha - AlphaCutoff);
 
     // Fog
     float dist     = distance(input.WorldPos, CameraPos);

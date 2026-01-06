@@ -12,6 +12,9 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
+// Alpha cutoff for foliage cutout; pixels below this alpha are discarded
+static const float AlphaCutoff = 0.35f;
+
 sampler2D AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
@@ -73,6 +76,13 @@ PixelOutput PS_Color(PixelInput input)
 {
     float4 texColor = tex2D(AtlasSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
+
+    // Hard alpha cutout to prevent transparent texels from writing depth
+    // Discards pixels with alpha below threshold so they don't occlude behind billboards.
+    float alpha = blockColor.a;
+
+    if (alpha < 1.0) // We're not opaque (hopefully)
+        clip(alpha - AlphaCutoff);
 
     // Fog
     float dist = distance(input.WorldPos, CameraPos);
