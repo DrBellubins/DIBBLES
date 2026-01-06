@@ -14,6 +14,8 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true;
+    
+    public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
@@ -56,6 +58,13 @@ public class TerrainMesh
         
         foreach (var oModel in Mesh.OpaqueModels)
         {
+            // Chunk center in world space
+            Vector3 center = oModel.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            // Skip if chunk is outside view frustum
+            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
+                continue;
+            
             // oModel.Value is a RuntimeModel
             if (oModel.Value != null)
             {
@@ -100,6 +109,13 @@ public class TerrainMesh
         
         foreach (var tModel in Mesh.TransparentModels)
         {
+            // Chunk center in world space
+            Vector3 center = tModel.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            // Skip if chunk is outside view frustum
+            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
+                continue;
+            
             // oModel.Value is a RuntimeModel
             if (tModel.Value != null)
             {
@@ -159,9 +175,16 @@ public class TerrainMesh
         shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
     
         shader.Parameters["Time"]?.SetValue(Time.time);
-    
+        
         foreach (var kv in BillboardBatches)
         {
+            // kv.Key is the chunk position
+            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            // Skip if chunk is outside view frustum
+            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
+                continue;
+            
             var batchesByType = kv.Value;
     
             foreach (var typeBatch in batchesByType)
