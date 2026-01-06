@@ -24,7 +24,7 @@ static const float AlphaCutoff = 0.35f;
 // WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
 // SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
-float2 WindDir = float2(0.0f, 0.0f);
+float2 WindDir = float2(1.0f, 0.0f);
 
 static const float WindSpeed = 0.6f;
 static const float WindFrequency = 0.01f;
@@ -84,6 +84,18 @@ float hash1(float x)
     return frac(sin(x * 12.9898f) * 43758.5453f);
 }
 
+// Robust 2D normalize helper (avoids NaNs and lurches on near-zero vectors)
+float2 safeNormalize2(float2 v)
+{
+    float len2 = dot(v, v);
+
+    if (len2 < 1e-8f)
+        return float2(1.0f, 0.0f); // stable fallback
+
+    // rsqrt is fast and avoids division-by-zero
+    return v * rsqrt(len2);
+}
+
 PixelInput VS(VertexInput input)
 {
     PixelInput outData;
@@ -110,21 +122,27 @@ PixelInput VS(VertexInput input)
     // 3) Base world position without wind deformation
     float3 worldPosUnbent = input.Center + rotatedPos;
 
-    // 4) Compute a smoothly rotating wind direction in XZ from WindDir
-    //    WindDir is the initial direction; we rotate it by Time * WindDirRotationSpeed.
+    // 4) Compute a smoothly rotating wind direction in XZ from WindDir (robust, no C# updates needed)
     float windRotationAngle = Time * WindDirRotationSpeed;
     float cosRot = cos(windRotationAngle);
     float sinRot = sin(windRotationAngle);
 
-    float2 baseWindDir = (dot(WindDir, WindDir) > 1e-6f) ? normalize(WindDir) : float2(1.0f, 0.0f);
+    // Clamp to a safe unit and never produce NaNs
+    float2 baseWindDir = safeNormalize2(WindDir);
 
-    float2 windDir2D = float2(
-        baseWindDir.x * cosRot - baseWindDir.y * sinRot,
-        baseWindDir.x * sinRot + baseWindDir.y * cosRot
-    );
+    // Rotate via 2x2 matrix; avoid re-normalizing unless necessary
+    float2x2 rot2 = float2x2(cosRot, -sinRot,
+                             sinRot,  cosRot);
 
-    // Guard against degenerate direction
-    windDir2D = (dot(windDir2D, windDir2D) > 1e-6f) ? normalize(windDir2D) : float2(1.0f, 0.0f);
+    float2 windDir2D = mul(rot2, baseWindDir);
+
+    // If rotation produces a near-zero, fall back to base to prevent a sudden flip/lurch
+    float len2 = dot(windDir2D, windDir2D);
+
+    if (len2 < 1e-8f)
+        windDir2D = baseWindDir;
+    else
+        windDir2D *= rsqrt(len2);
 
     float3 windDir3D       = float3(windDir2D.x, 0.0f, windDir2D.y);
     float3 perpendicular3D = float3(-windDir2D.y, 0.0f, windDir2D.x);
