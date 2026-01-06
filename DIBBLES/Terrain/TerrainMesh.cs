@@ -17,27 +17,16 @@ public class TerrainMesh
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
+    
+    public Dictionary<Vector3Int, (VertexBuffer InstanceBuffer, int InstanceCount)> BillboardBatches = new();
 
     // Main-thread mesh upload queue
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
     
-    // Fast scan of chunk's block types to see if any are transparent
-    private static bool chunkContainsTransparent(Chunk chunk)
-    {
-        var types = chunk.BlockTypes;
-
-        for (int i = 0; i < types.Length; i++)
-        {
-            var type = (BlockType)types[i];
-            var info = BlockData.Prefabs[type];
-
-            if (info.IsTransparent && type != BlockType.Air)
-                return true;
-        }
-
-        return false;
-    }
+    private VertexBuffer _billboardVB;
+    private IndexBuffer _billboardIB;
     
     public void Generate(Chunk chunk)
     {
@@ -49,6 +38,9 @@ public class TerrainMesh
             var tMeshData = Mesh.GenerateMeshData(chunk, true);
             TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
         }
+        
+        var billboardInstances = GenerateBillboardInstances(chunk);
+        BillboardUploadQueue.Enqueue((chunk.Position, billboardInstances));
     }
     
     public void DrawOpaque()
@@ -137,6 +129,63 @@ public class TerrainMesh
         }
     }
     
+    public void DrawBillboards()
+    {
+        EnsureBillboardMesh();
+    
+        var graphics = Engine.Graphics;
+    
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullNone;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
+    
+        var shader = TerrainGeneration.billboardShader;
+        var view = DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.View;
+        var proj = DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.Projection;
+    
+        shader.Parameters["AtlasTex"]?.SetValue(BlockData.TextureAtlas);
+        shader.Parameters["View"]?.SetValue(view);
+        shader.Parameters["Projection"]?.SetValue(proj);
+    
+        shader.Parameters["CameraPos"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        shader.Parameters["CameraNear"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.NearPlane);
+        shader.Parameters["CameraFar"]?.SetValue(DIBBLES.Scenes.GameScene.PlayerCharacter.Camera.FarPlane);
+    
+        shader.Parameters["FogNear"]?.SetValue(DIBBLES.Effects.FogEffect.FogNear);
+        shader.Parameters["FogFar"]?.SetValue(DIBBLES.Effects.FogEffect.FogFar);
+        shader.Parameters["FogColor"]?.SetValue(DIBBLES.Effects.FogEffect.FogColor());
+    
+        // Atlas UV rect for GrassBlades tile
+        var rect = BlockData.AtlasUVs[(BlockType.GrassBlades, 0)];
+        shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
+    
+        foreach (var kv in BillboardBatches)
+        {
+            var batch = kv.Value;
+    
+            if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
+                continue;
+    
+            graphics.SetVertexBuffers
+            (
+                new VertexBufferBinding(_billboardVB, 0, 0),
+                new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
+            );
+    
+            graphics.Indices = _billboardIB;
+    
+            foreach (var pass in shader.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
+            }
+        }
+    
+        graphics.SetVertexBuffer(null);
+        graphics.Indices = null;
+    }
+    
     // MeshData generation (thread-safe, no Raylib calls)
     public MeshData GenerateMeshData(Chunk chunk, bool isTransparencyPass)
     {
@@ -162,71 +211,7 @@ public class TerrainMesh
             // Billboard path for transparent mesh
             if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
             {
-                // Centered in block; bottom at block Y
-                var center = pos.ToVector3() + new Vector3(0.5f, 0.0f, 0.5f);
-                float halfW = 0.5f;
-                float height = 1.0f;
-            
-                // Deterministic rotation per block for variety
-                long seed = Seed
-                            ^ (pos.X * 73428767L)
-                            ^ (pos.Y * 9127841L)
-                            ^ (pos.Z * 192837465L);
-                
-                var rng = new SeededRandom(seed);
-                float angle = rng.NextFloat() * MathF.PI; // [0..pi] enough with 2-quads
-            
-                // Two crossed quads around Y
-                Vector3 right0 = new Vector3(MathF.Cos(angle), 0f, MathF.Sin(angle));
-                Vector3 right1 = new Vector3(-MathF.Sin(angle), 0f, MathF.Cos(angle));
-            
-                // Build vertex arrays
-                var quad0 = makeBillboardQuad(center, right0, halfW, height);
-                var quad1 = makeBillboardQuad(center, right1, halfW, height);
-            
-                // UVs from atlas (any face index, use 0)
-                var uv0 = FaceUtils.GetFaceUVs(blockType, 0);
-                var uv1 = uv0;
-            
-                // Simple lighting from top neighbor
-                float light = FaceUtils.GetFaceLightFlat(chunk, pos, 5);
-                var color = FaceUtils.ToColor(light);
-            
-                // Normal: use Up for billboard
-                var n = Vector3.Up;
-            
-                // Push both quads as transparent faces for sorting
-                {
-                    var faceCenter = (quad0[0] + quad0[1] + quad0[2] + quad0[3]) / 4f;
-                    var dist = Vector3.Distance(cameraPosition, faceCenter);
-                    
-                    transparentFaces.Add((dist, new FaceData
-                    {
-                        Verts = quad0,
-                        Normal = n,
-                        UVs = uv0,
-                        Colors = new[] { color, color, color, color },
-                        VertexOffset = 0,
-                        CenterDistance = dist
-                    }));
-                }
-            
-                {
-                    var faceCenter = (quad1[0] + quad1[1] + quad1[2] + quad1[3]) / 4f;
-                    var dist = Vector3.Distance(cameraPosition, faceCenter);
-                    
-                    transparentFaces.Add((dist, new FaceData
-                    {
-                        Verts = quad1,
-                        Normal = n,
-                        UVs = uv1,
-                        Colors = new[] { color, color, color, color },
-                        VertexOffset = 0,
-                        CenterDistance = dist
-                    }));
-                }
-            
-                // Skip default cube meshing for billboard blocks
+                // Billboards are handled by instanced pipeline; skip adding faces here
                 continue;
             }
             
@@ -587,6 +572,104 @@ public class TerrainMesh
         return target.GetTypeAt(lx, ly, lz) != BlockType.Air && !nInfo.IsTransparent;
     }
     
+    // Per-chunk billboard instance data
+    public VertexBillboardInstance[] GenerateBillboardInstances(Chunk chunk)
+    {
+        var instances = new List<VertexBillboardInstance>();
+
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkSize; y++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            var type = chunk.GetTypeAt(x, y, z);
+            var info = chunk.GetInfoAt(x, y, z);
+
+            if (type == BlockType.Air || !info.IsBillboard)
+                continue;
+
+            var localCenter = new Vector3(x + 0.5f, y + 0.0f, z + 0.5f);
+            var worldCenter = chunk.Position.ToVector3() + localCenter;
+
+            long seed = TerrainGeneration.Seed
+                        ^ (x * 73428767L)
+                        ^ (y * 9127841L)
+                        ^ (z * 192837465L);
+
+            var rng = new SeededRandom(seed);
+            float angle = rng.NextFloat() * MathF.PI;
+
+            float light = FaceUtils.GetFaceLightFlat(chunk, new Vector3Int(x, y, z), 5);
+            var color = FaceUtils.ToColor(light);
+
+            instances.Add(new VertexBillboardInstance
+            {
+                Center = worldCenter,
+                Angle = angle,
+                Size = new Vector2(0.5f, 1.0f),
+                Color = color
+            });
+        }
+
+        return instances.ToArray();
+    }
+    
+    // Create shared crossed-quad mesh (two quads, 8 verts, 12 indices)
+    private void EnsureBillboardMesh()
+    {
+        if (_billboardVB != null)
+            return;
+
+        var gd = Engine.Graphics;
+
+        var verts = new VertexPositionTexture[8];
+
+        float halfW = 0.5f;
+        float height = 1.0f;
+
+        // Quad A aligned to X axis (local space)
+        verts[0] = new VertexPositionTexture(new Vector3(-halfW, 0f, 0f),    new Vector2(0f, 1f));
+        verts[1] = new VertexPositionTexture(new Vector3(-halfW, height, 0f),new Vector2(0f, 0f));
+        verts[2] = new VertexPositionTexture(new Vector3( halfW, height, 0f),new Vector2(1f, 0f));
+        verts[3] = new VertexPositionTexture(new Vector3( halfW, 0f, 0f),    new Vector2(1f, 1f));
+
+        // Quad B aligned to Z axis (local space)
+        verts[4] = new VertexPositionTexture(new Vector3(0f, 0f, -halfW),    new Vector2(0f, 1f));
+        verts[5] = new VertexPositionTexture(new Vector3(0f, height, -halfW),new Vector2(0f, 0f));
+        verts[6] = new VertexPositionTexture(new Vector3(0f, height,  halfW),new Vector2(1f, 0f));
+        verts[7] = new VertexPositionTexture(new Vector3(0f, 0f,  halfW),    new Vector2(1f, 1f));
+
+        _billboardVB = new VertexBuffer(gd, typeof(VertexPositionTexture), verts.Length, BufferUsage.WriteOnly);
+        _billboardVB.SetData(verts);
+
+        var indices = new short[]
+        {
+            // Quad A
+            0, 1, 2, 0, 2, 3,
+            // Quad B
+            4, 5, 6, 4, 6, 7
+        };
+
+        _billboardIB = new IndexBuffer(gd, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
+        _billboardIB.SetData(indices);
+    }
+    
+    // Fast scan of chunk's block types to see if any are transparent
+    private static bool chunkContainsTransparent(Chunk chunk)
+    {
+        var types = chunk.BlockTypes;
+
+        for (int i = 0; i < types.Length; i++)
+        {
+            var type = (BlockType)types[i];
+            var info = BlockData.Prefabs[type];
+
+            if (info.IsTransparent && type != BlockType.Air)
+                return true;
+        }
+
+        return false;
+    }
+    
     private static Vector3[] makeBillboardQuad(Vector3 center, Vector3 right, float halfWidth, float height)
     {
         Vector3 up = Vector3.Up * height;
@@ -631,4 +714,23 @@ public struct VertexPositionNormalTextureColor : IVertexType
         TexCoord = tex;
         Color = color;
     }
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct VertexBillboardInstance : IVertexType
+{
+    public Vector3 Center;
+    public float Angle;
+    public Vector2 Size;   // X = half width, Y = height
+    public Color Color;
+
+    public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration
+    (
+        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position,          1), // POSITION1
+        new VertexElement(12, VertexElementFormat.Single,  VertexElementUsage.TextureCoordinate, 1), // TEXCOORD1
+        new VertexElement(16, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 2), // TEXCOORD2
+        new VertexElement(24, VertexElementFormat.Color,   VertexElementUsage.Color,             1)  // COLOR1
+    );
+
+    VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 }

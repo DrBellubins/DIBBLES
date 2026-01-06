@@ -25,3 +25,6 @@
 
 # Build the ssao processing shader
 /build:Shaders/SSAOPostProcess.fx
+
+# Build the billboard instance shader
+/build:Shaders/BillboardInstanced.fx

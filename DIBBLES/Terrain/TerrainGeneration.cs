@@ -36,6 +36,7 @@ public class TerrainGeneration
     public TerrainCommands Commands = new();
     
     public static Effect terrainShader;
+    public static Effect billboardShader;
     
     public static bool InitialLoadDone = false;
     
@@ -73,6 +74,7 @@ public class TerrainGeneration
             Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
+        billboardShader = Engine.Instance.Content.Load<Effect>("Shaders/BillboardInstanced");
         
         Commands.Register();
     }
@@ -138,6 +140,29 @@ public class TerrainGeneration
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
         }
+        
+        // Billboard pass
+        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        {
+            var instances = entry.instances;
+
+            if (instances == null || instances.Length == 0)
+            {
+                Mesh.BillboardBatches.Remove(entry.chunkPos);
+                continue;
+            }
+
+            var vb = new VertexBuffer(
+                Engine.Graphics,
+                VertexBillboardInstance.VertexDeclaration,
+                instances.Length,
+                BufferUsage.WriteOnly
+            );
+
+            vb.SetData(instances);
+
+            Mesh.BillboardBatches[entry.chunkPos] = (vb, instances.Length);
+        }
     }
     
     private bool IsInsideActiveView(Vector3Int pos)
@@ -197,6 +222,12 @@ public class TerrainGeneration
                 {
                     tModel.Dispose();
                     Mesh.TransparentModels.Remove(pos);
+                }
+                
+                if (Mesh.BillboardBatches.TryGetValue(pos, out var batch))
+                {
+                    batch.InstanceBuffer?.Dispose();
+                    Mesh.BillboardBatches.Remove(pos);
                 }
             }
         }
@@ -516,6 +547,7 @@ public class TerrainGeneration
         // Draw every mesh in the mesh queue
         Mesh.DrawOpaque();
         Mesh.DrawTransparent();
+        Mesh.DrawBillboards();
         
         // Chunk border debug
         if (Debug.ShowChunkDebug)
