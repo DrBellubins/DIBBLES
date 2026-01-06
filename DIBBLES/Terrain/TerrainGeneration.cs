@@ -36,7 +36,6 @@ public class TerrainGeneration
     public TerrainCommands Commands = new();
     
     public static Effect terrainShader;
-    public static Effect terrainDepthShader;
     
     public static bool InitialLoadDone = false;
     
@@ -58,19 +57,6 @@ public class TerrainGeneration
     
     private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
     
-    private static Vector3Int[] getNeighborOffsets()
-    {
-        return new[]
-        {
-            new Vector3Int( ChunkSize, 0, 0),
-            new Vector3Int(-ChunkSize, 0, 0),
-            new Vector3Int(0,  ChunkSize, 0),
-            new Vector3Int(0, -ChunkSize, 0),
-            new Vector3Int(0, 0,  ChunkSize),
-            new Vector3Int(0, 0, -ChunkSize),
-        };
-    }
-    
     public void Start()
     {
         BlockData.InitializeBlockPrefabs();
@@ -81,13 +67,12 @@ public class TerrainGeneration
         foreach (var kv in WorldSave.Data.ModifiedChunks)
             ChunkBuffer[kv.Key] = kv.Value;
         
-        /*if (WorldSave.Exists)
+        if (WorldSave.Exists)
             Seed = WorldSave.Data.Seed;
         else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);*/
+            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
-        terrainDepthShader = Engine.Instance.Content.Load<Effect>("Shaders/DepthPrepass");
         
         Commands.Register();
     }
@@ -311,7 +296,7 @@ public class TerrainGeneration
         // Lighting: require only neighbors inside the active view to have stable terrain (>= Decorations)
         if (stage == ChunkGenerationStage.Lighting)
         {
-            foreach (var offset in getNeighborOffsets())
+            foreach (var offset in TerrainUtils.GetNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
     
@@ -338,7 +323,7 @@ public class TerrainGeneration
         }
         else if (stage == ChunkGenerationStage.Meshing)
         {
-            foreach (var offset in getNeighborOffsets())
+            foreach (var offset in TerrainUtils.GetNeighborOffsets())
             {
                 var nPos = chunk.Position + offset;
     
@@ -398,7 +383,7 @@ public class TerrainGeneration
 
                 // After finishing lighting, nudge neighbors to Lighting (if they aren't yet),
                 // and optionally nudge both this chunk and neighbors toward Meshing.
-                foreach (var offset in getNeighborOffsets())
+                foreach (var offset in TerrainUtils.GetNeighborOffsets())
                 {
                     var nPos = chunk.Position + offset;
 
@@ -448,7 +433,7 @@ public class TerrainGeneration
         {
             bool allNeighborsInside = true;
 
-            foreach (var off in getNeighborOffsets())
+            foreach (var off in TerrainUtils.GetNeighborOffsets())
             {
                 if (!activeViewChunks.Contains(pos + off))
                 {

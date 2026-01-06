@@ -15,6 +15,22 @@ public struct FaceData
     //public Texture2D Texture;      // If faces may use different textures
 }
 
+public static class TerrainUtils
+{
+    public static Vector3Int[] GetNeighborOffsets()
+    {
+        return new[]
+        {
+            new Vector3Int(TerrainGeneration.ChunkSize, 0, 0),
+            new Vector3Int(-TerrainGeneration.ChunkSize, 0, 0),
+            new Vector3Int(0,  TerrainGeneration.ChunkSize, 0),
+            new Vector3Int(0, -TerrainGeneration.ChunkSize, 0),
+            new Vector3Int(0, 0,  TerrainGeneration.ChunkSize),
+            new Vector3Int(0, 0, -TerrainGeneration.ChunkSize),
+        };
+    }
+}
+
 public static class FaceUtils
 {
     public static (int faceIdx, Vector3 normal, Vector3Int neighborOffset)[] VoxelFaceInfos()
