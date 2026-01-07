@@ -193,19 +193,46 @@ PixelInput VS(VertexInput input)
 
     // Final world and view positions
     float3 worldPosition = input.Center + rotatedPosition;
-    float4 viewPosition = mul(float4(worldPosition, 1.0f), View);
+    float4 viewPosition  = mul(float4(worldPosition, 1.0f), View);
+
+    // Compute per-vertex world-space plane normal for the crossed quads:
+    // Quad A (base z==0) has local normal +Z; Quad B (base x==0) has local normal +X.
+    // Rotate by instance yaw, add a small tilt from curl, flip to face camera, then convert to view space.
+    float3 baseNormalLocal = (abs(localPosition.z) < 1e-6f) ? float3(0.0f, 0.0f, 1.0f)  // Quad A
+                                                        : float3(1.0f, 0.0f, 0.0f); // Quad B
+
+    // Rotate normal by yaw (same rotation as position)
+    float3 worldPlaneNormal;
+    worldPlaneNormal.x = baseNormalLocal.x * cosAngle + baseNormalLocal.z * sinAngle;
+    worldPlaneNormal.y = 0.0f;
+    worldPlaneNormal.z = -baseNormalLocal.x * sinAngle + baseNormalLocal.z * cosAngle;
+
+    // Optional: slight tilt with the curl so normals aren’t perfectly planar
+    float curlTilt = SideCurlAmount * pow(heightFactor, SideCurlExponent) * gustStrength * 0.2f;
+    worldPlaneNormal += windPerpendicular3D * (widthCoordinate * curlTilt);
+    worldPlaneNormal = normalize(worldPlaneNormal);
+
+    // Flip normal to face the camera for double-sided billboards
+    float3 toCamera = normalize(CameraPos - worldPosition);
+
+    if (dot(worldPlaneNormal, toCamera) < 0.0f)
+        worldPlaneNormal = -worldPlaneNormal;
+
+    // View-space normal (ignore translation by using w=0)
+    float3 viewNormal = mul(float4(worldPlaneNormal, 0.0f), View).xyz;
+    viewNormal = normalize(viewNormal);
 
     // Clip-space position for rasterizer
-    pixelOut.Position = mul(viewPosition, Projection);
+    pixelOut.Position  = mul(viewPosition, Projection);
 
     // World-space for fog computations
-    pixelOut.WorldPos = worldPosition;
+    pixelOut.WorldPos  = worldPosition;
 
-    // Positive forward distance in view space (MonoGame convention: camera looks down -Z)
+    // Positive forward distance in view space (camera looks down -Z)
     pixelOut.ViewDepth = -viewPosition.z;
 
-    // Simple upward normal for billboards (used by normal buffer)
-    pixelOut.ViewNorm = float3(0.0f, 1.0f, 0.0f);
+    // Use the computed view-space normal for the normal buffer
+    pixelOut.ViewNorm  = viewNormal;
 
     // Map quad UV (0..1) into atlas rectangle
     float2 atlasUV;
