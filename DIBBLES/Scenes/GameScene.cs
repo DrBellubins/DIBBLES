@@ -141,23 +141,28 @@ public class GameScene : Scene
     {
         var graphics = Engine.Graphics;
         
+        // Bind MRTs
         graphics.SetRenderTargets(
-            new RenderTargetBinding(BackBuffer),   // Color output  -> SV_Target0
-            new RenderTargetBinding(DepthBuffer),  // Depth output -> SV_Target1
-            new RenderTargetBinding(NormalBuffer)  // Normal output -> SV_Target2
+            new RenderTargetBinding(BackBuffer),
+            new RenderTargetBinding(DepthBuffer),
+            new RenderTargetBinding(NormalBuffer)
         );
-        
-        graphics.Clear(SkyColor); // Clear backbuffer ahead of time.
-        
-        // Set depth, clear it to white
+
+        // 1) Clear the depth-stencil actually used by the geometry pass (attached to the first RT)
+        graphics.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1.0f, 0);
+
+        // 2) Clear each color target individually
+        graphics.SetRenderTarget(BackBuffer);
+        graphics.Clear(SkyColor);
+
         graphics.SetRenderTarget(DepthBuffer);
-        graphics.Clear(Color.White); // far = 1.0
-        
-        // Set normal, clear it to transparent
+        graphics.Clear(Color.White);         // far = 1.0 for the sampled depth texture
+
         graphics.SetRenderTarget(NormalBuffer);
-        graphics.Clear(Color.Transparent);
-        
-        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer); // rebind MRT
+        graphics.Clear(Color.Transparent);   // mark "no normal" with a=0
+
+        // Rebind MRTs for drawing
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
         TerrainGen.Draw();
         TerrainGeneration.Gameplay.Draw();

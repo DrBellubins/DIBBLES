@@ -431,7 +431,15 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
 
 float4 PS_Composite(VSOutput input) : SV_Target0
 {
+    // Use blurred AO and mask where normals are invalid
     float ao = tex2D(AOSamplerLinear, input.TexCoord).r;
+
+    // If normal is missing (sky, BasicEffect geometry, etc.), do not darken
+    float4 nTex = tex2D(NormalSampler, input.TexCoord);
+
+    if (nTex.a < 0.5f)
+        ao = 1.0f;
+
     float4 color = tex2D(ColorSampler, input.TexCoord);
 
     return float4(color.rgb * ao, color.a);
