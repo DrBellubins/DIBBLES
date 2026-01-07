@@ -164,7 +164,11 @@ struct PSOutput
 float4 applyFog(float4 color, float3 worldPos)
 {
     float dist = distance(worldPos, CameraPos);
-    float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
+
+    // If fog range is invalid/uninitialized, disable fog
+    float fogFactor = (FogFar <= FogNear) ? 0.0f
+                                          : saturate((dist - FogNear) / (FogFar - FogNear));
+
     float4 fogged = lerp(color, FogColor, fogFactor);
     fogged.a = color.a;
     return fogged;

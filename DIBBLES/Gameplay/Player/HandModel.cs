@@ -65,8 +65,8 @@ public class HandModel
         handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
         handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
 
-        /*var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
-        handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelFixed, lightLevelFixed, lightLevelFixed, 1.0f);*/
+        var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
+        handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelFixed, lightLevelFixed, lightLevelFixed, 1.0f);
         
         // Set the hand model texture
         /*Texture2D texture = BlockData.Textures[(selectedItem.Type, 0)];
