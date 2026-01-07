@@ -70,9 +70,14 @@ public class HandModel
 
         currentLightLevel = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
         
-        var lightLevelLerped = GMath.Lerp(previousLightLevel, currentLightLevel, Time.DeltaTime * 0.1f);
+        // Framerate-independent exponential smoothing; higher rate = snappier response
+        float rate = 8.0f;
+        float deltaTimeExp = 1f - MathF.Exp(-rate * Time.DeltaTime);
         
-        previousLightLevel = currentLightLevel;
+        var lightLevelLerped = GMath.Lerp(previousLightLevel, currentLightLevel, deltaTimeExp);
+        
+        // IMPORTANT: carry the smoothed result forward (not the target)
+        previousLightLevel = lightLevelLerped;
         
         handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelLerped, lightLevelLerped, lightLevelLerped, 1.0f);
 
