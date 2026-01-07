@@ -22,11 +22,17 @@ public class CubeMesh
         GraphicsDevice = graphicsDevice;
         Texture = texture;
 
-        var vertices = new VertexPositionNormalTexture[24];
+        var vertices = new VertexPositionColorNormalTexture[24];
         var indices = new short[36];
         FillCubeMeshData(vertices, indices, 0.25f); // Cube size (half extents)
 
-        VertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionNormalTexture), vertices.Length, BufferUsage.WriteOnly);
+        VertexBuffer = new VertexBuffer(
+            graphicsDevice,
+            VertexPositionColorNormalTexture.VertexDeclaration,
+            vertices.Length,
+            BufferUsage.WriteOnly
+        );
+        
         VertexBuffer.SetData(vertices);
 
         IndexBuffer = new IndexBuffer(graphicsDevice, typeof(short), indices.Length, BufferUsage.WriteOnly);
@@ -37,14 +43,14 @@ public class CubeMesh
             TextureEnabled = true,
             Texture = Texture,
             //LightingEnabled = false,
-            VertexColorEnabled = false,
+            VertexColorEnabled = true,
             FogEnabled = false,
             DiffuseColor = Color.White.ToVector4()
         };
     }
 
     // Fills the arrays with cube data (positions, normals, UVs, indices)
-    private void FillCubeMeshData(VertexPositionNormalTexture[] vertices, short[] indices, float s)
+    private void FillCubeMeshData(VertexPositionColorNormalTexture[] vertices, short[] indices, float s)
     {
         // Cube faces: +X, -X, +Y, -Y, +Z, -Z
         Vector3[] positions =
@@ -100,7 +106,14 @@ public class CubeMesh
         };
 
         for (int i = 0; i < 24; i++)
-            vertices[i] = new VertexPositionNormalTexture(positions[i], normals[i], uvs[i]);
+        {
+            vertices[i] = new VertexPositionColorNormalTexture(
+                positions[i],
+                Color.White,
+                normals[i],
+                uvs[i]
+            );
+        }
 
         // Indices for each face (2 triangles per face)
         for (int f = 0; f < 6; f++)

@@ -16,6 +16,9 @@ public class HandModel
     private Camera3D handCamera;
     private MainSurfaceEffect _effect;
     
+    private float currentLightLevel = 0.0f;
+    private float previousLightLevel = 0.0f;
+    
     public void Start()
     {
         handBlockModel = MeshUtils.GenTexturedCube(Engine.Graphics, BlockData.Textures[(BlockType.Dirt, 0)]);
@@ -65,12 +68,13 @@ public class HandModel
         handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
         handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
 
-        var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
-        handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelFixed, lightLevelFixed, lightLevelFixed, 1.0f);
+        currentLightLevel = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
         
-        // Set the hand model texture
-        /*Texture2D texture = BlockData.Textures[(selectedItem.Type, 0)];
-        MeshUtils.SetCubeMeshTexture(handBlockModel, texture);*/
+        var lightLevelLerped = GMath.Lerp(previousLightLevel, currentLightLevel, Time.DeltaTime * 0.1f);
+        
+        previousLightLevel = currentLightLevel;
+        
+        handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelLerped, lightLevelLerped, lightLevelLerped, 1.0f);
 
         // Position relative to camera
         float forwardDistance = 0.7f;
