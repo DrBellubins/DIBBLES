@@ -81,6 +81,11 @@ float hash1(float x)
     return frac(sin(x * 12.9898f) * 43758.5453f);
 }
 
+float rand11(float2 p)
+{
+    return frac(sin(dot(p, float2(12.9898f, 78.233f))) * 43758.5453f);
+}
+
 PixelInput VS(VertexInput input)
 {
     PixelInput pixelOut;
@@ -177,7 +182,11 @@ PixelInput VS(VertexInput input)
     atlasUV.y = UVRect.y + input.Tex.y * UVRect.w;
 
     pixelOut.Tex   = atlasUV;
-    pixelOut.Color = input.InstanceCol; // per-instance lighting tint
+
+    float3 colorRGB = input.InstanceCol.rgb * windSignal;
+    float4 colorOutput = float4(colorRGB, input.InstanceCol.a);
+
+    pixelOut.Color = colorOutput; // per-instance lighting tint
 
     return pixelOut;
 }
