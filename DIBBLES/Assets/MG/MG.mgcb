@@ -28,3 +28,6 @@
 
 # Build the billboard instance shader
 /build:Shaders/BillboardInstanced.fx
+
+# Build the main surface shader
+/build:Shaders/MainSurfaceEffect.fx

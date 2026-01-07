@@ -185,7 +185,7 @@ public class GameScene : Scene
         // Restore to screen/backbuffer for UI and post
         graphics.SetRenderTarget(null);
         
-        // Draw UI (UI Batch)
+        // 6) Draw UI (UI Batch)
         if (UIEnabled)
         {
             graphics.SetRenderTarget(UIBuffer);
@@ -210,12 +210,12 @@ public class GameScene : Scene
             uiBlur.Apply(BackBuffer, UIBuffer);
         }
         
-        // Apply all registered post-processing effects, sampling color/normal/depth
+        // 7) Apply all registered post-processing effects, sampling color/normal/depth
         postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
         
-        // Draw buffers
+        // 8) Draw buffers
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         // Composite all post-processing outputs

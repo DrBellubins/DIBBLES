@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Gameplay.Player;
 
+// TODO: Hand model needs it's own shader
 public class HandModel
 {
     private CubeMesh handBlockModel;

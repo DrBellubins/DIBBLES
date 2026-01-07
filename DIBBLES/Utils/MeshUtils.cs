@@ -1,3 +1,4 @@
+using DIBBLES.Effects;
 using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,7 +11,7 @@ public class CubeMesh
     public VertexBuffer VertexBuffer { get; private set; }
     public IndexBuffer IndexBuffer { get; private set; }
     public Texture2D Texture { get; set; }
-    public BasicEffect Effect { get; private set; }
+    public MainSurfaceEffect Effect { get; private set; }
     public GraphicsDevice GraphicsDevice { get; private set; }
 
     // Generates a 0.5 unit size textured cube mesh
@@ -29,11 +30,11 @@ public class CubeMesh
         IndexBuffer = new IndexBuffer(graphicsDevice, typeof(short), indices.Length, BufferUsage.WriteOnly);
         IndexBuffer.SetData(indices);
 
-        Effect = new BasicEffect(graphicsDevice)
+        Effect = new MainSurfaceEffect(graphicsDevice)
         {
             TextureEnabled = true,
             Texture = Texture,
-            LightingEnabled = false,
+            //LightingEnabled = false,
             VertexColorEnabled = false
         };
     }
