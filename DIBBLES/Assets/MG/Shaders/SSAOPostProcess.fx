@@ -217,10 +217,18 @@ float ComputeAO(float2 uv)
     float centerZ = -P.z;
 
     // Get normal from G-buffer
-    float4 nTex = tex2D(NormalSampler, uv);
     float3 N;
+    float4 nTex = tex2D(NormalSampler, uv);
 
-    N = DecodeNormal01(nTex);
+    if (nTex.a < 0.5f)
+    {
+        // Reasonable default if normal missing: face camera
+        N = float3(0, 0, 1);
+    }
+    else
+    {
+        N = DecodeNormal01(nTex);
+    }
 
     // TBN construction
     float3 R = tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
