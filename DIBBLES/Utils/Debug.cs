@@ -34,22 +34,22 @@ public class Debug
         textBuffer2d.Clear();
     }
     
-    public static void ToggleDebug(string[] args)
+    public static void ToggleDebugCMD(string[] args)
     {
         ShowDebug = !ShowDebug;
-        Chat.Write("Toggled debug information", ChatMessageType.Command);
+        Chat.Write($"Toggled debug information: {ShowDebug}", ChatMessageType.Command);
     }
     
-    public static void ToggleChunkDebug(string[] args)
+    public static void ToggleChunkDebugCMD(string[] args)
     {
         ShowChunkDebug = !ShowChunkDebug;
-        Chat.Write("Toggled chunk border debug", ChatMessageType.Command);
+        Chat.Write($"Toggled chunk border debug: {ShowChunkDebug}", ChatMessageType.Command);
     }
     
-    public static void ToggleLightDebug(string[] args)
+    public static void ToggleLightDebugCMD(string[] args)
     {
         ShowLightDebug = !ShowLightDebug;
-        Chat.Write("Toggled light level debug", ChatMessageType.Command);
+        Chat.Write($"Toggled light level debug: {ShowLightDebug}", ChatMessageType.Command);
     }
     
     public static void Draw2D()

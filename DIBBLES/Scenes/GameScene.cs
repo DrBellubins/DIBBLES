@@ -98,9 +98,9 @@ public class GameScene : Scene
         postProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
         Commands.Register("help", "Lists all available commands", Chat.WriteHelp);
-        Commands.Register("db", "Toggle debug information", Debug.ToggleDebug);
-        Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
-        Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
+        Commands.Register("db", "Toggle debug information", Debug.ToggleDebugCMD);
+        Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebugCMD);
+        Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebugCMD);
         Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
         Commands.Register("ao", "Toggle ambient occlusion", toggleAOCMD);
     }
