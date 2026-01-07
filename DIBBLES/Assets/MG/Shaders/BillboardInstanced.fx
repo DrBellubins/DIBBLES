@@ -28,7 +28,7 @@ float2 WindDir = float2(1.0f, 0.0f);
 
 static const float WindSpeed = 0.6f;
 static const float WindFrequency = 0.01f;
-static const float WindAmplitude = 0.15f;
+static const float WindAmplitude = 0.0f;
 static const float WindDirRotationSpeed = 0.4f;
 static const float BendExponent = 2.0f;
 static const float SideCurlAmount = 0.45f;
@@ -92,7 +92,6 @@ float2 safeNormalize2(float2 v)
     if (len2 < 1e-8f)
         return float2(1.0f, 0.0f); // stable fallback
 
-    // rsqrt is fast and avoids division-by-zero
     return v * rsqrt(len2);
 }
 
@@ -122,29 +121,28 @@ PixelInput VS(VertexInput input)
     // 3) Base world position without wind deformation
     float3 worldPosUnbent = input.Center + rotatedPos;
 
-    // 4) Compute a smoothly rotating wind direction in XZ from WindDir (robust, no C# updates needed)
+    // 4) In VS(), replace the wind direction setup block with this safe rotation.
+    //    This avoids re-normalizing the rotated vector and guards tiny magnitudes.
+    // Compute smoothly rotating wind direction in XZ (robust against zero/near-zero)
     float windRotationAngle = Time * WindDirRotationSpeed;
     float cosRot = cos(windRotationAngle);
     float sinRot = sin(windRotationAngle);
 
-    // Clamp to a safe unit and never produce NaNs
     float2 baseWindDir = safeNormalize2(WindDir);
 
-    // Rotate via 2x2 matrix; avoid re-normalizing unless necessary
+    // Pure rotation (no re-normalize to avoid NaNs if precision collapses)
     float2x2 rot2 = float2x2(cosRot, -sinRot,
                              sinRot,  cosRot);
 
     float2 windDir2D = mul(rot2, baseWindDir);
 
-    // If rotation produces a near-zero, fall back to base to prevent a sudden flip/lurch
-    float len2 = dot(windDir2D, windDir2D);
+    // Final guard: if length is extremely tiny, fall back to base
+    float dirLen2 = dot(windDir2D, windDir2D);
 
-    if (len2 < 1e-8f)
+    if (dirLen2 < 1e-8f)
         windDir2D = baseWindDir;
-    else
-        windDir2D *= rsqrt(len2);
 
-    float3 windDir3D       = float3(windDir2D.x, 0.0f, windDir2D.y);
+    float3 windDir3D = float3(windDir2D.x, 0.0f, windDir2D.y);
     float3 perpendicular3D = float3(-windDir2D.y, 0.0f, windDir2D.x);
 
     // 5) Advect the sampling position in the wind direction (coherent motion over the world)
@@ -223,8 +221,8 @@ PixelOutput PS_Color(PixelInput input)
 
     // Hard alpha cutout to prevent transparent texels from writing depth
     // Discards pixels with alpha below threshold so they don't occlude behind billboards.
-    float alpha = blockColor.a;
-    clip(alpha - AlphaCutoff);
+    //float alpha = blockColor.a;
+    //clip(alpha - AlphaCutoff);
 
     // Fog
     float dist     = distance(input.WorldPos, CameraPos);
