@@ -25,7 +25,7 @@ static const float AlphaCutoff = 0.35f;
 float Time;
 static const float2 WindDir = float2(1.0f, 0.0f);
 static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.04f;
+static const float  WindFrequency = 0.01f;
 static const float  WindAmplitude = 0.15f;
 static const float  BendExponent = 2.0f;
 static const float  SideCurlAmount = 0.45f;
@@ -83,95 +83,103 @@ float hash1(float x)
 
 PixelInput VS(VertexInput input)
 {
-    PixelInput o;
+    PixelInput pixelOut;
 
-    // Rotate local XZ by Angle around Y, then scale by Size
-    float s = sin(input.Angle);
-    float c = cos(input.Angle);
+    // Rotate local crossed-quad around Y by the instance Angle (billboard yaw)
+    float sinAngle = sin(input.Angle);
+    float cosAngle = cos(input.Angle);
 
-    float3 local = input.Position;
+    float3 localPosition = input.Position;
 
-    float3 rotated;
-    rotated.x = local.x * c + local.z * s;
-    rotated.y = local.y;
-    rotated.z = -local.x * s + local.z * c;
+    float3 rotatedPosition;
+    rotatedPosition.x =  localPosition.x * cosAngle + localPosition.z * sinAngle;
+    rotatedPosition.y =  localPosition.y;
+    rotatedPosition.z = -localPosition.x * sinAngle + localPosition.z * cosAngle;
 
-    // Scale: XZ by halfWidth, Y by height
-    rotated.x *= (input.Size.x / 0.5f);
-    rotated.y *= (input.Size.y / 1.0f);
-    rotated.z *= (input.Size.x / 0.5f);
+    // Scale: XZ by halfWidth, Y by height (base quad is halfWidth=0.5, height=1.0)
+    float widthScale  = input.Size.x / 0.5f;
+    float heightScale = input.Size.y / 1.0f;
 
-    // ------------------------------
-    // Wind bend & curl (band-limited sinusoids)
-    // ------------------------------
-    float3 worldPosNoWind = input.Center + rotated;
+    rotatedPosition.x *= widthScale;
+    rotatedPosition.y *= heightScale;
+    rotatedPosition.z *= widthScale;
 
-    // Wind dirs
-    float2 wdir2 = normalize(WindDir);
-    float3 wdir3 = float3(wdir2.x, 0.0f, wdir2.y);
-    float3 perp3 = float3(-wdir2.y, 0.0f, wdir2.x);
+    // World position without wind deformation (used to sample the wind field)
+    float3 worldPositionUnbent = input.Center + rotatedPosition;
 
-    // Advected sample position for coherent flow
-    float3 flow = wdir3 * (Time * WindSpeed);
+    // Wind direction basis in XZ: forward direction and a perpendicular axis
+    float2 windDirection2D   = normalize(WindDir);
+    float3 windDirection3D   = float3(windDirection2D.x, 0.0f, windDirection2D.y);
+    float3 windPerpendicular3D = float3(-windDirection2D.y, 0.0f, windDirection2D.x);
 
-    // 2D field input (XZ) scaled by WindFrequency and advected along wind
-    float2 p = (worldPosNoWind.xz * WindFrequency) + flow.xz;
+    // Coherent advection over time (moves the wind field, not the geometry directly)
+    float3 windFlowOffset = windDirection3D * (Time * WindSpeed);
 
-    // Per-instance phase offsets (stable across time, varies per instance)
-    /*float phi1 = hash1(input.Angle * 17.0f) * 6.2831853f;
-    float phi2 = hash1(input.Angle * -31.0f) * 6.2831853f;
-    float phi3 = hash1(input.Angle * 59.0f) * 6.2831853f;*/
+    // Sample coordinate for the band-limited wind field (2D in XZ), scaled and advected
+    float2 windFieldCoord = (worldPositionUnbent.xz * WindFrequency) + windFlowOffset.xz;
 
-    // Disable per-instance phase offset for smoother, natrual look.
-    float phi1 = hash1(input.Angle) * 6.2831853f;
-    float phi2 = hash1(input.Angle) * 6.2831853f;
-    float phi3 = hash1(input.Angle) * 6.2831853f;
+    // Stable per-instance phases (derived from Angle) to keep motion consistent
+    float phase1 = hash1(input.Angle) * 6.2831853f; // 2*pi
+    float phase2 = phase1;
+    float phase3 = phase1;
 
-    // Band-limited sum of sinusoids (smooth C∞ field), roughly in [-1,1]
-    float sinusoids =
-        A1 * sin(dot(p, K1) + W1 * Time + phi1) +
-        A2 * sin(dot(p, K2) + W2 * Time + phi2) +
-        A3 * sin(dot(p, K3) + W3 * Time + phi3);
+    // Smooth wind signal in approximately [-1,1] using 3 harmonics
+    float windSignal =
+        A1 * sin(dot(windFieldCoord, K1) + W1 * Time + phase1) +
+        A2 * sin(dot(windFieldCoord, K2) + W2 * Time + phase2) +
+        A3 * sin(dot(windFieldCoord, K3) + W3 * Time + phase3);
 
-    // Main sway signal in [-1,1]
-    float low11 = saturate((sinusoids + 1.0f) * 0.5f) * 2.0f - 1.0f;
+    // Map to signed sway [-1,1] and compute a smooth gust strength [0,1]
+    float swaySigned    = saturate((windSignal + 1.0f) * 0.5f) * 2.0f - 1.0f;
+    float gustStrength  = saturate(windSignal * windSignal);
 
-    // Smooth “gust” measure: squared amplitude avoids abs() cusp
-    float gust = saturate(sinusoids * sinusoids);
+    // Height factor along the blade so the base stays anchored (0 at base, 1 at tip)
+    float heightFactor = saturate(rotatedPosition.y / max(input.Size.y, 1e-4f));
 
-    // Height-normalized bend mask so base stays anchored
-    float t = saturate(rotated.y / max(input.Size.y, 1e-4f));
-    float bendMask = pow(t, BendExponent);
+    // Bend increases toward the tip
+    float bendMask = pow(heightFactor, BendExponent);
 
-    // Lateral displacement along wind direction
-    float lateral = low11 * WindAmplitude * bendMask;
+    // Lateral bend along wind direction
+    float lateralBend = swaySigned * WindAmplitude * bendMask;
 
-    // Side curl: fold inward across the blade width, modulated by gusts and height
-    float u = input.Tex.x * 2.0f - 1.0f; // -1..1 across quad
-    float sideCurl = u * SideCurlAmount * pow(t, SideCurlExponent) * gust;
+    // Width coordinate across the quad: -1 (left) .. +1 (right)
+    float widthCoordinate = input.Tex.x * 2.0f - 1.0f;
 
-    // Apply displacements
-    rotated.xyz += wdir3 * lateral;   // main bend with wind
-    rotated.xyz += perp3 * sideCurl;  // inward curl that strengthens on gusts
+    // Inward curl across blade width, stronger on gusts and higher up
+    float sideCurlOffset = widthCoordinate
+                         * SideCurlAmount
+                         * pow(heightFactor, SideCurlExponent)
+                         * gustStrength;
 
-    float3 worldPos = input.Center + rotated;
+    // Apply wind deformation
+    rotatedPosition.xyz += windDirection3D    * lateralBend;   // main sway
+    rotatedPosition.xyz += windPerpendicular3D * sideCurlOffset; // inward curl
 
-    float4 viewPos = mul(float4(worldPos, 1), View);
+    // Final world and view positions
+    float3 worldPosition = input.Center + rotatedPosition;
+    float4 viewPosition  = mul(float4(worldPosition, 1.0f), View);
 
-    o.Position  = mul(viewPos, Projection);
-    o.WorldPos  = worldPos;
-    o.ViewDepth = -viewPos.z;                // +Z forward distance in view space
-    o.ViewNorm  = float3(0, 1, 0);           // billboard: Up normal
+    // Clip-space position for rasterizer
+    pixelOut.Position  = mul(viewPosition, Projection);
 
-    // Map quad UV (0..1) to atlas rect
-    float2 uv;
-    uv.x = UVRect.x + input.Tex.x * UVRect.z;
-    uv.y = UVRect.y + input.Tex.y * UVRect.w;
+    // World-space for fog computations
+    pixelOut.WorldPos  = worldPosition;
 
-    o.Tex   = uv;
-    o.Color = input.InstanceCol;
+    // Positive forward distance in view space (MonoGame convention: camera looks down -Z)
+    pixelOut.ViewDepth = -viewPosition.z;
 
-    return o;
+    // Simple upward normal for billboards (used by normal buffer)
+    pixelOut.ViewNorm  = float3(0.0f, 1.0f, 0.0f);
+
+    // Map quad UV (0..1) into atlas rectangle
+    float2 atlasUV;
+    atlasUV.x = UVRect.x + input.Tex.x * UVRect.z;
+    atlasUV.y = UVRect.y + input.Tex.y * UVRect.w;
+
+    pixelOut.Tex   = atlasUV;
+    pixelOut.Color = input.InstanceCol; // per-instance lighting tint
+
+    return pixelOut;
 }
 
 struct PixelOutput
