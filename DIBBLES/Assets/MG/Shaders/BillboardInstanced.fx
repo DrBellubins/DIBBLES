@@ -23,9 +23,11 @@ static const float AlphaCutoff = 0.35f;
 // WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
 // SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
+
+static const bool WindDebug = true;
 static const float2 WindDir = float2(1.0f, 0.0f);
 static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.01f;
+static const float  WindFrequency = 0.4f;
 static const float  WindAmplitude = 0.15f;
 static const float  BendExponent = 2.0f;
 static const float  SideCurlAmount = 0.45f;
@@ -73,6 +75,9 @@ struct PixelInput
     float3 WorldPos : TEXCOORD1;
     float  ViewDepth: TEXCOORD2;
     float3 ViewNorm : TEXCOORD3;
+
+    // Add wind debug payload
+    float3 WindBend : TEXCOORD4; // x=lateralBend, y=sideCurlOffset, z = gustStrength
 };
 
 // Small per-instance phase jitter derived from Angle
@@ -106,8 +111,8 @@ PixelInput VS(VertexInput input)
     float3 localPosition = input.Position;
 
     float3 rotatedPosition;
-    rotatedPosition.x =  localPosition.x * cosAngle + localPosition.z * sinAngle;
-    rotatedPosition.y =  localPosition.y;
+    rotatedPosition.x = localPosition.x * cosAngle + localPosition.z * sinAngle;
+    rotatedPosition.y = localPosition.y;
     rotatedPosition.z = -localPosition.x * sinAngle + localPosition.z * cosAngle;
 
     // Scale: XZ by halfWidth, Y by height (base quad is halfWidth=0.5, height=1.0)
@@ -122,8 +127,8 @@ PixelInput VS(VertexInput input)
     float3 worldPositionUnbent = input.Center + rotatedPosition;
 
     // Wind direction basis in XZ: forward direction and a perpendicular axis
-    float2 windDirection2D   = normalize(WindDir);
-    float3 windDirection3D   = float3(windDirection2D.x, 0.0f, windDirection2D.y);
+    float2 windDirection2D = normalize(WindDir);
+    float3 windDirection3D = float3(windDirection2D.x, 0.0f, windDirection2D.y);
     float3 windPerpendicular3D = float3(-windDirection2D.y, 0.0f, windDirection2D.x);
 
     // Coherent advection over time (moves the wind field, not the geometry directly)
@@ -133,9 +138,7 @@ PixelInput VS(VertexInput input)
     float2 windFieldCoord = (worldPositionUnbent.xz * WindFrequency) + windFlowOffset.xz;
 
     // Stable per-instance phases (derived from Angle) to keep motion consistent
-    //float phase1 = hash1(input.Angle) * 6.2831853f; // 2*pi
-
-    float phase1 = hash1(worldPositionUnbent.x * WindFrequency);
+    float phase1 = hash1(input.Angle) * 6.2831853f * WindFrequency; // 2*pi
     float phase2 = phase1;
     float phase3 = phase2;
 
@@ -146,8 +149,8 @@ PixelInput VS(VertexInput input)
         A3 * sin(dot(windFieldCoord, K3) + W3 * Time + phase3);
 
     // Map to signed sway [-1,1] and compute a smooth gust strength [0,1]
-    float swaySigned    = saturate((windSignal + 1.0f) * 0.5f) * 2.0f - 1.0f;
-    float gustStrength  = saturate(windSignal * windSignal);
+    float swaySigned = saturate((windSignal + 1.0f) * 0.5f) * 2.0f - 1.0f;
+    float gustStrength = saturate(windSignal * windSignal);
 
     // Height factor along the blade so the base stays anchored (0 at base, 1 at tip)
     float heightFactor = saturate(rotatedPosition.y / max(input.Size.y, 1e-4f));
@@ -173,32 +176,34 @@ PixelInput VS(VertexInput input)
 
     // Final world and view positions
     float3 worldPosition = input.Center + rotatedPosition;
-    float4 viewPosition  = mul(float4(worldPosition, 1.0f), View);
+    float4 viewPosition = mul(float4(worldPosition, 1.0f), View);
 
     // Clip-space position for rasterizer
-    pixelOut.Position  = mul(viewPosition, Projection);
+    pixelOut.Position = mul(viewPosition, Projection);
 
     // World-space for fog computations
-    pixelOut.WorldPos  = worldPosition;
+    pixelOut.WorldPos = worldPosition;
 
     // Positive forward distance in view space (MonoGame convention: camera looks down -Z)
     pixelOut.ViewDepth = -viewPosition.z;
 
     // Simple upward normal for billboards (used by normal buffer)
-    pixelOut.ViewNorm  = float3(0.0f, 1.0f, 0.0f);
+    pixelOut.ViewNorm = float3(0.0f, 1.0f, 0.0f);
 
     // Map quad UV (0..1) into atlas rectangle
     float2 atlasUV;
     atlasUV.x = UVRect.x + input.Tex.x * UVRect.z;
     atlasUV.y = UVRect.y + input.Tex.y * UVRect.w;
 
-    pixelOut.Tex   = atlasUV;
+    pixelOut.Tex = atlasUV;
 
     float3 colorRGB = input.InstanceCol.rgb * lateralBend;
     float4 colorOutput = float4(colorRGB, input.InstanceCol.a);
     //float4 colorOutput = input.InstanceCol;
 
     pixelOut.Color = colorOutput; // per-instance lighting tint
+
+    pixelOut.WindBend = float3(lateralBend, sideCurlOffset, gustStrength);
 
     return pixelOut;
 }
@@ -212,7 +217,7 @@ struct PixelOutput
 
 PixelOutput PS_Color(PixelInput input)
 {
-    float4 texColor  = tex2D(AtlasSampler, input.Tex);
+    float4 texColor = tex2D(AtlasSampler, input.Tex);
     float4 blockColor = texColor * input.Color;
 
     // Hard alpha cutout to prevent transparent texels from writing depth
@@ -234,6 +239,20 @@ PixelOutput PS_Color(PixelInput input)
     float3 n01 = nrm * 0.5f + 0.5f;
 
     PixelOutput o;
+
+    if (WindDebug)
+    {
+        // Map wind fields into [0,1] for visualization
+        float r = saturate(0.5f + input.WindBend.x); // along-wind bend
+        float g = saturate(input.WindBend.z);        // gust strength
+        float b = saturate(0.5f + input.WindBend.y); // inward curl
+
+        o.Color0 = float4(r * g, r * g, r * g, 1.0f);
+        o.Color1 = float4(depth01, depth01, depth01, 1.0f);
+        o.Color2 = float4(n01, 1.0f);
+        return o;
+    }
+
     o.Color0 = finalColor;
     o.Color1 = float4(depth01, depth01, depth01, 1.0f);
     o.Color2 = float4(n01, 1.0f);
