@@ -100,7 +100,7 @@ public class TerrainMesh
     {
         var graphics = Engine.Graphics;
         
-        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
         
@@ -153,7 +153,7 @@ public class TerrainMesh
     
         var graphics = Engine.Graphics;
     
-        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullNone;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
