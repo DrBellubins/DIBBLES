@@ -34,6 +34,8 @@ public class HandModel
             FogEnabled = true,
             DiffuseColor = Color.White.ToVector4()
         };
+        
+        handBlockModel.Effect =  _effect;
     }
 
     public void Draw(

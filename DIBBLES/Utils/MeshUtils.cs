@@ -8,7 +8,7 @@ namespace DIBBLES.Utils;
 // Class representing a simple textured cube mesh for MonoGame
 public class CubeMesh
 {
-    public MainSurfaceEffect Effect { get; private set; }
+    public MainSurfaceEffect Effect { get; set; }
     public Texture2D Texture { get; set; }
     
     public GraphicsDevice GraphicsDevice { get; private set; }
@@ -37,7 +37,9 @@ public class CubeMesh
             TextureEnabled = true,
             Texture = Texture,
             //LightingEnabled = false,
-            VertexColorEnabled = false
+            VertexColorEnabled = false,
+            FogEnabled = false,
+            DiffuseColor = Color.White.ToVector4()
         };
     }
 
