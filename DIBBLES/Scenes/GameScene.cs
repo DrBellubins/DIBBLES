@@ -231,7 +231,8 @@ public class GameScene : Scene
         {
             var bufferWidth = Engine.ScreenWidth / 4.0f;
             var bufferHeight = Engine.ScreenHeight / 4.0f;
-            var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            //var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            var tesBuffer = postProcessingManager.bloom.BloomOutput;
             
             UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
@@ -239,7 +240,7 @@ public class GameScene : Scene
             UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
             
-            UIBatch.Draw(aoBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
+            UIBatch.Draw(tesBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
         }
         

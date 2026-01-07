@@ -10,107 +10,156 @@ public class BloomEffect : PostProcessingEffect
     public float Intensity { get; set; }
     public float Radius { get; set; }
     
-    public const float BloomStrength1 = 0.5f;
-    public const float BloomStrength2 = 1;
-    public const float BloomStrength3 = 2;
-    public const float BloomStrength4 = 1;
-    public const float BloomStrength5 = 2;
-    
-    public const float BloomRadius1 = 1.0f;
-    public const float BloomRadius2 = 2.0f;
-    public const float BloomRadius3 = 2.0f;
-    public const float BloomRadius4 = 4.0f;
-    public const float BloomRadius5 = 4.0f;
-    
+    public RenderTarget2D BloomOutput;
     public List<RenderTarget2D> BloomRenderTargets = new();
     
-    private RenderTarget2D bloomMip0;
-    
     private Effect bloomEffect;
+    private VertexBuffer quadVertexBuffer;
+    private IndexBuffer quadIndexBuffer;
     
     public override void Start(int width, int height)
     {
-        int rtWidth = width;
-        int rtHeight = height;
-        
-        
-        bloomEffect = Engine.Instance.Content.Load<Effect>("Effects/Bloom");
-
-        bloomMip0 = new RenderTarget2D(Graphics, width, height);
-        
-        BloomRenderTargets.Add(bloomMip0);
-        
-        for (int i = 0; i < SampleCount; i++)
-        {
-            rtWidth /= 2;
-            rtHeight /= 2;
-            
-            var renderTarget = new RenderTarget2D(Graphics, rtWidth, rtHeight);
-            BloomRenderTargets.Add(renderTarget);
-        }
+        bloomEffect = Engine.Instance.Content.Load<Effect>("Shaders/Bloom");
+        ensureFullscreenQuad();
+        buildChain(width, height);
     }
 
     public override void DrawStart()
     {
-        // Downsample
-        var bloomInput = bloomMip0;
-        bloomEffect.Parameters["IsDownsample"]?.SetValue(true);
 
-        for (int i = 0; i < SampleCount; ++i)
-        {
-            var downsampleRT = BloomRenderTargets[i];
-            
-            int width = downsampleRT.Width;
-            int height = downsampleRT.Height;
-            
-            Vector2 currentTexelSize = new Vector2(1.0f / width, 1.0f / height);
-
-            bloomEffect.Parameters["TexelSize"]?.SetValue(currentTexelSize);
-
-            Scaler.SetInput(bloomInput);
-            Scaler.SetOutput(downsampleRT);
-            Scaler.Draw(context, $"Bloom downsample {i}");
-
-            bloomInput = downsampleRT;
-        }
-        
-        // Upsample
-        bloomEffect.Parameters["IsDownsample"]?.SetValue(false);
-
-        var intensityIterator = Intensity;
-        var radiusIterator = Radius;
-        
-        for (int i = 0; i < SampleCount; ++i)
-        {
-            var upsampleRT = BloomRenderTargets[i];
-            
-            int width = upsampleRT.Width;
-            int height = upsampleRT.Height;
-            
-            Vector2 currentTexelSize = new Vector2(1.0f / width, 1.0f / height);
-            
-            intensityIterator -= Intensity / 2;
-            radiusIterator -= Radius / 2;
-
-            bloomEffect.Parameters["TexelSize"]?.SetValue(currentTexelSize);
-            bloomEffect.Parameters["Intensity"]?.SetValue(intensityIterator);
-            bloomEffect.Parameters["Radius"]?.SetValue(radiusIterator);
-
-            Scaler.SetInput(bloomInput);
-            Scaler.SetOutput(upsampleRT);
-            Scaler.Draw(context, $"Bloom upsample {i}");
-
-            bloomInput = upsampleRT;
-        }
     }
 
     public override void DrawEnd()
     {
         
     }
-
+    
+    // Main apply entry (call this from your post manager)
+    public void Apply(RenderTarget2D scene, RenderTarget2D destination)
+    {
+        if (BloomRenderTargets == null || BloomRenderTargets.Count != Math.Max(1, SampleCount) ||
+            BloomRenderTargets[0].Width * 2 != scene.Width || BloomRenderTargets[0].Height * 2 != scene.Height)
+        {
+            buildChain(scene.Width, scene.Height);
+        }
+    
+        // Downsample
+        Texture2D current = scene;
+    
+        for (int i = 0; i < BloomRenderTargets.Count; i++)
+        {
+            var texel = new Vector2(1f / current.Width, 1f / current.Height);
+    
+            bloomEffect.Parameters["SourceTex"]?.SetValue(current);
+            bloomEffect.Parameters["TexelSize"]?.SetValue(texel);
+    
+            drawPass(BloomRenderTargets[i], bloomEffect, "BloomDownsample");
+            current = BloomRenderTargets[i];
+        }
+    
+        // Upsample
+        Texture2D up = BloomRenderTargets[^1];
+        float intensityIter = Math.Max(0f, Intensity);
+        float radiusIter = Math.Max(0.0001f, Radius);
+    
+        for (int i = BloomRenderTargets.Count - 2; i >= 0; i--)
+        {
+            var texel = new Vector2(1f / up.Width, 1f / up.Height);
+    
+            intensityIter = Math.Max(0f, intensityIter - (Intensity * 0.5f));
+            radiusIter = Math.Max(0.0001f, radiusIter - (Radius * 0.5f));
+    
+            bloomEffect.Parameters["SourceTex"]?.SetValue(up);
+            bloomEffect.Parameters["TexelSize"]?.SetValue(texel);
+            bloomEffect.Parameters["Intensity"]?.SetValue(intensityIter);
+            bloomEffect.Parameters["Radius"]?.SetValue(radiusIter);
+    
+            drawPass(BloomRenderTargets[i], bloomEffect, "BloomUpsample");
+            up = BloomRenderTargets[i];
+        }
+    
+        // Combine
+        bloomEffect.Parameters["SceneTex"]?.SetValue(scene);
+        bloomEffect.Parameters["BloomTex"]?.SetValue(up);
+        bloomEffect.Parameters["BloomIntensity"]?.SetValue(Intensity);
+    
+        drawPass(destination, bloomEffect, "BloomCombine");
+    }
+    
+    // Optional: dispose resources
     public override void Dispose()
     {
+        for (int i = 0; i < BloomRenderTargets.Count; i++)
+            BloomRenderTargets[i]?.Dispose();
+    
+        quadVertexBuffer?.Dispose();
+        quadIndexBuffer?.Dispose();
+    }
+    
+    // Create fullscreen quad in clip space [-1,1]
+    private void ensureFullscreenQuad()
+    {
+        var verts = new VertexPositionTexture[4];
+
+        verts[0] = new VertexPositionTexture(new Vector3(-1, -1, 0), new Vector2(0, 1));
+        verts[1] = new VertexPositionTexture(new Vector3( 1, -1, 0), new Vector2(1, 1));
+        verts[2] = new VertexPositionTexture(new Vector3( 1,  1, 0), new Vector2(1, 0));
+        verts[3] = new VertexPositionTexture(new Vector3(-1,  1, 0), new Vector2(0, 0));
+
+        short[] idx = { 0, 1, 2, 0, 2, 3 };
+
+        quadVertexBuffer = new VertexBuffer(Graphics, typeof(VertexPositionTexture), verts.Length, BufferUsage.WriteOnly);
+        quadVertexBuffer.SetData(verts);
+
+        quadIndexBuffer = new IndexBuffer(Graphics, IndexElementSize.SixteenBits, idx.Length, BufferUsage.WriteOnly);
+        quadIndexBuffer.SetData(idx);
+    }
+    
+    // Allocate chain sized from source
+    private void buildChain(int width, int height)
+    {
+        for (int i = 0; i < BloomRenderTargets.Count; i++)
+            BloomRenderTargets[i]?.Dispose();
+
+        int count = Math.Max(1, SampleCount);
+
+        int rtWidth = width;
+        int rtHeight = height;
         
+        BloomOutput = new RenderTarget2D(Graphics, width, height);
+        
+        BloomRenderTargets.Add(BloomOutput);
+
+        for (int i = 0; i < count; i++)
+        {
+            rtWidth = Math.Max(1, rtWidth / 2);
+            rtHeight = Math.Max(1, rtHeight / 2);
+
+            var renderTarget = new RenderTarget2D(Graphics, rtWidth, rtHeight, false, SurfaceFormat.Color, DepthFormat.None);
+            BloomRenderTargets.Add(renderTarget);
+        }
+    }
+    
+    // Draw one pass
+    private void drawPass(RenderTarget2D target, Effect fx, string technique)
+    {
+        Graphics.SetRenderTarget(target);
+        Graphics.Clear(Color.Transparent);
+
+        fx.CurrentTechnique = fx.Techniques[technique];
+
+        Graphics.SetVertexBuffer(quadVertexBuffer);
+        Graphics.Indices = quadIndexBuffer;
+
+        foreach (var pass in fx.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+        }
+
+        Graphics.SetVertexBuffer(null);
+        Graphics.Indices = null;
+
+        Graphics.SetRenderTarget(null);
     }
 }

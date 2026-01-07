@@ -31,3 +31,6 @@
 
 # Build the main surface shader
 /build:Shaders/MainSurfaceEffect.fx
+
+# Build the bloom shader
+/build:Shaders/Bloom.fx
