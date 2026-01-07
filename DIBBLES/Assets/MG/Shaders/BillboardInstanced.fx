@@ -124,9 +124,11 @@ PixelInput VS(VertexInput input)
     float2 windFieldCoord = (worldPositionUnbent.xz * WindFrequency) + windFlowOffset.xz;
 
     // Stable per-instance phases (derived from Angle) to keep motion consistent
-    float phase1 = hash1(input.Angle) * 6.2831853f; // 2*pi
-    float phase2 = phase1;
-    float phase3 = phase1;
+    //float phase1 = hash1(input.Angle) * 6.2831853f; // 2*pi
+
+    float phase1 = hash1(worldPositionUnbent.x);
+    float phase2 = hash1(worldPositionUnbent.y);
+    float phase3 = hash1(worldPositionUnbent.z);
 
     // Smooth wind signal in approximately [-1,1] using 3 harmonics
     float windSignal =
@@ -185,6 +187,7 @@ PixelInput VS(VertexInput input)
 
     float3 colorRGB = input.InstanceCol.rgb * windSignal;
     float4 colorOutput = float4(colorRGB, input.InstanceCol.a);
+    //float4 colorOutput = input.InstanceCol;
 
     pixelOut.Color = colorOutput; // per-instance lighting tint
 
