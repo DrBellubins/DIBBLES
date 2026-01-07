@@ -49,6 +49,7 @@ public class BloomEffect : PostProcessingEffect
         Graphics.BlendState = BlendState.Opaque;
         Graphics.DepthStencilState = DepthStencilState.None;
         Graphics.RasterizerState = RasterizerState.CullNone;
+        Graphics.SamplerStates[0] = SamplerState.LinearClamp;
     
         // Bind fullscreen quad
         Graphics.SetVertexBuffer(quadVertexBuffer);
@@ -93,7 +94,9 @@ public class BloomEffect : PostProcessingEffect
         BloomOutput = BloomRenderTargets[0];
     
         // Combine into our OutputBuffer (screen blend in shader)
+        var previousViewport = Graphics.Viewport;
         Graphics.SetRenderTarget(OutputBuffer);
+        Graphics.Viewport = new Viewport(0, 0, OutputBuffer.Width, OutputBuffer.Height);
         Graphics.Clear(Color.Black);
 
         bloomEffect.Parameters["SceneTex"]?.SetValue(ColorBuffer);
@@ -102,15 +105,14 @@ public class BloomEffect : PostProcessingEffect
 
         bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomCombine"];
 
-        // Ensure fullscreen quad buffers are bound for the final pass
-        Graphics.SetVertexBuffer(quadVertexBuffer);
-        Graphics.Indices = quadIndexBuffer;
-
         foreach (var pass in bloomEffect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
+
+        // Restore viewport and leave RT unbound to the manager's DrawEnd
+        Graphics.Viewport = previousViewport;
     }
 
     // Unbind and restore default RT
@@ -200,11 +202,15 @@ public class BloomEffect : PostProcessingEffect
     // Draw one pass
     private void drawPass(RenderTarget2D target, Effect fx, string technique)
     {
+        var previousViewport = Graphics.Viewport;
+
         Graphics.SetRenderTarget(target);
+        Graphics.Viewport = new Viewport(0, 0, target.Width, target.Height);
         Graphics.Clear(Color.Black);
 
         fx.CurrentTechnique = fx.Techniques[technique];
 
+        // Ensure quad is bound (safe to rebind here)
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
 
@@ -214,7 +220,8 @@ public class BloomEffect : PostProcessingEffect
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
 
-        // Do not unbind here; keep quad bound for subsequent passes
+        // Restore viewport and unbind RT
+        Graphics.Viewport = previousViewport;
         Graphics.SetRenderTarget(null);
     }
 }

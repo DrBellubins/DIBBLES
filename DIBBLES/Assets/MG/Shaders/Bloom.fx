@@ -89,13 +89,14 @@ float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float4 c12 = tex2D(SourceSampler, uv + float2( 2,  2) * o);
 
     float4 r =
-        Box4(c0, c1, c5, c6)   * 0.125f +
-        Box4(c1, c2, c6, c7)   * 0.125f +
-        Box4(c5, c6, c10, c11) * 0.125f +
-        Box4(c6, c7, c11, c12) * 0.125f +
-        Box4(c3, c4, c8, c9)   * 0.5f;
+    Box4(c0, c1, c5, c6)   * 0.125f +
+    Box4(c1, c2, c6, c7)   * 0.125f +
+    Box4(c5, c6, c10, c11) * 0.125f +
+    Box4(c6, c7, c11, c12) * 0.125f +
+    Box4(c3, c4, c8, c9)   * 0.5f;
 
-    return r;
+    // Force visible alpha so debug draw with AlphaBlend shows content
+    return float4(r.rgb, 1.0f);
 }
 
 float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
@@ -113,7 +114,10 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float4 c8 = tex2D(SourceSampler, uv + float2( 1,  1) * o);
 
     float4 tent = 0.0625f * (c0 + 2*c1 + c2 + 2*c3 + 4*c4 + 2*c5 + c6 + 2*c7 + c8);
-    return tent * Intensity;
+    float3 rgb = tent.rgb * Intensity;
+
+    // Force visible alpha
+    return float4(rgb, 1.0f);
 }
 
 float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
