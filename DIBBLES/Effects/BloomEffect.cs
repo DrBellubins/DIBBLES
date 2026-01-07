@@ -19,6 +19,9 @@ public class BloomEffect : PostProcessingEffect
     
     public override void Start(int width, int height)
     {
+        // Allocate OutputBuffer (effectBuffer) in base
+        base.Start(width, height);
+        
         bloomEffect = Engine.Instance.Content.Load<Effect>("Shaders/Bloom");
         ensureFullscreenQuad();
         buildChain(width, height);
@@ -33,6 +36,7 @@ public class BloomEffect : PostProcessingEffect
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
+            Console.WriteLine("NULL");
             return;
         }
     
