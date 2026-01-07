@@ -71,7 +71,20 @@ public class SSAOPostProcess : PostProcessingEffect
     public override void DrawStart()
     {
         if (!AOEnabled)
+        {
+            // Ensure our output is transparent this frame so composite draws nothing.
+            Graphics.SetRenderTarget(OutputBuffer);
+            Graphics.Clear(Color.Transparent);
+        
+            // Restore default RT immediately.
+            Graphics.SetRenderTarget(null);
+        
+            // Also ensure no stray buffers are left bound.
+            Graphics.SetVertexBuffer(null);
+            Graphics.Indices = null;
+        
             return;
+        }
         
         // State
         Graphics.BlendState = BlendState.Opaque;
@@ -169,9 +182,6 @@ public class SSAOPostProcess : PostProcessingEffect
 
     public override void DrawEnd()
     {
-        if (!AOEnabled)
-            return;
-        
         // Unbind to avoid leaking state into other draws
         Graphics.SetVertexBuffer(null);
         Graphics.Indices = null;

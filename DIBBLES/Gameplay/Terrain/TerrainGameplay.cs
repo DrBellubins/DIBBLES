@@ -20,7 +20,7 @@ public class TerrainGameplay
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
     public void Draw()
     {
-        if (SelectedBlock.Type != BlockType.Air)
+        if (SelectedBlock.Type != BlockType.Air && GameScene.UIEnabled)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);

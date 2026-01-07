@@ -101,7 +101,6 @@ public class GameScene : Scene
         Commands.Register("db", "Toggle debug information", Debug.ToggleDebug);
         Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebug);
         Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
-        Commands.Register("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
         Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
         Commands.Register("ao", "Toggle ambient occlusion", toggleAOCMD);
     }
@@ -166,13 +165,25 @@ public class GameScene : Scene
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
         TerrainGen.Draw();
-        TerrainGeneration.Gameplay.Draw();
-        
         PlayerCharacter.Draw();
         
+        // Switch to single target with the same depth-stencil to preserve terrain depth
+        graphics.SetRenderTarget(BackBuffer);
+    
+        // Depth test on, depth writes off so overlays don't modify the depth buffer
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.DepthRead;
+        graphics.RasterizerState = RasterizerState.CullNone;
+    
+        // Draw block overlays here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
+        TerrainGeneration.Gameplay.Draw();
         Debug.Draw3D();
-        
-        // Restore to single target for UI and post
+    
+        // Restore default depth state for subsequent passes
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+
+        // Restore to screen/backbuffer for UI and post
         graphics.SetRenderTarget(null);
         
         // Draw UI (UI Batch)
@@ -235,15 +246,13 @@ public class GameScene : Scene
         
         UIBatch.End();
         
+        // Toggle UI
+        if (Input.IsKeyPressed(Keys.F1))
+            UIEnabled = !UIEnabled;
+        
         // Take screenshot after full scene composite, but before UI
         if (Input.IsKeyPressed(Keys.F2))
             takeScreenshot(graphics);
-    }
-
-    private void toggleUICMD(string[] args)
-    {
-        UIEnabled = !UIEnabled;
-        Chat.Write($"Toggled UI: {UIEnabled}", ChatMessageType.Command);
     }
     
     private void toggleBBDCMD(string[] args)
@@ -255,7 +264,7 @@ public class GameScene : Scene
     private void toggleAOCMD(string[] args)
     {
         SSAOPostProcess.AOEnabled = !SSAOPostProcess.AOEnabled;
-        Chat.Write($"Toggled ambient occlusion: {backBuffersDebug}", ChatMessageType.Command);
+        Chat.Write($"Toggled ambient occlusion: {SSAOPostProcess.AOEnabled}", ChatMessageType.Command);
     }
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
