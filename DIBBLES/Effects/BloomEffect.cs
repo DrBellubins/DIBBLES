@@ -37,8 +37,10 @@ public class BloomEffect : PostProcessingEffect
     // Main apply entry (call this from your post manager)
     public void Apply(RenderTarget2D scene, RenderTarget2D destination)
     {
-        if (BloomRenderTargets == null || BloomRenderTargets.Count != Math.Max(1, SampleCount) ||
-            BloomRenderTargets[0].Width * 2 != scene.Width || BloomRenderTargets[0].Height * 2 != scene.Height)
+        if (BloomRenderTargets == null
+            || BloomRenderTargets.Count != SampleCount + 1
+            || BloomRenderTargets[0].Width != scene.Width
+            || BloomRenderTargets[0].Height != scene.Height)
         {
             buildChain(scene.Width, scene.Height);
         }
@@ -121,22 +123,44 @@ public class BloomEffect : PostProcessingEffect
         for (int i = 0; i < BloomRenderTargets.Count; i++)
             BloomRenderTargets[i]?.Dispose();
 
+        BloomRenderTargets.Clear();
+
+        BloomOutput?.Dispose();
+        BloomOutput = new RenderTarget2D(
+            Graphics,
+            width,
+            height,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+
+        BloomRenderTargets.Add(BloomOutput);
+
         int count = Math.Max(1, SampleCount);
 
         int rtWidth = width;
         int rtHeight = height;
-        
-        BloomOutput = new RenderTarget2D(Graphics, width, height);
-        
-        BloomRenderTargets.Add(BloomOutput);
 
         for (int i = 0; i < count; i++)
         {
             rtWidth = Math.Max(1, rtWidth / 2);
             rtHeight = Math.Max(1, rtHeight / 2);
 
-            var renderTarget = new RenderTarget2D(Graphics, rtWidth, rtHeight, false, SurfaceFormat.Color, DepthFormat.None);
-            BloomRenderTargets.Add(renderTarget);
+            var rt = new RenderTarget2D(
+                Graphics,
+                rtWidth,
+                rtHeight,
+                false,
+                SurfaceFormat.Color,
+                DepthFormat.None,
+                0,
+                RenderTargetUsage.PreserveContents
+            );
+
+            BloomRenderTargets.Add(rt);
         }
     }
     
