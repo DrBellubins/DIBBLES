@@ -103,6 +103,7 @@ public class GameScene : Scene
         Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebug);
         Commands.Register("ui", "Toggle UI, Debug.ToggleLightDebug", toggleUICMD);
         Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
+        Commands.Register("ao", "Toggle ambient occlusion", toggleAOCMD);
     }
 
     private int fpsCounter;
@@ -249,6 +250,12 @@ public class GameScene : Scene
     {
         backBuffersDebug = !backBuffersDebug;
         Chat.Write($"Toggled back buffer debug: {backBuffersDebug}", ChatMessageType.Command);
+    }
+
+    private void toggleAOCMD(string[] args)
+    {
+        SSAOPostProcess.AOEnabled = !SSAOPostProcess.AOEnabled;
+        Chat.Write($"Toggled ambient occlusion: {backBuffersDebug}", ChatMessageType.Command);
     }
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
