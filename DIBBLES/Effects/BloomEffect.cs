@@ -7,8 +7,8 @@ public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 4;
     
-    public float Intensity { get; set; }
-    public float Radius { get; set; }
+    public float Intensity { get; set; } = 1.0f;
+    public float Radius { get; set; } = 1.0f;
     
     public RenderTarget2D BloomOutput;
     public List<RenderTarget2D> BloomRenderTargets = new();
@@ -24,42 +24,51 @@ public class BloomEffect : PostProcessingEffect
         buildChain(width, height);
     }
 
+    // Main draw
     public override void DrawStart()
     {
-
-    }
-
-    public override void DrawEnd()
-    {
-        
-    }
-    
-    // Main apply entry (call this from your post manager)
-    public void Apply(RenderTarget2D scene, RenderTarget2D destination)
-    {
-        if (BloomRenderTargets == null
-            || BloomRenderTargets.Count != SampleCount + 1
-            || BloomRenderTargets[0].Width != scene.Width
-            || BloomRenderTargets[0].Height != scene.Height)
+        // Early out if no source
+        if (ColorBuffer == null)
         {
-            buildChain(scene.Width, scene.Height);
+            Graphics.SetRenderTarget(OutputBuffer);
+            Graphics.Clear(Color.Transparent);
+            Graphics.SetRenderTarget(null);
+            return;
         }
     
-        // Downsample
-        Texture2D current = scene;
+        // Ensure chain matches source size
+        if (BloomRenderTargets == null
+            || BloomRenderTargets.Count != SampleCount + 1
+            || BloomRenderTargets[0].Width != ColorBuffer.Width
+            || BloomRenderTargets[0].Height != ColorBuffer.Height)
+        {
+            buildChain(ColorBuffer.Width, ColorBuffer.Height);
+        }
+    
+        // Render states (consistent with SSAO)
+        Graphics.BlendState = BlendState.Opaque;
+        Graphics.DepthStencilState = DepthStencilState.None;
+        Graphics.RasterizerState = RasterizerState.CullNone;
+    
+        // Bind fullscreen quad
+        Graphics.SetVertexBuffer(quadVertexBuffer);
+        Graphics.Indices = quadIndexBuffer;
+    
+        // Downsample chain
+        Texture2D src = ColorBuffer;
     
         for (int i = 0; i < BloomRenderTargets.Count; i++)
         {
-            var texel = new Vector2(1f / current.Width, 1f / current.Height);
+            var texel = new Vector2(1f / src.Width, 1f / src.Height);
     
-            bloomEffect.Parameters["SourceTex"]?.SetValue(current);
+            bloomEffect.Parameters["SourceTex"]?.SetValue(src);
             bloomEffect.Parameters["TexelSize"]?.SetValue(texel);
     
             drawPass(BloomRenderTargets[i], bloomEffect, "BloomDownsample");
-            current = BloomRenderTargets[i];
+            src = BloomRenderTargets[i];
         }
     
-        // Upsample
+        // Upsample back up
         Texture2D up = BloomRenderTargets[^1];
         float intensityIter = Math.Max(0f, Intensity);
         float radiusIter = Math.Max(0.0001f, Radius);
@@ -80,15 +89,35 @@ public class BloomEffect : PostProcessingEffect
             up = BloomRenderTargets[i];
         }
     
-        // Combine
-        bloomEffect.Parameters["SceneTex"]?.SetValue(scene);
-        bloomEffect.Parameters["BloomTex"]?.SetValue(up);
+        // Expose full-res bloom layer for buffer debug
+        BloomOutput = BloomRenderTargets[0];
+    
+        // Combine into our OutputBuffer (screen blend in shader)
+        Graphics.SetRenderTarget(OutputBuffer);
+        Graphics.Clear(Color.Transparent);
+    
+        bloomEffect.Parameters["SceneTex"]?.SetValue(ColorBuffer);
+        bloomEffect.Parameters["BloomTex"]?.SetValue(BloomOutput);
         bloomEffect.Parameters["BloomIntensity"]?.SetValue(Intensity);
     
-        drawPass(destination, bloomEffect, "BloomCombine");
+        bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomCombine"];
+    
+        foreach (var pass in bloomEffect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+        }
+    }
+
+    // Unbind and restore default RT
+    public override void DrawEnd()
+    {
+        Graphics.SetVertexBuffer(null);
+        Graphics.Indices = null;
+        Graphics.SetRenderTarget(null);
     }
     
-    // Optional: dispose resources
+    // Dispose resources
     public override void Dispose()
     {
         for (int i = 0; i < BloomRenderTargets.Count; i++)
