@@ -70,8 +70,12 @@ public class SSAOPostProcess : PostProcessingEffect
     {
         // State
         Graphics.BlendState = BlendState.Opaque;
-        Graphics. DepthStencilState = DepthStencilState.None;
-        Graphics. RasterizerState = RasterizerState.CullNone;
+        Graphics.DepthStencilState = DepthStencilState.None;
+        Graphics.RasterizerState = RasterizerState.CullNone;
+    
+        // Bind fullscreen quad buffers BEFORE drawing
+        Graphics.SetVertexBuffer(vertexBuffer);
+        Graphics.Indices = indexBuffer;
     
         // Set G-buffer textures
         effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
@@ -83,15 +87,15 @@ public class SSAOPostProcess : PostProcessingEffect
         var invProj = Matrix.Invert(proj);
     
         effect.Parameters["Projection"]?.SetValue(proj);
-        effect.Parameters["InvProjection"]?. SetValue(invProj);
+        effect.Parameters["InvProjection"]?.SetValue(invProj);
         effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-        effect.Parameters["CameraFar"]?. SetValue(GameScene.PlayerCharacter. Camera.FarPlane);
+        effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
         effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
     
         float tanHalfFovY = 1.0f / proj.M22;
         float aspectRatio = proj.M22 / proj.M11;
     
-        effect.Parameters["TanHalfFovY"]?. SetValue(tanHalfFovY);
+        effect.Parameters["TanHalfFovY"]?.SetValue(tanHalfFovY);
         effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
     
         var noiseScale = new Vector2(
@@ -101,53 +105,53 @@ public class SSAOPostProcess : PostProcessingEffect
     
         effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
     
-        effect.Parameters["radius"]?.SetValue(0.30f);
+        effect.Parameters["radius"]?.SetValue(0.5f);
         effect.Parameters["bias"]?.SetValue(0.02f);
-        effect.Parameters["total_strength"]?.SetValue(1.1f);
+        effect.Parameters["total_strength"]?.SetValue(1.3f);
         effect.Parameters["base_ao"]?.SetValue(0.05f);
-
+    
         // Pass 1: SSAO -> SSAOTarget
         Graphics.SetRenderTarget(SSAOTarget);
         Graphics.Clear(Color.White);
         effect.CurrentTechnique = effect.Techniques["SSAO"];
-
+    
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-
+    
         // Pass 2: BlurH (read SSAOTarget, write SSAOBlurTarget)
         Graphics.SetRenderTarget(SSAOBlurTarget);
         Graphics.Clear(Color.White);
         effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
         effect.CurrentTechnique = effect.Techniques["BlurH"];
-
+    
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-
+    
         // Pass 3: BlurV (read SSAOBlurTarget, write SSAOTarget)
         Graphics.SetRenderTarget(SSAOTarget);
         Graphics.Clear(Color.White);
         effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
         effect.CurrentTechnique = effect.Techniques["BlurV"];
-
+    
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-
+    
         // Pass 4: Composite (use blurred AO in SSAOTarget)
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Clear(Color.Transparent);
         effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
         effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
         effect.CurrentTechnique = effect.Techniques["Composite"];
-
+    
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
@@ -157,6 +161,10 @@ public class SSAOPostProcess : PostProcessingEffect
 
     public override void DrawEnd()
     {
+        // Unbind to avoid leaking state into other draws
+        Graphics.SetVertexBuffer(null);
+        Graphics.Indices = null;
+
         Graphics.SetRenderTarget(null);
     }
 
