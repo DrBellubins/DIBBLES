@@ -8,12 +8,14 @@ namespace DIBBLES.Utils;
 // Class representing a simple textured cube mesh for MonoGame
 public class CubeMesh
 {
+    public MainSurfaceEffect Effect { get; private set; }
+    public Texture2D Texture { get; set; }
+    
+    public GraphicsDevice GraphicsDevice { get; private set; }
+    
     public VertexBuffer VertexBuffer { get; private set; }
     public IndexBuffer IndexBuffer { get; private set; }
-    public Texture2D Texture { get; set; }
-    public MainSurfaceEffect Effect { get; private set; }
-    public GraphicsDevice GraphicsDevice { get; private set; }
-
+    
     // Generates a 0.5 unit size textured cube mesh
     public CubeMesh(GraphicsDevice graphicsDevice, Texture2D texture)
     {
@@ -128,6 +130,9 @@ public class CubeMesh
         Effect.World = world;
         Effect.View = view;
         Effect.Projection = projection;
+
+        // Ensure technique selection (TextureEnabled/VertexColorEnabled/FogEnabled) is applied
+        Effect.Apply();
 
         foreach (var pass in Effect.CurrentTechnique.Passes)
         {

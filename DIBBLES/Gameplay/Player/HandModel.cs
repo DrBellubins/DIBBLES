@@ -1,4 +1,6 @@
+using DIBBLES.Effects;
 using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using Microsoft.Xna.Framework;
 using DIBBLES.Terrain;
@@ -11,8 +13,8 @@ namespace DIBBLES.Gameplay.Player;
 public class HandModel
 {
     private CubeMesh handBlockModel;
-    
     private Camera3D handCamera;
+    private MainSurfaceEffect _effect;
     
     public void Start()
     {
@@ -24,6 +26,14 @@ public class HandModel
         handCamera.Up = new Vector3(0.0f, 1.0f, 0.0f);
         handCamera.Fov = 60.0f;
         handCamera.SetPerspective();
+        
+        _effect = new MainSurfaceEffect(Engine.Graphics)
+        {
+            TextureEnabled = true,
+            VertexColorEnabled = true,
+            FogEnabled = true,
+            DiffuseColor = Color.White.ToVector4()
+        };
     }
 
     public void Draw(
@@ -45,20 +55,20 @@ public class HandModel
         handCamera.Target = camera.Target;
         handCamera.Up = camera.Up;
         
-        handBlockModel.Effect.LightingEnabled = true;
+        /*handBlockModel.Effect.LightingEnabled = true;
         handBlockModel.Effect.AmbientLightColor = new Vector3(0.9f, 0.9f, 0.9f);
         
         handBlockModel.Effect.DirectionalLight0.Enabled = true;
         handBlockModel.Effect.DirectionalLight0.Direction = Vector3.Normalize(new Vector3(-1.0f, -1.0f, -1.0f));
         handBlockModel.Effect.DirectionalLight0.DiffuseColor = new Vector3(1.0f, 1.0f, 1.0f);
-        handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);
+        handBlockModel.Effect.DirectionalLight0.SpecularColor = new Vector3(0f, 0f, 0f);*/
 
-        var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
-        handBlockModel.Effect.DiffuseColor = new Vector3(lightLevelFixed, lightLevelFixed, lightLevelFixed);
+        /*var lightLevelFixed = MathF.Max(0.1f, lightLevel * 0.06f); // Prevent fully dark, this matches FaceUtils.ToColor
+        handBlockModel.Effect.DiffuseColor = new Vector4(lightLevelFixed, lightLevelFixed, lightLevelFixed, 1.0f);*/
         
         // Set the hand model texture
-        Texture2D texture = BlockData.Textures[(selectedItem.Type, 0)];
-        MeshUtils.SetCubeMeshTexture(handBlockModel, texture);
+        /*Texture2D texture = BlockData.Textures[(selectedItem.Type, 0)];
+        MeshUtils.SetCubeMeshTexture(handBlockModel, texture);*/
 
         // Position relative to camera
         float forwardDistance = 0.7f;
@@ -88,7 +98,22 @@ public class HandModel
         Matrix view = handCamera.View;
         Matrix projection = handCamera.Projection;
 
-        // Draw the model
-        handBlockModel.Draw(world, view, projection);
+        // If you set a hand texture, assign it:
+        _effect.Texture = BlockData.Textures[(selectedItem.Type, 0)];
+
+        // In the hand draw path, set matrices and apply before drawing passes
+        _effect.World = world;
+        _effect.View = view;
+        _effect.Projection = projection;
+
+        _effect.Apply();
+        
+        foreach (var pass in _effect.CurrentTechnique.Passes)
+        {
+            pass.Apply();
+            
+            // Draw the model
+            handBlockModel.Draw(world, view, projection);
+        }
     }
 }

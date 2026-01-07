@@ -297,6 +297,26 @@ public class MainSurfaceEffect
         if (tech != null)
             _effect.CurrentTechnique = tech;
     }
+    
+    public EffectTechnique CurrentTechnique
+    {
+        get
+        {
+            return _effect.CurrentTechnique;
+        }
+        set
+        {
+            _effect.CurrentTechnique = value;
+        }
+    }
+
+    public EffectTechniqueCollection Techniques
+    {
+        get
+        {
+            return _effect.Techniques;
+        }
+    }
 
     private readonly Effect _effect;
 
