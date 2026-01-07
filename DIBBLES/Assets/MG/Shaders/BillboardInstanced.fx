@@ -17,37 +17,20 @@ float4 UVRect;
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
-// Wind parameters (set from C# as needed; keep simple and fast)
 // Time drives advection of a coherent world-space field.
-// WindDir is XZ direction; WindFrequency controls spatial scale.
-// WindAmplitude controls lateral bend; BendExponent increases bend toward the tip.
-// SideCurlAmount scales inward curl; SideCurlExponent controls height falloff.
 float Time;
 
-static const bool WindDebug = true;
-static const float2 WindDir = float2(1.0f, 0.0f);
-static const float  WindSpeed = 0.6f;
-static const float  WindFrequency = 0.4f;
-static const float  WindAmplitude = 0.15f;
-static const float  BendExponent = 2.0f;
-static const float  SideCurlAmount = 0.45f;
-static const float  SideCurlExponent = 1.2f;
+// Debug toggle
+static const bool WindDebug = false;
 
-// Band-limited sinusoid field settings (2–3 harmonics)
-// Spatial wavevectors (in 2D XZ); magnitudes are later scaled by WindFrequency
-static const float2 K1 = float2(0.8f, 0.3f);
-static const float2 K2 = float2(-0.4f, 1.1f);
-static const float2 K3 = float2(0.2f, -0.7f);
-
-// Temporal angular frequencies (radians/sec), modestly separated bands
-static const float W1 = 0.9f;
-static const float W2 = 1.6f;
-static const float W3 = 2.3f;
-
-// Harmonic weights (must sum <= 1 to keep [-1,1] range)
-static const float A1 = 0.6f;
-static const float A2 = 0.3f;
-static const float A3 = 0.1f;
+// Wind parameters (kept simple and fast)
+static const float2 WindDir = float2(1.0f, 0.0f); // XZ direction
+static const float  WindSpeed = 0.6f;             // advection speed
+static const float  WindFrequency = 0.4f;         // spatial scale
+static const float  WindAmplitude = 0.15f;        // lateral bend scale
+static const float  BendExponent = 2.0f;          // bend grows toward tip
+static const float  SideCurlAmount = 0.45f;       // inward curl magnitude
+static const float  SideCurlExponent = 1.2f;      // curl grows toward tip
 
 sampler2D AtlasSampler = sampler_state
 {
@@ -76,28 +59,67 @@ struct PixelInput
     float  ViewDepth: TEXCOORD2;
     float3 ViewNorm : TEXCOORD3;
 
-    // Add wind debug payload
-    float3 WindBend : TEXCOORD4; // x=lateralBend, y=sideCurlOffset, z = gustStrength
+    // Wind debug payload
+    float3 WindBend : TEXCOORD4; // x=lateralBend, y=sideCurlOffset, z=gustStrength
 };
 
-// Small per-instance phase jitter derived from Angle
+// Hash helpers
 float hash1(float x)
 {
     return frac(sin(x * 12.9898f) * 43758.5453f);
 }
 
-// Value-noise hash
-float rand11(float2 p)
+// Quasi-random unit direction on the circle from a scalar “seed”
+float2 unitDir(float h)
 {
-    return frac(sin(dot(p, float2(12.9898f, 78.233f))) * 43758.5453f);
+    float a = 6.2831853f * frac(sin(h * 19.19f) * 43758.5453f);
+    return float2(cos(a), sin(a));
 }
 
-// Smooth bilinear blend helper (value noise)
-float bilerp(float a00, float a10, float a01, float a11, float2 w)
+// Parameters for multi-wave sums
+#define MAIN_WAVES 7   // try 5 if you need cheaper
+#define GUST_WAVES 4   // try 3 if you need cheaper
+
+// Band-limited isotropic “random waves” field (sum of plane waves)
+float randomWaves(float2 p, float t, float baseSeed, float kMin, float kMax, float wMin, float wMax)
 {
-    float ax0 = lerp(a00, a10, w.x);
-    float ax1 = lerp(a01, a11, w.x);
-    return lerp(ax0, ax1, w.y);
+    float s = 0.0f;
+
+    [unroll]
+    for (int i = 0; i < MAIN_WAVES; ++i)
+    {
+        float id = baseSeed + (float)i * 17.0f;
+
+        float2 dir = unitDir(id);
+        float k = lerp(kMin, kMax, hash1(id + 3.1f));     // spatial frequency band
+        float w = lerp(wMin, wMax, hash1(id + 7.7f));     // temporal band
+        float ph = 6.2831853f * hash1(id + 11.9f);        // independent phase
+
+        s += sin(dot(p * WindFrequency * k, dir) + w * t + ph);
+    }
+
+    return s / MAIN_WAVES; // keep in ~[-1,1]
+}
+
+// Lower-frequency set for gust strength (separate seed so it decorrelates)
+float randomWavesGust(float2 p, float t, float baseSeed)
+{
+    float s = 0.0f;
+
+    [unroll]
+    for (int i = 0; i < GUST_WAVES; ++i)
+    {
+        float id = baseSeed + (float)i * 29.0f;
+
+        float2 dir = unitDir(id);
+        float k = lerp(0.25f, 0.7f,  hash1(id + 2.3f));   // broad, low frequency
+        float w = lerp(0.35f, 0.9f,  hash1(id + 5.5f));   // slower time
+        float ph = 6.2831853f * hash1(id + 9.9f);
+
+        s += sin(dot(p * WindFrequency * k, dir) + w * t + ph);
+    }
+
+    return s / GUST_WAVES; // ~[-1,1]
 }
 
 PixelInput VS(VertexInput input)
@@ -134,23 +156,18 @@ PixelInput VS(VertexInput input)
     // Coherent advection over time (moves the wind field, not the geometry directly)
     float3 windFlowOffset = windDirection3D * (Time * WindSpeed);
 
-    // Sample coordinate for the band-limited wind field (2D in XZ), scaled and advected
-    float2 windFieldCoord = (worldPositionUnbent.xz * WindFrequency) + windFlowOffset.xz;
+    // Sample coordinate for the wind field (2D in XZ), scaled and advected
+    float2 windFieldCoord = (worldPositionUnbent.xz) + windFlowOffset.xz;
 
-    // Stable per-instance phases (derived from Angle) to keep motion consistent
-    float phase1 = hash1(input.Angle) * 6.2831853f * WindFrequency; // 2*pi
-    float phase2 = phase1;
-    float phase3 = phase2;
+    // Per-instance base seeds to keep motion stable per blade and decorrelate fields
+    float baseSeed = 37.0f + 97.0f * hash1(input.Angle * 0.773f);   // main field
+    float gustSeed = 113.0f + 59.0f * hash1(input.Angle * 1.337f);  // gust field
 
-    // Smooth wind signal in approximately [-1,1] using 3 harmonics
-    float windSignal =
-        A1 * sin(dot(windFieldCoord, K1) + W1 * Time + phase1) +
-        A2 * sin(dot(windFieldCoord, K2) + W2 * Time + phase2) +
-        A3 * sin(dot(windFieldCoord, K3) + W3 * Time + phase3);
+    // Isotropic multi-wave sway in [-1,1]
+    float windSignal = randomWaves(windFieldCoord, Time, baseSeed, 0.6f, 1.6f, 0.7f, 2.0f);
 
-    // Map to signed sway [-1,1] and compute a smooth gust strength [0,1]
-    float swaySigned = saturate((windSignal + 1.0f) * 0.5f) * 2.0f - 1.0f;
-    float gustStrength = saturate(windSignal * windSignal);
+    // Slow-varying gust strength in [0,1], decorrelated from windSignal
+    float gustStrength = saturate(0.5f + 0.5f * randomWavesGust(windFieldCoord, Time, gustSeed));
 
     // Height factor along the blade so the base stays anchored (0 at base, 1 at tip)
     float heightFactor = saturate(rotatedPosition.y / max(input.Size.y, 1e-4f));
@@ -159,7 +176,7 @@ PixelInput VS(VertexInput input)
     float bendMask = pow(heightFactor, BendExponent);
 
     // Lateral bend along wind direction
-    float lateralBend = swaySigned * WindAmplitude * bendMask;
+    float lateralBend = windSignal * WindAmplitude * bendMask;
 
     // Width coordinate across the quad: -1 (left) .. +1 (right)
     float widthCoordinate = input.Tex.x * 2.0f - 1.0f;
@@ -171,8 +188,8 @@ PixelInput VS(VertexInput input)
                          * gustStrength;
 
     // Apply wind deformation
-    rotatedPosition.xyz += windDirection3D    * lateralBend;   // main sway
-    rotatedPosition.xyz += windPerpendicular3D * sideCurlOffset; // inward curl
+    rotatedPosition.xyz += windDirection3D      * lateralBend;      // main sway
+    rotatedPosition.xyz += windPerpendicular3D * sideCurlOffset;    // inward curl
 
     // Final world and view positions
     float3 worldPosition = input.Center + rotatedPosition;
@@ -194,14 +211,12 @@ PixelInput VS(VertexInput input)
     float2 atlasUV;
     atlasUV.x = UVRect.x + input.Tex.x * UVRect.z;
     atlasUV.y = UVRect.y + input.Tex.y * UVRect.w;
-
     pixelOut.Tex = atlasUV;
 
+    // Keep your per-instance lighting tint
     float3 colorRGB = input.InstanceCol.rgb * lateralBend;
     float4 colorOutput = float4(colorRGB, input.InstanceCol.a);
-    //float4 colorOutput = input.InstanceCol;
-
-    pixelOut.Color = colorOutput; // per-instance lighting tint
+    pixelOut.Color = colorOutput;
 
     pixelOut.WindBend = float3(lateralBend, sideCurlOffset, gustStrength);
 
@@ -220,13 +235,11 @@ PixelOutput PS_Color(PixelInput input)
     float4 texColor = tex2D(AtlasSampler, input.Tex);
     float4 blockColor = texColor * input.Color;
 
-    // Hard alpha cutout to prevent transparent texels from writing depth
-    // Discards pixels with alpha below threshold so they don't occlude behind billboards.
-    float alpha = blockColor.a;
-    clip(alpha - AlphaCutoff);
+    // Hard alpha cutout so near-transparent texels don’t occlude
+    clip(blockColor.a - AlphaCutoff);
 
     // Fog
-    float dist     = distance(input.WorldPos, CameraPos);
+    float dist      = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
@@ -242,12 +255,12 @@ PixelOutput PS_Color(PixelInput input)
 
     if (WindDebug)
     {
-        // Map wind fields into [0,1] for visualization
-        float r = saturate(0.5f + input.WindBend.x); // along-wind bend
-        float g = saturate(input.WindBend.z);        // gust strength
-        float b = saturate(0.5f + input.WindBend.y); // inward curl
+        // Visualize: R=lateral bend, G=gust, B=curl
+        float r = saturate(0.5f + input.WindBend.x);
+        float g = saturate(input.WindBend.z);
+        float b = saturate(0.5f + input.WindBend.y);
 
-        o.Color0 = float4(r * g, r * g, r * g, 1.0f);
+        o.Color0 = float4(r, g, b, 1.0f);
         o.Color1 = float4(depth01, depth01, depth01, 1.0f);
         o.Color2 = float4(n01, 1.0f);
         return o;
