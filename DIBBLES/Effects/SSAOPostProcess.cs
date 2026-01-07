@@ -102,7 +102,7 @@ public class SSAOPostProcess : PostProcessingEffect
         effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
     
         effect.Parameters["radius"]?.SetValue(0.35f);
-        effect.Parameters["bias"]?.SetValue(0.1f);
+        effect.Parameters["bias"]?.SetValue(0.2f);
         effect.Parameters["total_strength"]?.SetValue(1.2f);
         effect.Parameters["base_ao"]?.SetValue(0.05f);
     
