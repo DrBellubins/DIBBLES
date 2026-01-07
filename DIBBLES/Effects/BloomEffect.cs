@@ -7,8 +7,8 @@ public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 4;
     
-    public float Intensity { get; set; } = 1.0f;
-    public float Radius { get; set; } = 1.0f;
+    public float Intensity { get; set; } = 10.0f;
+    public float Radius { get; set; } = 2.0f;
     
     public RenderTarget2D BloomOutput;
     public List<RenderTarget2D> BloomRenderTargets = new();
