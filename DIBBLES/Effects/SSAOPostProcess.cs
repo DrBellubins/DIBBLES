@@ -101,56 +101,52 @@ public class SSAOPostProcess : PostProcessingEffect
     
         effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
     
-        effect.Parameters["radius"]?.SetValue(0.35f);
-        effect.Parameters["bias"]?.SetValue(0.06f);
-        effect.Parameters["total_strength"]?.SetValue(1.2f);
+        effect.Parameters["radius"]?.SetValue(0.30f);
+        effect.Parameters["bias"]?.SetValue(0.02f);
+        effect.Parameters["total_strength"]?.SetValue(1.1f);
         effect.Parameters["base_ao"]?.SetValue(0.05f);
-    
-        // USE THE PRE-ALLOCATED BUFFERS (like old shader)
-        Graphics.SetVertexBuffer(vertexBuffer);
-        Graphics.Indices = indexBuffer;
-    
-        // Pass 1: SSAO
+
+        // Pass 1: SSAO -> SSAOTarget
         Graphics.SetRenderTarget(SSAOTarget);
-        Graphics.Clear(Color. White);
+        Graphics.Clear(Color.White);
         effect.CurrentTechnique = effect.Techniques["SSAO"];
-    
+
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-    
-        // Pass 2: BlurH
+
+        // Pass 2: BlurH (read SSAOTarget, write SSAOBlurTarget)
         Graphics.SetRenderTarget(SSAOBlurTarget);
         Graphics.Clear(Color.White);
         effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
         effect.CurrentTechnique = effect.Techniques["BlurH"];
-    
+
         foreach (var pass in effect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-    
-        // Pass 3: BlurV
-        Graphics. SetRenderTarget(OutputBuffer);
-        Graphics.Clear(Color. Transparent);
+
+        // Pass 3: BlurV (read SSAOBlurTarget, write SSAOTarget)
+        Graphics.SetRenderTarget(SSAOTarget);
+        Graphics.Clear(Color.White);
         effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
-        effect.CurrentTechnique = effect. Techniques["BlurV"];
-    
-        foreach (var pass in effect. CurrentTechnique. Passes)
+        effect.CurrentTechnique = effect.Techniques["BlurV"];
+
+        foreach (var pass in effect.CurrentTechnique.Passes)
         {
-            pass. Apply();
-            Graphics.DrawIndexedPrimitives(PrimitiveType. TriangleList, 0, 0, 2);
+            pass.Apply();
+            Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-        
-        // Pass 4: Composite (AO * Color -> OutputBuffer)
+
+        // Pass 4: Composite (use blurred AO in SSAOTarget)
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Clear(Color.Transparent);
         effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
         effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
-        effect.CurrentTechnique = effect. Techniques["Composite"];
+        effect.CurrentTechnique = effect.Techniques["Composite"];
 
         foreach (var pass in effect.CurrentTechnique.Passes)
         {

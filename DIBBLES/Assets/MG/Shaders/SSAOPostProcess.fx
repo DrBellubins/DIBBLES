@@ -222,15 +222,15 @@ float ComputeAO(float2 uv)
 
     if (nTex.a < 0.5f)
     {
-        // Reasonable default if normal missing: face camera
-        N = float3(0, 0, 1);
+        // No normal: do not darken
+        return 1.0f;
     }
     else
     {
         N = DecodeNormal01(nTex);
     }
 
-    // TBN construction
+    // TBN construction (same as before)
     float3 R = tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
     R = normalize(R);
 
@@ -256,22 +256,29 @@ float ComputeAO(float2 uv)
     [unroll]
     for (int i = 0; i < samples; i++)
     {
-        float3 sampleOffset = mul(sample_sphere[i], TBN);
+        // Hemisphere-only sampling to avoid back-facing self-occlusion
+        float3 s = sample_sphere[i];
+        s.z = abs(s.z);
+
+        float3 sampleOffset = mul(s, TBN);
         float3 samplePosVS = P + sampleOffset * radius;
 
         float2 uvSamp;
-        if (! ProjectToUV(samplePosVS, uvSamp))
+        if (!ProjectToUV(samplePosVS, uvSamp))
             continue;
 
         float sampDepth01 = tex2D(DepthSampler, uvSamp).r;
         float sceneZ = lerp(CameraNear, CameraFar, sampDepth01);
         float sampleZ = -samplePosVS.z;
 
-        // Improved range check - falloff based on distance from center
+        // Depth-proportional bias (reduces halos without crushing AO)
+        float biasVS = max(bias, centerZ * 0.0005f);
+
+        // Range check falloff
         float rangeCheck = 1.0f - smoothstep(0.0f, radius, abs(sceneZ - centerZ));
 
-        // Occlusion test with bias
-        float occ = (sceneZ < sampleZ - bias) ? 1.0f : 0.0f;
+        // Occlusion if scene is in front of the sample (with bias)
+        float occ = (sceneZ < sampleZ - biasVS) ? 1.0f : 0.0f;
 
         occlusion += occ * rangeCheck;
         validSamples++;
