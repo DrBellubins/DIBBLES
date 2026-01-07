@@ -214,9 +214,7 @@ PixelInput VS(VertexInput input)
     pixelOut.Tex = atlasUV;
 
     // Keep your per-instance lighting tint
-    float3 colorRGB = input.InstanceCol.rgb * lateralBend;
-    float4 colorOutput = float4(colorRGB, input.InstanceCol.a);
-    pixelOut.Color = colorOutput;
+    pixelOut.Color = input.InstanceCol;
 
     pixelOut.WindBend = float3(lateralBend, sideCurlOffset, gustStrength);
 
