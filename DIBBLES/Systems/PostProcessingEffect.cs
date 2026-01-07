@@ -8,7 +8,7 @@ public abstract class PostProcessingEffect
 {
     private static readonly List<PostProcessingEffect> _effects = new();
 
-    protected RenderTarget2D _effectBuffer;
+    protected RenderTarget2D effectBuffer;
 
     protected Texture2D _colorBuffer;
 
@@ -34,7 +34,7 @@ public abstract class PostProcessingEffect
 
     public virtual void Start(int width, int height)
     {
-        _effectBuffer = new RenderTarget2D(
+        effectBuffer = new RenderTarget2D(
             Graphics,
             width,
             height,
@@ -48,13 +48,13 @@ public abstract class PostProcessingEffect
 
     public virtual void Dispose()
     {
-        _effectBuffer?.Dispose();
-        _effectBuffer = null;
+        effectBuffer?.Dispose();
+        effectBuffer = null;
     }
 
     public RenderTarget2D OutputBuffer
     {
-        get { return _effectBuffer; }
+        get { return effectBuffer; }
     }
 
     public Texture2D ColorBuffer
@@ -65,7 +65,7 @@ public abstract class PostProcessingEffect
     // Begin drawing to the effect's own backbuffer
     public virtual void DrawStart()
     {
-        Graphics.SetRenderTarget(_effectBuffer);
+        Graphics.SetRenderTarget(effectBuffer);
         Graphics.Clear(Color.Transparent);
     }
 

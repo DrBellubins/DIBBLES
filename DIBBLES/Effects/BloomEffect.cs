@@ -31,7 +31,7 @@ public class BloomEffect : PostProcessingEffect
         if (ColorBuffer == null)
         {
             Graphics.SetRenderTarget(OutputBuffer);
-            Graphics.Clear(Color.Transparent);
+            Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
             return;
         }
@@ -94,14 +94,18 @@ public class BloomEffect : PostProcessingEffect
     
         // Combine into our OutputBuffer (screen blend in shader)
         Graphics.SetRenderTarget(OutputBuffer);
-        Graphics.Clear(Color.Transparent);
-    
+        Graphics.Clear(Color.Black);
+
         bloomEffect.Parameters["SceneTex"]?.SetValue(ColorBuffer);
         bloomEffect.Parameters["BloomTex"]?.SetValue(BloomOutput);
         bloomEffect.Parameters["BloomIntensity"]?.SetValue(Intensity);
-    
+
         bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomCombine"];
-    
+
+        // Ensure fullscreen quad buffers are bound for the final pass
+        Graphics.SetVertexBuffer(quadVertexBuffer);
+        Graphics.Indices = quadIndexBuffer;
+
         foreach (var pass in bloomEffect.CurrentTechnique.Passes)
         {
             pass.Apply();
@@ -197,7 +201,7 @@ public class BloomEffect : PostProcessingEffect
     private void drawPass(RenderTarget2D target, Effect fx, string technique)
     {
         Graphics.SetRenderTarget(target);
-        Graphics.Clear(Color.Transparent);
+        Graphics.Clear(Color.Black);
 
         fx.CurrentTechnique = fx.Techniques[technique];
 
@@ -210,9 +214,7 @@ public class BloomEffect : PostProcessingEffect
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
 
-        Graphics.SetVertexBuffer(null);
-        Graphics.Indices = null;
-
+        // Do not unbind here; keep quad bound for subsequent passes
         Graphics.SetRenderTarget(null);
     }
 }
