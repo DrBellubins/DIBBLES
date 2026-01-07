@@ -161,16 +161,15 @@ public class GameScene : Scene
         graphics.SetRenderTarget(NormalBuffer);
         graphics.Clear(Color.Transparent);   // mark "no normal" with a=0
 
-        // Rebind MRTs for drawing
+        // 3) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
         TerrainGen.Draw();
         PlayerCharacter.Draw();
         
-        // Switch to single target with the same depth-stencil to preserve terrain depth
+        // 4) Switch to single target with the same depth-stencil to preserve terrain depth
         graphics.SetRenderTarget(BackBuffer);
-    
-        // Depth test on, depth writes off so overlays don't modify the depth buffer
+        
         graphics.BlendState = BlendState.NonPremultiplied;
         graphics.DepthStencilState = DepthStencilState.DepthRead;
         graphics.RasterizerState = RasterizerState.CullNone;
@@ -179,7 +178,7 @@ public class GameScene : Scene
         TerrainGeneration.Gameplay.Draw();
         Debug.Draw3D();
     
-        // Restore default depth state for subsequent passes
+        // 5) Restore default depth state for subsequent passes
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
 
