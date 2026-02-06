@@ -16,6 +16,7 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true;
+    public const bool UseGreedyMeshing = true;
     
     public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 

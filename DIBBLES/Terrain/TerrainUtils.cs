@@ -210,6 +210,92 @@ public static class FaceUtils
         // ToColor is from TerrainMesh.cs
         return new[] { ToColor(l0), ToColor(l1), ToColor(l2), ToColor(l3) };
     }
+    
+    // Smooth lighting for a merged rectangle face using corner samples.
+    // x0,y0,z0 = start voxel; du,dv = size along the two in-plane axes for the face
+    public static Color[] GetRectFaceColors(Chunk chunk, int faceIdx, int x0, int y0, int z0, int du, int dv)
+    {
+        // Select the appropriate vertex-light sampler per face
+        Func<int, int, int, float> sample = (vx, vy, vz) =>
+        {
+            if (faceIdx == 5) // Top (+Y) uses specialized sampler
+                return GetVertexLightTopFace(chunk, vx, vy, vz);
+            
+            return GetVertexLight(chunk, vx, vy, vz);
+        };
+
+        // For each face, map rectangle corners to voxel vertex coordinates.
+        // Corner order must match TL, BL, BR, TR to align with winding.
+        float lTL, lBL, lBR, lTR;
+
+        switch (faceIdx)
+        {
+            case 0: // Front (-Z): plane at z = z0; u = X, v = Y
+            {
+                lTL = sample(x0,       y0 + dv, z0);
+                lBL = sample(x0,       y0,      z0);
+                lBR = sample(x0 + du,  y0,      z0);
+                lTR = sample(x0 + du,  y0 + dv, z0);
+                break;
+            }
+            case 1: // Back (+Z): plane at z = z0 + 1; u = X, v = Y
+            {
+                int zP = z0 + 1;
+                lTL = sample(x0,       y0 + dv, zP);
+                lBL = sample(x0,       y0,      zP);
+                lBR = sample(x0 + du,  y0,      zP);
+                lTR = sample(x0 + du,  y0 + dv, zP);
+                break;
+            }
+            case 2: // Left (-X): plane at x = x0; u = Z, v = Y
+            {
+                lTL = sample(x0, y0 + dv, z0 + du);
+                lBL = sample(x0, y0,      z0 + 0);
+                lBR = sample(x0, y0,      z0 + du);
+                lTR = sample(x0, y0 + dv, z0 + 0);
+                break;
+            }
+            case 3: // Right (+X): plane at x = x0 + 1; u = Z, v = Y
+            {
+                int xP = x0 + 1;
+                lTL = sample(xP, y0 + dv, z0 + du);
+                lBL = sample(xP, y0,      z0 + 0);
+                lBR = sample(xP, y0,      z0 + du);
+                lTR = sample(xP, y0 + dv, z0 + 0);
+                break;
+            }
+            case 4: // Bottom (-Y): plane at y = y0; u = X, v = Z
+            {
+                lTL = sample(x0,       y0, z0 + dv);
+                lBL = sample(x0,       y0, z0 + 0);
+                lBR = sample(x0 + du,  y0, z0 + 0);
+                lTR = sample(x0 + du,  y0, z0 + dv);
+                break;
+            }
+            case 5: // Top (+Y): plane at y = y0 + 1; u = X, v = Z
+            {
+                // GetVertexLightTopFace() already samples one above in Y
+                lTL = sample(x0,       y0, z0 + dv);
+                lBL = sample(x0,       y0, z0 + 0);
+                lBR = sample(x0 + du,  y0, z0 + 0);
+                lTR = sample(x0 + du,  y0, z0 + dv);
+                break;
+            }
+            default:
+            {
+                lTL = lBL = lBR = lTR = 1f;
+                break;
+            }
+        }
+
+        return new[]
+        {
+            ToColor(lTL),
+            ToColor(lBL),
+            ToColor(lBR),
+            ToColor(lTR)
+        };
+    }
 
     // Helper: map [0,1] to Color
     public static Color ToColor(float light)

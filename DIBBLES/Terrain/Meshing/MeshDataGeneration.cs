@@ -13,6 +13,10 @@ public class MeshDataGeneration
     // MeshData generation (thread-safe, basic data for meshing)
     public MeshData Generate(Chunk chunk, bool isTransparencyPass)
     {
+        // Switch to greedy meshing when enabled
+        if (UseGreedyMeshing)
+            return GreedyMeshing.Generate(chunk, isTransparencyPass);
+        
         var cameraPosition = GameScene.PlayerCharacter.Camera.Position.ToVector3();
         
         var neighborCache = NeighborCache.Build(chunk);

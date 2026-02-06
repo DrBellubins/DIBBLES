@@ -524,9 +524,9 @@ public class TerrainGeneration
     {
         // Normalize stages to [0..1]: Uninitialized=0, Islands=0.2, ..., Meshing=1.0
         int max = (int)ChunkGenerationStage.Meshing;
-        int s = Math.Clamp((int)stage, 0, max);
+        int stageNrm = Math.Clamp((int)stage, 0, max);
         
-        return s / (float)max;
+        return stageNrm / (float)max;
     }
 
     private float computeVisualProgress(HashSet<Vector3Int> set)
@@ -538,21 +538,19 @@ public class TerrainGeneration
 
         foreach (var pos in set)
         {
-            float p = 0f;
+            float progress = 0f;
 
             if (ChunkBuffer.TryGetValue(pos, out var chunk))
             {
                 // Primary: stage-based progress (starts at Islands)
-                p = stageToProgress(chunk.GenerationStage);
+                progress = stageToProgress(chunk.GenerationStage);
 
                 // If models are uploaded, treat as fully done visually
                 if (Mesh.OpaqueModels.ContainsKey(pos) || Mesh.TransparentModels.ContainsKey(pos))
-                {
-                    p = 1f;
-                }
+                    progress = 1f;
             }
 
-            sum += p;
+            sum += progress;
         }
 
         return sum / set.Count;
