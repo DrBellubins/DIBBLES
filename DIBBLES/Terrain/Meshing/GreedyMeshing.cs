@@ -294,11 +294,6 @@ public class GreedyMeshing
                                 baseY = vRow;
                                 baseZ = slice;
                             }
-                            
-                            Vector3 vBL = p1;
-                            Vector3 vBR = p2;
-                            Vector3 vTR = p3;
-                            Vector3 vTL = p0;
 
                             // Smooth per-vertex colors at merged corners
                             var rectColors = FaceUtils.GetRectFaceColors(chunk, cell.FaceIdx, baseX, baseY, baseZ, du, dv);
@@ -310,8 +305,6 @@ public class GreedyMeshing
                             // Optional anti-tiling flips (kept off unless you enable the toggle)
                             if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
-                            
-                            Vector2 t0, t1, t2, t3;
                             
                             // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
                             Vector3 q0 = p1,
@@ -344,57 +337,66 @@ public class GreedyMeshing
                             
                             Vector4 rect4 = new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
 
-                            // Local tile-space mapping by face (match vertex order you use for q0..q3)
+                            // LOCAL tile-space UVs (0..du, 0..dv) mapped to the same per-face vertex order (q0..q3)
+                            // This replaces tileUVs = FaceUtils.GetFaceUVs(...) so shader can tile with frac()
+                            Vector2 t0, t1, t2, t3;
+
                             switch (cell.FaceIdx)
                             {
-                                case 0: // Front (-Z): [BL, TL, TR, BR]
+                                case 0: // Front (-Z): q = [BL, TL, TR, BR]
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
-                                case 1: // Back (+Z): [BR, TR, TL, BL]
+                                case 1: // Back (+Z): q = [BR, TR, TL, BL]
                                 {
-                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
-                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    t0 = new Vector2(du, 0);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(0, dv);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
-                                case 2: // Left (-X): [BL, TL, TR, BR]
+                                case 2: // Left (-X): q = [BL, TL, TR, BR]
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
-                                    
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
-                                case 3: // Right (+X): [BR, TR, TL, BL]
+                                case 3: // Right (+X): q = [BR, TR, TL, BL]
                                 {
-                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
-                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    t0 = new Vector2(du, 0);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(0, dv);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
-                                case 4: // Bottom (-Y): [TL, BL, BR, TR]
+                                case 4: // Bottom (-Y): q = [TL, BL, BR, TR]
                                 {
-                                    q0 = p0; q1 = p1; q2 = p2; q3 = p3;
-                                    t0 = tileUVs[0]; t1 = tileUVs[1]; t2 = tileUVs[2]; t3 = tileUVs[3];
-                                    col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
+                                    t0 = new Vector2(0, dv);
+                                    t1 = new Vector2(0, 0);
+                                    t2 = new Vector2(du, 0);
+                                    t3 = new Vector2(du, dv);
                                     break;
                                 }
-                                case 5: // Top (+Y): [TL, TR, BR, BL]
+                                case 5: // Top (+Y): q = [TL, TR, BR, BL]
                                 {
-                                    q0 = p0; q1 = p3; q2 = p2; q3 = p1;
-                                    t0 = tileUVs[0]; t1 = tileUVs[3]; t2 = tileUVs[2]; t3 = tileUVs[1];
-                                    col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
+                                    t0 = new Vector2(0, dv);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(du, 0);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
                                 default:
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
                             }
