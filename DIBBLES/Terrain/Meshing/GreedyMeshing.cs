@@ -143,12 +143,13 @@ public class GreedyMeshing
 
                             // Atlas rect for this face
                             RectangleF uvRect;
+
                             if (BlockData.Prefabs[curType].FaceUVs != null &&
                                 BlockData.Prefabs[curType].FaceUVs.TryGetValue(faceIdx, out uvRect))
                             {
                                 // per-face rect
                             }
-                            else if (!BlockData.AtlasUVs.TryGetValue((curType, 0), out uvRect))
+                            else if (!BlockData.AtlasUVs.TryGetValue((curType, faceIdx), out uvRect))
                             {
                                 uvRect = new RectangleF(0, 0, 1, 1);
                             }
@@ -322,9 +323,13 @@ public class GreedyMeshing
                             
                             // Atlas sub-rect for shader tiling
                             RectangleF rect;
-                            
-                            if (BlockData.Prefabs[cell.Type].FaceUVs != null && BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect)) { }
-                            else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, 0), out rect))
+
+                            if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
+                                BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect))
+                            {
+                                // per-face rect
+                            }
+                            else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, cell.FaceIdx), out rect))
                             {
                                 rect = new RectangleF(0, 0, 1, 1);
                             }

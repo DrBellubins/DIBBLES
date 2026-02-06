@@ -115,9 +115,15 @@ public static class FaceUtils
         var blockInfo = BlockData.Prefabs[type];
         RectangleF uvRect;
 
-        if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect)) { }
-        else if (!BlockData.AtlasUVs.TryGetValue((type, 0), out uvRect))
+        if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect))
+        {
+            // per-face rect from prefab
+        }
+        else if (!BlockData.AtlasUVs.TryGetValue((type, faceIdx), out uvRect))
+        {
+            // Fallback only if atlas mapping missing
             uvRect = new RectangleF(0, 0, 1, 1);
+        }
 
         // Texture space is top-left anchored; Y grows downward.
         Vector2 tl = new Vector2(uvRect.X,                 uvRect.Y);

@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Gameplay.Player;
 
-// TODO: Hand model needs it's own shader
+// TODO: Hand model does not use adjusted UVs generated in TerrainData
 public class HandModel
 {
     private CubeMesh handBlockModel;

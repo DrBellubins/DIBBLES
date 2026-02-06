@@ -133,54 +133,62 @@ public class BlockData
         
         foreach (BlockType blockType in atlasBlockTypes)
         {
+            // Ensure a per-face UV rect dictionary exists on the prefab
             var info = Prefabs[blockType];
 
-            if (info.FaceUVs == null)
-                continue;
+            var faceRects = new Dictionary<int, RectangleF>();
 
             for (int faceIdx = 0; faceIdx < 6; faceIdx++)
             {
                 RectangleF rect;
 
-                if (info.FaceUVs.TryGetValue(faceIdx, out rect)) { }
-                else if (!AtlasUVs.TryGetValue((blockType, 0), out rect))
-                {
+                if (!AtlasUVs.TryGetValue((blockType, faceIdx), out rect))
                     rect = new RectangleF(0, 0, 1, 1);
-                }
 
-                // Canonical BL, TL, TR, BR for the atlas sub-rect
+                faceRects[faceIdx] = rect;
+
+                // Canonical BL, TL, TR, BR for this face's atlas sub-rect
+                // (GetFaceUVs will now use faceIdx correctly)
                 var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
-                
-                // Rotate/flip UVs to be correct manually
+
+                // Apply any universal per-face fixups here
+                // Top and bottom have their textures facing Z+
                 switch (faceIdx)
                 {
                     case 0: // Front (-Z)
+                    {
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        break;
+                    }
+                    case 2: // Left (-X)
+                    {
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        break;
+                    }
+                    case 4: // Bottom (-Y)
+                    {
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 2, 0);
+                        break;
+                    }
+                    case 5: // Top (+Y)
+                    {
                         faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 1, 1);
                         break;
-                    case 1: // Back (+Z)
+                    }
+                    default:
+                    {
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 0);
                         break;
-                    case 2: // Left (-X)
-                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
-                        break;
-                    case 3: // Right (+X)
-                        break;
-                    case 4: // Bottom (-Y)
-                        break;
-                    case 5: // Top (+Y)
-                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
-                        break;
+                    }
                 }
 
-                /*var bl = faceUVs[0];
-                var tl = faceUVs[1];
-                var tr = faceUVs[2];
-                var br = faceUVs[3];
-
-                // Pre-map to the per-face vertex order used by GetFaceVertices()
-                var ordered = FaceUtils.MapUVsToFaceVertexOrder(new[] { bl, tl, tr, br }, faceIdx);*/
-
+                // Store final ordered UVs that match GetFaceVertices() for this face
                 FaceUVsOrdered[(blockType, faceIdx)] = faceUVs;
             }
+
+            // Write back the per-face rects to the prefab (BlockInfo is a struct)
+            info.FaceUVs = faceRects;
+            Prefabs[blockType] = info;
         }
     }
     
