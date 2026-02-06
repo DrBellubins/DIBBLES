@@ -28,6 +28,8 @@ public class MeshDataGeneration
         List<Vector2> texcoords = [];
         List<Color> colors = [];
         
+        var rng = new SeededRandom(1337); // TEMP
+        
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
@@ -35,6 +37,13 @@ public class MeshDataGeneration
             var pos = new Vector3Int(x, y, z);
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
+            
+            long chunkBlockSeed = Seed 
+                             ^ (pos.X * 73428767L)
+                             ^ (pos.Y * 9127841L)
+                             ^ (pos.Z * 192837465L);
+            
+            rng.SetSeed(chunkBlockSeed);
             
             // Billboard path for transparent mesh
             if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
@@ -50,24 +59,37 @@ public class MeshDataGeneration
             if (isTransparencyPass && (!blockInfo.IsTransparent || blockType == BlockType.Air)) continue;
             
             int vertexOffset = vertices.Count;
-
+            
             foreach (var (faceIdx, normal, neighborOffset) in FaceUtils.VoxelFaceInfos())
             {
                 int nx = x + neighborOffset.X;
                 int ny = y + neighborOffset.Y;
                 int nz = z + neighborOffset.Z;
-        
-                long chunkSeed = Seed 
-                                 ^ (pos.X * 73428767L)
-                                 ^ (pos.Y * 9127841L)
-                                 ^ (pos.Z * 192837465L);
-        
-                var rng = new SeededRandom(chunkSeed);
                 
                 if (!IsVoxelSolid(chunk, nx, ny, nz, neighborCache))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
                     var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
+                    
+                    // Rotate/flip UVs to be correct manually
+                    switch (faceIdx)
+                    {
+                        case 0: // Front (-Z)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                            break;
+                        case 1: // Back (+Z)
+                            break;
+                        case 2: // Left (-X)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                            break;
+                        case 3: // Right (+X)
+                            break;
+                        case 4: // Bottom (-Y)
+                            break;
+                        case 5: // Top (+Y)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                            break;
+                    }
                     
                     float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx); // samples surrounding voxels
                     Color flatColor = FaceUtils.ToColor(faceLight);
@@ -93,15 +115,14 @@ public class MeshDataGeneration
                         );
                     }*/
 
-                    var rndOffset = (int)(rng.NextFloat() * ChunkSize);
-                    var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
-
-                    // Random uv rotation
-                    //faceUVs = RndRotUV(pos, faceIdx, faceUVs);
-                    
                     // Random uv flipping
-                    faceUVs = RndFlipUV(rng, blockInfo, pos, faceIdx, faceUVs);
-                    faceUVs = FaceUtils.MapUVsToFaceVertexOrder(faceUVs, faceIdx); // Remap to GetFaceVertices
+                    int rotationSteps = 0;
+                    int flipMask = NonGreedyRespectAntiTileFlips
+                        ? Helpers.ComputeRndFlipMask(rng, blockInfo, pos, faceIdx)
+                        : 0;
+                    
+                    // Apply transform and standardize to face vertex order
+                    faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, rotationSteps, flipMask);
                     
                     if (isTransparencyPass)
                     {

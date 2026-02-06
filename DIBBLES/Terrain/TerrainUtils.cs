@@ -80,6 +80,36 @@ public static class FaceUtils
         };
     }
     
+    public static Vector2[] ApplyUVTransform(Vector2[] uvsBLTLTRBR, int faceIdx, int rotationSteps, int flipMask)
+    {
+        // Normalize inputs
+        rotationSteps &= 3;
+        flipMask &= 3;
+
+        // 1) Rotate in canonical [BL, TL, TR, BR]
+        var rotated = RotateUVs(uvsBLTLTRBR, rotationSteps);
+
+        // 2) Flip atlas-space columns/rows
+        var flipped = FlipUVsAtlas(rotated, faceIdx, flipMask);
+
+        // 3) Remap to the per-face vertex order used by GetFaceVertices()
+        return MapUVsToFaceVertexOrder(flipped, faceIdx);
+    }
+
+    public static Vector4 ComputeUVBasis(Vector2[] orderedUVs)
+    {
+        // orderedUVs must be in per-face vertex order matching geometry:
+        // indices [0]=BL, [1]=TL, [2]=TR, [3]=BR after MapUVsToFaceVertexOrder
+        Vector2 uvBL = orderedUVs[0];
+        Vector2 uvTL = orderedUVs[1];
+        Vector2 uvBR = orderedUVs[3];
+
+        Vector2 basisU = uvBR - uvBL; // +U axis in atlas space
+        Vector2 basisV = uvTL - uvBL; // +V axis in atlas space
+
+        return new Vector4(basisU.X, basisU.Y, basisV.X, basisV.Y);
+    }
+    
     public static Vector2[] GetFaceUVs(BlockType type, int faceIdx)
     {
         var blockInfo = BlockData.Prefabs[type];

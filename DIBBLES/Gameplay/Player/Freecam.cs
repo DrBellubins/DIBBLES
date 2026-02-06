@@ -4,6 +4,7 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Gameplay.Player;
 
+// TODO: Opening inventory when in freecam still allows moving the camera.
 public class Freecam
 {
     private bool isRunning = false;

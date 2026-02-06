@@ -148,6 +148,50 @@ public class Helpers
         int rotation = ((pos.X) ^ (pos.Y) ^ (pos.Z) ^ faceIdx) & 3;
         return FaceUtils.RotateUVs(faceUVs, rotation);
     }
+    
+    public static int ComputeRndFlipMask(SeededRandom rng, BlockInfo blockInfo, Vector3Int pos, int faceIdx)
+    {
+        int rndOffset = (int)(rng.NextFloat() * ChunkSize);
+        var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
+
+        int flipRandom = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
+        int flip = 0;
+
+        // Sides: honor per-axis anti-tiling flags
+        if (faceIdx >= 0 && faceIdx <= 3)
+        {
+            if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
+            {
+                flip |= 1;
+            }
+            if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
+            {
+                flip |= 2;
+            }
+        }
+        else
+        {
+            // Top/bottom: only flip if anti-tiling is enabled for this block
+            if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
+            {
+                flip = flipRandom;
+            }
+        }
+
+        // If anti-tiling disabled entirely, no flips
+        if (!blockInfo.AntiTileUVsHorizontally && !blockInfo.AntiTileUVsVertically)
+        {
+            return 0;
+        }
+
+        return flip & 3;
+    }
+
+    public static int ComputeRndRotation(Vector3Int pos, int faceIdx)
+    {
+        // 0..3 quarter-turns
+        return ((pos.X) ^ (pos.Y) ^ (pos.Z) ^ faceIdx) & 3;
+    }
 }
 
 // Define a custom vertex struct with Position, Normal, Texcoord, Color

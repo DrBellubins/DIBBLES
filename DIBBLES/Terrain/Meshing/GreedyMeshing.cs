@@ -303,25 +303,16 @@ public class GreedyMeshing
                             // FaceUtils.GetFaceUVs returns UVs ordered [TL, BL, BR, TR]
                             Vector2[] tileUVs = FaceUtils.GetFaceUVs(cell.Type, cell.FaceIdx);
 
-                            // Optional anti-tiling flips (kept off unless you enable the toggle)
-                            if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
-                            {
-                                tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
-                            }
+                            int rotationSteps = 0;
+                            int flipMask = TerrainMesh.GreedyRespectAntiTileFlips ? cell.UVFlipDirection : 0;
                             
                             // Reorder to match the per-face vertex order (same as q0..q3 below)
-                            Vector2[] orderedUVs = FaceUtils.MapUVsToFaceVertexOrder(tileUVs, cell.FaceIdx);
+                            Vector2[] orderedUVs = FaceUtils.ApplyUVTransform(tileUVs, cell.FaceIdx, rotationSteps, flipMask);;
                             
-                            // Compute UV basis from the per-face orientation (atlas space)
-                            // IMPORTANT: use indices that match the new order
+                            // Atlas rect origin/size for shader tiling: origin = BL, size = atlas sub-rect
                             Vector2 uvBL = orderedUVs[0];
-                            Vector2 uvTL = orderedUVs[1];
-                            Vector2 uvBR = orderedUVs[3];
                             
-                            Vector2 basisU = uvBR - uvBL; // +U direction in atlas
-                            Vector2 basisV = uvTL - uvBL; // +V direction in atlas
-                            
-                            Vector4 basis4 = new Vector4(basisU.X, basisU.Y, basisV.X, basisV.Y);
+                            Vector4 basis4 = FaceUtils.ComputeUVBasis(orderedUVs);
                             
                             // Corner colors come back as [BL, BR, TR, TL]
                             Color cBL = rectColors[0];
@@ -332,14 +323,12 @@ public class GreedyMeshing
                             // Atlas sub-rect for shader tiling
                             RectangleF rect;
                             
-                            if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
-                                BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect)) { }
+                            if (BlockData.Prefabs[cell.Type].FaceUVs != null && BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect)) { }
                             else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, 0), out rect))
                             {
                                 rect = new RectangleF(0, 0, 1, 1);
                             }
-                            
-                            // IMPORTANT: origin = uvBL, size = rect.Width/Height
+
                             Vector4 rect4 = new Vector4(uvBL.X, uvBL.Y, rect.Width, rect.Height);
 
                             // LOCAL tile-space UVs (0..du, 0..dv) — these must line up with the per-face vertex order
