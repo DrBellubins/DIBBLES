@@ -78,7 +78,7 @@ public class TerrainMesh
                 var shader = oModel.Value.Shader;
                 
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1f : 0f);
+                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1 : 0);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
@@ -130,7 +130,7 @@ public class TerrainMesh
                 var shader = tModel.Value.Shader;
                 
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1f : 0f);
+                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1 : 0);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);

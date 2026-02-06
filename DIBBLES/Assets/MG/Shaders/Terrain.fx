@@ -94,7 +94,7 @@ PixelOutput PS_Color(PixelInput input)
         atlasUV = input.TexCoord;
     }
 
-    float4 texColor = tex2D(AtlasSampler, input.TexCoord);
+    float4 texColor = tex2D(AtlasSampler, atlasUV);
     float4 blockColor = texColor * input.Color;
 
     // Hard alpha cutout to prevent transparent texels from writing depth
