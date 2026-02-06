@@ -350,42 +350,50 @@ public class GreedyMeshing
                                 case 0: // Front (-Z): [BL, TL, TR, BR]
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
                                     col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
                                     break;
                                 }
                                 case 1: // Back (+Z): [BR, TR, TL, BL]
                                 {
                                     q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
                                     col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
                                     break;
                                 }
                                 case 2: // Left (-X): [BL, TL, TR, BR]
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
                                     col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    
                                     break;
                                 }
                                 case 3: // Right (+X): [BR, TR, TL, BL]
                                 {
                                     q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
                                     col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
                                     break;
                                 }
                                 case 4: // Bottom (-Y): [TL, BL, BR, TR]
                                 {
                                     q0 = p0; q1 = p1; q2 = p2; q3 = p3;
+                                    t0 = tileUVs[0]; t1 = tileUVs[1]; t2 = tileUVs[2]; t3 = tileUVs[3];
                                     col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
                                     break;
                                 }
                                 case 5: // Top (+Y): [TL, TR, BR, BL]
                                 {
                                     q0 = p0; q1 = p3; q2 = p2; q3 = p1;
+                                    t0 = tileUVs[0]; t1 = tileUVs[3]; t2 = tileUVs[2]; t3 = tileUVs[1];
                                     col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
                                     break;
                                 }
                                 default:
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
                                     col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
                                     break;
                                 }

@@ -82,7 +82,7 @@ PixelOutput PS_Color(PixelInput input)
     float2 atlasUV;
 
     // Use tiling when toggle is on AND rect has nonzero size
-    if (UseAtlasTiling > 0.5 && (input.UVRect.z > 0.0 || input.UVRect.w > 0.0))
+    if (UseGreedyMeshing > 0.5 && (input.UVRect.z > 0.0 || input.UVRect.w > 0.0))
     {
         // input.TexCoord is in tile-space (0..du, 0..dv); frac repeats every 1 tile
         atlasUV = float2(input.UVRect.x, input.UVRect.y)
