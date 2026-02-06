@@ -7,8 +7,8 @@ namespace DIBBLES.Effects;
 public class PostProcessingManager
 {
     // Initialize every post processing effect in order here!
-    //public SSAOPostProcess ssaoPostProcess = new();
-    //public BloomEffect bloom = new();
+    public SSAOPostProcess ssaoPostProcess = new();
+    public BloomEffect bloom = new();
     
     public void Initialize(int width, int height)
     {
