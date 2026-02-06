@@ -152,32 +152,38 @@ public class GreedyMeshing
                             // Deterministic flip flags (same idea as MeshDataGeneration)
                             int uvFlipDirection = 0;
 
-                            // Per-cell RNG to avoid obvious patterns
-                            long cellSeed =
-                                Seed ^
-                                (x * 73428767L) ^
-                                (y * 9127841L) ^
-                                (z * 192837465L);
-
-                            var rng = new SeededRandom(cellSeed);
-                            int rndOffset = (int)(rng.NextFloat() * ChunkSize);
-
-                            var worldRNG = new Vector3Int(x + rndOffset, y + rndOffset, z + rndOffset);
-                            int flipRandom = ((worldRNG.X) ^ (worldRNG.Y) ^ (worldRNG.Z) ^ faceIdx) & 3;
-
-                            // Honor AntiTile flags: sides use flags, top/bottom may always flip (to match your non-greedy)
-                            if (faceIdx >= 0 && faceIdx <= 3) // sides
+                            if (TerrainMesh.GreedyRespectAntiTileFlips)
                             {
-                                if (curInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0) uvFlipDirection |= 1;
-                                if (curInfo.AntiTileUVsVertically   && (flipRandom & 2) != 0) uvFlipDirection |= 2;
+                                long cellSeed =
+                                    Seed ^
+                                    (x * 73428767L) ^
+                                    (y * 9127841L) ^
+                                    (z * 192837465L);
+
+                                var rng = new SeededRandom(cellSeed);
+                                int rndOffset = (int)(rng.NextFloat() * ChunkSize);
+
+                                var worldRNG = new Vector3Int(x + rndOffset, y + rndOffset, z + rndOffset);
+                                int flipRandom = ((worldRNG.X) ^ (worldRNG.Y) ^ (worldRNG.Z) ^ faceIdx) & 3;
+
+                                // Honor AntiTile flags
+                                if (faceIdx >= 0 && faceIdx <= 3) // sides
+                                {
+                                    if (curInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0) uvFlipDirection |= 1;
+                                    if (curInfo.AntiTileUVsVertically   && (flipRandom & 2) != 0) uvFlipDirection |= 2;
+                                }
+                                else
+                                {
+                                    if (curInfo.AntiTileUVsHorizontally || curInfo.AntiTileUVsVertically)
+                                        uvFlipDirection = flipRandom;
+                                    else
+                                        uvFlipDirection = 0;
+                                }
                             }
                             else
                             {
-                                // Top/bottom: keep your behavior (comment in non-greedy path)
-                                if (curInfo.AntiTileUVsHorizontally || curInfo.AntiTileUVsVertically)
-                                    uvFlipDirection = flipRandom;
-                                else
-                                    uvFlipDirection = 0;
+                                // No flips in greedy to avoid inconsistent orientation in merged quads
+                                uvFlipDirection = 0;
                             }
 
                             mask[u, v] = new GreedyCell
@@ -345,7 +351,10 @@ public class GreedyMeshing
                             
                             // Apply the same flip parity as non-greedy
                             Vector2[] uvBase = new[] { uvTL, uvBL, uvBR, uvTR };
-                            Vector2[] uvFlipped = FaceUtils.FlipUVsAtlas(uvBase, cell.FaceIdx, cell.UVFlipDirection);
+                            
+                            Vector2[] uvFlipped = TerrainMesh.GreedyRespectAntiTileFlips
+                                ? FaceUtils.FlipUVsAtlas(uvBase, cell.FaceIdx, cell.UVFlipDirection)
+                                : uvBase;
                             
                             // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
                             Vector3 q0, q1, q2, q3;
@@ -382,11 +391,11 @@ public class GreedyMeshing
                                     col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
                                     break;
                                 }
-                                case 4: // Bottom (-Y): [BL, TL, TR, BR]
+                                case 4: // Bottom (-Y): [TL, BL, BR, TR]
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = uvFlipped[1]; t1 = uvFlipped[0]; t2 = uvFlipped[3]; t3 = uvFlipped[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    q0 = p0; q1 = p1; q2 = p2; q3 = p3;
+                                    t0 = uvFlipped[0]; t1 = uvFlipped[1]; t2 = uvFlipped[2]; t3 = uvFlipped[3];
+                                    col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
                                     break;
                                 }
                                 case 5: // Top (+Y): [TL, TR, BR, BL]

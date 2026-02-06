@@ -18,6 +18,10 @@ public class TerrainMesh
     public const bool SmoothLighting = true;
     public const bool UseGreedyMeshing = true;
     
+    // Greedy path ignores per-cell anti-tiling flips to keep UVs consistent across merged rectangles.
+    // Set true if you really want per-cell flips (you’ll see inconsistent orientations on large quads).
+    public const bool GreedyRespectAntiTileFlips = false;
+    
     public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
