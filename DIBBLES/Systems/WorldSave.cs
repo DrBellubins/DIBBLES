@@ -64,8 +64,7 @@ public class WorldSave
         using (var stream = File.Open(worldDataDir, FileMode.Create))
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
         {
-            writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBW"));
-            
+            writer.Write("DIBW");
             writer.Write(Seed);
         }
         
@@ -74,7 +73,7 @@ public class WorldSave
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBP"));
+                writer.Write("DIBP");
                 
                 writer.Write(GameScene.PlayerCharacter.Position.X);
                 writer.Write(GameScene.PlayerCharacter.Position.Y);
@@ -127,7 +126,7 @@ public class WorldSave
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBR"));
+                writer.Write("DIBR");
                 
                 writer.Write(nonAirBlocks);
                 
@@ -150,7 +149,7 @@ public class WorldSave
             }
         }
         
-        Console.WriteLine($"Saved world `{worldName}`");
+        Debug.Info($"Saved world `{worldName}`");
     }
     
     public static void LoadWorldData(string worldName)
@@ -162,13 +161,13 @@ public class WorldSave
     
         if (!Directory.Exists(currentSaveDir))
         {
-            Console.WriteLine($"Error: save directory '{currentSaveDir}' doesn't exist");
+            Debug.Error($"Save directory '{currentSaveDir}' doesn't exist");
             return;
         }
     
         if (!Directory.Exists(regionsDir))
         {
-            Console.WriteLine($"Error: region directory '{regionsDir}' doesn't exist");
+            Debug.Error($"Region directory '{regionsDir}' doesn't exist");
             return;
         }
     
@@ -183,7 +182,7 @@ public class WorldSave
                 var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
                 if (header != "DIBW")
-                    Console.WriteLine("World data format is incorrect");
+                    Debug.Error("World data format is incorrect");
                 
                 Data.WorldName = worldName;
                 Data.Seed = reader.ReadInt32();
@@ -199,7 +198,7 @@ public class WorldSave
                 var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
                 if (header != "DIBP")
-                    Console.WriteLine("Player data format is incorrect");
+                    Debug.Error("Player data format is incorrect");
                 
                 Data.PlayerPosition = new GVec3(reader.ReadDouble(), reader.ReadDouble(), reader.ReadDouble());
                 Data.CameraDirection = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
@@ -237,7 +236,7 @@ public class WorldSave
         }
         else
         {
-            Console.WriteLine($"Error: Player data file '{playerDataDir}' doesn't exist");
+            Debug.Error($"Player data file '{playerDataDir}' doesn't exist");
             return;
         }
     
@@ -270,7 +269,7 @@ public class WorldSave
                 var header = Encoding.ASCII.GetString(reader.ReadBytes(4));
                 
                 if (header != "DIBR")
-                    Console.WriteLine("Region data format is incorrect!");
+                    Debug.Error("Region data format is incorrect!");
                 
                 int nonAirCount = reader.ReadInt32();
     
@@ -295,7 +294,7 @@ public class WorldSave
             }
         }
     
-        Console.WriteLine($"Loaded world '{Data.WorldName}'");
-        Console.WriteLine($"Data: Seed '{Data.Seed}' PlayerPos '{Data.PlayerPosition}' CamDir '{Data.CameraDirection}' Hotbar '{Data.HotbarPosition}' chunkCount '{regionPaths.Length}'");
+        Debug.Info($"Loaded world '{Data.WorldName}'");
+        Debug.Info($"Data: Seed '{Data.Seed}' PlayerPos '{Data.PlayerPosition}' CamDir '{Data.CameraDirection}' Hotbar '{Data.HotbarPosition}' chunkCount '{regionPaths.Length}'");
     }
 }

@@ -38,7 +38,7 @@ public class AudioPlayer
         audioPlayer.Sound = sound;
         audioPlayer.Position = position;
         
-        Console.WriteLine($"Audio players in buffer: {Engine.AudioPlayers.Count}");
+        Debug.Info($"Audio players in buffer: {Engine.AudioPlayers.Count}");
         
         audioPlayer.Play();
     }
@@ -58,7 +58,7 @@ public class AudioPlayer
             // Dispose after we've played.
             if (!IsPlaying && hasPlayed)
             {
-                Console.WriteLine("Unloaded");
+                Debug.Info("Unloaded");
                 Engine.AudioPlayers.Remove(this);
                 hasPlayed = false; // ensure we only run this block once
             }

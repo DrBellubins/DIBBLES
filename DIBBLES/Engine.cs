@@ -6,6 +6,7 @@ using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
+using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES;
 
@@ -51,6 +52,8 @@ public class Engine : Game
 
         timer.Start();
         previousTicks = timer.ElapsedTicks;
+        
+        Debug.Start();
         
         //TargetElapsedTime = TimeSpan.FromSeconds(FrameTimestep);
     }
@@ -129,5 +132,7 @@ public class Engine : Game
     {
         // TODO: Port resource cleanup
         base.UnloadContent();
+        
+        Debug.Close();
     }
 }

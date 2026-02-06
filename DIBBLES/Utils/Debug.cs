@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Text;
@@ -24,6 +25,53 @@ public class Debug
     public static bool ShowChunkDebug { get; private set; } = false;
     public static bool ShowLightDebug { get; private set; } = false;
     
+    private static string logPath = Path.Combine(AppContext.BaseDirectory, "log.txt");
+    private static StreamWriter? logWriter;
+    
+    public static void Start()
+    {
+        if (!File.Exists(logPath))
+            logWriter = File.CreateText(logPath);
+        else
+        {
+            File.Delete(logPath);
+            logWriter = File.CreateText(logPath);
+        }
+    }
+
+    // Dispose of anything before closing here
+    public static void Close()
+    {
+        logWriter?.Close();
+    }
+    
+    public static void Info(string info)
+    {
+        string output = $"[INFO] {info}";
+        Console.WriteLine(output);
+        logWriter?.WriteLine(output);
+        
+        Trace.TraceInformation(output);
+    }
+    
+    public static void Warning(string warning)
+    {
+        string output = $"[WARNING] {warning}";
+        Console.WriteLine(output);
+        logWriter?.WriteLine(output);
+        
+        Trace.TraceWarning(output);
+    }
+    
+    public static void Error(string error)
+    {
+        string output = $"[ERROR] {error}";
+        Console.WriteLine(output);
+        logWriter?.WriteLine(output);
+        
+        Trace.TraceError(output);
+    }
+    
     public static void Update(Camera3D camera)
     {
         debugCamera = camera;
@@ -32,24 +80,6 @@ public class Debug
     public static void Clear2D()
     {
         textBuffer2d.Clear();
-    }
-    
-    public static void ToggleDebugCMD(string[] args)
-    {
-        ShowDebug = !ShowDebug;
-        Chat.Write($"Toggled debug information: {ShowDebug}", ChatMessageType.Command);
-    }
-    
-    public static void ToggleChunkDebugCMD(string[] args)
-    {
-        ShowChunkDebug = !ShowChunkDebug;
-        Chat.Write($"Toggled chunk border debug: {ShowChunkDebug}", ChatMessageType.Command);
-    }
-    
-    public static void ToggleLightDebugCMD(string[] args)
-    {
-        ShowLightDebug = !ShowLightDebug;
-        Chat.Write($"Toggled light level debug: {ShowLightDebug}", ChatMessageType.Command);
     }
     
     public static void Draw2D()
@@ -172,6 +202,24 @@ public class Debug
         
         // Draw the billboard with the cached texture
         Raylib.DrawBillboard(debugCamera, imgTexture, position, scale, Color.White);*/
+    }
+    
+    public static void ToggleDebugCMD(string[] args)
+    {
+        ShowDebug = !ShowDebug;
+        Chat.Write($"Toggled debug information: {ShowDebug}", ChatMessageType.Command);
+    }
+    
+    public static void ToggleChunkDebugCMD(string[] args)
+    {
+        ShowChunkDebug = !ShowChunkDebug;
+        Chat.Write($"Toggled chunk border debug: {ShowChunkDebug}", ChatMessageType.Command);
+    }
+    
+    public static void ToggleLightDebugCMD(string[] args)
+    {
+        ShowLightDebug = !ShowLightDebug;
+        Chat.Write($"Toggled light level debug: {ShowLightDebug}", ChatMessageType.Command);
     }
 }
 

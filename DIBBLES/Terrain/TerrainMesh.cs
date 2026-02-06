@@ -250,7 +250,7 @@ public class TerrainMesh
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
-            Shader = terrainShader.Clone(),
+            Shader = terrainShader,
             Texture = BlockData.TextureAtlas
         };
     }

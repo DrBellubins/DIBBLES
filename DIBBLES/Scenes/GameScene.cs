@@ -168,7 +168,16 @@ public class GameScene : Scene
         // 3) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
+        timer.Start();
+        
         TerrainGen.Draw();
+        
+        timer.Stop();
+
+        var terrainProgress = TerrainGen.VisualLoadProgress * 100f;
+        
+        if (terrainProgress < 100f)
+            Debug.Info($"Visual progress: {terrainProgress}% - Terrain draw time (in ticks): {timer.ElapsedTicks}");
         
         PlayerCharacter.Draw();
         
@@ -216,7 +225,6 @@ public class GameScene : Scene
         }
         
         // 7) Apply all registered post-processing effects, sampling color/normal/depth
-        timer.Start();
         postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
@@ -226,9 +234,6 @@ public class GameScene : Scene
         
         // Composite all post-processing outputs
         postProcessingManager.Draw();
-        
-        timer.Stop();
-        Console.WriteLine($"Post processing draw time (in TimeSpan): {timer.Elapsed}");
         
         if (UIEnabled)
         {
@@ -320,7 +325,7 @@ public class GameScene : Scene
 
         var outputString = $"Saved buffers to: {folder}";
         
-        Console.WriteLine(outputString);
+        Debug.Info(outputString);
         Chat.Write(outputString, ChatMessageType.Command);
     }
 }

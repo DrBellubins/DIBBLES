@@ -123,18 +123,18 @@ public class Chat
                 if (Commands.Registry.TryGetValue(cmdName, out var cmd))
                 {
                     cmd.Handler(args);
-                    Console.WriteLine($"[INFO] Player executed command '{textBox.Text}'.");
+                    Debug.Info($"Player executed command '{textBox.Text}'.");
                 }
                 else
                 {
                     Write($"Unknown command: {cmdName}", ChatMessageType.Error);
-                    Console.WriteLine($"[ERROR] Player attempted to execute nonexistent command '{textBox.Text}'");
+                    Debug.Error($"Player attempted to execute nonexistent command '{textBox.Text}'");
                 }
             }
             else
             {
                 Write(textBox.Text, ChatMessageType.Message);
-                Console.WriteLine($"[INFO] Player typed: '{textBox.Text}'");
+                Debug.Info($"Player typed: '{textBox.Text}'");
                 
                 if (!isUserScrolling)
                     scrollOffset = 0;

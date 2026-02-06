@@ -36,7 +36,7 @@ public class BloomEffect : PostProcessingEffect
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
-            Console.WriteLine("NULL");
+            Utils.Debug.Error("NULL");
             return;
         }
     
