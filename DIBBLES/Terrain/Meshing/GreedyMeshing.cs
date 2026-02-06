@@ -1,9 +1,10 @@
-namespace DIBBLES.Terrain.Meshing;
-
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
+
 using static DIBBLES.Terrain.TerrainGeneration;
+
+namespace DIBBLES.Terrain.Meshing;
 
 public class GreedyMeshing
 {
@@ -268,56 +269,116 @@ public class GreedyMeshing
                                 p3 = new Vector3(x0 + du, y0 + dv, fz); // TR
                             }
                             
+                            // Base voxel for lighting (do NOT use the face plane coordinate with +1)
+                            int baseX, baseY, baseZ;
+
+                            if (axis == 0) // X slices: u=Y, v=Z
+                            {
+                                baseX = slice;
+                                baseY = uCol;
+                                baseZ = vRow;
+                            }
+                            else if (axis == 1) // Y slices: u=X, v=Z
+                            {
+                                baseX = uCol;
+                                baseY = slice;
+                                baseZ = vRow;
+                            }
+                            else // Z slices: u=X, v=Y
+                            {
+                                baseX = uCol;
+                                baseY = vRow;
+                                baseZ = slice;
+                            }
+                            
                             Vector3 vBL = p1;
                             Vector3 vBR = p2;
                             Vector3 vTR = p3;
                             Vector3 vTL = p0;
 
                             // Smooth per-vertex colors at merged corners
-                            var rectColors = FaceUtils.GetRectFaceColors(
-                                chunk, cell.FaceIdx,
-                                (axis == 0) ? slice : x0 - ((axis == 1) ? 0 : 0), // x0 for corners is already set
-                                (axis == 1) ? slice : y0 - ((axis == 0) ? 0 : 0),
-                                (axis == 2) ? slice : z0 - ((axis == 2) ? 0 : 0),
-                                du, dv
-                            );
-
-                            // Stretch atlas UVs (acceptable default)
-                            var uvTL = new Vector2(cell.UVRect.X, cell.UVRect.Y + cell.UVRect.Height);
-                            var uvBL = new Vector2(cell.UVRect.X, cell.UVRect.Y);
-                            var uvBR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y);
-                            var uvTR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y + cell.UVRect.Height);
-
+                            var rectColors = FaceUtils.GetRectFaceColors(chunk, cell.FaceIdx, baseX, baseY, baseZ, du, dv);
+                            
                             // Reordered colors to match BL, BR, TR, TL vertex order
-                            Color cBL = rectColors[1];
-                            Color cBR = rectColors[2];
-                            Color cTR = rectColors[3];
-                            Color cTL = rectColors[0];
+                            Color cBL = rectColors[0];
+                            Color cBR = rectColors[1];
+                            Color cTR = rectColors[2];
+                            Color cTL = rectColors[3];
+
+                            // Stretch atlas UVs
+                            var uvTL = new Vector2(cell.UVRect.X, cell.UVRect.Y + cell.UVRect.Height);
+                            var uvTR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y + cell.UVRect.Height);
+                            var uvBR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y);
+                            var uvBL = new Vector2(cell.UVRect.X, cell.UVRect.Y);
+                            
+                            // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
+                            Vector3 q0, q1, q2, q3;
+                            Vector2 t0, t1, t2, t3;
+                            Color   col0, col1, col2, col3;
+
+                            switch (cell.FaceIdx)
+                            {
+                                case 0: // Front (-Z): [BL, TL, TR, BR]
+                                {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = uvBL; t1 = uvTL; t2 = uvTR; t3 = uvBR;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    break;
+                                }
+                                case 1: // Back (+Z): [BR, TR, TL, BL]
+                                {
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    t0 = uvBR; t1 = uvTR; t2 = uvTL; t3 = uvBL;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    break;
+                                }
+                                case 2: // Left (-X): [BL, TL, TR, BR]
+                                {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = uvBL; t1 = uvTL; t2 = uvTR; t3 = uvBR;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    break;
+                                }
+                                case 3: // Right (+X): [BR, TR, TL, BL]
+                                {
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    t0 = uvBR; t1 = uvTR; t2 = uvTL; t3 = uvBL;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    break;
+                                }
+                                case 4: // Bottom (-Y): [BL, TL, TR, BR]
+                                {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = uvBL; t1 = uvTL; t2 = uvTR; t3 = uvBR;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    break;
+                                }
+                                case 5: // Top (+Y): [TL, TR, BR, BL]
+                                {
+                                    q0 = p0; q1 = p3; q2 = p2; q3 = p1;
+                                    t0 = uvTL; t1 = uvTR; t2 = uvBR; t3 = uvBL;
+                                    col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
+                                    break;
+                                }
+                                default:
+                                {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    t0 = uvBL; t1 = uvTL; t2 = uvTR; t3 = uvBR;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    break;
+                                }
+                            }
                             
                             if (!isTransparencyPass)
                             {
                                 int baseOffset = vertices.Count;
 
-                                vertices.Add(vBL);
-                                vertices.Add(vBR);
-                                vertices.Add(vTR);
-                                vertices.Add(vTL);
+                                vertices.Add(q0); vertices.Add(q1); vertices.Add(q2); vertices.Add(q3);
+                                normals.Add(normal); normals.Add(normal); normals.Add(normal); normals.Add(normal);
+                                texcoords.Add(t0); texcoords.Add(t1); texcoords.Add(t2); texcoords.Add(t3);
+                                colors.Add(col0); colors.Add(col1); colors.Add(col2); colors.Add(col3);
 
-                                normals.Add(normal);
-                                normals.Add(normal);
-                                normals.Add(normal);
-                                normals.Add(normal);
-
-                                texcoords.Add(uvBL);
-                                texcoords.Add(uvBR);
-                                texcoords.Add(uvTR);
-                                texcoords.Add(uvTL);
-                                
-                                colors.Add(cBL);
-                                colors.Add(cBR);
-                                colors.Add(cTR);
-                                colors.Add(cTL);
-
+                                // Keep indices CCW like the per-voxel path
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 1);
                                 indices.Add(baseOffset + 0);
@@ -327,16 +388,16 @@ public class GreedyMeshing
                             }
                             else
                             {
-                                var centerLocal = (vBL + vBR + vTR + vTL) * 0.25f;
+                                var centerLocal = (q0 + q1 + q2 + q3) * 0.25f;
                                 var centerWorld = centerLocal + chunk.Position.ToVector3();
                                 var dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), centerWorld);
 
                                 transparentFaces.Add((dist, new FaceData
                                 {
-                                    Verts = new[] { vBL, vBR, vTR, vTL },
+                                    Verts = new[] { q0, q1, q2, q3 },
                                     Normal = normal,
-                                    UVs = new[] { uvBL, uvBR, uvTR, uvTL },
-                                    Colors = new[] { cBL, cBR, cTR, cTL },
+                                    UVs = new[] { t0, t1, t2, t3 },
+                                    Colors = new[] { col0, col1, col2, col3 },
                                     VertexOffset = 0,
                                     CenterDistance = dist
                                 }));
