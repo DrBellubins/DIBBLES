@@ -149,50 +149,13 @@ public class GreedyMeshing
                                 uvRect = new RectangleF(0, 0, 1, 1);
                             }
 
-                            // Deterministic flip flags (same idea as MeshDataGeneration)
-                            int uvFlipDirection = 0;
-
-                            if (TerrainMesh.GreedyRespectAntiTileFlips)
-                            {
-                                long cellSeed =
-                                    Seed ^
-                                    (x * 73428767L) ^
-                                    (y * 9127841L) ^
-                                    (z * 192837465L);
-
-                                var rng = new SeededRandom(cellSeed);
-                                int rndOffset = (int)(rng.NextFloat() * ChunkSize);
-
-                                var worldRNG = new Vector3Int(x + rndOffset, y + rndOffset, z + rndOffset);
-                                int flipRandom = ((worldRNG.X) ^ (worldRNG.Y) ^ (worldRNG.Z) ^ faceIdx) & 3;
-
-                                // Honor AntiTile flags
-                                if (faceIdx >= 0 && faceIdx <= 3) // sides
-                                {
-                                    if (curInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0) uvFlipDirection |= 1;
-                                    if (curInfo.AntiTileUVsVertically   && (flipRandom & 2) != 0) uvFlipDirection |= 2;
-                                }
-                                else
-                                {
-                                    if (curInfo.AntiTileUVsHorizontally || curInfo.AntiTileUVsVertically)
-                                        uvFlipDirection = flipRandom;
-                                    else
-                                        uvFlipDirection = 0;
-                                }
-                            }
-                            else
-                            {
-                                // No flips in greedy to avoid inconsistent orientation in merged quads
-                                uvFlipDirection = 0;
-                            }
-
                             mask[u, v] = new GreedyCell
                             {
                                 Visible = true,
                                 Type = curType,
                                 FaceIdx = faceIdx,
                                 UVRect = uvRect,
-                                UVFlipDirection = uvFlipDirection
+                                UVFlipDirection = 0 // TEMP
                             };
                         }
                     }
@@ -337,24 +300,13 @@ public class GreedyMeshing
                             // Smooth per-vertex colors at merged corners
                             var rectColors = FaceUtils.GetRectFaceColors(chunk, cell.FaceIdx, baseX, baseY, baseZ, du, dv);
                             
-                            // Reordered colors to match BL, BR, TR, TL vertex order
-                            Color cBL = rectColors[0];
-                            Color cBR = rectColors[1];
-                            Color cTR = rectColors[2];
-                            Color cTL = rectColors[3];
+                            // Build tile UVs exactly like per-voxel path
+                            // FaceUtils.GetFaceUVs returns UVs ordered [TL, BL, BR, TR]
+                            Vector2[] tileUVs = FaceUtils.GetFaceUVs(cell.Type, cell.FaceIdx);
 
-                            // Build base atlas UV corners (TL, BL, BR, TR)
-                            var uvTL = new Vector2(cell.UVRect.X, cell.UVRect.Y + cell.UVRect.Height);
-                            var uvBL = new Vector2(cell.UVRect.X, cell.UVRect.Y);
-                            var uvBR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y);
-                            var uvTR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y + cell.UVRect.Height);
-                            
-                            // Apply the same flip parity as non-greedy
-                            Vector2[] uvBase = new[] { uvTL, uvBL, uvBR, uvTR };
-                            
-                            Vector2[] uvFlipped = TerrainMesh.GreedyRespectAntiTileFlips
-                                ? FaceUtils.FlipUVsAtlas(uvBase, cell.FaceIdx, cell.UVFlipDirection)
-                                : uvBase;
+                            // Optional anti-tiling flips (kept off unless you enable the toggle)
+                            if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
+                                tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
                             
                             // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
                             Vector3 q0, q1, q2, q3;
@@ -366,50 +318,50 @@ public class GreedyMeshing
                                 case 0: // Front (-Z): [BL, TL, TR, BR]
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = uvFlipped[1]; t1 = uvFlipped[0]; t2 = uvFlipped[3]; t3 = uvFlipped[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
+                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
                                     break;
                                 }
                                 case 1: // Back (+Z): [BR, TR, TL, BL]
                                 {
                                     q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = uvFlipped[2]; t1 = uvFlipped[3]; t2 = uvFlipped[0]; t3 = uvFlipped[1];
-                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
+                                    col0 = rectColors[1]; col1 = rectColors[2]; col2 = rectColors[3]; col3 = rectColors[0];
                                     break;
                                 }
                                 case 2: // Left (-X): [BL, TL, TR, BR]
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = uvFlipped[1]; t1 = uvFlipped[0]; t2 = uvFlipped[3]; t3 = uvFlipped[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
+                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
                                     break;
                                 }
                                 case 3: // Right (+X): [BR, TR, TL, BL]
                                 {
                                     q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = uvFlipped[2]; t1 = uvFlipped[3]; t2 = uvFlipped[0]; t3 = uvFlipped[1];
-                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
+                                    col0 = rectColors[1]; col1 = rectColors[2]; col2 = rectColors[3]; col3 = rectColors[0];
                                     break;
                                 }
                                 case 4: // Bottom (-Y): [TL, BL, BR, TR]
                                 {
                                     q0 = p0; q1 = p1; q2 = p2; q3 = p3;
-                                    t0 = uvFlipped[0]; t1 = uvFlipped[1]; t2 = uvFlipped[2]; t3 = uvFlipped[3];
-                                    col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
+                                    t0 = tileUVs[0]; t1 = tileUVs[1]; t2 = tileUVs[2]; t3 = tileUVs[3];
+                                    col0 = rectColors[3]; col1 = rectColors[0]; col2 = rectColors[1]; col3 = rectColors[2];
                                     break;
                                 }
                                 case 5: // Top (+Y): [TL, TR, BR, BL]
                                 {
                                     q0 = p0; q1 = p3; q2 = p2; q3 = p1;
-                                    t0 = uvFlipped[0]; t1 = uvFlipped[3]; t2 = uvFlipped[2]; t3 = uvFlipped[1];
-                                    col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
+                                    t0 = tileUVs[0]; t1 = tileUVs[3]; t2 = tileUVs[2]; t3 = tileUVs[1];
+                                    col0 = rectColors[3]; col1 = rectColors[2]; col2 = rectColors[1]; col3 = rectColors[0];
                                     break;
                                 }
                                 default:
                                 {
                                     q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = uvFlipped[1]; t1 = uvFlipped[0]; t2 = uvFlipped[3]; t3 = uvFlipped[2];
-                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
+                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
                                     break;
                                 }
                             }
