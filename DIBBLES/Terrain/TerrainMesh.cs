@@ -57,8 +57,8 @@ public class TerrainMesh
         
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         foreach (var oModel in Mesh.OpaqueModels)
         {
@@ -159,8 +159,8 @@ public class TerrainMesh
     
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.RasterizerState = RasterizerState.CullNone;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.RasterizerState = RasterizerState.CullNone;
     
         var shader = billboardShader;
         var view = GameScene.PlayerCharacter.Camera.View;

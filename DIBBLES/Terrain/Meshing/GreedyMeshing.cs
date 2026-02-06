@@ -267,6 +267,11 @@ public class GreedyMeshing
                                 p2 = new Vector3(x0 + du, y0,      fz); // BR
                                 p3 = new Vector3(x0 + du, y0 + dv, fz); // TR
                             }
+                            
+                            Vector3 vBL = p1;
+                            Vector3 vBR = p2;
+                            Vector3 vTR = p3;
+                            Vector3 vTL = p0;
 
                             // Smooth per-vertex colors at merged corners
                             var rectColors = FaceUtils.GetRectFaceColors(
@@ -283,29 +288,35 @@ public class GreedyMeshing
                             var uvBR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y);
                             var uvTR = new Vector2(cell.UVRect.X + cell.UVRect.Width, cell.UVRect.Y + cell.UVRect.Height);
 
+                            // Reordered colors to match BL, BR, TR, TL vertex order
+                            Color cBL = rectColors[1];
+                            Color cBR = rectColors[2];
+                            Color cTR = rectColors[3];
+                            Color cTL = rectColors[0];
+                            
                             if (!isTransparencyPass)
                             {
                                 int baseOffset = vertices.Count;
 
-                                vertices.Add(p0);
-                                vertices.Add(p1);
-                                vertices.Add(p2);
-                                vertices.Add(p3);
+                                vertices.Add(vBL);
+                                vertices.Add(vBR);
+                                vertices.Add(vTR);
+                                vertices.Add(vTL);
 
                                 normals.Add(normal);
                                 normals.Add(normal);
                                 normals.Add(normal);
                                 normals.Add(normal);
 
-                                texcoords.Add(uvTL);
                                 texcoords.Add(uvBL);
                                 texcoords.Add(uvBR);
                                 texcoords.Add(uvTR);
-
-                                colors.Add(rectColors[0]);
-                                colors.Add(rectColors[1]);
-                                colors.Add(rectColors[2]);
-                                colors.Add(rectColors[3]);
+                                texcoords.Add(uvTL);
+                                
+                                colors.Add(cBL);
+                                colors.Add(cBR);
+                                colors.Add(cTR);
+                                colors.Add(cTL);
 
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 1);
@@ -316,16 +327,16 @@ public class GreedyMeshing
                             }
                             else
                             {
-                                var centerLocal = (p0 + p1 + p2 + p3) * 0.25f;
+                                var centerLocal = (vBL + vBR + vTR + vTL) * 0.25f;
                                 var centerWorld = centerLocal + chunk.Position.ToVector3();
                                 var dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), centerWorld);
 
                                 transparentFaces.Add((dist, new FaceData
                                 {
-                                    Verts = new[] { p0, p1, p2, p3 },
+                                    Verts = new[] { vBL, vBR, vTR, vTL },
                                     Normal = normal,
-                                    UVs = new[] { uvTL, uvBL, uvBR, uvTR },
-                                    Colors = rectColors,
+                                    UVs = new[] { uvBL, uvBR, uvTR, uvTL },
+                                    Colors = new[] { cBL, cBR, cTR, cTL },
                                     VertexOffset = 0,
                                     CenterDistance = dist
                                 }));

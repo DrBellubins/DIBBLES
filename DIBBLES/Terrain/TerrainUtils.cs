@@ -290,10 +290,10 @@ public static class FaceUtils
 
         return new[]
         {
-            ToColor(lTL),
             ToColor(lBL),
             ToColor(lBR),
-            ToColor(lTR)
+            ToColor(lTR),
+            ToColor(lTL)
         };
     }
 
