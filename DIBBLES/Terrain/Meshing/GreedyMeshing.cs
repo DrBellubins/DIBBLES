@@ -305,13 +305,18 @@ public class GreedyMeshing
 
                             // Optional anti-tiling flips (kept off unless you enable the toggle)
                             if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
+                            {
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
+                            }
+                            
+                            // Reorder to match the per-face vertex order (same as q0..q3 below)
+                            Vector2[] orderedUVs = FaceUtils.MapUVsToFaceVertexOrder(tileUVs, cell.FaceIdx);
                             
                             // Compute UV basis from the per-face orientation (atlas space)
                             // IMPORTANT: use indices that match the new order
-                            Vector2 uvBL = tileUVs[0];
-                            Vector2 uvTL = tileUVs[1];
-                            Vector2 uvBR = tileUVs[3];
+                            Vector2 uvBL = orderedUVs[0];
+                            Vector2 uvTL = orderedUVs[1];
+                            Vector2 uvBR = orderedUVs[3];
                             
                             Vector2 basisU = uvBR - uvBL; // +U direction in atlas
                             Vector2 basisV = uvTL - uvBL; // +V direction in atlas

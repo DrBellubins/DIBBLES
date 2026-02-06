@@ -144,6 +144,48 @@ public static class FaceUtils
         return new[] { bl, tl, tr, br };
     }
     
+    // Remap UVs to match the per-face vertex order of GetFaceVertices().
+    public static Vector2[] MapUVsToFaceVertexOrder(Vector2[] uvsBLTLTRBR, int faceIdx)
+    {
+        // Input order is [BL, TL, TR, BR]. Reorder per face to match GetFaceVertices:
+        // 0 Front (-Z):   [BL, TL, TR, BR]
+        // 1 Back  (+Z):   [BR, TR, TL, BL]
+        // 2 Left  (-X):   [BL, TL, TR, BR]
+        // 3 Right (+X):   [BR, TR, TL, BL]
+        // 4 Bottom (-Y):  [TL, BL, BR, TR]
+        // 5 Top   (+Y):   [TL, TR, BR, BL]
+        var bl = uvsBLTLTRBR[0];
+        var tl = uvsBLTLTRBR[1];
+        var tr = uvsBLTLTRBR[2];
+        var br = uvsBLTLTRBR[3];
+
+        switch (faceIdx)
+        {
+            case 0: // Front
+            case 2: // Left
+            {
+                return new[] { bl, tl, tr, br };
+            }
+            case 1: // Back
+            case 3: // Right
+            {
+                return new[] { br, tr, tl, bl };
+            }
+            case 4: // Bottom
+            {
+                return new[] { tl, bl, br, tr };
+            }
+            case 5: // Top
+            {
+                return new[] { tl, tr, br, bl };
+            }
+            default:
+            {
+                return new[] { bl, tl, tr, br };
+            }
+        }
+    }
+    
     public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx)
     {
         // Lighting calculation for each face (copied from TerrainMesh.cs)

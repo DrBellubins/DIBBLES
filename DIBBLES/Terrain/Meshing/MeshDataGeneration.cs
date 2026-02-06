@@ -101,6 +101,7 @@ public class MeshDataGeneration
                     
                     // Random uv flipping
                     faceUVs = RndFlipUV(rng, blockInfo, pos, faceIdx, faceUVs);
+                    faceUVs = FaceUtils.MapUVsToFaceVertexOrder(faceUVs, faceIdx); // Remap to GetFaceVertices
                     
                     if (isTransparencyPass)
                     {
