@@ -105,7 +105,7 @@ public class Billboards
             var localCenter = new Vector3(x + 0.5f, y + 0.0f, z + 0.5f);
             var worldCenter = chunk.Position.ToVector3() + localCenter;
 
-            long seed = TerrainGeneration.Seed
+            long seed = Seed
                         ^ (x * 73428767L)
                         ^ (y * 9127841L)
                         ^ (z * 192837465L);

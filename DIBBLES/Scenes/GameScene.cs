@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DIBBLES.Effects;
 using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
@@ -9,6 +10,7 @@ using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES.Scenes;
 
@@ -37,6 +39,8 @@ public class GameScene : Scene
     
     private Chat gameChat = new();
     private UIBlur uiBlur = new();
+    
+    private Stopwatch timer = new Stopwatch();
     
     public override void Start()
     {
@@ -164,7 +168,12 @@ public class GameScene : Scene
         // 3) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
+        timer.Start();
         TerrainGen.Draw();
+        timer.Stop();
+        
+        Console.WriteLine($"Terrain draw time: {timer.Elapsed}");
+        
         PlayerCharacter.Draw();
         
         // 4) Switch to single target with the same depth-stencil to preserve terrain depth
@@ -232,7 +241,7 @@ public class GameScene : Scene
             var bufferWidth = Engine.ScreenWidth / 4.0f;
             var bufferHeight = Engine.ScreenHeight / 4.0f;
             //var aoBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
-            var tesBuffer = postProcessingManager.bloom.BloomOutput;
+            //var tesBuffer = postProcessingManager.bloom.BloomOutput;
             
             UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
@@ -240,8 +249,8 @@ public class GameScene : Scene
             UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
             
-            UIBatch.Draw(tesBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
-                new Vector2(bufferWidth, bufferHeight), Color.White);
+            //UIBatch.Draw(tesBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
+            //    new Vector2(bufferWidth, bufferHeight), Color.White);
         }
         
         UIBatch.End();
