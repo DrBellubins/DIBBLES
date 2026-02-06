@@ -311,10 +311,25 @@ public class GreedyMeshing
                             if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
                             
-                            // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
-                            Vector3 q0, q1, q2, q3;
                             Vector2 t0, t1, t2, t3;
-                            Color col0, col1, col2, col3;
+                            
+                            // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
+                            Vector3 q0 = p1,
+                                q1 = p0,
+                                q2 = p3,
+                                q3 = p2;
+                            
+                            // Corner colors come back as [BL, BR, TR, TL]
+                            Color cBL = rectColors[0];
+                            Color cBR = rectColors[1];
+                            Color cTR = rectColors[2];
+                            Color cTL = rectColors[3];
+                            
+                            // Bind colors to vertex slots (will be overridden per face below)
+                            Color col0 = cBL,
+                                col1 = cTL,
+                                col2 = cTR,
+                                col3 = cBR;
                             
                             RectangleF rect;
                             if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
@@ -334,61 +349,52 @@ public class GreedyMeshing
                             {
                                 case 0: // Front (-Z): [BL, TL, TR, BR]
                                 {
-                                    t0 = new Vector2(0, 0);
-                                    t1 = new Vector2(0, dv);
-                                    t2 = new Vector2(du, dv);
-                                    t3 = new Vector2(du, 0);
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
                                     break;
                                 }
                                 case 1: // Back (+Z): [BR, TR, TL, BL]
                                 {
-                                    t0 = new Vector2(du, 0);
-                                    t1 = new Vector2(du, dv);
-                                    t2 = new Vector2(0, dv);
-                                    t3 = new Vector2(0, 0);
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
                                     break;
                                 }
                                 case 2: // Left (-X): [BL, TL, TR, BR]
                                 {
-                                    t0 = new Vector2(0, 0);
-                                    t1 = new Vector2(0, dv);
-                                    t2 = new Vector2(du, dv);
-                                    t3 = new Vector2(du, 0);
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
                                     break;
                                 }
                                 case 3: // Right (+X): [BR, TR, TL, BL]
                                 {
-                                    t0 = new Vector2(du, 0);
-                                    t1 = new Vector2(du, dv);
-                                    t2 = new Vector2(0, dv);
-                                    t3 = new Vector2(0, 0);
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
                                     break;
                                 }
                                 case 4: // Bottom (-Y): [TL, BL, BR, TR]
                                 {
-                                    t0 = new Vector2(0, dv);
-                                    t1 = new Vector2(0, 0);
-                                    t2 = new Vector2(du, 0);
-                                    t3 = new Vector2(du, dv);
+                                    q0 = p0; q1 = p1; q2 = p2; q3 = p3;
+                                    col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
                                     break;
                                 }
                                 case 5: // Top (+Y): [TL, TR, BR, BL]
                                 {
-                                    t0 = new Vector2(0, dv);
-                                    t1 = new Vector2(du, dv);
-                                    t2 = new Vector2(du, 0);
-                                    t3 = new Vector2(0, 0);
+                                    q0 = p0; q1 = p3; q2 = p2; q3 = p1;
+                                    col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
                                     break;
                                 }
                                 default:
                                 {
-                                    t0 = new Vector2(0, 0);
-                                    t1 = new Vector2(0, dv);
-                                    t2 = new Vector2(du, dv);
-                                    t3 = new Vector2(du, 0);
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
                                     break;
                                 }
                             }
+                            
+                            // Compute distance for transparent sorting
+                            var centerLocal = (q0 + q1 + q2 + q3) * 0.25f;
+                            var centerWorld = centerLocal + chunk.Position.ToVector3();
+                            float dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), centerWorld);
                             
                             if (!isTransparencyPass)
                             {
@@ -410,7 +416,6 @@ public class GreedyMeshing
                             }
                             else
                             {
-                                // Transparent faces: store payload
                                 transparentFaces.Add((dist, new FaceData
                                 {
                                     Verts = new[] { q0, q1, q2, q3 },
@@ -420,7 +425,7 @@ public class GreedyMeshing
                                     VertexOffset = 0,
                                     CenterDistance = dist
                                 }));
-                                // Also queue rects (will append after sort)
+
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
                             }
 
