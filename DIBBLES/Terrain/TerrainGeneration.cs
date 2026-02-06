@@ -13,7 +13,7 @@ namespace DIBBLES.Terrain;
 
 public class TerrainGeneration
 {
-    public const int RenderDistance = 12;
+    public const int RenderDistance = 16;
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     
@@ -579,7 +579,9 @@ public class TerrainGeneration
                     dbgColor = Color.Red;
                 }
                 
-                Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), dbgColor, thickness, 16f);
+                // Use chunk center, not min corner
+                Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize, ChunkSize, ChunkSize);
+                Debug.DrawBox(center, new Vector3(ChunkSize, ChunkSize, ChunkSize), dbgColor, thickness, 16f);
             }
         }
         
