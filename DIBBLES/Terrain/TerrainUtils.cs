@@ -87,26 +87,25 @@ public static class FaceUtils
 
         if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect))
         {
-            // Use per-face UV
+            // per-face rect
         }
         else if (BlockData.AtlasUVs.TryGetValue((type, 0), out uvRect))
         {
-            // Use default (all faces same)
+            // fallback rect
         }
         else
         {
             uvRect = new RectangleF(0, 0, 1, 1);
         }
 
-        Vector2[] uvCoords =
-        {
-            new Vector2(uvRect.X, uvRect.Y + uvRect.Height), // Top-left
-            new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height), // Top-right
-            new Vector2(uvRect.X + uvRect.Width, uvRect.Y), // Bottom-right
-            new Vector2(uvRect.X, uvRect.Y) // Bottom-left
-        };
+        // Build corners in atlas space
+        Vector2 bl = new Vector2(uvRect.X, uvRect.Y);
+        Vector2 br = new Vector2(uvRect.X + uvRect.Width, uvRect.Y);
+        Vector2 tl = new Vector2(uvRect.X, uvRect.Y + uvRect.Height);
+        Vector2 tr = new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height);
 
-        return new[] { uvCoords[0], uvCoords[3], uvCoords[2], uvCoords[1] };
+        // Return order to MATCH GetFaceVertices: [BL, TL, TR, BR]
+        return new[] { bl, tl, tr, br };
     }
     
     public static Vector2[] RotateUVs(Vector2[] uvs, int rotation)
@@ -122,41 +121,27 @@ public static class FaceUtils
     
     public static Vector2[] FlipUVsAtlas(Vector2[] uvs, int faceIdx, int flip)
     {
-        Vector2[] result = new Vector2[4];
-        
-        for (int i = 0; i < 4; i++) result[i] = uvs[i];
+        // uvs are in [BL, TL, TR, BR] order
+        Vector2 bl = uvs[0];
+        Vector2 tl = uvs[1];
+        Vector2 tr = uvs[2];
+        Vector2 br = uvs[3];
 
-        // For sides
-        if (faceIdx >= 0 && faceIdx <= 3)
+        // Horizontal flip: swap left/right columns
+        if ((flip & 1) != 0)
         {
-            if ((flip & 1) != 0) // Horizontal: mirror left-right
-            {
-                (result[0], result[3]) = (result[3], result[0]);
-                (result[1], result[2]) = (result[2], result[1]);
-            }
-            
-            if ((flip & 2) != 0) // Vertical: invert top-bottom
-            {
-                (result[0], result[1]) = (result[1], result[0]);
-                (result[2], result[3]) = (result[3], result[2]);
-            }
+            (tl, tr) = (tr, tl);
+            (bl, br) = (br, bl);
         }
-        else
+
+        // Vertical flip: swap top/bottom rows
+        if ((flip & 2) != 0)
         {
-            // Top/bottom: normal mapping
-            if ((flip & 1) != 0)
-            {
-                (result[0], result[1]) = (result[1], result[0]);
-                (result[3], result[2]) = (result[2], result[3]);
-            }
-        
-            if ((flip & 2) != 0)
-            {
-                (result[0], result[3]) = (result[3], result[0]);
-                (result[1], result[2]) = (result[2], result[1]);
-            }
+            (tl, bl) = (bl, tl);
+            (tr, br) = (br, tr);
         }
-        return result;
+
+        return new[] { bl, tl, tr, br };
     }
     
     public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx)

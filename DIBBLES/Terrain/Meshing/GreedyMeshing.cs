@@ -308,13 +308,13 @@ public class GreedyMeshing
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
                             
                             // Compute UV basis from the per-face orientation (atlas space)
-                            Vector2 uvTL = tileUVs[0];
-                            Vector2 uvBL = tileUVs[1];
-                            Vector2 uvBR = tileUVs[2];
-                            //Vector2 uvTR = tileUVs[3];
+                            // IMPORTANT: use indices that match the new order
+                            Vector2 uvBL = tileUVs[0];
+                            Vector2 uvTL = tileUVs[1];
+                            Vector2 uvBR = tileUVs[3];
                             
-                            Vector2 basisU = uvBR - uvBL; // +U direction in atlas space
-                            Vector2 basisV = uvTL - uvBL; // +V direction in atlas space
+                            Vector2 basisU = uvBR - uvBL; // +U direction in atlas
+                            Vector2 basisV = uvTL - uvBL; // +V direction in atlas
                             
                             Vector4 basis4 = new Vector4(basisU.X, basisU.Y, basisV.X, basisV.Y);
                             
