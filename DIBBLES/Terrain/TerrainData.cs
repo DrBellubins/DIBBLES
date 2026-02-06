@@ -149,15 +149,37 @@ public class BlockData
                 }
 
                 // Canonical BL, TL, TR, BR for the atlas sub-rect
-                var bl = new Vector2(rect.X,                 rect.Y + rect.Height);
-                var tl = new Vector2(rect.X,                 rect.Y);
-                var tr = new Vector2(rect.X + rect.Width,    rect.Y);
-                var br = new Vector2(rect.X + rect.Width,    rect.Y + rect.Height);
+                var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
+                
+                // Rotate/flip UVs to be correct manually
+                switch (faceIdx)
+                {
+                    case 0: // Front (-Z)
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 1, 1);
+                        break;
+                    case 1: // Back (+Z)
+                        break;
+                    case 2: // Left (-X)
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        break;
+                    case 3: // Right (+X)
+                        break;
+                    case 4: // Bottom (-Y)
+                        break;
+                    case 5: // Top (+Y)
+                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        break;
+                }
+
+                /*var bl = faceUVs[0];
+                var tl = faceUVs[1];
+                var tr = faceUVs[2];
+                var br = faceUVs[3];
 
                 // Pre-map to the per-face vertex order used by GetFaceVertices()
-                var ordered = FaceUtils.MapUVsToFaceVertexOrder(new[] { bl, tl, tr, br }, faceIdx);
+                var ordered = FaceUtils.MapUVsToFaceVertexOrder(new[] { bl, tl, tr, br }, faceIdx);*/
 
-                FaceUVsOrdered[(blockType, faceIdx)] = ordered;
+                FaceUVsOrdered[(blockType, faceIdx)] = faceUVs;
             }
         }
     }
