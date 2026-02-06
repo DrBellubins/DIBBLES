@@ -29,21 +29,22 @@ public class Billboards
     
         var shader = billboardShader;
         var view = GameScene.PlayerCharacter.Camera.View;
-        var proj = GameScene.PlayerCharacter.Camera.Projection;
+        var projection = GameScene.PlayerCharacter.Camera.Projection;
     
-        shader.Parameters["AtlasTex"]?.SetValue(BlockData.TextureAtlas);
-        shader.Parameters["View"]?.SetValue(view);
-        shader.Parameters["Projection"]?.SetValue(proj);
+        EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+        
+        EffectParams.SetMatrix(shader, "View", view);
+        EffectParams.SetMatrix(shader, "Projection", projection);
+                
+        EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+        EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+                
+        EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
+        EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
+        EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
     
-        shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-        shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-    
-        shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
-        shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
-        shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
-    
-        shader.Parameters["Time"]?.SetValue(Time.time);
+        EffectParams.SetFloat(shader, "Time", Time.time);
         
         foreach (var kv in BillboardBatches)
         {
@@ -65,7 +66,9 @@ public class Billboards
                     continue;
     
                 var rect = BlockData.AtlasUVs[(type, 0)];
-                shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
+                
+                EffectParams.SetVector4(billboardShader, "UVRect",
+                    new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
     
                 graphics.SetVertexBuffers
                 (

@@ -75,23 +75,23 @@ public class TerrainMesh
                 var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
                 var shader = oModel.Value.Shader;
                 
-                shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1 : 0);
-                
-                shader.Parameters["World"].SetValue(world);
-                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
-                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                
-                shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-                    
-                shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
-
                 var view = GameScene.PlayerCharacter.Camera.View;
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
+                
+                EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+                EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
+                
+                EffectParams.SetMatrix(shader, "World", world);
+                EffectParams.SetMatrix(shader, "View", view);
+                EffectParams.SetMatrix(shader, "Projection", projection);
+                
+                EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+                EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+                
+                EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
+                EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
+                EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
                 
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
@@ -121,29 +121,29 @@ public class TerrainMesh
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
                 continue;
             
-            // oModel.Value is a RuntimeModel
+            // tModel.Value is a RuntimeModel
             if (tModel.Value != null)
             {
                 var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
                 var shader = tModel.Value.Shader;
-                
-                shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
-                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1 : 0);
-                
-                shader.Parameters["World"].SetValue(world);
-                shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
-                shader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
-                
-                shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-                
-                shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
-                shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
-                shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
-    
+
                 var view = GameScene.PlayerCharacter.Camera.View;
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
+                
+                EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+                EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
+                
+                EffectParams.SetMatrix(shader, "World", world);
+                EffectParams.SetMatrix(shader, "View", view);
+                EffectParams.SetMatrix(shader, "Projection", projection);
+                
+                EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+                EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+                
+                EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
+                EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
+                EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
                 
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
