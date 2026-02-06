@@ -306,30 +306,17 @@ public class GreedyMeshing
                             if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
                             
-                            // Per-face vertex, UV, color order to match FaceUtils.GetFaceVertices() winding
-                            Vector3 q0 = p1,
-                                q1 = p0,
-                                q2 = p3,
-                                q3 = p2;
-                            
                             // Corner colors come back as [BL, BR, TR, TL]
                             Color cBL = rectColors[0];
                             Color cBR = rectColors[1];
                             Color cTR = rectColors[2];
                             Color cTL = rectColors[3];
                             
-                            // Bind colors to vertex slots (will be overridden per face below)
-                            Color col0 = cBL,
-                                col1 = cTL,
-                                col2 = cTR,
-                                col3 = cBR;
-                            
+                            // Atlas sub-rect for shader tiling
                             RectangleF rect;
+                            
                             if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
-                                BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect))
-                            {
-                                // ok
-                            }
+                                BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect)) { }
                             else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, 0), out rect))
                             {
                                 rect = new RectangleF(0, 0, 1, 1);
@@ -337,14 +324,20 @@ public class GreedyMeshing
                             
                             Vector4 rect4 = new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
 
-                            // LOCAL tile-space UVs (0..du, 0..dv) mapped to the same per-face vertex order (q0..q3)
-                            // This replaces tileUVs = FaceUtils.GetFaceUVs(...) so shader can tile with frac()
+                            // LOCAL tile-space UVs (0..du, 0..dv) — these must line up with the per-face vertex order
                             Vector2 t0, t1, t2, t3;
+                            
+                            // Per-face vertex order (q0..q3) and colors (col0..col3); keep CCW under CullCounterClockwise
+                            Vector3 q0, q1, q2, q3;
+                            Color col0, col1, col2, col3;
 
                             switch (cell.FaceIdx)
                             {
                                 case 0: // Front (-Z): q = [BL, TL, TR, BR]
                                 {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                            
                                     t0 = new Vector2(0, 0);
                                     t1 = new Vector2(0, dv);
                                     t2 = new Vector2(du, dv);
@@ -353,14 +346,20 @@ public class GreedyMeshing
                                 }
                                 case 1: // Back (+Z): q = [BR, TR, TL, BL]
                                 {
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                            
                                     t0 = new Vector2(du, 0);
                                     t1 = new Vector2(du, dv);
-                                    t2 = new Vector2(0, dv);
-                                    t3 = new Vector2(0, 0);
+                                    t2 = new Vector2(0,  dv);
+                                    t3 = new Vector2(0,  0);
                                     break;
                                 }
                                 case 2: // Left (-X): q = [BL, TL, TR, BR]
                                 {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                            
                                     t0 = new Vector2(0, 0);
                                     t1 = new Vector2(0, dv);
                                     t2 = new Vector2(du, dv);
@@ -369,30 +368,42 @@ public class GreedyMeshing
                                 }
                                 case 3: // Right (+X): q = [BR, TR, TL, BL]
                                 {
+                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
+                                    col0 = cBR; col1 = cTR; col2 = cTL; col3 = cBL;
+                            
                                     t0 = new Vector2(du, 0);
                                     t1 = new Vector2(du, dv);
-                                    t2 = new Vector2(0, dv);
-                                    t3 = new Vector2(0, 0);
+                                    t2 = new Vector2(0,  dv);
+                                    t3 = new Vector2(0,  0);
                                     break;
                                 }
                                 case 4: // Bottom (-Y): q = [TL, BL, BR, TR]
                                 {
-                                    t0 = new Vector2(0, dv);
-                                    t1 = new Vector2(0, 0);
+                                    q0 = p0; q1 = p1; q2 = p2; q3 = p3;
+                                    col0 = cTL; col1 = cBL; col2 = cBR; col3 = cTR;
+                            
+                                    t0 = new Vector2(0,  dv);
+                                    t1 = new Vector2(0,  0);
                                     t2 = new Vector2(du, 0);
                                     t3 = new Vector2(du, dv);
                                     break;
                                 }
                                 case 5: // Top (+Y): q = [TL, TR, BR, BL]
                                 {
-                                    t0 = new Vector2(0, dv);
+                                    q0 = p0; q1 = p3; q2 = p2; q3 = p1;
+                                    col0 = cTL; col1 = cTR; col2 = cBR; col3 = cBL;
+                            
+                                    t0 = new Vector2(0,  dv);
                                     t1 = new Vector2(du, dv);
                                     t2 = new Vector2(du, 0);
-                                    t3 = new Vector2(0, 0);
+                                    t3 = new Vector2(0,  0);
                                     break;
                                 }
                                 default:
                                 {
+                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
+                                    col0 = cBL; col1 = cTL; col2 = cTR; col3 = cBR;
+                            
                                     t0 = new Vector2(0, 0);
                                     t1 = new Vector2(0, dv);
                                     t2 = new Vector2(du, dv);
