@@ -569,7 +569,17 @@ public class TerrainGeneration
             foreach (var chunkPair in ChunkBuffer)
             {
                 var chunkPos = chunkPair.Key;
-                Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), Color.Blue, 16f);
+
+                float thickness = 0.01f;
+                Color dbgColor = Color.Blue;
+
+                if (chunkPair.Value.IsModified)
+                {
+                    thickness = 0.05f;
+                    dbgColor = Color.Red;
+                }
+                
+                Debug.DrawBox(chunkPos, new Vector3Int(ChunkSize, ChunkSize, ChunkSize), dbgColor, thickness, 16f);
             }
         }
         

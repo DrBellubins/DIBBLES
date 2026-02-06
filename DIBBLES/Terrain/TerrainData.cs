@@ -160,14 +160,40 @@ public class BlockData
                         faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
                         break;
                     }
+                    case 1: // Back (+Z)
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        else
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 0);
+                        
+                        break;
+                    }
                     case 2: // Left (-X)
                     {
-                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        if (TerrainMesh.UseGreedyMeshing)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 1, 1);
+                        else
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        
+                        break;
+                    }
+                    case 3: // Right (+X)
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 1, 2);
+                        else
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 0);
+                        
                         break;
                     }
                     case 4: // Bottom (-Y)
                     {
-                        faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 2, 0);
+                        if (TerrainMesh.UseGreedyMeshing)
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
+                        else
+                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 2, 0);
+                        
                         break;
                     }
                     case 5: // Top (+Y)
@@ -175,7 +201,7 @@ public class BlockData
                         faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 1, 1);
                         break;
                     }
-                    default:
+                    default: // Unused
                     {
                         faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 0);
                         break;

@@ -300,19 +300,20 @@ public class GreedyMeshing
                             // Smooth per-vertex colors at merged corners
                             var rectColors = FaceUtils.GetRectFaceColors(chunk, cell.FaceIdx, baseX, baseY, baseZ, du, dv);
                             
-                            // Build tile UVs exactly like per-voxel path
-                            // FaceUtils.GetFaceUVs returns UVs ordered [TL, BL, BR, TR]
-                            Vector2[] tileUVs = FaceUtils.GetFaceUVs(cell.Type, cell.FaceIdx);
+                            // Get precomputed ordered UVs aligned to this face's vertex order (matches q0..q3 below)
+                            Vector2[] orderedUVs;
 
-                            int rotationSteps = 0;
-                            int flipMask = TerrainMesh.GreedyRespectAntiTileFlips ? cell.UVFlipDirection : 0;
+                            if (!BlockData.FaceUVsOrdered.TryGetValue((cell.Type, cell.FaceIdx), out orderedUVs))
+                            {
+                                // Fallback: compute once from atlas rect and map to face vertex order
+                                var canonical = FaceUtils.GetFaceUVs(cell.Type, cell.FaceIdx);
+                                orderedUVs = FaceUtils.MapUVsToFaceVertexOrder(canonical, cell.FaceIdx);
+                            }
                             
-                            // Reorder to match the per-face vertex order (same as q0..q3 below)
-                            Vector2[] orderedUVs = FaceUtils.ApplyUVTransform(tileUVs, cell.FaceIdx, rotationSteps, flipMask);;
-                            
-                            // Atlas rect origin/size for shader tiling: origin = BL, size = atlas sub-rect
+                            // BL origin for atlas tiling
                             Vector2 uvBL = orderedUVs[0];
                             
+                            // Basis from ordered UVs (BL, TL, TR, BR in per-face order)
                             Vector4 basis4 = FaceUtils.ComputeUVBasis(orderedUVs);
                             
                             // Corner colors come back as [BL, BR, TR, TL]
@@ -321,13 +322,13 @@ public class GreedyMeshing
                             Color cTR = rectColors[2];
                             Color cTL = rectColors[3];
                             
-                            // Atlas sub-rect for shader tiling
+                            // Atlas sub-rect for shader tiling (width/height only; origin comes from uvBL)
                             RectangleF rect;
 
                             if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
                                 BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect))
                             {
-                                // per-face rect
+                                // per-face rect from prefab
                             }
                             else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, cell.FaceIdx), out rect))
                             {
