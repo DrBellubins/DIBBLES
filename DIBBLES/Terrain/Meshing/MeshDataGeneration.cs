@@ -69,26 +69,50 @@ public class MeshDataGeneration
                 if (!IsVoxelSolid(chunk, nx, ny, nz, neighborCache))
                 {
                     var faceVerts = FaceUtils.GetFaceVertices(pos.ToVector3(), faceIdx);
-                    var faceUVs = FaceUtils.GetFaceUVs(blockType, faceIdx);
                     
-                    // Rotate/flip UVs to be correct manually
-                    switch (faceIdx)
+                    Vector2[] baseUVs;
+
+                    if (!BlockData.FaceUVsOrdered.TryGetValue((blockType, faceIdx), out baseUVs))
                     {
-                        case 0: // Front (-Z)
-                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
-                            break;
-                        case 1: // Back (+Z)
-                            break;
-                        case 2: // Left (-X)
-                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
-                            break;
-                        case 3: // Right (+X)
-                            break;
-                        case 4: // Bottom (-Y)
-                            break;
-                        case 5: // Top (+Y)
-                            faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, 0, 1);
-                            break;
+                        // Fallback only if not present: compute once at runtime
+                        var canonical = FaceUtils.GetFaceUVs(blockType, faceIdx);
+                        baseUVs = FaceUtils.MapUVsToFaceVertexOrder(canonical, faceIdx);
+                    }
+                    
+                    // Deterministic random uv flipping
+                    int rotationSteps = 0;
+                    int flipMask = NonGreedyRespectAntiTileFlips
+                        ? Helpers.ComputeRndFlipMask(rng, blockInfo, pos, faceIdx)
+                        : 0;
+                    
+                    Vector2 uv0 = baseUVs[0];
+                    Vector2 uv1 = baseUVs[1];
+                    Vector2 uv2 = baseUVs[2];
+                    Vector2 uv3 = baseUVs[3];
+
+                    if (flipMask != 0)
+                    {
+                        float minX = MathF.Min(MathF.Min(uv0.X, uv1.X), MathF.Min(uv2.X, uv3.X));
+                        float maxX = MathF.Max(MathF.Max(uv0.X, uv1.X), MathF.Max(uv2.X, uv3.X));
+                        float minY = MathF.Min(MathF.Min(uv0.Y, uv1.Y), MathF.Min(uv2.Y, uv3.Y));
+                        float maxY = MathF.Max(MathF.Max(uv0.Y, uv1.Y), MathF.Max(uv2.Y, uv3.Y));
+
+                        // 1 = horizontal flip (reflect X), 2 = vertical flip (reflect Y)
+                        if ((flipMask & 1) != 0)
+                        {
+                            uv0.X = minX + maxX - uv0.X;
+                            uv1.X = minX + maxX - uv1.X;
+                            uv2.X = minX + maxX - uv2.X;
+                            uv3.X = minX + maxX - uv3.X;
+                        }
+
+                        if ((flipMask & 2) != 0)
+                        {
+                            uv0.Y = minY + maxY - uv0.Y;
+                            uv1.Y = minY + maxY - uv1.Y;
+                            uv2.Y = minY + maxY - uv2.Y;
+                            uv3.Y = minY + maxY - uv3.Y;
+                        }
                     }
                     
                     float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx); // samples surrounding voxels
@@ -114,15 +138,6 @@ public class MeshDataGeneration
                             c.A
                         );
                     }*/
-
-                    // Random uv flipping
-                    int rotationSteps = 0;
-                    int flipMask = NonGreedyRespectAntiTileFlips
-                        ? Helpers.ComputeRndFlipMask(rng, blockInfo, pos, faceIdx)
-                        : 0;
-                    
-                    // Apply transform and standardize to face vertex order
-                    faceUVs = FaceUtils.ApplyUVTransform(faceUVs, faceIdx, rotationSteps, flipMask);
                     
                     if (isTransparencyPass)
                     {
@@ -134,7 +149,7 @@ public class MeshDataGeneration
                         {
                             Verts = faceVerts,
                             Normal = normal,
-                            UVs = faceUVs,
+                            UVs = new[] { uv0, uv1, uv2, uv3 },
                             Colors = faceColors,
                             VertexOffset = vertexOffset,
                             CenterDistance =  dist
@@ -145,7 +160,9 @@ public class MeshDataGeneration
                         // Opaque faces: add immediately
                         vertices.AddRange(faceVerts);
                         normals.AddRange(Enumerable.Repeat(normal, 4));
-                        texcoords.AddRange(faceUVs);
+                        texcoords.AddRange(new []{uv0, uv1, uv2, uv3});
+                        //texcoords.AddRange(faceUVs);
+                        
                         colors.AddRange(faceColors);
                         
                         indices.AddRange(new int[]

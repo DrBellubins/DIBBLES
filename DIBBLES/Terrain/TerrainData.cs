@@ -44,6 +44,7 @@ public class BlockData
     
     public static Texture2D TextureAtlas; // Store the atlas
     public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new(); // Store UV mappings
+    public static readonly Dictionary<(BlockType, int), Vector2[]> FaceUVsOrdered = new();
     
     public static void InitializeBlockPrefabs()
     {
@@ -128,24 +129,37 @@ public class BlockData
         TextureAtlas = result.AtlasTexture;
         AtlasUVs = result.BlockUVs;
         
+        FaceUVsOrdered.Clear();
+        
         foreach (BlockType blockType in atlasBlockTypes)
         {
-            var blockInfo = Prefabs[blockType];
-            var faceUVs = new Dictionary<int, RectangleF>();
+            var info = Prefabs[blockType];
+
+            if (info.FaceUVs == null)
+                continue;
 
             for (int faceIdx = 0; faceIdx < 6; faceIdx++)
             {
-                // Assign correct rect from AtlasUVs (now populated)
-                if (AtlasUVs.TryGetValue((blockType, faceIdx), out var rect))
-                    faceUVs[faceIdx] = rect;
-                else if (AtlasUVs.TryGetValue((blockType, 0), out var fallback))
-                    faceUVs[faceIdx] = fallback;
-            }
-            
-            blockInfo.FaceUVs = faceUVs;
-            Prefabs[blockType] = blockInfo;
-        }
+                RectangleF rect;
 
+                if (info.FaceUVs.TryGetValue(faceIdx, out rect)) { }
+                else if (!AtlasUVs.TryGetValue((blockType, 0), out rect))
+                {
+                    rect = new RectangleF(0, 0, 1, 1);
+                }
+
+                // Canonical BL, TL, TR, BR for the atlas sub-rect
+                var bl = new Vector2(rect.X,                 rect.Y + rect.Height);
+                var tl = new Vector2(rect.X,                 rect.Y);
+                var tr = new Vector2(rect.X + rect.Width,    rect.Y);
+                var br = new Vector2(rect.X + rect.Width,    rect.Y + rect.Height);
+
+                // Pre-map to the per-face vertex order used by GetFaceVertices()
+                var ordered = FaceUtils.MapUVsToFaceVertexOrder(new[] { bl, tl, tr, br }, faceIdx);
+
+                FaceUVsOrdered[(blockType, faceIdx)] = ordered;
+            }
+        }
     }
     
     private static Texture2D loadBlockTexture(BlockType blockType)
