@@ -211,8 +211,8 @@ public class TerrainGameplay
             //Lighting.PropagateLight(chunk);
             
             // Regenerate mesh
-            var meshData = Mesh.GenerateMeshData(chunk, false);
-            var tMeshData = Mesh.GenerateMeshData(chunk, true);
+            var meshData = Mesh.MeshDataGen.Generate(chunk, false);
+            var tMeshData = Mesh.MeshDataGen.Generate(chunk, true);
             
             Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
             Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
@@ -292,8 +292,8 @@ public class TerrainGameplay
         //Lighting.PropagateLight(chunk);
         
         // Regenerate mesh
-        var meshData = Mesh.GenerateMeshData(chunk, false);
-        var tMeshData = Mesh.GenerateMeshData(chunk, true);
+        var meshData = Mesh.MeshDataGen.Generate(chunk, false);
+        var tMeshData = Mesh.MeshDataGen.Generate(chunk, true);
             
         Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
         Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);

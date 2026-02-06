@@ -1,15 +1,13 @@
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Concurrent;
-using System.Net;
-using DIBBLES.Effects;
-using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Terrain.Features;
 using DIBBLES.Utils;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
+using DIBBLES.Terrain.Meshing;
 
 namespace DIBBLES.Terrain;
 

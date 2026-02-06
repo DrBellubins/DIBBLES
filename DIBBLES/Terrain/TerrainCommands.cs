@@ -87,11 +87,11 @@ public class TerrainCommands
             if (ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
             {
                 // Opaque
-                var meshData = Mesh.GenerateMeshData(chunk, false);
+                var meshData = Mesh.MeshDataGen.Generate(chunk, false);
                 Mesh.OpaqueModels[chunkCoord] = Mesh.UploadMesh(meshData);
     
                 // Transparent
-                var tMeshData = Mesh.GenerateMeshData(chunk, true);
+                var tMeshData = Mesh.MeshDataGen.Generate(chunk, true);
                 Mesh.TransparentModels[chunkCoord] = Mesh.UploadMesh(tMeshData);
 
                 // Add to save
