@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -106,6 +107,44 @@ public class Helpers
         }
 
         return false;
+    }
+
+    // Deterministic random flipping for this block face
+    public static Vector2[] RndFlipUV(SeededRandom rng, BlockInfo blockInfo, Vector3Int pos, int faceIdx, Vector2[] faceUVs)
+    {
+        var rndOffset = (int)(rng.NextFloat() * ChunkSize);
+        var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
+        
+        int flipRandom = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
+
+        // For side faces, only allow axes enabled by TOML
+        int flip = 0;
+                    
+        if (faceIdx >= 0 && faceIdx <= 3) // Sides
+        {
+            if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
+                flip |= 1; // horizontal
+            if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
+                flip |= 2; // vertical
+        }
+        else // Top/bottom faces: always allow random flip
+            flip = flipRandom;
+
+        // TODO: AntiTileUVsHorizontally & AntiTileUVsVertically false does not disable flipping for tops and bottoms
+        // See Feeb block
+                    
+        // Treat horizontal and vertical being false as disabling uv flipping for entire block
+        if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
+            return FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
+        else
+            return [];
+    }
+
+    // Deterministic random rotation for this block face
+    public static Vector2[] RndRotUV(Vector3Int pos, int faceIdx, Vector2[] faceUVs)
+    {
+        int rotation = ((pos.X) ^ (pos.Y) ^ (pos.Z) ^ faceIdx) & 3;
+        return FaceUtils.RotateUVs(faceUVs, rotation);
     }
 }
 

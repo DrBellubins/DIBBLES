@@ -95,33 +95,12 @@ public class MeshDataGeneration
 
                     var rndOffset = (int)(rng.NextFloat() * ChunkSize);
                     var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
-                    
-                    // Deterministic random rotation for this block face
-                    //int rotation = ((worldBlockPos.X) ^ (worldBlockPos.Y) ^ (worldBlockPos.Z) ^ faceIdx) & 3;
-                    //faceUVs = FaceUtils.RotateUVs(faceUVs, rotation);
-                    
-                    // Deterministic random flipping for this block face
-                    int flipRandom = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
 
-                    // For side faces, only allow axes enabled by TOML
-                    int flip = 0;
+                    // Random uv rotation
+                    //faceUVs = RndRotUV(pos, faceIdx, faceUVs);
                     
-                    if (faceIdx >= 0 && faceIdx <= 3) // Sides
-                    {
-                        if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
-                            flip |= 1; // horizontal
-                        if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
-                            flip |= 2; // vertical
-                    }
-                    else // Top/bottom faces: always allow random flip
-                        flip = flipRandom;
-
-                    // TODO: AntiTileUVsHorizontally & AntiTileUVsVertically false does not disable flipping for tops and bottoms
-                    // See Feeb block
-                    
-                    // Treat horizontal and vertical being false as disabling uv flipping for entire block
-                    if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
-                        faceUVs = FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
+                    // Random uv flipping
+                    faceUVs = RndFlipUV(rng, blockInfo, pos, faceIdx, faceUVs);
                     
                     if (isTransparencyPass)
                     {
