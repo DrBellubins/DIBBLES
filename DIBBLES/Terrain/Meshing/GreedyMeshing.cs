@@ -24,6 +24,9 @@ public class GreedyMeshing
         var normals = new List<Vector3>();
         var texcoords = new List<Vector2>();
         var colors = new List<Color>();
+        
+        // Storage for per-vertex atlas rects
+        var uvRects = new List<Vector4>();
 
         var transparentFaces = new List<(float dist, FaceData face)>();
 
@@ -312,56 +315,77 @@ public class GreedyMeshing
                             Vector3 q0, q1, q2, q3;
                             Vector2 t0, t1, t2, t3;
                             Color col0, col1, col2, col3;
+                            
+                            RectangleF rect;
+                            if (BlockData.Prefabs[cell.Type].FaceUVs != null &&
+                                BlockData.Prefabs[cell.Type].FaceUVs.TryGetValue(cell.FaceIdx, out rect))
+                            {
+                                // ok
+                            }
+                            else if (!BlockData.AtlasUVs.TryGetValue((cell.Type, 0), out rect))
+                            {
+                                rect = new RectangleF(0, 0, 1, 1);
+                            }
+                            
+                            Vector4 rect4 = new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
 
+                            // Local tile-space mapping by face (match vertex order you use for q0..q3)
                             switch (cell.FaceIdx)
                             {
                                 case 0: // Front (-Z): [BL, TL, TR, BR]
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
                                 case 1: // Back (+Z): [BR, TR, TL, BL]
                                 {
-                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
-                                    col0 = rectColors[1]; col1 = rectColors[2]; col2 = rectColors[3]; col3 = rectColors[0];
+                                    t0 = new Vector2(du, 0);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(0, dv);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
                                 case 2: // Left (-X): [BL, TL, TR, BR]
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
                                 case 3: // Right (+X): [BR, TR, TL, BL]
                                 {
-                                    q0 = p2; q1 = p3; q2 = p0; q3 = p1;
-                                    t0 = tileUVs[2]; t1 = tileUVs[3]; t2 = tileUVs[0]; t3 = tileUVs[1];
-                                    col0 = rectColors[1]; col1 = rectColors[2]; col2 = rectColors[3]; col3 = rectColors[0];
+                                    t0 = new Vector2(du, 0);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(0, dv);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
                                 case 4: // Bottom (-Y): [TL, BL, BR, TR]
                                 {
-                                    q0 = p0; q1 = p1; q2 = p2; q3 = p3;
-                                    t0 = tileUVs[0]; t1 = tileUVs[1]; t2 = tileUVs[2]; t3 = tileUVs[3];
-                                    col0 = rectColors[3]; col1 = rectColors[0]; col2 = rectColors[1]; col3 = rectColors[2];
+                                    t0 = new Vector2(0, dv);
+                                    t1 = new Vector2(0, 0);
+                                    t2 = new Vector2(du, 0);
+                                    t3 = new Vector2(du, dv);
                                     break;
                                 }
                                 case 5: // Top (+Y): [TL, TR, BR, BL]
                                 {
-                                    q0 = p0; q1 = p3; q2 = p2; q3 = p1;
-                                    t0 = tileUVs[0]; t1 = tileUVs[3]; t2 = tileUVs[2]; t3 = tileUVs[1];
-                                    col0 = rectColors[3]; col1 = rectColors[2]; col2 = rectColors[1]; col3 = rectColors[0];
+                                    t0 = new Vector2(0, dv);
+                                    t1 = new Vector2(du, dv);
+                                    t2 = new Vector2(du, 0);
+                                    t3 = new Vector2(0, 0);
                                     break;
                                 }
                                 default:
                                 {
-                                    q0 = p1; q1 = p0; q2 = p3; q3 = p2;
-                                    t0 = tileUVs[1]; t1 = tileUVs[0]; t2 = tileUVs[3]; t3 = tileUVs[2];
-                                    col0 = rectColors[0]; col1 = rectColors[3]; col2 = rectColors[2]; col3 = rectColors[1];
+                                    t0 = new Vector2(0, 0);
+                                    t1 = new Vector2(0, dv);
+                                    t2 = new Vector2(du, dv);
+                                    t3 = new Vector2(du, 0);
                                     break;
                                 }
                             }
@@ -375,7 +399,8 @@ public class GreedyMeshing
                                 texcoords.Add(t0); texcoords.Add(t1); texcoords.Add(t2); texcoords.Add(t3);
                                 colors.Add(col0); colors.Add(col1); colors.Add(col2); colors.Add(col3);
 
-                                // Keep indices CCW like the per-voxel path
+                                uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
+
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 1);
                                 indices.Add(baseOffset + 0);
@@ -385,10 +410,7 @@ public class GreedyMeshing
                             }
                             else
                             {
-                                var centerLocal = (q0 + q1 + q2 + q3) * 0.25f;
-                                var centerWorld = centerLocal + chunk.Position.ToVector3();
-                                var dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), centerWorld);
-
+                                // Transparent faces: store payload
                                 transparentFaces.Add((dist, new FaceData
                                 {
                                     Verts = new[] { q0, q1, q2, q3 },
@@ -398,6 +420,8 @@ public class GreedyMeshing
                                     VertexOffset = 0,
                                     CenterDistance = dist
                                 }));
+                                // Also queue rects (will append after sort)
+                                uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
                             }
 
                             // Clear mask area
@@ -475,6 +499,14 @@ public class GreedyMeshing
         for (int i = 0; i < indices.Count; i++)
             meshData.Indices[i] = (ushort)indices[i];
 
+        for (int i = 0; i < uvRects.Count; i++)
+        {
+            meshData.UVRects[i * 4 + 0] = uvRects[i].X;
+            meshData.UVRects[i * 4 + 1] = uvRects[i].Y;
+            meshData.UVRects[i * 4 + 2] = uvRects[i].Z;
+            meshData.UVRects[i * 4 + 3] = uvRects[i].W;
+        }
+        
         return meshData;
     }
 

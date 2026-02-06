@@ -26,8 +26,6 @@ public class TerrainMesh
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
     public Dictionary<Vector3Int, RuntimeModel> TransparentModels = new();
-    
-    public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
 
     // Meshing extension classes
     public MeshDataGeneration MeshDataGen = new();
@@ -80,6 +78,7 @@ public class TerrainMesh
                 var shader = oModel.Value.Shader;
                 
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1f : 0f);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
@@ -131,6 +130,7 @@ public class TerrainMesh
                 var shader = tModel.Value.Shader;
                 
                 shader.Parameters["AtlasTex"].SetValue(BlockData.TextureAtlas);
+                shader.Parameters["UseGreedyMeshing"]?.SetValue(UseGreedyMeshing ? 1f : 0f);
                 
                 shader.Parameters["World"].SetValue(world);
                 shader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
@@ -153,77 +153,6 @@ public class TerrainMesh
                 tModel.Value.Draw(world, view, projection);
             }
         }
-    }
-    
-    public void DrawBillboards()
-    {
-        BillboardGen.EnsureBillboardMesh();
-    
-        var graphics = Engine.Graphics;
-    
-        graphics.BlendState = BlendState.Opaque;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.SamplerStates[0] = SamplerState.PointClamp;
-        graphics.RasterizerState = RasterizerState.CullNone;
-    
-        var shader = billboardShader;
-        var view = GameScene.PlayerCharacter.Camera.View;
-        var proj = GameScene.PlayerCharacter.Camera.Projection;
-    
-        shader.Parameters["AtlasTex"]?.SetValue(BlockData.TextureAtlas);
-        shader.Parameters["View"]?.SetValue(view);
-        shader.Parameters["Projection"]?.SetValue(proj);
-    
-        shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-        shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-    
-        shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
-        shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
-        shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
-    
-        shader.Parameters["Time"]?.SetValue(Time.time);
-        
-        foreach (var kv in BillboardBatches)
-        {
-            // kv.Key is the chunk position
-            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            // Skip if chunk is outside view frustum
-            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
-                continue;
-            
-            var batchesByType = kv.Value;
-    
-            foreach (var typeBatch in batchesByType)
-            {
-                var type = typeBatch.Key;
-                var batch = typeBatch.Value;
-    
-                if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
-                    continue;
-    
-                var rect = BlockData.AtlasUVs[(type, 0)];
-                shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
-    
-                graphics.SetVertexBuffers
-                (
-                    new VertexBufferBinding(BillboardGen.BillboardVB, 0, 0),
-                    new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
-                );
-    
-                graphics.Indices = BillboardGen.BillboardIB;
-    
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                {
-                    pass.Apply();
-                    graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
-                }
-            }
-        }
-    
-        graphics.SetVertexBuffer(null);
-        graphics.Indices = null;
     }
     
     public void RemeshBorderingChunks(Vector3Int chunkPos, Vector3Int localPos)
@@ -290,7 +219,18 @@ public class TerrainMesh
                 data.Colors[i * 4 + 2],
                 data.Colors[i * 4 + 3]);
 
-            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color);
+            Vector4 uvRect = Vector4.Zero;
+            
+            if (data.UVRects != null && data.UVRects.Length >= (i + 1) * 4)
+            {
+                uvRect = new Vector4(
+                    data.UVRects[i * 4 + 0],
+                    data.UVRects[i * 4 + 1],
+                    data.UVRects[i * 4 + 2],
+                    data.UVRects[i * 4 + 3]);
+            }
+
+            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color, uvRect);
         }
 
         // Create buffers

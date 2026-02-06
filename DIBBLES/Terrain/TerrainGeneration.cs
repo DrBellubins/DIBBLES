@@ -146,10 +146,10 @@ public class TerrainGeneration
             var type = entry.type;
             var instances = entry.instances;
 
-            if (!Mesh.BillboardBatches.TryGetValue(chunkPos, out var batchesByType))
+            if (!Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var batchesByType))
             {
                 batchesByType = new Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>();
-                Mesh.BillboardBatches[chunkPos] = batchesByType;
+                Mesh.BillboardGen.BillboardBatches[chunkPos] = batchesByType;
             }
 
             // Remove empty types, otherwise upload buffer
@@ -162,7 +162,7 @@ public class TerrainGeneration
                 }
 
                 if (batchesByType.Count == 0)
-                    Mesh.BillboardBatches.Remove(chunkPos);
+                    Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
 
                 continue;
             }
@@ -238,12 +238,12 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
                 
-                if (Mesh.BillboardBatches.TryGetValue(pos, out var batchesByType))
+                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var batchesByType))
                 {
                     foreach (var kv2 in batchesByType)
                         kv2.Value.InstanceBuffer?.Dispose();
 
-                    Mesh.BillboardBatches.Remove(pos);
+                    Mesh.BillboardGen.BillboardBatches.Remove(pos);
                 }
             }
         }
@@ -561,7 +561,7 @@ public class TerrainGeneration
         // Draw every mesh in the mesh queue
         Mesh.DrawOpaque();
         Mesh.DrawTransparent();
-        Mesh.DrawBillboards();
+        Mesh.BillboardGen.Draw();
         
         // Chunk border debug
         if (Debug.ShowChunkDebug)

@@ -1,3 +1,6 @@
+using DIBBLES.Effects;
+using DIBBLES.Scenes;
+using DIBBLES.Systems;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,6 +13,79 @@ public class Billboards
 {
     public VertexBuffer BillboardVB;
     public IndexBuffer BillboardIB;
+    
+    public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
+    
+    public void Draw()
+    {
+        EnsureBillboardMesh();
+    
+        var graphics = Engine.Graphics;
+    
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.RasterizerState = RasterizerState.CullNone;
+    
+        var shader = billboardShader;
+        var view = GameScene.PlayerCharacter.Camera.View;
+        var proj = GameScene.PlayerCharacter.Camera.Projection;
+    
+        shader.Parameters["AtlasTex"]?.SetValue(BlockData.TextureAtlas);
+        shader.Parameters["View"]?.SetValue(view);
+        shader.Parameters["Projection"]?.SetValue(proj);
+    
+        shader.Parameters["CameraPos"]?.SetValue(GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        shader.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
+        shader.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
+    
+        shader.Parameters["FogNear"]?.SetValue(FogEffect.FogNear);
+        shader.Parameters["FogFar"]?.SetValue(FogEffect.FogFar);
+        shader.Parameters["FogColor"]?.SetValue(FogEffect.FogColor());
+    
+        shader.Parameters["Time"]?.SetValue(Time.time);
+        
+        foreach (var kv in BillboardBatches)
+        {
+            // kv.Key is the chunk position
+            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            // Skip if chunk is outside view frustum
+            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
+                continue;
+            
+            var batchesByType = kv.Value;
+    
+            foreach (var typeBatch in batchesByType)
+            {
+                var type = typeBatch.Key;
+                var batch = typeBatch.Value;
+    
+                if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
+                    continue;
+    
+                var rect = BlockData.AtlasUVs[(type, 0)];
+                shader.Parameters["UVRect"]?.SetValue(new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
+    
+                graphics.SetVertexBuffers
+                (
+                    new VertexBufferBinding(BillboardVB, 0, 0),
+                    new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
+                );
+    
+                graphics.Indices = BillboardIB;
+    
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
+                }
+            }
+        }
+    
+        graphics.SetVertexBuffer(null);
+        graphics.Indices = null;
+    }
     
     // Generates per-chunk billboard instance data
     public Dictionary<BlockType, VertexBillboardInstance[]> Generate(Chunk chunk)

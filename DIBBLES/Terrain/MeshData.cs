@@ -10,6 +10,9 @@ public struct MeshData
     public byte[] Colors;
     public ushort[] Indices;
 
+    // Per-vertex atlas sub-rect storage (x,y,w,h). For non-greedy it stays zeros.
+    public float[] UVRects; // length = vertCount * 4
+    
     public int VertexCount;
     public int TriangleCount;
 
@@ -20,6 +23,7 @@ public struct MeshData
         TexCoords = new float[vertCount * 2];
         Colors = new byte[vertCount * 4];
         Indices = new ushort[triCount * 3];
+        UVRects = new float[vertCount * 4];
         VertexCount = vertCount;
         TriangleCount = triCount;
     }

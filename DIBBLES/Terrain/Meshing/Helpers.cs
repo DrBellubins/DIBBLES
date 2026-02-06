@@ -154,25 +154,28 @@ public struct VertexPositionNormalTextureColor : IVertexType
 {
     public Vector3 Position;
     public Vector3 Normal;
-    public Vector2 TexCoord;
-    public Color Color;
+    public Vector2 TexCoord;   // Either absolute atlas UV (non-greedy) or local tile-space (greedy)
+    public Color   Color;
+    public Vector4 UVRect;     // Atlas sub-rect (x,y,w,h) for greedy tiling; zero for non-greedy
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
-        new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
-        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
+        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position,          0),
+        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal,            0),
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
-        new VertexElement(32, VertexElementFormat.Color, VertexElementUsage.Color, 0)
+        new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color,             0),
+        new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 
-    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color)
+    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color, Vector4 uvRect)
     {
         Position = pos;
         Normal = norm;
         TexCoord = tex;
         Color = color;
+        UVRect = uvRect;
     }
 }
 

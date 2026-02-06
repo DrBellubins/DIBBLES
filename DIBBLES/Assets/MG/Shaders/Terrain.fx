@@ -1,4 +1,5 @@
 texture AtlasTex;
+int UseGreedyMeshing; // Toggle (0 or 1). Set from TerrainMesh.UseGreedyMeshing
 
 float4x4 World;
 float4x4 View;
@@ -24,8 +25,9 @@ struct VertexInput
 {
     float3 Position : POSITION0;
     float3 Normal   : NORMAL0;
-    float2 TexCoord : TEXCOORD0;
+    float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
     float4 Color    : COLOR0;
+    float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
 };
 
 // Add CameraNear/Far are already declared; reuse them to write normalized linear depth to RT1.
@@ -39,6 +41,7 @@ struct PixelInput
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
+    float4 UVRect       : TEXCOORD4; // carry rect to PS
 };
 
 PixelInput VS(VertexInput input)
@@ -61,6 +64,7 @@ PixelInput VS(VertexInput input)
     float3 viewNormal = mul(float4(worldNormal, 0), View).xyz;
 
     output.ViewNormal = normalize(viewNormal);
+    output.UVRect = input.UVRect;
 
     return output;
 }
@@ -74,6 +78,22 @@ struct PixelOutput
 
 PixelOutput PS_Color(PixelInput input)
 {
+    // Compose atlas UV
+    float2 atlasUV;
+
+    // Use tiling when toggle is on AND rect has nonzero size
+    if (UseAtlasTiling > 0.5 && (input.UVRect.z > 0.0 || input.UVRect.w > 0.0))
+    {
+        // input.TexCoord is in tile-space (0..du, 0..dv); frac repeats every 1 tile
+        atlasUV = float2(input.UVRect.x, input.UVRect.y)
+                + frac(input.TexCoord) * float2(input.UVRect.z, input.UVRect.w);
+    }
+    else
+    {
+        // Non-greedy path: TexCoord already absolute atlas UV
+        atlasUV = input.TexCoord;
+    }
+
     float4 texColor = tex2D(AtlasSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
