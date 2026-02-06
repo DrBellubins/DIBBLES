@@ -339,7 +339,8 @@ public class GreedyMeshing
                                 rect = new RectangleF(0, 0, 1, 1);
                             }
                             
-                            Vector4 rect4 = new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
+                            // IMPORTANT: origin = uvBL, size = rect.Width/Height
+                            Vector4 rect4 = new Vector4(uvBL.X, uvBL.Y, rect.Width, rect.Height);
 
                             // LOCAL tile-space UVs (0..du, 0..dv) — these must line up with the per-face vertex order
                             Vector2 t0, t1, t2, t3;

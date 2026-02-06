@@ -85,26 +85,17 @@ public static class FaceUtils
         var blockInfo = BlockData.Prefabs[type];
         RectangleF uvRect;
 
-        if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect))
-        {
-            // per-face rect
-        }
-        else if (BlockData.AtlasUVs.TryGetValue((type, 0), out uvRect))
-        {
-            // fallback rect
-        }
-        else
-        {
+        if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out uvRect)) { }
+        else if (!BlockData.AtlasUVs.TryGetValue((type, 0), out uvRect))
             uvRect = new RectangleF(0, 0, 1, 1);
-        }
 
-        // Build corners in atlas space
-        Vector2 bl = new Vector2(uvRect.X, uvRect.Y);
-        Vector2 br = new Vector2(uvRect.X + uvRect.Width, uvRect.Y);
-        Vector2 tl = new Vector2(uvRect.X, uvRect.Y + uvRect.Height);
-        Vector2 tr = new Vector2(uvRect.X + uvRect.Width, uvRect.Y + uvRect.Height);
+        // Texture space is top-left anchored; Y grows downward.
+        Vector2 tl = new Vector2(uvRect.X,                 uvRect.Y);
+        Vector2 tr = new Vector2(uvRect.X + uvRect.Width,  uvRect.Y);
+        Vector2 bl = new Vector2(uvRect.X,                 uvRect.Y + uvRect.Height);
+        Vector2 br = new Vector2(uvRect.X + uvRect.Width,  uvRect.Y + uvRect.Height);
 
-        // Return order to MATCH GetFaceVertices: [BL, TL, TR, BR]
+        // Return in canonical [BL, TL, TR, BR]; MapUVsToFaceVertexOrder will align to each face's vertex order.
         return new[] { bl, tl, tr, br };
     }
     
