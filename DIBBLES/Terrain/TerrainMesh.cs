@@ -16,7 +16,7 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true;
-    public const bool UseGreedyMeshing = false;
+    public const bool UseGreedyMeshing = true;
     
     // Greedy path ignores per-cell anti-tiling flips to keep UVs consistent across merged rectangles.
     // Set true if you really want per-cell flips (you’ll see inconsistent orientations on large quads).

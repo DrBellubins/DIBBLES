@@ -122,8 +122,8 @@ public class PlayerCharacter
     public void Update()
     {
         var vec3Position = Position.ToVector3();
-        Debug.Draw2DText($"Position: {vec3Position.X}, {vec3Position.Y}, {vec3Position.Z}", Color.White);
-        Debug.Draw2DText($"Camera Direction: {CameraForward.X}, {CameraForward.Y}, {CameraForward.Z}", Color.White);
+        Debug.Draw2DText($"Position: {vec3Position.X:F4}, {vec3Position.Y:F4}, {vec3Position.Z:F4}", Color.White);
+        Debug.Draw2DText($"Camera Direction: {CameraForward.X:F4}, {CameraForward.Y:F4}, {CameraForward.Z:F4}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
         
         hotbar.Update(IsDead, IsFrozen);
