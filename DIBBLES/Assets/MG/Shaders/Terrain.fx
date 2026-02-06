@@ -28,6 +28,7 @@ struct VertexInput
     float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
     float4 Color    : COLOR0;
     float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
+    float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
 };
 
 // Add CameraNear/Far are already declared; reuse them to write normalized linear depth to RT1.
@@ -41,7 +42,8 @@ struct PixelInput
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
-    float4 UVRect       : TEXCOORD4; // carry rect to PS
+    float4 UVRect       : TEXCOORD4;
+    float4 UVBasis      : TEXCOORD5;
 };
 
 PixelInput VS(VertexInput input)
@@ -65,6 +67,7 @@ PixelInput VS(VertexInput input)
 
     output.ViewNormal = normalize(viewNormal);
     output.UVRect = input.UVRect;
+    output.UVBasis = input.UVBasis;
 
     return output;
 }
@@ -84,9 +87,13 @@ PixelOutput PS_Color(PixelInput input)
     // Use tiling when toggle is on AND rect has nonzero size
     if (UseGreedyMeshing > 0.5 && (input.UVRect.z > 0.0 || input.UVRect.w > 0.0))
     {
-        // input.TexCoord is in tile-space (0..du, 0..dv); frac repeats every 1 tile
+        float2 basisU = float2(input.UVBasis.x, input.UVBasis.y);
+        float2 basisV = float2(input.UVBasis.z, input.UVBasis.w);
+
+        // BL origin + frac(local) projected by per-face basis (matches non-greedy orientation)
         atlasUV = float2(input.UVRect.x, input.UVRect.y)
-                + frac(input.TexCoord) * float2(input.UVRect.z, input.UVRect.w);
+                + frac(input.TexCoord.x) * basisU
+                + frac(input.TexCoord.y) * basisV;
     }
     else
     {

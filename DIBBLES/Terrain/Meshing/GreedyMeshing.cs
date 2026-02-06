@@ -27,6 +27,7 @@ public class GreedyMeshing
         
         // Storage for per-vertex atlas rects
         var uvRects = new List<Vector4>();
+        var uvBasis = new List<Vector4>();
 
         var transparentFaces = new List<(float dist, FaceData face)>();
 
@@ -306,6 +307,17 @@ public class GreedyMeshing
                             if (TerrainMesh.GreedyRespectAntiTileFlips && cell.UVFlipDirection != 0)
                                 tileUVs = FaceUtils.FlipUVsAtlas(tileUVs, cell.FaceIdx, cell.UVFlipDirection);
                             
+                            // Compute UV basis from the per-face orientation (atlas space)
+                            Vector2 uvTL = tileUVs[0];
+                            Vector2 uvBL = tileUVs[1];
+                            Vector2 uvBR = tileUVs[2];
+                            //Vector2 uvTR = tileUVs[3];
+                            
+                            Vector2 basisU = uvBR - uvBL; // +U direction in atlas space
+                            Vector2 basisV = uvTL - uvBL; // +V direction in atlas space
+                            
+                            Vector4 basis4 = new Vector4(basisU.X, basisU.Y, basisV.X, basisV.Y);
+                            
                             // Corner colors come back as [BL, BR, TR, TL]
                             Color cBL = rectColors[0];
                             Color cBR = rectColors[1];
@@ -427,6 +439,7 @@ public class GreedyMeshing
                                 colors.Add(col0); colors.Add(col1); colors.Add(col2); colors.Add(col3);
 
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
+                                uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4);
 
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 1);
@@ -448,6 +461,7 @@ public class GreedyMeshing
                                 }));
 
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
+                                uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4);
                             }
 
                             // Clear mask area
@@ -531,6 +545,14 @@ public class GreedyMeshing
             meshData.UVRects[i * 4 + 1] = uvRects[i].Y;
             meshData.UVRects[i * 4 + 2] = uvRects[i].Z;
             meshData.UVRects[i * 4 + 3] = uvRects[i].W;
+        }
+        
+        for (int i = 0; i < uvBasis.Count; i++)
+        {
+            meshData.UVBasis[i * 4 + 0] = uvBasis[i].X;
+            meshData.UVBasis[i * 4 + 1] = uvBasis[i].Y;
+            meshData.UVBasis[i * 4 + 2] = uvBasis[i].Z;
+            meshData.UVBasis[i * 4 + 3] = uvBasis[i].W;
         }
         
         return meshData;

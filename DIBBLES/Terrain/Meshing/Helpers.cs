@@ -114,30 +114,32 @@ public class Helpers
     {
         var rndOffset = (int)(rng.NextFloat() * ChunkSize);
         var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
-        
+
         int flipRandom = ((worldBlockPosRNG.X) ^ (worldBlockPosRNG.Y) ^ (worldBlockPosRNG.Z) ^ faceIdx) & 3;
 
-        // For side faces, only allow axes enabled by TOML
         int flip = 0;
-                    
+
         if (faceIdx >= 0 && faceIdx <= 3) // Sides
         {
             if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
-                flip |= 1; // horizontal
+                flip |= 1;
             if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
-                flip |= 2; // vertical
+                flip |= 2;
         }
-        else // Top/bottom faces: always allow random flip
-            flip = flipRandom;
-
-        // TODO: AntiTileUVsHorizontally & AntiTileUVsVertically false does not disable flipping for tops and bottoms
-        // See Feeb block
-                    
-        // Treat horizontal and vertical being false as disabling uv flipping for entire block
-        if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
-            return FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
         else
-            return [];
+        {
+            // Top/bottom: only allow flips when anti-tiling is enabled for this block
+            if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
+                flip = flipRandom;
+            else
+                flip = 0;
+        }
+
+        // If no flip or anti-tiling disabled, return input UVs unchanged
+        if (flip == 0 || (!blockInfo.AntiTileUVsHorizontally && !blockInfo.AntiTileUVsVertically))
+            return faceUVs;
+
+        return FaceUtils.FlipUVsAtlas(faceUVs, faceIdx, flip);
     }
 
     // Deterministic random rotation for this block face
@@ -154,9 +156,10 @@ public struct VertexPositionNormalTextureColor : IVertexType
 {
     public Vector3 Position;
     public Vector3 Normal;
-    public Vector2 TexCoord;   // Either absolute atlas UV (non-greedy) or local tile-space (greedy)
+    public Vector2 TexCoord;
     public Color   Color;
-    public Vector4 UVRect;     // Atlas sub-rect (x,y,w,h) for greedy tiling; zero for non-greedy
+    public Vector4 UVRect;   // (x,y,w,h)
+    public Vector4 UVBasis;  // (uX,uY,vX,vY)
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
@@ -164,18 +167,20 @@ public struct VertexPositionNormalTextureColor : IVertexType
         new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal,            0),
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
         new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color,             0),
-        new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1)
+        new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
+        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 
-    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color, Vector4 uvRect)
+    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color, Vector4 uvRect, Vector4 uvBasis)
     {
         Position = pos;
         Normal = norm;
         TexCoord = tex;
         Color = color;
         UVRect = uvRect;
+        UVBasis = uvBasis;
     }
 }
 

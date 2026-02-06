@@ -193,31 +193,17 @@ public class TerrainMesh
     {
         var graphicsDevice = Engine.Graphics;
 
-        // Don't process empty mesh data
         if (data.VertexCount == 0 || data.Vertices == null || data.Indices == null || data.Indices.Length == 0)
             return null;
 
-        // Pack vertex data
         var verts = new VertexPositionNormalTextureColor[data.VertexCount];
-        
+
         for (int i = 0; i < data.VertexCount; i++)
         {
-            var pos = new Vector3(
-                data.Vertices[i * 3 + 0],
-                data.Vertices[i * 3 + 1],
-                data.Vertices[i * 3 + 2]);
-            var norm = new Vector3(
-                data.Normals[i * 3 + 0],
-                data.Normals[i * 3 + 1],
-                data.Normals[i * 3 + 2]);
-            var tex = new Vector2(
-                data.TexCoords[i * 2 + 0],
-                data.TexCoords[i * 2 + 1]);
-            var color = new Color(
-                data.Colors[i * 4 + 0],
-                data.Colors[i * 4 + 1],
-                data.Colors[i * 4 + 2],
-                data.Colors[i * 4 + 3]);
+            var pos = new Vector3(data.Vertices[i * 3 + 0], data.Vertices[i * 3 + 1], data.Vertices[i * 3 + 2]);
+            var norm = new Vector3(data.Normals[i * 3 + 0], data.Normals[i * 3 + 1], data.Normals[i * 3 + 2]);
+            var tex = new Vector2(data.TexCoords[i * 2 + 0], data.TexCoords[i * 2 + 1]);
+            var color = new Color(data.Colors[i * 4 + 0], data.Colors[i * 4 + 1], data.Colors[i * 4 + 2], data.Colors[i * 4 + 3]);
 
             Vector4 uvRect = Vector4.Zero;
             
@@ -230,7 +216,17 @@ public class TerrainMesh
                     data.UVRects[i * 4 + 3]);
             }
 
-            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color, uvRect);
+            Vector4 uvBasis = Vector4.Zero;
+            if (data.UVBasis != null && data.UVBasis.Length >= (i + 1) * 4)
+            {
+                uvBasis = new Vector4(
+                    data.UVBasis[i * 4 + 0],
+                    data.UVBasis[i * 4 + 1],
+                    data.UVBasis[i * 4 + 2],
+                    data.UVBasis[i * 4 + 3]);
+            }
+
+            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color, uvRect, uvBasis);
         }
 
         // Create buffers
