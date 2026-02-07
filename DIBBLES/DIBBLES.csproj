@@ -60,4 +60,8 @@
       <None Remove="Artwork\**" />
     </ItemGroup>
 
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="find . \&#xA;  \( -type d \( -name bin -o -name obj -o -name .git -o -name .vs \) -prune \) \&#xA;  -o -type f -print &gt; file_list.txt" />
+    </Target>
+
 </Project>
