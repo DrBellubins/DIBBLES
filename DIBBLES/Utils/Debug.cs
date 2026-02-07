@@ -25,6 +25,8 @@ public class Debug
     public static bool ShowChunkDebug { get; private set; } = false;
     public static bool ShowLightDebug { get; private set; } = false;
     
+    private static Stopwatch debugTimer = new();
+    
     private static string logPath = Path.Combine(AppContext.BaseDirectory, "log.txt");
     private static StreamWriter? logWriter;
     
@@ -69,7 +71,33 @@ public class Debug
         Console.WriteLine(output);
         logWriter?.WriteLine(output);
         
-        Trace.TraceError(output);
+        throw new Exception(output);
+    }
+
+    private static string lastTimerName = string.Empty;
+    public static void TimerStart(string name)
+    {
+        if (debugTimer.IsRunning)
+            Error("Timer was not stopped before starting a new one! Crashing...");
+
+        lastTimerName = name;
+        
+        Info($"Starting timer '{name}'");
+        debugTimer.Restart();
+    }
+    
+    public static void TimerStop()
+    {
+        if (!debugTimer.IsRunning)
+        {
+            Warning("Timer was stopped before ever starting! Call ignored...");
+            return;
+        }
+        
+        debugTimer.Stop();
+        Info($"Stopped timer '{lastTimerName}' with {debugTimer.ElapsedTicks} ticks elapsed.");
+
+        lastTimerName = string.Empty;
     }
     
     public static void Update(Camera3D camera)

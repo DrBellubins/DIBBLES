@@ -40,8 +40,6 @@ public class GameScene : Scene
     private Chat gameChat = new();
     private UIBlur uiBlur = new();
     
-    private Stopwatch timer = new Stopwatch();
-    
     public override void Start()
     {
         BackBuffer = new RenderTarget2D(
@@ -168,16 +166,12 @@ public class GameScene : Scene
         // 3) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
         
-        timer.Start();
-        
         TerrainGen.Draw();
-        
-        timer.Stop();
 
-        var terrainProgress = TerrainGen.VisualLoadProgress * 100f;
+        //var terrainProgress = TerrainGen.VisualLoadProgress * 100f;
         
-        if (terrainProgress < 100f)
-            Debug.Info($"Visual progress: {terrainProgress}% - Terrain draw time (in ticks): {timer.ElapsedTicks}");
+        //if (terrainProgress < 100f)
+            //Debug.Info($"Visual progress: {terrainProgress}% - Terrain draw time (in ticks): {timer.ElapsedTicks}");
         
         PlayerCharacter.Draw();
         
@@ -225,6 +219,7 @@ public class GameScene : Scene
         }
         
         // 7) Apply all registered post-processing effects, sampling color/normal/depth
+        Debug.TimerStart("Post processing");
         postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
@@ -259,6 +254,8 @@ public class GameScene : Scene
         }
         
         UIBatch.End();
+        
+        Debug.TimerStop();
         
         // Toggle UI
         if (Input.IsKeyPressed(Keys.F1))

@@ -18,6 +18,7 @@ public class Billboards
     
     public void Draw()
     {
+        Debug.TimerStart("Terrain billboard");
         EnsureBillboardMesh();
     
         var graphics = Engine.Graphics;
@@ -88,6 +89,8 @@ public class Billboards
     
         graphics.SetVertexBuffer(null);
         graphics.Indices = null;
+        
+        Debug.TimerStop();
     }
     
     // Generates per-chunk billboard instance data
