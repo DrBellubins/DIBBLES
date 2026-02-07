@@ -130,7 +130,7 @@ public class BlockData
         AtlasUVs = result.BlockUVs;
         
         using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
-            TextureAtlas.SaveAsPng(atlasPngStr, maxWidth * atlasBlockTypes.Count, maxHeight);
+            TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
         
         FaceUVsOrdered.Clear();
         
