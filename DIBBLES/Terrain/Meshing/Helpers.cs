@@ -204,7 +204,6 @@ public struct VertexPositionNormalTextureColor : IVertexType
     public Color   Color;
     public Vector4 UVRect;   // (x,y,w,h)
     public Vector4 UVBasis;  // (uX,uY,vX,vY)
-    public float Emissive;
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
