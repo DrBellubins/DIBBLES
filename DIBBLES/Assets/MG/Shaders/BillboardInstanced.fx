@@ -1,3 +1,6 @@
+// TODO: Wind only seems to blow billboards in one direction
+// TODO: Weird stretching with mesh on flowers (and sometimes grass)
+
 texture AtlasTex;
 
 float4x4 View;
