@@ -51,28 +51,28 @@ namespace Tommy
         public virtual bool IsDateTimeLocal { get; } = false;
         public virtual bool IsDateTimeOffset { get; } = false;
         public virtual bool IsBoolean { get; } = false;
-        public virtual string Comment { get; set; }
+        public virtual string? Comment { get; set; }
         public virtual int CollapseLevel { get; set; }
 
-        public virtual TomlTable AsTable => this as TomlTable;
-        public virtual TomlString AsString => this as TomlString;
-        public virtual TomlInteger AsInteger => this as TomlInteger;
-        public virtual TomlFloat AsFloat => this as TomlFloat;
-        public virtual TomlBoolean AsBoolean => this as TomlBoolean;
-        public virtual TomlDateTimeLocal AsDateTimeLocal => this as TomlDateTimeLocal;
-        public virtual TomlDateTimeOffset AsDateTimeOffset => this as TomlDateTimeOffset;
-        public virtual TomlDateTime AsDateTime => this as TomlDateTime;
-        public virtual TomlArray AsArray => this as TomlArray;
+        public virtual TomlTable? AsTable => this as TomlTable;
+        public virtual TomlString? AsString => this as TomlString;
+        public virtual TomlInteger? AsInteger => this as TomlInteger;
+        public virtual TomlFloat? AsFloat => this as TomlFloat;
+        public virtual TomlBoolean? AsBoolean => this as TomlBoolean;
+        public virtual TomlDateTimeLocal? AsDateTimeLocal => this as TomlDateTimeLocal;
+        public virtual TomlDateTimeOffset? AsDateTimeOffset => this as TomlDateTimeOffset;
+        public virtual TomlDateTime? AsDateTime => this as TomlDateTime;
+        public virtual TomlArray? AsArray => this as TomlArray;
 
         public virtual int ChildrenCount => 0;
 
-        public virtual TomlNode this[string key]
+        public virtual TomlNode? this[string key]
         {
             get => null;
             set { }
         }
 
-        public virtual TomlNode this[int index]
+        public virtual TomlNode? this[int index]
         {
             get => null;
             set { }
@@ -90,7 +90,7 @@ namespace Tommy
 
         public IEnumerator GetEnumerator() => Children.GetEnumerator();
 
-        public virtual bool TryGetNode(string key, out TomlNode node)
+        public virtual bool TryGetNode(string key, out TomlNode? node)
         {
             node = null;
             return false;
@@ -115,9 +115,9 @@ namespace Tommy
             foreach (var tomlNode in nodes) Add(tomlNode);
         }
 
-        public virtual void WriteTo(TextWriter tw, string name = null) => tw.WriteLine(ToInlineToml());
+        public virtual void WriteTo(TextWriter tw, string? name = null) => tw.WriteLine(ToInlineToml());
 
-        public virtual string ToInlineToml() => ToString();
+        public virtual string? ToInlineToml() => ToString();
 
         #region Native type to TOML cast
 
@@ -146,7 +146,7 @@ namespace Tommy
 
         #region TOML to native type cast
 
-        public static implicit operator string(TomlNode value) => value.ToString();
+        public static implicit operator string?(TomlNode value) => value.ToString();
 
         public static implicit operator int(TomlNode value) => (int) value.AsInteger.Value;
 
@@ -173,9 +173,9 @@ namespace Tommy
         public bool MultilineTrimFirstLine { get; set; }
         public bool PreferLiteral { get; set; }
 
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
-        public override string ToString() => Value;
+        public override string? ToString() => Value;
 
         public override string ToInlineToml()
         {
