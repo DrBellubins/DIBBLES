@@ -32,6 +32,9 @@ public class PostProcessingManager
     // Composite all effects' outputs over the scene (caller should enclose in a UIBatch)
     public void Draw()
     {
+        // Force opaque compositing for post buffers so alpha=0 won’t hide them.
+        UIBatch.SetBlendState(BlendState.Opaque);
+        
         foreach (var effect in PostProcessingEffect.All)
         {
             var output = effect.OutputBuffer;
@@ -46,5 +49,8 @@ public class PostProcessingManager
                 );
             }
         }
+        
+        // Restore default for subsequent UI draws
+        UIBatch.SetBlendState(BlendState.AlphaBlend);
     }
 }

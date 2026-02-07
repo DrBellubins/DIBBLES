@@ -24,6 +24,8 @@ public static class UIBatch
     private static List<short> _indices = new();
     private static Texture2D? _currentTexture;
     private static bool _inBatch = false;
+    
+    private static BlendState _blendOverride = BlendState.AlphaBlend;
 
     // Simple effect for 2D UI
     private static BasicEffect _effect;
@@ -67,6 +69,15 @@ public static class UIBatch
     public static void DrawRect(RectangleF rect, Color color)
     {
         Draw(_whitePixel, new Vector2(rect.X, rect.Y), new Vector2(rect.Width, rect.Height), color);
+    }
+    
+    /// <summary>
+    /// Set the blend state for the UIBatch.
+    /// </summary>
+    /// <param name="blendState"></param>
+    public static void SetBlendState(BlendState blendState)
+    {
+        _blendOverride = blendState ?? BlendState.AlphaBlend;
     }
     
     /// <summary>
@@ -547,7 +558,7 @@ public static class UIBatch
             vertexArray[i] = new VertexPositionColorTexture(v.Position, v.Color, v.TexCoord);
         }
 
-        _graphics.BlendState = BlendState.AlphaBlend;
+        _graphics.BlendState = _blendOverride;
         _graphics.RasterizerState = RasterizerState.CullNone;
         _graphics.DepthStencilState = DepthStencilState.None;
         _graphics.SamplerStates[0] = SamplerState.PointClamp;

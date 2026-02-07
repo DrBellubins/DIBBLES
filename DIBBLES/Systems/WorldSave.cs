@@ -64,7 +64,7 @@ public class WorldSave
         using (var stream = File.Open(worldDataDir, FileMode.Create))
         using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
         {
-            writer.Write("DIBW");
+            writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBW"));
             writer.Write(Seed);
         }
         
@@ -73,7 +73,7 @@ public class WorldSave
         {
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("DIBP");
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBP"));
                 
                 writer.Write(GameScene.PlayerCharacter.Position.X);
                 writer.Write(GameScene.PlayerCharacter.Position.Y);
@@ -126,7 +126,7 @@ public class WorldSave
             using (var stream = File.Open(Path.Combine(regionsDir, $"Region_{chunk.Key.ToStringUnderscore()}.dat"), FileMode.Create))
             using (var writer = new BinaryWriter(stream, Encoding.UTF8, false))
             {
-                writer.Write("DIBR");
+                writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBR"));
                 
                 writer.Write(nonAirBlocks);
                 

@@ -519,7 +519,7 @@ float4 PS_Composite(VSOutput input) : SV_Target0
 
     float4 color = tex2D(ColorSampler, input.TexCoord);
 
-    return float4(color.rgb * ao, color.a);
+    return float4(color.rgb * ao, 1.0f); // ensure alpha = 1
 }
 
 technique SSAO
