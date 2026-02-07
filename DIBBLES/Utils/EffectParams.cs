@@ -9,6 +9,7 @@ public class EffectParams
     private class Cache
     {
         public Dictionary<string, Matrix> Matrices = new();
+        public Dictionary<string, Vector2> Vec2 = new();
         public Dictionary<string, Vector3> Vec3 = new();
         public Dictionary<string, Vector4> Vec4 = new();
         public Dictionary<string, Color> Colors = new();
@@ -38,6 +39,18 @@ public class EffectParams
             return false;
     
         cache.Matrices[name] = value;
+        effect.Parameters[name]?.SetValue(value);
+        return true;
+    }
+    
+    public static bool SetVector2(Effect effect, string name, Vector2 value, float eps = 1e-6f)
+    {
+        var cache = Get(effect);
+    
+        if (cache.Vec2.TryGetValue(name, out var old) && Vector2NearEqual(old, value, eps))
+            return false;
+    
+        cache.Vec2[name] = value;
         effect.Parameters[name]?.SetValue(value);
         return true;
     }
@@ -132,6 +145,12 @@ public class EffectParams
                Math.Abs(a.M42 - b.M42) <= eps &&
                Math.Abs(a.M43 - b.M43) <= eps &&
                Math.Abs(a.M44 - b.M44) <= eps;
+    }
+    
+    private static bool Vector2NearEqual(Vector2 a, Vector2 b, float eps)
+    {
+        return Math.Abs(a.X - b.X) <= eps &&
+               Math.Abs(a.Y - b.Y) <= eps;
     }
     
     private static bool Vector3NearEqual(Vector3 a, Vector3 b, float eps)

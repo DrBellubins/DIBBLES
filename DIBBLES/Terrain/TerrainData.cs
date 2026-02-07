@@ -42,8 +42,11 @@ public class BlockData
     public static readonly Dictionary<(BlockType, int), Texture2D> Textures = new();
     public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
-    public static Texture2D TextureAtlas; // Store the atlas
-    public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new(); // Store UV mappings
+    // Store the atlas
+    public static Texture2D TextureAtlas = new(Engine.Graphics, 1, 1);
+    
+    // Store UV mappings
+    public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new();
     public static readonly Dictionary<(BlockType, int), Vector2[]> FaceUVsOrdered = new();
     
     public static void InitializeBlockPrefabs()
@@ -61,8 +64,6 @@ public class BlockData
                 atlasBlockTypes.Add(blockType);
         }
         
-        List<Texture2D> tempTextures = new List<Texture2D>();
-        
         int maxWidth = 0;
         int maxHeight = 0;
 
@@ -77,7 +78,6 @@ public class BlockData
                 {
                     var texture = Resource.Load<Texture2D>(faceTextureNames[faceIdx]);
                     Textures.Add((blockType, faceIdx), texture);
-                    tempTextures.Add(texture);
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
                 }
@@ -89,7 +89,6 @@ public class BlockData
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++)
                 {
                     Textures.Add((blockType, faceIdx), texture);
-                    tempTextures.Add(texture);
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
                 }
@@ -112,7 +111,7 @@ public class BlockData
 
         // Create texture atlas in a 5x1 layout
         // 1. Get your block types (skip air/water)
-        var blockTypes = Enum.GetValues(typeof(BlockType))
+        var blockTypes = Enum.GetValuesAsUnderlyingType(typeof(BlockType))
             .Cast<BlockType>()
             .Where(t => t != BlockType.Air && t != BlockType.Water)
             .ToArray();
@@ -227,7 +226,7 @@ public class BlockData
         return Resource.Load<Texture2D>($"{blockType.ToString()}.png");
     }
     
-    private static string[] getFaceTextureNamesForBlock(BlockType blockType)
+    private static string[]? getFaceTextureNamesForBlock(BlockType blockType)
     {
         // Path to your TOML config
         string tomlPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Blocks.toml");
@@ -244,8 +243,8 @@ public class BlockData
 
         var table = toml[blockType.ToString()].AsTable;
         
-        if (table == null)
-            return null;
+        //if (table == null)
+        //    return null;
 
         // Check for a per-face texture array
         if (table.HasKey("FaceTextures"))
@@ -257,7 +256,11 @@ public class BlockData
             foreach (var item in arr)
             {
                 if (i >= 6) break;
-                result[i++] = item.ToString();
+
+                string? output = item.ToString();
+                
+                if (output != null)
+                    result[i++] = output;
             }
 
             // If less than 6 entries, fill remaining with the first (or fallback)
@@ -289,15 +292,15 @@ public class BlockData
 
         Prefabs.Clear();
 
-        foreach (BlockType type in Enum.GetValues(typeof(BlockType)))
+        foreach (BlockType type in Enum.GetValuesAsUnderlyingType(typeof(BlockType)))
         {
             if (!toml.HasKey(type.ToString()))
                 continue; // Skip missing blocks
 
             var table = toml[type.ToString()].AsTable;
             
-            if (table == null)
-                continue; // Not a table
+            //if (table == null)
+            //    continue; // Not a table
 
             int hardness = table.HasKey("Hardness") ? (int)table["Hardness"].AsInteger.Value : 0;
             float thickness = table.HasKey("Thickness") ? (float)table["Thickness"].AsFloat.Value : 0f;

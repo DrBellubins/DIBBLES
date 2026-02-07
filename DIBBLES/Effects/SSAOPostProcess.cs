@@ -3,6 +3,7 @@ using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
+using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
 
@@ -35,15 +36,15 @@ public class SSAOPostProcess : PostProcessingEffect
     
     public static bool AOEnabled = true;
     
-    private Effect effect;
+    private Effect? effect;
 
-    private Texture2D blueNoiseTex;
+    private Texture2D? blueNoiseTex;
     
-    private VertexBuffer vertexBuffer;
-    private IndexBuffer indexBuffer;
+    private VertexBuffer? vertexBuffer;
+    private IndexBuffer? indexBuffer;
     
-    public RenderTarget2D SSAOTarget;
-    public RenderTarget2D SSAOBlurTarget;
+    public RenderTarget2D? SSAOTarget;
+    public RenderTarget2D? SSAOBlurTarget;
 
     public override void Start(int width, int height)
     {
@@ -75,6 +76,9 @@ public class SSAOPostProcess : PostProcessingEffect
 
     public override void DrawStart()
     {
+        if (effect == null || blueNoiseTex == null || SSAOTarget == null || SSAOBlurTarget == null)
+            return;
+        
         if (!AOEnabled)
         {
             // Ensure our output is transparent this frame so composite draws nothing.
@@ -99,42 +103,44 @@ public class SSAOPostProcess : PostProcessingEffect
         // Bind fullscreen quad buffers BEFORE drawing
         Graphics.SetVertexBuffer(vertexBuffer);
         Graphics.Indices = indexBuffer;
-    
+        
         // Set G-buffer textures
-        effect.Parameters["DepthTex"]?.SetValue(GameScene.DepthBuffer);
-        effect.Parameters["NormalTex"]?.SetValue(GameScene.NormalBuffer);
-        effect.Parameters["RandomTex"]?.SetValue(blueNoiseTex);
+        EffectParams.SetTexture(effect, "DepthTex", GameScene.DepthBuffer);
+        EffectParams.SetTexture(effect, "NormalTex", GameScene.NormalBuffer);
+        EffectParams.SetTexture(effect, "RandomTex", blueNoiseTex);
     
         // Camera params
         var proj = GameScene.PlayerCharacter.Camera.Projection;
         var invProj = Matrix.Invert(proj);
     
-        effect.Parameters["Projection"]?.SetValue(proj);
-        effect.Parameters["InvProjection"]?.SetValue(invProj);
-        effect.Parameters["CameraNear"]?.SetValue(GameScene.PlayerCharacter.Camera.NearPlane);
-        effect.Parameters["CameraFar"]?.SetValue(GameScene.PlayerCharacter.Camera.FarPlane);
-        effect.Parameters["ScreenSize"]?.SetValue(new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
+        EffectParams.SetMatrix(effect, "Projection", proj);
+        EffectParams.SetMatrix(effect, "InvProjection", invProj);
+        
+        EffectParams.SetFloat(effect, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+        EffectParams.SetFloat(effect, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+        
+        EffectParams.SetVector2(effect, "ScreenSize", new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
     
         float tanHalfFovY = 1.0f / proj.M22;
         float aspectRatio = proj.M22 / proj.M11;
     
-        effect.Parameters["TanHalfFovY"]?.SetValue(tanHalfFovY);
-        effect.Parameters["AspectRatio"]?.SetValue(aspectRatio);
+        EffectParams.SetFloat(effect, "TanHalfFovY", tanHalfFovY);
+        EffectParams.SetFloat(effect, "AspectRatio", aspectRatio);
     
         var noiseScale = new Vector2(
             (float)Engine.ScreenWidth / blueNoiseTex.Width,
             (float)Engine.ScreenHeight / blueNoiseTex.Height
         );
     
-        effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
-    
-        effect.Parameters["radius"]?.SetValue(Radius);
-        effect.Parameters["bias"]?.SetValue(Bias);
-        effect.Parameters["total_strength"]?.SetValue(TotalStrength);
-        effect.Parameters["base_ao"]?.SetValue(BaseAO);
+        EffectParams.SetVector2(effect, "NoiseScale", noiseScale);
+
+        EffectParams.SetFloat(effect, "radius", Radius);
+        EffectParams.SetFloat(effect, "bias", Bias);
+        EffectParams.SetFloat(effect, "total_strength", TotalStrength);
+        EffectParams.SetFloat(effect, "base_ao", BaseAO);
         
-        effect.Parameters["BlurDepthSigma"]?.SetValue(5.5f);
-        effect.Parameters["BlurNormalPower"]?.SetValue(14.0f);
+        EffectParams.SetFloat(effect, "BlurDepthSigma", 5.5f);
+        EffectParams.SetFloat(effect, "BlurNormalPower", 14.0f);
     
         // Pass 1: SSAO -> SSAOTarget
         Graphics.SetRenderTarget(SSAOTarget);
@@ -150,7 +156,9 @@ public class SSAOPostProcess : PostProcessingEffect
         // Pass 2: BlurH (read SSAOTarget, write SSAOBlurTarget)
         Graphics.SetRenderTarget(SSAOBlurTarget);
         Graphics.Clear(Color.White);
-        effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
+        
+        EffectParams.SetTexture(effect, "AOTex", SSAOTarget);
+        
         effect.CurrentTechnique = effect.Techniques["BlurH"];
     
         foreach (var pass in effect.CurrentTechnique.Passes)
@@ -162,7 +170,9 @@ public class SSAOPostProcess : PostProcessingEffect
         // Pass 3: BlurV (read SSAOBlurTarget, write SSAOTarget)
         Graphics.SetRenderTarget(SSAOTarget);
         Graphics.Clear(Color.White);
-        effect.Parameters["AOTex"]?.SetValue(SSAOBlurTarget);
+        
+        EffectParams.SetTexture(effect, "AOTex", SSAOBlurTarget);
+        
         effect.CurrentTechnique = effect.Techniques["BlurV"];
     
         foreach (var pass in effect.CurrentTechnique.Passes)
@@ -174,8 +184,10 @@ public class SSAOPostProcess : PostProcessingEffect
         // Pass 4: Composite (use blurred AO in SSAOTarget)
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Clear(Color.Transparent);
-        effect.Parameters["AOTex"]?.SetValue(SSAOTarget);
-        effect.Parameters["ColorTex"]?.SetValue(GameScene.BackBuffer);
+        
+        EffectParams.SetTexture(effect, "AOTex", SSAOTarget);
+        EffectParams.SetTexture(effect, "ColorTex", GameScene.BackBuffer);
+        
         effect.CurrentTechnique = effect.Techniques["Composite"];
     
         foreach (var pass in effect.CurrentTechnique.Passes)

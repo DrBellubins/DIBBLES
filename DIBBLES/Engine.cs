@@ -17,24 +17,21 @@ public class Engine : Game
     public const int FPS = 165;
     public const float FrameTimestep = 1.0f / (float)FPS;
 
-    public static Engine Instance { get; private set; } = new Engine();
+    public static Engine Instance { get; private set; }
     
     public static bool IsRunning;
     public static bool IsPaused;
-    
-    public static GraphicsDevice Graphics = new(GraphicsAdapter.DefaultAdapter,
-        GraphicsProfile.HiDef, new PresentationParameters());
-    
-    public static SpriteBatch Sprites = new SpriteBatch(Graphics);
-    
-    public static SpriteFont MainFont = new SpriteFont(new Texture2D(Graphics, 1, 1), 
-        new(), new(), new(), 0, 0f,
-        new(), null);
+
+    public static GraphicsDevice Graphics;
+
+    //public static SpriteBatch Sprites;
+
+    public static SpriteFont MainFont;
     
     public static List<Scene> Scenes = new();
     public static List<AudioPlayer> AudioPlayers = new();
 
-    private static GraphicsDeviceManager GraphicsManager = new(new Game());
+    private static GraphicsDeviceManager GraphicsManager;
     
     private Stopwatch timer = new();
     private long previousTicks;
@@ -73,7 +70,7 @@ public class Engine : Game
     protected override void LoadContent()
     {
         Graphics = GraphicsManager.GraphicsDevice;
-        Sprites = new SpriteBatch(GraphicsDevice);
+        //Sprites = new SpriteBatch(GraphicsDevice);
         
         MainFont = Content.Load<SpriteFont>("Fonts/MainFont");
         MainFont = TextureUtils.AlterSpriteFont(MainFont, ' ', 8f);
