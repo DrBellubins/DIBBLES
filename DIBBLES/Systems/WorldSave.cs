@@ -161,7 +161,7 @@ public class WorldSave
     
         if (!Directory.Exists(currentSaveDir))
         {
-            Debug.Error($"Save directory '{currentSaveDir}' doesn't exist");
+            Debug.Warning($"Save directory '{currentSaveDir}' doesn't exist");
             return;
         }
     

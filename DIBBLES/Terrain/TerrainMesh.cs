@@ -53,7 +53,7 @@ public class TerrainMesh
     
     public void DrawOpaque()
     {
-        Debug.TimerStart("Terrain opaque");
+        //Debug.TimerStart("Terrain opaque");
         var graphics = Engine.Graphics;
         
         graphics.BlendState = BlendState.Opaque;
@@ -94,6 +94,12 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
                 EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
                 
+                // Ensure technique is set
+                var terrainTech = shader.Techniques["Terrain"];
+                
+                if (terrainTech != null && shader.CurrentTechnique != terrainTech)
+                    shader.CurrentTechnique = terrainTech;
+                
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
@@ -101,12 +107,12 @@ public class TerrainMesh
             }
         }
         
-        Debug.TimerStop();
+        //Debug.TimerStop();
     }
 
     public void DrawTransparent()
     {
-        Debug.TimerStart("Terrain transparent");
+        //Debug.TimerStart("Terrain transparent");
         var graphics = Engine.Graphics;
         
         graphics.BlendState = BlendState.Opaque;
@@ -149,6 +155,12 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
                 EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
                 
+                // Ensure technique is set
+                var terrainTech = shader.Techniques["Terrain"];
+                
+                if (terrainTech != null && shader.CurrentTechnique != terrainTech)
+                    shader.CurrentTechnique = terrainTech;
+                
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
@@ -156,7 +168,7 @@ public class TerrainMesh
             }
         }
         
-        Debug.TimerStop();
+        //Debug.TimerStop();
     }
     
     public void RemeshBorderingChunks(Vector3Int chunkPos, Vector3Int localPos)
@@ -256,7 +268,7 @@ public class TerrainMesh
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
-            Shader = terrainShader,
+            Shader = terrainShader.Clone(),
             Texture = BlockData.TextureAtlas
         };
     }

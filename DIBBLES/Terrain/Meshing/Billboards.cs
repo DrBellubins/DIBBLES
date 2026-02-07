@@ -18,7 +18,7 @@ public class Billboards
     
     public void Draw()
     {
-        Debug.TimerStart("Terrain billboard");
+        //Debug.TimerStart("Terrain billboard");
         EnsureBillboardMesh();
     
         var graphics = Engine.Graphics;
@@ -79,6 +79,12 @@ public class Billboards
     
                 graphics.Indices = BillboardIB;
     
+                // Ensure technique is set
+                var billboardTech = shader.Techniques["BillboardInstanced"];
+                
+                if (billboardTech != null && shader.CurrentTechnique != billboardTech)
+                    shader.CurrentTechnique = billboardTech;
+                
                 foreach (var pass in shader.CurrentTechnique.Passes)
                 {
                     pass.Apply();
@@ -90,7 +96,7 @@ public class Billboards
         graphics.SetVertexBuffer(null);
         graphics.Indices = null;
         
-        Debug.TimerStop();
+        //Debug.TimerStop();
     }
     
     // Generates per-chunk billboard instance data

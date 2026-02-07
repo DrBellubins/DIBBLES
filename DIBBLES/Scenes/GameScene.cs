@@ -219,7 +219,7 @@ public class GameScene : Scene
         }
         
         // 7) Apply all registered post-processing effects, sampling color/normal/depth
-        Debug.TimerStart("Post processing");
+        //Debug.TimerStart("Post processing");
         postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
@@ -255,7 +255,7 @@ public class GameScene : Scene
         
         UIBatch.End();
         
-        Debug.TimerStop();
+        //Debug.TimerStop();
         
         // Toggle UI
         if (Input.IsKeyPressed(Keys.F1))

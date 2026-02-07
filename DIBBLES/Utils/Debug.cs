@@ -28,7 +28,11 @@ public class Debug
     private static Stopwatch debugTimer = new();
     
     private static string logPath = Path.Combine(AppContext.BaseDirectory, "log.txt");
+    private static List<string> logLines = new();
     private static StreamWriter? logWriter;
+
+    private static float logSaveTimer = 0f;
+    private const float logSaveInterval = 0.5f;
     
     public static void Start()
     {
@@ -38,6 +42,22 @@ public class Debug
         {
             File.Delete(logPath);
             logWriter = File.CreateText(logPath);
+        }
+    }
+    
+    public static void Update(Camera3D camera)
+    {
+        debugCamera = camera;
+        
+        // Log save interval
+        logSaveTimer += Time.DeltaTime;
+
+        if (logSaveTimer >= logSaveInterval)
+        {
+            logSaveTimer -= logSaveInterval; // keeps it consistent even if frame rate hiccups
+            
+            //Info("Saving log file...");
+            File.WriteAllLines(logPath, logLines);
         }
     }
 
@@ -51,7 +71,7 @@ public class Debug
     {
         string output = $"[INFO] {info}";
         Console.WriteLine(output);
-        logWriter?.WriteLine(output);
+        logLines.Add(output);
         
         Trace.TraceInformation(output);
     }
@@ -60,7 +80,7 @@ public class Debug
     {
         string output = $"[WARNING] {warning}";
         Console.WriteLine(output);
-        logWriter?.WriteLine(output);
+        logLines.Add(output);
         
         Trace.TraceWarning(output);
     }
@@ -69,7 +89,7 @@ public class Debug
     {
         string output = $"[ERROR] {error}";
         Console.WriteLine(output);
-        logWriter?.WriteLine(output);
+        logLines.Add(output);
         
         throw new Exception(output);
     }
@@ -98,11 +118,6 @@ public class Debug
         Info($"Stopped timer '{lastTimerName}' with {debugTimer.ElapsedTicks} ticks elapsed.");
 
         lastTimerName = string.Empty;
-    }
-    
-    public static void Update(Camera3D camera)
-    {
-        debugCamera = camera;
     }
 
     public static void Clear2D()
