@@ -240,8 +240,8 @@ public class GameScene : Scene
         {
             var bufferWidth = Engine.ScreenWidth / 4.0f;
             var bufferHeight = Engine.ScreenHeight / 4.0f;
-            var tesBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
-            //var tesBuffer = postProcessingManager.bloom.BloomOutput;
+            //var tesBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            var tesBuffer = postProcessingManager.bloom.BloomOutput;
             
             UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
