@@ -35,6 +35,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+#pragma warning disable CS8600, CS8601, CS8602, CS8603, CS8618, CS8625, CS8765, CS8767
+
 namespace Tommy
 {
     #region TOML Nodes

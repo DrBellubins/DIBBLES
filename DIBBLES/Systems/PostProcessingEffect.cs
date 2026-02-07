@@ -8,9 +8,9 @@ public abstract class PostProcessingEffect
 {
     private static readonly List<PostProcessingEffect> _effects = new();
 
-    protected RenderTarget2D effectBuffer;
+    protected RenderTarget2D? effectBuffer;
 
-    protected Texture2D _colorBuffer;
+    protected Texture2D? _colorBuffer;
 
     protected GraphicsDevice Graphics
     {
@@ -54,12 +54,12 @@ public abstract class PostProcessingEffect
 
     public RenderTarget2D OutputBuffer
     {
-        get { return effectBuffer; }
+        get { return effectBuffer ?? new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight); }
     }
 
     public Texture2D ColorBuffer
     {
-        get { return _colorBuffer; }
+        get { return _colorBuffer ?? new RenderTarget2D(Engine.Graphics, Engine.ScreenWidth, Engine.ScreenHeight); }
     }
 
     // Begin drawing to the effect's own backbuffer

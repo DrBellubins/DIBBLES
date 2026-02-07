@@ -69,6 +69,6 @@ public struct GVec3
     public static bool operator !=(GVec3 a, GVec3 b) => !(a == b);
     
     public override string ToString() => $"{{X:{X:G9} Y:{Y:G9} Z:{Z:G9}}}";
-    public override bool Equals(object obj) => obj is GVec3 other && X == other.X && Y == other.Y && Z == other.Z;
+    public override bool Equals(object? obj) => obj is GVec3 other && X == other.X && Y == other.Y && Z == other.Z;
     public override int GetHashCode() => (X, Y).GetHashCode();
 }

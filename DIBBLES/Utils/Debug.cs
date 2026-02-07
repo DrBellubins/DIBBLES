@@ -11,8 +11,6 @@ namespace DIBBLES.Utils;
 
 public class Debug
 {
-    private static Camera3D debugCamera;
-
     private static List<(string, Color)> textBuffer2d = new();
     
     //private static Dictionary<Vector3, Vector3> debugBoxes = new();
@@ -47,8 +45,6 @@ public class Debug
     
     public static void Update(Camera3D camera)
     {
-        debugCamera = camera;
-        
         // Log save interval
         logSaveTimer += Time.DeltaTime;
 
@@ -293,7 +289,7 @@ public struct DebuBox : IEquatable<DebuBox>
                && Color.Equals(other.Color);
     }
 
-    public override bool Equals(object obj) => obj is DebuBox other && Equals(other);
+    public override bool Equals(object? obj) => obj is DebuBox other && Equals(other);
 
     public override int GetHashCode()
     {

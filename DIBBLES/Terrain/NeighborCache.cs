@@ -5,12 +5,12 @@ namespace DIBBLES.Terrain;
 
 public class NeighborCache
 {
-    public Chunk PosX;
-    public Chunk NegX;
-    public Chunk PosY;
-    public Chunk NegY;
-    public Chunk PosZ;
-    public Chunk NegZ;
+    public Chunk? PosX;
+    public Chunk? NegX;
+    public Chunk? PosY;
+    public Chunk? NegY;
+    public Chunk? PosZ;
+    public Chunk? NegZ;
     
     public static NeighborCache Build(Chunk chunk)
     {
@@ -125,8 +125,8 @@ public class NeighborCache
         int offZ = (lz < 0 ? -ChunkSize : (lz >= ChunkSize ? ChunkSize : 0));
     
         Vector3Int targetChunkPos = basePos + new Vector3Int(offX, offY, offZ);
-    
-        if (!ChunkBuffer.TryGetValue(targetChunkPos, out target))
+
+        if (!ChunkBuffer.TryGetValue(targetChunkPos, out var dummyOutput))
             return BlockType.Air;
     
         lx = (lx % ChunkSize + ChunkSize) % ChunkSize;
@@ -213,7 +213,7 @@ public class NeighborCache
 
         Vector3Int targetChunkPos = basePos + new Vector3Int(offX, offY, offZ);
 
-        if (!ChunkBuffer.TryGetValue(targetChunkPos, out target))
+        if (!ChunkBuffer.TryGetValue(targetChunkPos, out var dummyOutput))
             return;
 
         lx = (lx % ChunkSize + ChunkSize) % ChunkSize;

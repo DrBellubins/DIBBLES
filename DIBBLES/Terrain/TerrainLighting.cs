@@ -49,8 +49,8 @@ public class TerrainLighting
         }
 
         // Track the last-chunk to avoid rebuilding caches every cell
-        Chunk lastChunk = null;
-        NeighborCache neighborCache = default;
+        Chunk? lastChunk = null;
+        NeighborCache? neighborCache = null;
 
         Vector3Int[] directions =
         {
@@ -89,7 +89,7 @@ public class TerrainLighting
                 // X axis
                 if (localPos.X < 0)
                 {
-                    if (neighborCache.NegX == null)
+                    if (neighborCache == null || neighborCache.NegX == null)
                         continue;
 
                     targetChunk = neighborCache.NegX;
@@ -97,7 +97,7 @@ public class TerrainLighting
                 }
                 else if (localPos.X >= ChunkSize)
                 {
-                    if (neighborCache.PosX == null)
+                    if (neighborCache == null || neighborCache.PosX == null)
                         continue;
 
                     targetChunk = neighborCache.PosX;
@@ -107,7 +107,7 @@ public class TerrainLighting
                 // Y axis
                 if (localPos.Y < 0)
                 {
-                    if (neighborCache.NegY == null)
+                    if (neighborCache == null || neighborCache.NegY == null)
                         continue;
 
                     targetChunk = neighborCache.NegY;
@@ -115,7 +115,7 @@ public class TerrainLighting
                 }
                 else if (localPos.Y >= ChunkSize)
                 {
-                    if (neighborCache.PosY == null)
+                    if (neighborCache == null || neighborCache.PosY == null)
                         continue;
 
                     targetChunk = neighborCache.PosY;
@@ -125,7 +125,7 @@ public class TerrainLighting
                 // Z axis
                 if (localPos.Z < 0)
                 {
-                    if (neighborCache.NegZ == null)
+                    if (neighborCache == null || neighborCache.NegZ == null)
                         continue;
 
                     targetChunk = neighborCache.NegZ;
@@ -133,7 +133,7 @@ public class TerrainLighting
                 }
                 else if (localPos.Z >= ChunkSize)
                 {
-                    if (neighborCache.PosZ == null)
+                    if (neighborCache == null || neighborCache.PosZ == null)
                         continue;
 
                     targetChunk = neighborCache.PosZ;

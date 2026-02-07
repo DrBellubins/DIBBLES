@@ -17,19 +17,24 @@ public class Engine : Game
     public const int FPS = 165;
     public const float FrameTimestep = 1.0f / (float)FPS;
 
-    public static Engine Instance { get; private set; }
+    public static Engine Instance { get; private set; } = new Engine();
     
     public static bool IsRunning;
     public static bool IsPaused;
     
-    public static GraphicsDevice Graphics;
-    public static SpriteBatch Sprites;
+    public static GraphicsDevice Graphics = new(GraphicsAdapter.DefaultAdapter,
+        GraphicsProfile.HiDef, new PresentationParameters());
     
-    public static SpriteFont MainFont;
+    public static SpriteBatch Sprites = new SpriteBatch(Graphics);
+    
+    public static SpriteFont MainFont = new SpriteFont(new Texture2D(Graphics, 1, 1), 
+        new(), new(), new(), 0, 0f,
+        new(), null);
+    
     public static List<Scene> Scenes = new();
     public static List<AudioPlayer> AudioPlayers = new();
 
-    private static GraphicsDeviceManager GraphicsManager;
+    private static GraphicsDeviceManager GraphicsManager = new(new Game());
     
     private Stopwatch timer = new();
     private long previousTicks;
@@ -100,13 +105,13 @@ public class Engine : Game
         long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
         long beforeWait = timer.ElapsedTicks;
         long elapsedTicks = beforeWait - previousTicks;
-        int spinCount = 0;
+        //int spinCount = 0;
         
         while (elapsedTicks < targetTicks)
         {
             Thread.SpinWait(100); // Brief spin-wait to reduce CPU usage
             elapsedTicks = timer.ElapsedTicks - previousTicks;
-            spinCount++;
+            //spinCount++;
         }
         
         long afterWait = timer.ElapsedTicks;

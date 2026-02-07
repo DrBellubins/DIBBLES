@@ -15,7 +15,7 @@ public struct Vector2Int
         return $"({X}, {Y})";
     }
     
-    public override bool Equals(object obj) => obj is Vector2Int other && X == other.X && Y == other.Y;
+    public override bool Equals(object? obj) => obj is Vector2Int other && X == other.X && Y == other.Y;
     public override int GetHashCode() => (X, Y).GetHashCode();
     public static bool operator ==(Vector2Int a, Vector2Int b) => a.X == b.X && a.Y == b.Y;
     public static bool operator !=(Vector2Int a, Vector2Int b) => !(a == b);

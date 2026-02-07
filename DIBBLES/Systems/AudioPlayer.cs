@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Audio;
 public class AudioPlayer
 {
     public Vector3 Position = Vector3.Zero;
-    public SoundEffect Sound;
+    public SoundEffect? Sound;
     
     private SoundEffectInstance? instance;
     
@@ -16,7 +16,7 @@ public class AudioPlayer
     
     public float Volume = 1.0f;
     public float Pitch = 0.0f; // MonoGame: -1.0f (down 1 octave) to +1.0f (up 1 octave)
-    public bool IsPlaying => Sound != null && instance.State == SoundState.Playing;
+    public bool IsPlaying => Sound != null && instance?.State == SoundState.Playing;
 
     public float MaxDistance = 5.0f;
     public float MinDistance = 1.0f;
