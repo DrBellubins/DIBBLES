@@ -18,10 +18,10 @@ public static class AtlasGenerator
         if (blockTypes == null || blockTypes.Length == 0)
             throw new ArgumentException("blockTypes must not be empty.");
     
-        // Phase 1: Normalize each per-face texture to tileSize and compute a content hash.
-        // Build a unique tile list keyed by hash, and remember which face maps to which unique index.
-        var uniqueTiles = new List<Color[]>(); // normalized tiles
-        var uniqueRects = new List<RectangleF>(); // will fill after layout
+        // Unique tiles (dedup identical content) and emissive scale per unique tile
+        var uniqueTiles = new List<Color[]>(); // normalized to tileSize
+        var uniqueRects = new List<RectangleF>();
+        var uniqueScales = new List<float>();  // emissive scale per unique tile (1.0 for non-emissive)
         var hashToIndex = new Dictionary<ulong, int>();
         var keyToIndex = new Dictionary<(BlockType, int), int>();
     
@@ -33,10 +33,7 @@ public static class AtlasGenerator
             if (tex == null)
                 continue;
     
-            // Normalize to tileSize and get pixels
             var tilePixels = getTilePixels(tex, tileSize);
-    
-            // Hash pixels to dedupe identical content, even if Texture2D instances differ
             ulong h = hashPixels(tilePixels);
     
             int idx;
@@ -46,6 +43,11 @@ public static class AtlasGenerator
                 idx = uniqueTiles.Count;
                 hashToIndex[h] = idx;
                 uniqueTiles.Add(tilePixels);
+    
+                // Emissive scale: 1.0 for non-emissive, else LightEmission / 7.5f (max ~2.0x)
+                var info = BlockData.Prefabs[key.Item1];
+                float scale = (info.LightEmission > 0) ? (info.LightEmission / 7.5f) : 1.0f;
+                uniqueScales.Add(scale);
             }
     
             keyToIndex[key] = idx;
@@ -56,7 +58,7 @@ public static class AtlasGenerator
         if (uniqueCount == 0)
             throw new InvalidOperationException("No textures found to pack into atlas.");
     
-        // Phase 2: Choose a near-square layout, then clamp dimensions to next power-of-two.
+        // Near-square layout, clamp to next power-of-two
         int atlasCols = (int)Math.Ceiling(Math.Sqrt(uniqueCount));
         int atlasRows = (int)Math.Ceiling(uniqueCount / (float)atlasCols);
     
@@ -66,19 +68,22 @@ public static class AtlasGenerator
         int atlasWidth = nextPowerOfTwo(rawWidth);
         int atlasHeight = nextPowerOfTwo(rawHeight);
     
-        // Recompute effective grid after PoT padding (gives us headroom columns/rows)
         int effCols = Math.Max(1, atlasWidth / tileSize);
         int effRows = Math.Max(1, atlasHeight / tileSize);
     
         if (effCols * effRows < uniqueCount)
             throw new InvalidOperationException("Power-of-two atlas is too small to fit all tiles.");
     
-        // Phase 3: Blit each unique tile into the atlas and record normalized rects
-        var atlasPixels = new Color[atlasWidth * atlasHeight];
+        // Allocate HDR atlas data (HalfVector4 supports >1.0 values)
+        var atlasData = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4[atlasWidth * atlasHeight];
     
-        for (int i = 0; i < atlasPixels.Length; i++)
-            atlasPixels[i] = Color.Transparent;
+        // Initialize to transparent
+        for (int i = 0; i < atlasData.Length; i++)
+        {
+            atlasData[i] = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(0f, 0f, 0f, 0f);
+        }
     
+        // Blit each unique tile with emissive scaling into the HDR atlas
         for (int i = 0; i < uniqueCount; i++)
         {
             int col = i % effCols;
@@ -88,6 +93,7 @@ public static class AtlasGenerator
             int startY = row * tileSize;
     
             var src = uniqueTiles[i];
+            float scale = uniqueScales[i];
     
             for (int y = 0; y < tileSize; y++)
             {
@@ -96,7 +102,16 @@ public static class AtlasGenerator
                 for (int x = 0; x < tileSize; x++)
                 {
                     int destX = startX + x;
-                    atlasPixels[destY * atlasWidth + destX] = src[y * tileSize + x];
+    
+                    var c = src[y * tileSize + x];
+    
+                    // Convert to float, apply emissive scale to RGB, preserve alpha
+                    float r = (c.R / 255f) * scale;
+                    float g = (c.G / 255f) * scale;
+                    float b = (c.B / 255f) * scale;
+                    float a = (c.A / 255f);
+    
+                    atlasData[destY * atlasWidth + destX] = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(r, g, b, a);
                 }
             }
     
@@ -108,11 +123,11 @@ public static class AtlasGenerator
             uniqueRects.Add(new RectangleF(u, v, uSize, vSize));
         }
     
-        // Create Texture2D
-        var atlasTex = new Texture2D(graphicsDevice, atlasWidth, atlasHeight, false, SurfaceFormat.Color);
-        atlasTex.SetData(atlasPixels);
+        // Create HDR Texture2D atlas
+        var atlasTex = new Texture2D(graphicsDevice, atlasWidth, atlasHeight, false, SurfaceFormat.HalfVector4);
+        atlasTex.SetData(atlasData);
     
-        // Phase 4: Map every (blockType, faceIdx) to the rect of its unique tile
+        // Map (BlockType, faceIdx) -> rect
         var blockUVs = new Dictionary<(BlockType, int), RectangleF>(textures.Count);
     
         foreach (var kv in keyToIndex)

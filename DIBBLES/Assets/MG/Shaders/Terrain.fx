@@ -29,7 +29,6 @@ struct VertexInput
     float4 Color    : COLOR0;
     float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
     float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
-    float Emissive  : TEXCOORD6; // Normalized to 0..1
 };
 
 // Add CameraNear/Far are already declared; reuse them to write normalized linear depth to RT1.
@@ -45,7 +44,6 @@ struct PixelInput
     float3 ViewNormal   : TEXCOORD3;
     float4 UVRect       : TEXCOORD4;
     float4 UVBasis      : TEXCOORD5;
-    float  Emissive     : TEXCOORD6;
 };
 
 PixelInput VS(VertexInput input)
@@ -70,7 +68,6 @@ PixelInput VS(VertexInput input)
     output.ViewNormal = normalize(viewNormal);
     output.UVRect = input.UVRect;
     output.UVBasis = input.UVBasis;
-    output.Emissive   = input.Emissive;
 
     return output;
 }
@@ -114,14 +111,10 @@ PixelOutput PS_Color(PixelInput input)
     if (alpha < 1.0) // We're not opaque (hopefully)
         clip(alpha - AlphaCutoff);
 
-    // Emissive
-    float3 emissiveRgb = texColor.rgb * input.Emissive;
-    float4 litColor    = float4(blockColor.rgb + emissiveRgb, blockColor.a);
-
     // Fog
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
-    float4 finalColor = lerp(litColor, FogColor, fogFactor);
+    float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
 
     // Normalized linear depth (near=0, far=1)

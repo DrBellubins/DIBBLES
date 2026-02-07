@@ -10,7 +10,6 @@ public struct FaceData
     public Vector3 Normal;
     public Vector2[] UVs;
     public Color[] Colors;
-    public float Emissive; // Pper-face emissive to replicate to 4 verts
     public int VertexOffset;
     public float CenterDistance;   // For sorting
     //public Texture2D Texture;      // If faces may use different textures

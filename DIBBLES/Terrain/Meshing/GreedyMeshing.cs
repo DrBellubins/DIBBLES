@@ -28,8 +28,6 @@ public class GreedyMeshing
         // Storage for per-vertex atlas rects
         var uvRects = new List<Vector4>();
         var uvBasis = new List<Vector4>();
-        
-        var emissives = new List<float>();
 
         var transparentFaces = new List<(float dist, FaceData face)>();
 
@@ -454,11 +452,6 @@ public class GreedyMeshing
                                 indices.Add(baseOffset + 3);
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 0);
-                                
-                                emissives.Add(emissiveVal);
-                                emissives.Add(emissiveVal);
-                                emissives.Add(emissiveVal);
-                                emissives.Add(emissiveVal);
                             }
                             else
                             {
@@ -469,8 +462,7 @@ public class GreedyMeshing
                                     UVs = new[] { t0, t1, t2, t3 },
                                     Colors = new[] { col0, col1, col2, col3 },
                                     VertexOffset = 0,
-                                    CenterDistance = dist,
-                                    Emissive = emissiveVal
+                                    CenterDistance = dist
                                 }));
 
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
@@ -513,11 +505,6 @@ public class GreedyMeshing
                 indices.Add(baseOffset + 3);
                 indices.Add(baseOffset + 2);
                 indices.Add(baseOffset + 0);
-                
-                emissives.Add(face.Emissive);
-                emissives.Add(face.Emissive);
-                emissives.Add(face.Emissive);
-                emissives.Add(face.Emissive);
             }
         }
 
@@ -571,11 +558,6 @@ public class GreedyMeshing
             meshData.UVBasis[i * 4 + 1] = uvBasis[i].Y;
             meshData.UVBasis[i * 4 + 2] = uvBasis[i].Z;
             meshData.UVBasis[i * 4 + 3] = uvBasis[i].W;
-        }
-        
-        for (int i = 0; i < emissives.Count; i++)
-        {
-            meshData.Emissives[i] = emissives[i];
         }
         
         return meshData;

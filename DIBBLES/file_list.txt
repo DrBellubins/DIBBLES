@@ -3,6 +3,7 @@
 ./Utils/Vector3Extensions.cs
 ./Utils/MeshUtils.cs
 ./Utils/Vector2Int.cs
+./Utils/ColorExtensions.cs
 ./Utils/SeededRandom.cs
 ./Utils/FastNoiseLite.cs
 ./Utils/Primatives3D.cs
@@ -16,6 +17,7 @@
 ./Utils/Vector3Int.cs
 ./Utils/EffectParams.cs
 ./Utils/GVec3.cs
+./Utils/ColorF.cs
 ./Utils/Tommy.cs
 ./Terrain/TerrainGeneration.cs
 ./Terrain/TerrainData.cs
