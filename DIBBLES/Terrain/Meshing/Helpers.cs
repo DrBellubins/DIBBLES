@@ -213,7 +213,8 @@ public struct VertexPositionNormalTextureColor : IVertexType
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
         new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color,             0),
         new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
-        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2)
+        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
+        new VertexElement(68, VertexElementFormat.Single,  VertexElementUsage.TextureCoordinate, 6)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
