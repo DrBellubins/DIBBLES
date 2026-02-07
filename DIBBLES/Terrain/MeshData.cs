@@ -14,6 +14,8 @@ public struct MeshData
     public float[] UVRects;
     public float[] UVBasis;
     
+    public float[] Emissives;
+    
     public int VertexCount;
     public int TriangleCount;
 
@@ -24,8 +26,12 @@ public struct MeshData
         TexCoords = new float[vertCount * 2];
         Colors = new byte[vertCount * 4];
         Indices = new ushort[triCount * 3];
+        
         UVRects = new float[vertCount * 4];
         UVBasis = new float[vertCount * 4];
+        
+        Emissives = new float[vertCount];
+        
         VertexCount = vertCount;
         TriangleCount = triCount;
     }

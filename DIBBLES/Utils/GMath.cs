@@ -5,6 +5,8 @@ namespace DIBBLES.Utils;
 // Helper class for math functions
 public static class GMath
 {
+    public const float ColorDivisor = 0.00392156862745f; // 1 / 255, divide byte based colors
+    
     // XorWow
     private static uint x, y, z, w, v;
     private static uint d;

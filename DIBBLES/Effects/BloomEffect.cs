@@ -170,7 +170,7 @@ public class BloomEffect : PostProcessingEffect
             width,
             height,
             false,
-            SurfaceFormat.Color,
+            SurfaceFormat.HdrBlendable,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
@@ -193,7 +193,7 @@ public class BloomEffect : PostProcessingEffect
                 rtWidth,
                 rtHeight,
                 false,
-                SurfaceFormat.Color,
+                SurfaceFormat.HdrBlendable,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents

@@ -39,7 +39,7 @@ public abstract class PostProcessingEffect
             width,
             height,
             false,
-            SurfaceFormat.Color,
+            SurfaceFormat.HdrBlendable,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents

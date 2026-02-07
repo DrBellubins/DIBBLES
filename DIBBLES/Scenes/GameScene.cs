@@ -47,7 +47,7 @@ public class GameScene : Scene
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
-            SurfaceFormat.Color,
+            SurfaceFormat.HdrBlendable,
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents

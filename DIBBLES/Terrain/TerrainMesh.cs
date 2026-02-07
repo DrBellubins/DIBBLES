@@ -241,6 +241,22 @@ public class TerrainMesh
                     data.UVBasis[i * 4 + 2],
                     data.UVBasis[i * 4 + 3]);
             }
+            
+            // Emissive strength per vertex (0..1 normalize from terrain's 0..15)
+            float emissive = 0.0f;
+
+            if (data.UVRects != null && data.UVRects.Length >= (i + 1) * 4)
+            {
+                var emissiveColor = color.ToColorF();
+
+                emissiveColor.R *= emissive;
+                emissiveColor.G
+                emissiveColor.B = 1.0f;
+                
+                color = new Color(color.R, color.G, color.B, color.A);
+            }
+
+            data.Emissives[i] = emissive;
 
             verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color, uvRect, uvBasis);
         }
