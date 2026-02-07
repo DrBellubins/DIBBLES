@@ -28,6 +28,11 @@ public struct VertexPositionTexCoord :  IVertexType
 
 public class SSAOPostProcess : PostProcessingEffect
 {
+    public const float Radius = 0.5f;
+    public const float Bias = 0.02f;
+    public const float TotalStrength = 1.3f;
+    public const float BaseAO = 0.05f;
+    
     public static bool AOEnabled = true;
     
     private Effect effect;
@@ -123,10 +128,10 @@ public class SSAOPostProcess : PostProcessingEffect
     
         effect.Parameters["NoiseScale"]?.SetValue(noiseScale);
     
-        effect.Parameters["radius"]?.SetValue(0.5f);
-        effect.Parameters["bias"]?.SetValue(0.02f);
-        effect.Parameters["total_strength"]?.SetValue(1.3f);
-        effect.Parameters["base_ao"]?.SetValue(0.05f);
+        effect.Parameters["radius"]?.SetValue(Radius);
+        effect.Parameters["bias"]?.SetValue(Bias);
+        effect.Parameters["total_strength"]?.SetValue(TotalStrength);
+        effect.Parameters["base_ao"]?.SetValue(BaseAO);
         
         effect.Parameters["BlurDepthSigma"]?.SetValue(5.5f);
         effect.Parameters["BlurNormalPower"]?.SetValue(14.0f);

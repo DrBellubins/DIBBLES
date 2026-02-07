@@ -90,8 +90,9 @@ public class Debug
         string output = $"[ERROR] {error}";
         Console.WriteLine(output);
         logLines.Add(output);
-        
-        throw new Exception(output);
+
+        File.WriteAllLines(logPath, logLines);
+        throw new Exception(error);
     }
 
     private static string lastTimerName = string.Empty;
