@@ -10,8 +10,9 @@ public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 4;
     
-    public float Intensity { get; set; } = 2.0f;
-    public float Radius { get; set; } = 2.0f;
+    public float Intensity { get; set; } = 0.5f; // Overall intensity
+    public float Strength { get; set; } = 2.0f;  // Per sample intensity
+    public float Radius { get; set; } = 4.0f;
     
     public float Threshold { get; set; } = 0.1f;
     public float ThresholdSoftKnee { get; set; } = 0.5f;
@@ -84,24 +85,29 @@ public class BloomEffect : PostProcessingEffect
         drawPass(thresholdRT, bloomEffect, "BloomThreshold");
         
         // 2) Downsample chain:
-        //    DownsampleRTs[0] samples from ColorBuffer (scene), subsequent levels sample previous downsample level
-        for (int i = 0; i < DownsampleRTs.Count; i++)
-        {
-            var src = DownsampleRTs[SafeI(i - 1)];
-            var dst = DownsampleRTs[i];
+        //    First level: thresholdRT -> DownsampleRTs[0]
+        EffectParams.SetTexture(bloomEffect, "SourceTex", thresholdRT);
+        EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / thresholdRT.Width, 1f / thresholdRT.Height));
+        
+        drawPass(DownsampleRTs[0], bloomEffect, "BloomDownsample");
     
-            // Set source and texel size for the current sampling input
+        // Subsequent levels: DownsampleRTs[i-1] -> DownsampleRTs[i]
+        for (int i = 1; i < DownsampleRTs.Count; i++)
+        {
+            var src = DownsampleRTs[i - 1];
+            var dst = DownsampleRTs[i];
+
             EffectParams.SetTexture(bloomEffect, "SourceTex", src);
             EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / src.Width, 1f / src.Height));
-    
+
             drawPass(dst, bloomEffect, "BloomDownsample");
         }
-    
+        
         // 3) Upsample chain:
         //    Start from the smallest downsample result and progressively upsample to larger targets
         RenderTarget2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
     
-        float intensityIter = Math.Max(0f, Intensity);
+        float intensityIter = Math.Max(0f, Strength);
         float radiusIter = Math.Max(0.0001f, Radius);
     
         for (int i = UpsampleRTs.Count - 1; i >= 0; i--)
@@ -319,6 +325,9 @@ public class BloomEffect : PostProcessingEffect
 
         BloomOutput?.Dispose();
         BloomOutput = null;
+        
+        thresholdRT?.Dispose();
+        thresholdRT = null;
 
         quadVertexBuffer?.Dispose();
         quadVertexBuffer = null;

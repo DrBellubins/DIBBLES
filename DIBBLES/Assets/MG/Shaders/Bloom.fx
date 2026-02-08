@@ -9,14 +9,12 @@
 
 #define EPSILON 1.0e-4
 
-
 float Intensity;
+float Strength;
 float Radius;
 
 float Threshold;
 float3 ThresholdCurve;
-
-float BloomIntensity = 1.0f; // May not be needed
 
 float2 TexelSize;
 
@@ -150,7 +148,7 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float4 c8 = tex2D(SourceSampler, uv + float2( 1,  1) * o);
 
     float4 tent = 0.0625f * (c0 + 2*c1 + c2 + 2*c3 + 4*c4 + 2*c5 + c6 + 2*c7 + c8);
-    float3 rgb = tent.rgb * Intensity;
+    float3 rgb = tent.rgb * Strength;
 
     // Force visible alpha
     return float4(rgb, 1.0f);
@@ -159,7 +157,9 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 scene = tex2D(SceneSampler, uv);
-    float4 bloom = tex2D(BloomSampler, uv) * BloomIntensity;
+    float4 bloom = tex2D(BloomSampler, uv);
+
+    bloom.rgb *= Intensity;
 
     float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
     return float4(screenRgb, scene.a);
