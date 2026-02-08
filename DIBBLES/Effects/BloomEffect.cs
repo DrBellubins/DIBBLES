@@ -8,10 +8,10 @@ namespace DIBBLES.Effects;
 // TODO: Implement quadratic threshold
 public class BloomEffect : PostProcessingEffect
 {
-    public const int SampleCount = 4;
+    public const int SampleCount = 8;
     
-    public float Intensity { get; set; } = 0.5f; // Overall intensity
-    public float Strength { get; set; } = 2.0f;  // Per sample intensity
+    public float Intensity { get; set; } = 1.0f; // Overall intensity
+    public float Strength { get; set; } = 3.0f;  // Per sample intensity
     public float Radius { get; set; } = 4.0f;
     
     public float Threshold { get; set; } = 0.1f;
@@ -107,7 +107,7 @@ public class BloomEffect : PostProcessingEffect
         //    Start from the smallest downsample result and progressively upsample to larger targets
         RenderTarget2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
     
-        float intensityIter = Math.Max(0f, Strength);
+        float strengthIter = Math.Max(0f, Strength);
         float radiusIter = Math.Max(0.0001f, Radius);
     
         for (int i = UpsampleRTs.Count - 1; i >= 0; i--)
@@ -117,7 +117,7 @@ public class BloomEffect : PostProcessingEffect
             EffectParams.SetTexture(bloomEffect, "SourceTex", upsampleSrc);
             EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / upsampleSrc.Width, 1f / upsampleSrc.Height));
             
-            EffectParams.SetFloat(bloomEffect, "Intensity", intensityIter);
+            EffectParams.SetFloat(bloomEffect, "Strength", strengthIter);
             EffectParams.SetFloat(bloomEffect, "Radius", radiusIter);
     
             drawPass(target, bloomEffect, "BloomUpsample");
@@ -126,7 +126,7 @@ public class BloomEffect : PostProcessingEffect
             upsampleSrc = target;
     
             // Gentle falloff per level
-            intensityIter *= 0.5f;
+            strengthIter *= 0.5f;
             radiusIter *= 0.5f;
         }
     
