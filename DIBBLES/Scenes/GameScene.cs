@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Debug = DIBBLES.Utils.Debug;
 using ImGuiNET;
+using Monogame.Imgui.Renderer;
 
 namespace DIBBLES.Scenes;
 
@@ -46,7 +47,7 @@ public class GameScene : Scene
     
     // Debug menu
     private DebugMenu debugMenu = new();
-    private ImGuiViewport imguiRenderer;
+    private ImGuiRenderer imguiRenderer;
     
     public override void Start()
     {
@@ -93,6 +94,16 @@ public class GameScene : Scene
             0,
             RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
         );
+        
+        // IMGUI
+        imguiRenderer = new ImGuiRenderer(Engine.Instance);
+        imguiRenderer.RebuildFontAtlas();
+
+        // Provide the texture binder so TextureDisplayParam can draw images
+        DebugMenu.SetBindTextureFunc(tex =>
+        {
+            return imguiRenderer.BindTexture(tex);
+        });
         
         UIBatch.Initialize();
         Primatives3D.Initialize();
@@ -269,6 +280,14 @@ public class GameScene : Scene
         UIBatch.End();
         
         //Debug.TimerStop();
+        
+        // Draw IMGUI
+        imguiRenderer.BeforeLayout(Engine.Instance, Engine.MonoGameTime);
+
+        // Draw the IMGUI panel for the active type
+        debugMenu.DrawIMGUI();
+
+        imguiRenderer.AfterLayout();
         
         // Toggle UI
         if (Input.IsKeyPressed(Keys.F1))

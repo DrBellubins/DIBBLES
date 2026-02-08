@@ -6,6 +6,7 @@ using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
+
 using Debug = DIBBLES.Utils.Debug;
 
 namespace DIBBLES;
@@ -27,6 +28,8 @@ public class Engine : Game
     //public static SpriteBatch Sprites;
 
     public static SpriteFont MainFont;
+    
+    public static GameTime MonoGameTime;
     
     public static List<Scene> Scenes = new();
     public static List<AudioPlayer> AudioPlayers = new();
@@ -83,6 +86,8 @@ public class Engine : Game
 
     protected override void Update(GameTime gameTime)
     {
+        MonoGameTime = gameTime;
+        
         if (!IsActive || !IsRunning)
         {
             base.Update(gameTime);
