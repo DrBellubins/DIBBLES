@@ -45,79 +45,84 @@ public class BloomEffect : PostProcessingEffect
         }
     
         // Ensure chain matches source size
-        /*if (BloomRenderTargets == null
-            || BloomRenderTargets.Count != SampleCount + 1
-            || BloomRenderTargets[0].Width != ColorBuffer.Width
-            || BloomRenderTargets[0].Height != ColorBuffer.Height)
-        {
-            buildChain(ColorBuffer.Width, ColorBuffer.Height);
-        }*/
+        ensureChainMatchesSource(ColorBuffer.Width, ColorBuffer.Height);
     
-        // Render states (consistent with SSAO)
+        // Render states
         Graphics.BlendState = BlendState.Opaque;
         Graphics.DepthStencilState = DepthStencilState.None;
         Graphics.RasterizerState = RasterizerState.CullNone;
         Graphics.SamplerStates[0] = SamplerState.LinearClamp;
-        
+    
         // Bind fullscreen quad
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
     
-        // Downsample
+        // 1) Downsample chain:
+        //    DownsampleRTs[0] samples from ColorBuffer (scene), subsequent levels sample previous downsample level
+        Texture2D sourceTex = ColorBuffer;
+    
         for (int i = 0; i < DownsampleRTs.Count; i++)
         {
-            var downRT = DownsampleRTs[i];
-            var texel = new Vector2(1f / downRT.Width, 1f / downRT.Height);
-            
-            EffectParams.SetTexture(bloomEffect, "SourceTex", downRT);
-            EffectParams.SetVector2(bloomEffect, "TexelSize", texel);
-            
-            drawPass(downRT, bloomEffect, "BloomDownsample");
+            var target = DownsampleRTs[i];
+    
+            // Set source and texel size for the current sampling input
+            EffectParams.SetTexture(bloomEffect, "SourceTex", sourceTex);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / sourceTex.Width, 1f / sourceTex.Height));
+    
+            drawPass(target, bloomEffect, "BloomDownsample");
+    
+            // Next level samples from the result we just wrote
+            sourceTex = target;
         }
     
-        // Upsample
+        // 2) Upsample chain:
+        //    Start from the smallest downsample result and progressively upsample to larger targets
+        Texture2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
+    
         float intensityIter = Math.Max(0f, Intensity);
         float radiusIter = Math.Max(0.0001f, Radius);
     
-        for (int i = 0; i < UpsampleRTs.Count; i++)
+        for (int i = UpsampleRTs.Count - 1; i >= 0; i--)
         {
-            var upRT = UpsampleRTs[i];
-            var texel = new Vector2(1f * upRT.Width, 1f * upRT.Height);
+            var target = UpsampleRTs[i];
     
-            // Use multiplicative falloff so we never hit zero before the final full-res write.
-            intensityIter *= 0.5f;
-            radiusIter *= 0.5f;
-    
-            bloomEffect.Parameters["SourceTex"]?.SetValue(upRT);
-            bloomEffect.Parameters["TexelSize"]?.SetValue(texel);
+            bloomEffect.Parameters["SourceTex"]?.SetValue(upsampleSrc);
+            bloomEffect.Parameters["TexelSize"]?.SetValue(new Vector2(1f / upsampleSrc.Width, 1f / upsampleSrc.Height));
             bloomEffect.Parameters["Intensity"]?.SetValue(intensityIter);
             bloomEffect.Parameters["Radius"]?.SetValue(radiusIter);
     
-            drawPass(upRT, bloomEffect, "BloomUpsample");
+            drawPass(target, bloomEffect, "BloomUpsample");
+    
+            // Prepare for next stage
+            upsampleSrc = target;
+    
+            // Gentle falloff per level
+            intensityIter *= 0.5f;
+            radiusIter *= 0.5f;
         }
     
-        // Expose full-res bloom layer for buffer debug
+        // Full-res bloom layer for buffer debug and combine
         BloomOutput = UpsampleRTs[0];
     
-        // Combine into our OutputBuffer (screen blend in shader)
+        // 3) Combine bloom with the scene into OutputBuffer
         var previousViewport = Graphics.Viewport;
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Viewport = new Viewport(0, 0, OutputBuffer.Width, OutputBuffer.Height);
         Graphics.Clear(Color.Black);
-
+    
         bloomEffect.Parameters["SceneTex"]?.SetValue(ColorBuffer);
         bloomEffect.Parameters["BloomTex"]?.SetValue(BloomOutput);
         bloomEffect.Parameters["BloomIntensity"]?.SetValue(Intensity);
-
+    
         bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomCombine"];
-
+    
         foreach (var pass in bloomEffect.CurrentTechnique.Passes)
         {
             pass.Apply();
             Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
         }
-
-        // Restore viewport and leave RT unbound to the manager's DrawEnd
+    
+        // Restore viewport; DrawEnd will unbind targets
         Graphics.Viewport = previousViewport;
     }
 
@@ -127,16 +132,6 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetVertexBuffer(null);
         Graphics.Indices = null;
         Graphics.SetRenderTarget(null);
-    }
-    
-    // Dispose resources
-    public override void Dispose()
-    {
-        //for (int i = 0; i < BloomRenderTargets.Count; i++)
-        //    BloomRenderTargets[i]?.Dispose();
-    
-        quadVertexBuffer?.Dispose();
-        quadIndexBuffer?.Dispose();
     }
     
     // Create fullscreen quad in clip space [-1,1]
@@ -161,9 +156,59 @@ public class BloomEffect : PostProcessingEffect
     // Allocate chain sized from source
     private void buildChain(int width, int height)
     {
+        // Dispose old
+        foreach (var rt in DownsampleRTs)
+            rt?.Dispose();
+        
+        foreach (var rt in UpsampleRTs)
+            rt?.Dispose();
+
         DownsampleRTs.Clear();
         UpsampleRTs.Clear();
 
+        // Allocate downsample chain: half res first, then quarter, etc.
+        int count = Math.Max(1, SampleCount);
+
+        for (int i = 0; i < count; i++)
+        {
+            int dsW = Math.Max(1, width >> (i + 1));   // /2, /4, /8...
+            int dsH = Math.Max(1, height >> (i + 1));
+
+            var ds = new RenderTarget2D(
+                Graphics,
+                dsW,
+                dsH,
+                false,
+                SurfaceFormat.HdrBlendable,
+                DepthFormat.None,
+                0,
+                RenderTargetUsage.PreserveContents
+            );
+
+            DownsampleRTs.Add(ds);
+        }
+
+        // Allocate upsample chain: start at smallest level size, end at full res
+        for (int i = 0; i < count; i++)
+        {
+            int usW = (i == 0) ? width : DownsampleRTs[i - 1].Width;   // full, half, quarter...
+            int usH = (i == 0) ? height : DownsampleRTs[i - 1].Height;
+
+            var us = new RenderTarget2D(
+                Graphics,
+                usW,
+                usH,
+                false,
+                SurfaceFormat.HdrBlendable,
+                DepthFormat.None,
+                0,
+                RenderTargetUsage.PreserveContents
+            );
+
+            UpsampleRTs.Add(us);
+        }
+
+        // Recreate full-res BloomOutput compatible with current size
         BloomOutput?.Dispose();
         BloomOutput = new RenderTarget2D(
             Graphics,
@@ -175,48 +220,6 @@ public class BloomEffect : PostProcessingEffect
             0,
             RenderTargetUsage.PreserveContents
         );
-        
-        int count = Math.Max(1, SampleCount);
-
-        // Downsample
-        for (int i = 0; i < count; i++)
-        {
-            var rtWidth = Math.Max(1, width / 2);
-            var rtHeight = Math.Max(1, height / 2);
-
-            var rt = new RenderTarget2D(
-                Graphics,
-                rtWidth,
-                rtHeight,
-                false,
-                SurfaceFormat.HdrBlendable,
-                DepthFormat.None,
-                0,
-                RenderTargetUsage.PreserveContents
-            );
-
-            DownsampleRTs.Add(rt);
-        }
-        
-        // Upsample
-        for (int i = 0; i < count; i++)
-        {
-            var rtWidth = Math.Max(1, width * 2);
-            var rtHeight = Math.Max(1, height * 2);
-
-            var rt = new RenderTarget2D(
-                Graphics,
-                rtWidth,
-                rtHeight,
-                false,
-                SurfaceFormat.HdrBlendable,
-                DepthFormat.None,
-                0,
-                RenderTargetUsage.PreserveContents
-            );
-
-            UpsampleRTs.Add(rt);
-        }
     }
     
     // Draw one pass
@@ -243,5 +246,52 @@ public class BloomEffect : PostProcessingEffect
         // Restore viewport and unbind RT
         Graphics.Viewport = previousViewport;
         Graphics.SetRenderTarget(null);
+    }
+    
+    private void ensureChainMatchesSource(int width, int height)
+    {
+        int count = Math.Max(1, SampleCount);
+
+        bool needsRebuild =
+            DownsampleRTs.Count != count ||
+            UpsampleRTs.Count != count ||
+            UpsampleRTs.Count == 0 ||
+            DownsampleRTs.Count == 0 ||
+            UpsampleRTs[0].Width != width ||
+            UpsampleRTs[0].Height != height ||
+            DownsampleRTs[0].Width != Math.Max(1, width / 2) ||
+            DownsampleRTs[0].Height != Math.Max(1, height / 2);
+
+        if (needsRebuild)
+        {
+            buildChain(width, height);
+        }
+    }
+    
+    // Dispose resources
+    public override void Dispose()
+    {
+        base.Dispose();
+
+        foreach (var rt in DownsampleRTs)
+        {
+            rt?.Dispose();
+        }
+        DownsampleRTs.Clear();
+
+        foreach (var rt in UpsampleRTs)
+        {
+            rt?.Dispose();
+        }
+        UpsampleRTs.Clear();
+
+        BloomOutput?.Dispose();
+        BloomOutput = null;
+
+        quadVertexBuffer?.Dispose();
+        quadVertexBuffer = null;
+
+        quadIndexBuffer?.Dispose();
+        quadIndexBuffer = null;
     }
 }
