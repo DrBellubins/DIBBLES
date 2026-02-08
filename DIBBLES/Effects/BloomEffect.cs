@@ -1,3 +1,5 @@
+using DIBBLES.Scenes;
+using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -38,7 +40,7 @@ public class BloomEffect : PostProcessingEffect
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
-            Utils.Debug.Error("NULL");
+            Debug.Error("Bloom ColorBuffer NULL");
             return;
         }
     
@@ -56,7 +58,7 @@ public class BloomEffect : PostProcessingEffect
         Graphics.DepthStencilState = DepthStencilState.None;
         Graphics.RasterizerState = RasterizerState.CullNone;
         Graphics.SamplerStates[0] = SamplerState.LinearClamp;
-    
+        
         // Bind fullscreen quad
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
@@ -66,10 +68,10 @@ public class BloomEffect : PostProcessingEffect
         {
             var downRT = DownsampleRTs[i];
             var texel = new Vector2(1f / downRT.Width, 1f / downRT.Height);
-    
-            bloomEffect.Parameters["SourceTex"]?.SetValue(downRT);
-            bloomEffect.Parameters["TexelSize"]?.SetValue(texel);
-    
+            
+            EffectParams.SetTexture(bloomEffect, "SourceTex", downRT);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", texel);
+            
             drawPass(downRT, bloomEffect, "BloomDownsample");
         }
     
@@ -80,7 +82,7 @@ public class BloomEffect : PostProcessingEffect
         for (int i = 0; i < UpsampleRTs.Count; i++)
         {
             var upRT = UpsampleRTs[i];
-            var texel = new Vector2(1f / upRT.Width, 1f / upRT.Height);
+            var texel = new Vector2(1f * upRT.Width, 1f * upRT.Height);
     
             // Use multiplicative falloff so we never hit zero before the final full-res write.
             intensityIter *= 0.5f;
