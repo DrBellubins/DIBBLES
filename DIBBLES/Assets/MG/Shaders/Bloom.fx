@@ -9,6 +9,8 @@
 
 #define EPSILON 1.0e-4
 
+float PreBrightness;
+
 float Intensity;
 float Strength;
 float Radius;
@@ -99,7 +101,7 @@ float3 QuadraticThreshold(float3 color, float threshold, float3 curve)
 float4 ThresholdPS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 color = tex2D(SourceSampler, uv);
-    color.rgb = QuadraticThreshold(color.rgb, Threshold, ThresholdCurve);
+    color.rgb = QuadraticThreshold(color.rgb, Threshold, ThresholdCurve) * PreBrightness;
 
     return color;
 }
@@ -163,7 +165,7 @@ float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
 
     //float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
 
-    return float4(scene.rgb + bloom.rbg, scene.a);
+    return float4(scene.rgb + bloom.rgb, scene.a);
 }
 
 technique BloomThreshold

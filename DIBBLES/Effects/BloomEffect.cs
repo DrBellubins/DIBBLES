@@ -5,17 +5,19 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Effects;
 
-// TODO: Implement quadratic threshold
+// TODO: Try blending all upsample RTs together for more detailed bloom.
 public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 6;
     
-    public float Intensity { get; set; } = 1.0f; // Overall intensity
-    public float Strength { get; set; } = 0.7f;  // Per sample intensity
-    public float Radius { get; set; } = 2.0f;
+    public const float PreBrightness = 15.0f; // Color gets multiplied by this number in threshold stage
     
-    public float Threshold { get; set; } = 0.1f;
-    public float ThresholdSoftKnee { get; set; } = 0.5f;
+    public const float Intensity = 0.5f; // Overall intensity
+    public const float Strength = 1.0f;  // Per sample intensity
+    public const float Radius = 2.0f;
+    
+    public const float Threshold = 0.7f;
+    public const float ThresholdSoftKnee = 0.5f;
     
     public RenderTarget2D BloomOutput;
 
@@ -77,6 +79,7 @@ public class BloomEffect : PostProcessingEffect
         Graphics.Indices = quadIndexBuffer;
     
         // 1) Threshold: ColorBuffer -> thresholdRT
+        EffectParams.SetFloat(bloomEffect, "PreBrightness", PreBrightness);
         EffectParams.SetTexture(bloomEffect, "SourceTex", ColorBuffer);
         EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / ColorBuffer.Width, 1f / ColorBuffer.Height));
         EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);

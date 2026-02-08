@@ -303,17 +303,10 @@ public class GameScene : Scene
                 outputTex.SaveAsPng(outputStream, width, height);
         }
         
-        // Save color buffer
-        using (var colorStream = new FileStream(Path.Combine(folder, "Color.png"), FileMode.Create))
-            BackBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-        
-        // Save depth buffer
-        using (var colorStream = new FileStream(Path.Combine(folder, "Depth.png"), FileMode.Create))
-            DepthBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
-        
-        // Save normal buffer
-        using (var colorStream = new FileStream(Path.Combine(folder, "Normal.png"), FileMode.Create))
-            NormalBuffer.SaveAsPng(colorStream, BackBuffer.Width, BackBuffer.Height);
+        // Save HDR/float RTs by converting to LDR Color first
+        SaveRenderTargetAsPng(BackBuffer, Path.Combine(folder, "Color.png"));       // HdrBlendable
+        SaveRenderTargetAsPng(DepthBuffer, Path.Combine(folder, "Depth.png"));      // Single
+        SaveRenderTargetAsPng(NormalBuffer, Path.Combine(folder, "Normal.png"));    // Color
         
         // Save Ambient Occlusion buffer
         /*using (var colorStream = new FileStream(Path.Combine(folder, "AO.png"), FileMode.Create))
@@ -326,5 +319,77 @@ public class GameScene : Scene
         
         Debug.Info(outputString);
         Chat.Write(outputString, ChatMessageType.Command);
+    }
+    
+    private void SaveRenderTargetAsPng(RenderTarget2D rt, string path)
+    {
+        try
+        {
+            if (rt == null)
+                return;
+    
+            // Direct save for LDR Color
+            if (rt.Format == SurfaceFormat.Color)
+            {
+                using (var s = new FileStream(path, FileMode.Create))
+                    rt.SaveAsPng(s, rt.Width, rt.Height);
+                return;
+            }
+    
+            // GPU resolve to a temporary LDR Color RT (safe for HdrBlendable/HalfVector4/Single)
+            using (var temp = new RenderTarget2D(Engine.Graphics, rt.Width, rt.Height, false, SurfaceFormat.Color, DepthFormat.None))
+            {
+                var gd = Engine.Graphics;
+                var prevTargets = gd.GetRenderTargets();
+    
+                gd.SetRenderTarget(temp);
+                gd.Clear(Color.Transparent);
+    
+                UIBatch.Begin();
+                // Draw the source as-is; sampling writes clamped [0..1] into Color
+                UIBatch.Draw(rt, Vector2.Zero, new Vector2(temp.Width, temp.Height), Color.White);
+                UIBatch.End();
+    
+                gd.SetRenderTargets(prevTargets);
+    
+                using (var s = new FileStream(path, FileMode.Create))
+                    temp.SaveAsPng(s, temp.Width, temp.Height);
+            }
+        }
+        catch
+        {
+            // Fallback only for Single (depth) if GPU resolve fails on some platforms
+            try
+            {
+                if (rt.Format == SurfaceFormat.Single)
+                {
+                    var data = new float[rt.Width * rt.Height];
+                    rt.GetData(data);
+    
+                    var pixels = new Color[data.Length];
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        float c = MathF.Min(1f, MathF.Max(0f, data[i]));
+                        byte v = (byte)(c * 255f + 0.5f);
+                        pixels[i] = new Color(v, v, v, (byte)255);
+                    }
+    
+                    using (var tex = new Texture2D(Engine.Graphics, rt.Width, rt.Height, false, SurfaceFormat.Color))
+                    {
+                        tex.SetData(pixels);
+                        using (var s = new FileStream(path, FileMode.Create))
+                            tex.SaveAsPng(s, rt.Width, rt.Height);
+                    }
+                    return;
+                }
+            }
+            catch (Exception ex2)
+            {
+                Debug.Error($"Failed to save '{path}' (fallback): {ex2.Message}");
+                return;
+            }
+    
+            Debug.Error($"Failed to save '{path}': Value does not fall within the expected range.");
+        }
     }
 }

@@ -6,8 +6,8 @@ namespace DIBBLES.Effects;
 
 public class TonemappingEffect : PostProcessingEffect
 {
-    public const float ExposureEV  = 0.0f;  // stops
-    public const int AgxLook = 1;           // 0=Low, 1=Medium, 2=High, 3=VeryHigh
+    public const float ExposureEV  = 0.5f;  // stops
+    public const int AgxLook = 0;           // 0=Low, 1=Medium, 2=High, 3=VeryHigh
     public const float Saturation = 1.0f;
     
     private Effect tonemapEffect;

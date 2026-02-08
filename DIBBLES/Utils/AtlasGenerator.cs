@@ -47,7 +47,7 @@ public static class AtlasGenerator
                 // Emissive scale: 1.0 for non-emissive, full emissive strength for now,
                 // could be LightEmission / 7.5f (max ~2.0x)
                 var info = BlockData.Prefabs[key.Item1];
-                float scale = (info.LightEmission > 0) ? (info.LightEmission) : 1.0f;
+                float scale = (info.LightEmission > 0) ? (info.LightEmission * 0.06f) : 1.0f;
                 uniqueScales.Add(scale);
             }
     
