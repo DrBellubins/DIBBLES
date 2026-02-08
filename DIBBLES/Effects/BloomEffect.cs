@@ -82,8 +82,12 @@ public class BloomEffect : PostProcessingEffect
         {
             var texel = new Vector2(1f / up.Width, 1f / up.Height);
     
-            intensityIter = Math.Max(0f, intensityIter - (Intensity * 0.5f));
-            radiusIter = Math.Max(0.0001f, radiusIter - (Radius * 0.5f));
+            // Use multiplicative falloff so we never hit zero before the final full-res write.
+            intensityIter *= 0.5f;
+            radiusIter *= 0.5f;
+            
+            //intensityIter = Math.Max(0f, intensityIter - (Intensity * 0.5f));
+            //radiusIter = Math.Max(0.0001f, radiusIter - (Radius * 0.5f));
     
             bloomEffect.Parameters["SourceTex"]?.SetValue(up);
             bloomEffect.Parameters["TexelSize"]?.SetValue(texel);

@@ -7,6 +7,8 @@
 // Fullscreen quad is provided in clip space [-1,1], vertex shader passes it through.
 // Ignore sampler binding issues per instructions.
 
+#define EPSILON 1.0e-4
+
 struct VertIn
 {
     float3 Position : POSITION0;
@@ -68,6 +70,26 @@ float BloomIntensity = 1.0f;
 float4 Box4(float4 a, float4 b, float4 c, float4 d)
 {
     return (a + b + c + d) * 0.25f;
+}
+
+float Max3(float a, float b, float c)
+{
+    return max(max(a, b), c);
+}
+
+float3 QuadraticThreshold(float3 color, float threshold, float3 curve)
+{
+    // Pixel brightness
+    float br = Max3(color.r, color.g, color.b);
+
+    // Under-threshold part: quadratic curve
+    float rq = clamp(br - curve.x, 0.0, curve.y);
+    rq = curve.z * rq * rq;
+
+    // Combine and apply the brightness response curve.
+    color *= max(rq, br - threshold) / max(br, EPSILON);
+
+    return color;
 }
 
 float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
