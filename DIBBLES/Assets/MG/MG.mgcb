@@ -14,6 +14,9 @@
 # Build the blue noise texture for SSAO
 /build:Textures/BlueNoise.png
 
+# Build the blit shader
+/build:Shaders/Blit.fx
+
 # Build the terrain shader
 /build:Shaders/Terrain.fx
 

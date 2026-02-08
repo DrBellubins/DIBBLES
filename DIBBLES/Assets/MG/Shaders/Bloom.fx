@@ -9,6 +9,17 @@
 
 #define EPSILON 1.0e-4
 
+
+float Intensity;
+float Radius;
+
+float Threshold;
+float3 ThresholdCurve;
+
+float BloomIntensity = 1.0f; // May not be needed
+
+float2 TexelSize;
+
 struct VertIn
 {
     float3 Position : POSITION0;
@@ -62,11 +73,6 @@ sampler2D SceneSampler = sampler_state
     AddressV = Clamp;
 };
 
-float2 TexelSize;
-float Radius = 1.0f;
-float Intensity = 1.0f;
-float BloomIntensity = 1.0f;
-
 float4 Box4(float4 a, float4 b, float4 c, float4 d)
 {
     return (a + b + c + d) * 0.25f;
@@ -88,6 +94,14 @@ float3 QuadraticThreshold(float3 color, float threshold, float3 curve)
 
     // Combine and apply the brightness response curve.
     color *= max(rq, br - threshold) / max(br, EPSILON);
+
+    return color;
+}
+
+float4 ThresholdPS(float2 uv : TEXCOORD0) : COLOR0
+{
+    float4 color = tex2D(SourceSampler, uv);
+    color.rgb = QuadraticThreshold(color.rgb, Threshold, ThresholdCurve);
 
     return color;
 }
@@ -150,6 +164,16 @@ float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
     float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
     return float4(screenRgb, scene.a);
 }
+
+technique BloomThreshold
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 FullscreenVS();
+        PixelShader  = compile ps_3_0 ThresholdPS();
+    }
+}
+
 
 technique BloomDownsample
 {

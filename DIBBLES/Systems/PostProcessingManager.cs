@@ -27,7 +27,7 @@ public class PostProcessingManager
     // Pass the G-buffer textures to each effect and allow them to render to their backbuffer
     public void ApplyAll(RenderTarget2D color)
     {
-        Texture2D inputTexture = color;
+        RenderTarget2D inputTexture = color;
         
         foreach (var effect in PostProcessingEffect.All)
         {

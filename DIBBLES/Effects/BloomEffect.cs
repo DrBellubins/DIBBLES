@@ -13,6 +13,9 @@ public class BloomEffect : PostProcessingEffect
     public float Intensity { get; set; } = 2.0f;
     public float Radius { get; set; } = 2.0f;
     
+    public float Threshold { get; set; } = 1.0f;
+    public Vector3 ThresholdCurve { get; set; } = new(0, 1, 1); // TODO: CHANGE TO PROPER VALUES
+    
     public RenderTarget2D BloomOutput;
 
     public List<RenderTarget2D> DownsampleRTs = new();
@@ -58,27 +61,34 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
     
-        // 1) Downsample chain:
+        // 1) Quadratic threshold
+        //    Take input color and smoothly threshold it to only bright spots.
+        RenderTarget2D thresholdRT = ColorBuffer;
+        
+        EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);
+        EffectParams.SetVector3(bloomEffect, "ThresholdCurve", ThresholdCurve);
+        
+        drawPass(thresholdRT, bloomEffect, "BloomDownsample");
+        
+        // 1.5) Blit full-res threshold texture to lower downsample res
+        Blit(thresholdRT, DownsampleRTs[0]);
+        
+        // 2) Downsample chain:
         //    DownsampleRTs[0] samples from ColorBuffer (scene), subsequent levels sample previous downsample level
-        Texture2D sourceTex = ColorBuffer;
-    
         for (int i = 0; i < DownsampleRTs.Count; i++)
         {
             var target = DownsampleRTs[i];
     
             // Set source and texel size for the current sampling input
-            EffectParams.SetTexture(bloomEffect, "SourceTex", sourceTex);
-            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / sourceTex.Width, 1f / sourceTex.Height));
+            EffectParams.SetTexture(bloomEffect, "SourceTex", target);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / target.Width, 1f / target.Height));
     
             drawPass(target, bloomEffect, "BloomDownsample");
-    
-            // Next level samples from the result we just wrote
-            sourceTex = target;
         }
     
-        // 2) Upsample chain:
+        // 3) Upsample chain:
         //    Start from the smallest downsample result and progressively upsample to larger targets
-        Texture2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
+        RenderTarget2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
     
         float intensityIter = Math.Max(0f, Intensity);
         float radiusIter = Math.Max(0.0001f, Radius);
@@ -106,7 +116,7 @@ public class BloomEffect : PostProcessingEffect
         // Full-res bloom layer for buffer debug and combine
         BloomOutput = UpsampleRTs[0];
     
-        // 3) Combine bloom with the scene into OutputBuffer
+        // 4) Combine bloom with the scene into OutputBuffer
         var previousViewport = Graphics.Viewport;
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Viewport = new Viewport(0, 0, OutputBuffer.Width, OutputBuffer.Height);
