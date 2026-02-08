@@ -11,9 +11,9 @@ using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.ImGuiNet;
+
 using Debug = DIBBLES.Utils.Debug;
-using ImGuiNET;
-using Monogame.Imgui.Renderer;
 
 namespace DIBBLES.Scenes;
 

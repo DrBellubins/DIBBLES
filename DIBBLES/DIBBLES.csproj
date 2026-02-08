@@ -24,7 +24,7 @@
       <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
       <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
-      <PackageReference Include="Monogame.Imgui.Renderer" Version="1.0.5" />
+      <PackageReference Include="MonoGame.ImGuiNet" Version="1.0.5" />
     </ItemGroup>
 
     <ItemGroup>
