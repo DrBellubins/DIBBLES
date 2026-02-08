@@ -16,8 +16,8 @@ public class BloomEffect : PostProcessingEffect
     public const float Strength = 1.0f;  // Per sample intensity
     public const float Radius = 2.0f;
     
-    public const float Threshold = 0.7f;
-    public const float ThresholdSoftKnee = 0.5f;
+    public const float Threshold = 0.6f;
+    public const float ThresholdSoftKnee = 0.05f; // Lower = softer
     
     public RenderTarget2D BloomOutput;
 
@@ -115,6 +115,8 @@ public class BloomEffect : PostProcessingEffect
             var target = UpsampleRTs[i];
     
             EffectParams.SetTexture(bloomEffect, "SourceTex", upsampleSrc);
+            EffectParams.SetTexture(bloomEffect, "StageTex", UpsampleRTs[SafeI(i - 1, UpsampleRTs.Count)]);
+            
             EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / upsampleSrc.Width, 1f / upsampleSrc.Height));
             
             EffectParams.SetFloat(bloomEffect, "Strength", Strength);

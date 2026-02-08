@@ -85,6 +85,16 @@ public abstract class PostProcessingEffect
         return i < 0 ? 0 : i;
     }
     
+    public int SafeI(int i, int max)
+    {
+        var iterator = i;
+        
+        if (iterator > max)
+            iterator = max;
+        
+        return iterator < 0 ? 0 : i;
+    }
+    
     /// <summary>
     /// GPU blit with scaling: copies 'source' into 'dest' (any size) with a shader.
     /// </summary>

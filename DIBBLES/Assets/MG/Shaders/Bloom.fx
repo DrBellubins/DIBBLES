@@ -20,30 +20,21 @@ float3 ThresholdCurve;
 
 float2 TexelSize;
 
-struct VertIn
-{
-    float3 Position : POSITION0;
-    float2 TexCoord : TEXCOORD0;
-};
-
-struct VertOut
-{
-    float4 Position : POSITION0;
-    float2 TexCoord : TEXCOORD0;
-};
-
-VertOut FullscreenVS(VertIn i)
-{
-    VertOut o;
-    o.Position = float4(i.Position.xy, 0, 1);
-    o.TexCoord = i.TexCoord;
-    return o;
-}
-
 texture SourceTex;
 sampler2D SourceSampler = sampler_state
 {
     Texture = <SourceTex>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+    AddressU = Clamp;
+    AddressV = Clamp;
+};
+
+texture StageTex;
+sampler2D StageSampler = sampler_state
+{
+    Texture = <StageTex>;
     MinFilter = Linear;
     MagFilter = Linear;
     MipFilter = Linear;
@@ -72,6 +63,26 @@ sampler2D SceneSampler = sampler_state
     AddressU = Clamp;
     AddressV = Clamp;
 };
+
+struct VertIn
+{
+    float3 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
+};
+
+struct VertOut
+{
+    float4 Position : POSITION0;
+    float2 TexCoord : TEXCOORD0;
+};
+
+VertOut FullscreenVS(VertIn i)
+{
+    VertOut o;
+    o.Position = float4(i.Position.xy, 0, 1);
+    o.TexCoord = i.TexCoord;
+    return o;
+}
 
 float4 Box4(float4 a, float4 b, float4 c, float4 d)
 {
@@ -139,15 +150,25 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
     float2 o = TexelSize * max(Radius, 0.0001f);
 
-    float4 c0 = tex2D(SourceSampler, uv + float2(-1, -1) * o);
-    float4 c1 = tex2D(SourceSampler, uv + float2( 0, -1) * o);
-    float4 c2 = tex2D(SourceSampler, uv + float2( 1, -1) * o);
-    float4 c3 = tex2D(SourceSampler, uv + float2(-1,  0) * o);
-    float4 c4 = tex2D(SourceSampler, uv + float2( 0,  0) * o);
-    float4 c5 = tex2D(SourceSampler, uv + float2( 1,  0) * o);
-    float4 c6 = tex2D(SourceSampler, uv + float2(-1,  1) * o);
-    float4 c7 = tex2D(SourceSampler, uv + float2( 0,  1) * o);
-    float4 c8 = tex2D(SourceSampler, uv + float2( 1,  1) * o);
+    float2 u0 = uv + float2(-1, -1) * o;
+    float2 u1 = uv + float2( 0, -1) * o;
+    float2 u2 = uv + float2( 1, -1) * o;
+    float2 u3 = uv + float2(-1,  0) * o;
+    float2 u4 = uv + float2( 0,  0) * o;
+    float2 u5 = uv + float2( 1,  0) * o;
+    float2 u6 = uv + float2(-1,  1) * o;
+    float2 u7 = uv + float2( 0,  1) * o;
+    float2 u8 = uv + float2( 1,  1) * o;
+
+    float4 c0 = tex2D(SourceSampler, u0) + tex2D(StageSampler, u0);
+    float4 c1 = tex2D(SourceSampler, u1) + tex2D(StageSampler, u1);
+    float4 c2 = tex2D(SourceSampler, u2) + tex2D(StageSampler, u2);
+    float4 c3 = tex2D(SourceSampler, u3) + tex2D(StageSampler, u3);
+    float4 c4 = tex2D(SourceSampler, u4) + tex2D(StageSampler, u4);
+    float4 c5 = tex2D(SourceSampler, u5) + tex2D(StageSampler, u5);
+    float4 c6 = tex2D(SourceSampler, u6) + tex2D(StageSampler, u6);
+    float4 c7 = tex2D(SourceSampler, u7) + tex2D(StageSampler, u7);
+    float4 c8 = tex2D(SourceSampler, u8) + tex2D(StageSampler, u8);
 
     float4 tent = 0.0625f * (c0 + 2*c1 + c2 + 2*c3 + 4*c4 + 2*c5 + c6 + 2*c7 + c8);
     float3 rgb = tent.rgb * Strength;
