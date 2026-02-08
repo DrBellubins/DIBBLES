@@ -282,12 +282,12 @@ public class GameScene : Scene
         //Debug.TimerStop();
         
         // Draw IMGUI
-        imguiRenderer.BeforeLayout(Engine.Instance, Engine.MonoGameTime);
+        imguiRenderer.BeginLayout(Engine.MonoGameTime);
 
         // Draw the IMGUI panel for the active type
         debugMenu.DrawIMGUI();
 
-        imguiRenderer.AfterLayout();
+        imguiRenderer.EndLayout();
         
         // Toggle UI
         if (Input.IsKeyPressed(Keys.F1))

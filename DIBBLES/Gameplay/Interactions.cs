@@ -1,4 +1,5 @@
 using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Systems;
 
 namespace DIBBLES.Gameplay;
 
@@ -47,6 +48,7 @@ public class Interactions
     {
         if (!wasClosedAndFrozen)
         {
+            CursorManager.ReleaseCursor();
             InventorySystem.StateMachine.CloseAll();
             Frozen = true;
         }
@@ -56,6 +58,7 @@ public class Interactions
 
     public static void Unfreeze()
     {
+        CursorManager.LockCursor();
         Frozen = false;
         wasClosedAndFrozen = false;
     }

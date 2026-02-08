@@ -110,14 +110,10 @@ public class DebugMenu
         if (paramsByOwner.TryGetValue(activeOwner, out var items))
         {
             foreach (var p in items)
-            {
                 p.Draw();
-            }
         }
         else
-        {
             ImGui.TextDisabled("No registered parameters for this type.");
-        }
 
         ImGui.End();
     }
@@ -167,6 +163,7 @@ public class DebugMenu
                 id = _bindTextureFunc(tex);
                 imguiTextureIds[tex] = id;
             }
+            
             return id;
         };
     }

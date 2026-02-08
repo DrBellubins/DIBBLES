@@ -24,7 +24,6 @@
       <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
       <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.4" />
       <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4" />
-      <PackageReference Include="MonoGame.ImGuiNet" Version="1.0.5" />
     </ItemGroup>
 
     <ItemGroup>
@@ -60,6 +59,10 @@
 
     <ItemGroup>
       <None Remove="Artwork\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\deps\MonoGame.ImGuiNet-main\MonoGame.ImGuiNet\Monogame.ImGuiNet.csproj" />
     </ItemGroup>
 
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
