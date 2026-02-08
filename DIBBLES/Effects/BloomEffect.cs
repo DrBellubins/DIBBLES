@@ -110,7 +110,6 @@ public class BloomEffect : PostProcessingEffect
         
         // 2.5) Accumulate all downsample layers into a single full-res BloomOutput
         // Clear accumulation target
-        BloomOutput = DownsampleRTs[^1];
         Graphics.SetRenderTarget(BloomOutput);
         Graphics.Clear(Color.Black);
 
@@ -126,9 +125,16 @@ public class BloomEffect : PostProcessingEffect
             EffectParams.SetFloat(bloomEffect, "Strength", Strength);
             EffectParams.SetFloat(bloomEffect, "LayerDecay", LayerDecay);
             EffectParams.SetInt(bloomEffect, "LayerIndex", i);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / src.Width, 1f / src.Height));
 
             // Accumulate this layer into BloomOutput (additive)
-            drawPass(BloomOutput, bloomEffect, "BloomAccumulate");
+            // IMPORTANT: do not clear here; we’re accumulating additively
+            bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomAccumulate"];
+            foreach (var pass in bloomEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                Graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, 2);
+            }
         }
 
         // Restore opaque for combine
