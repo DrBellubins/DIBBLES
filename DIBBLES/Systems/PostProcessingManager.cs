@@ -7,7 +7,7 @@ namespace DIBBLES.Effects;
 public class PostProcessingManager
 {
     // Initialize every post processing effect in order here!
-    //public SSAOPostProcess ssaoPostProcess = new();
+    public SSAOPostProcess ssaoPostProcess = new();
     public BloomEffect bloom = new(); // TODO: Enabling breaks AO drawing to screen, probably blend state issue.
     
     public void Initialize(int width, int height)
