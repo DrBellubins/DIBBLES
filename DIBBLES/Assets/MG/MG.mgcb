@@ -37,3 +37,6 @@
 
 # Build the bloom shader
 /build:Shaders/Bloom.fx
+
+# Build the tonemap shader
+/build:Shaders/Tonemap.fx

@@ -134,6 +134,7 @@
 ./Assets/MG/Shaders/BillboardInstanced.fx
 ./Assets/MG/Shaders/Bloom.fx
 ./Assets/MG/Shaders/SSAOPostProcess.fx
+./Assets/MG/Shaders/Tonemap.fx
 ./Assets/MG/Shaders/UIBlur.fx
 ./Assets/MG/Shaders/Terrain.fx
 ./Assets/MG/Shaders/MainSurfaceEffect.fx
@@ -193,6 +194,7 @@
 ./Systems/Scene.cs
 ./Systems/Time.cs
 ./Engine.cs
+./Effects/TonemappingEffect.cs
 ./Effects/UIBlur.cs
 ./Effects/MainSurfaceEffect.cs
 ./Effects/FogEffect.cs
