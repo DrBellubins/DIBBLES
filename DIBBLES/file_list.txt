@@ -130,6 +130,7 @@
 ./Assets/MG/Fonts/MainFont.spritefont
 ./Assets/MG/Shaders/DepthPrepass.fx
 ./Assets/MG/Shaders/TerrainMRT.fx
+./Assets/MG/Shaders/Blit.fx
 ./Assets/MG/Shaders/BillboardInstanced.fx
 ./Assets/MG/Shaders/Bloom.fx
 ./Assets/MG/Shaders/SSAOPostProcess.fx
@@ -195,6 +196,7 @@
 ./Effects/UIBlur.cs
 ./Effects/MainSurfaceEffect.cs
 ./Effects/FogEffect.cs
+./Effects/BasicPostProcess.cs
 ./Effects/BloomEffect.cs
 ./Effects/SSAOPostProcess.cs
 ./Effects/Skybox.cs

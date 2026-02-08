@@ -14,7 +14,7 @@ public class BloomEffect : PostProcessingEffect
     public float Radius { get; set; } = 2.0f;
     
     public float Threshold { get; set; } = 1.0f;
-    public Vector3 ThresholdCurve { get; set; } = new(0, 1, 1); // TODO: CHANGE TO PROPER VALUES
+    public float ThresholdSoftKnee { get; set; } = 0.5f;
     
     public RenderTarget2D BloomOutput;
 
@@ -66,7 +66,7 @@ public class BloomEffect : PostProcessingEffect
         RenderTarget2D thresholdRT = ColorBuffer;
         
         EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);
-        EffectParams.SetVector3(bloomEffect, "ThresholdCurve", ThresholdCurve);
+        EffectParams.SetVector3(bloomEffect, "ThresholdCurve", genThresholdCurve(Threshold, ThresholdSoftKnee));
         
         drawPass(thresholdRT, bloomEffect, "BloomDownsample");
         
@@ -279,6 +279,16 @@ public class BloomEffect : PostProcessingEffect
         {
             buildChain(width, height);
         }
+    }
+    
+    private Vector3 genThresholdCurve(float threshold, float softKnee)
+    {
+        float k = MathF.Max(threshold * softKnee, 1e-5f);
+        float cx = threshold - k;
+        float cy = 2.0f * k;
+        float cz = 0.25f / k;
+        
+        return new Vector3(cx, cy, cz);
     }
     
     // Dispose resources
