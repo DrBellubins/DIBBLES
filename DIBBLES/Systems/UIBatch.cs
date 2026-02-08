@@ -197,6 +197,19 @@ public static class UIBatch
         }
     }
 
+    public static void DrawStringCentered(SpriteFont font, string text, Vector2 position, Color color, float scale = 1f)
+    {
+        var textSize = font.MeasureString(text);
+
+        // This offset is a hack, for some reason MeasureString is inaccurate.
+        textSize.X *= 0.93f;
+        textSize.Y *= 1.2f;
+        
+        var pos = new Vector2(position.X - (textSize.X * 0.5f), position.Y - (textSize.Y * 0.5f));
+        
+        DrawString(font, text, pos, color, scale);
+    }
+
     public static Texture2D PremultiplyAlpha(Texture2D source)
     {
         // Step 1: Extract pixel data

@@ -1,4 +1,5 @@
 using System;
+using DIBBLES.Gameplay;
 
 namespace DIBBLES.Systems;
 
@@ -42,6 +43,8 @@ public class UIStateMachine
     /// </summary>
     public bool Open(UIState state)
     {
+        CanOpenAnyUI = !Interactions.UIFrozen;
+        
         // If already open, do nothing
         if (CurrentState == state || !CanOpenAnyUI)
             return false;

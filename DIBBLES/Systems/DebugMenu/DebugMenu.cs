@@ -21,8 +21,8 @@ public class DebugMenu
         sideMenu.Draw();
     }
 
-    public static void Register()
+    public static void Register(string buttonName)
     {
-        SideMenu.CreateButton("");
+        SideMenu.CreateButton(buttonName);
     }
 }

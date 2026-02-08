@@ -1,4 +1,5 @@
 using DIBBLES.Scenes;
+using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -52,6 +53,8 @@ public class BloomEffect : PostProcessingEffect
             0,
             RenderTargetUsage.PreserveContents
         );
+        
+        DebugMenu.Register("Bloom Effect");
     }
 
     // Main draw

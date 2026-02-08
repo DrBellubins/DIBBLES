@@ -54,6 +54,7 @@
 ./Gameplay/Inventory/InventoryBase.cs
 ./Gameplay/Inventory/InventorySystem.cs
 ./Gameplay/Chat.cs
+./Gameplay/Interactions.cs
 ./Gameplay/Commands.cs
 ./Gameplay/Player/HandModel.cs
 ./Gameplay/Player/Hotbar.cs
@@ -180,6 +181,7 @@
 ./Artwork/Blocks/Feeb.pxo
 ./Artwork/Blocks/Grass.pxo
 ./Artwork/Blocks/CheckerboardBrush.pxo
+./Systems/DebugMenu/MenuTypes.cs
 ./Systems/DebugMenu/SideMenu.cs
 ./Systems/DebugMenu/DebugMenu.cs
 ./Systems/RuntimeModel.cs

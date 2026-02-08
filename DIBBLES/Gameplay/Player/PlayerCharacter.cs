@@ -50,11 +50,11 @@ public class PlayerCharacter
     public Freecam freecam = new();
 
     public bool IsDead = false;
-    public bool IsUIFrozen = false;
+    public bool Freeze = false;
     
     public bool IsFrozen
     {
-        get { return IsUIFrozen || IsDead; }
+        get { return Freeze || IsDead; }
     }
     
     public bool ShouldUpdate = false;
@@ -113,7 +113,7 @@ public class PlayerCharacter
         // Update from UI state machine
         InventorySystem.StateMachine.OnUIStateChanged += state =>
         {
-            IsUIFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
+            Interactions.PlayerFrozen = InventorySystem.StateMachine.IsAnyInventoryOpen;
         };
     }
     
@@ -125,6 +125,8 @@ public class PlayerCharacter
         Debug.Draw2DText($"Position: {vec3Position.X:F4}, {vec3Position.Y:F4}, {vec3Position.Z:F4}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward.X:F4}, {CameraForward.Y:F4}, {CameraForward.Z:F4}", Color.White);
         Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
+
+        Freeze = Interactions.PlayerFrozen;
         
         hotbar.Update(IsDead, IsFrozen);
         

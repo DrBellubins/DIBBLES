@@ -17,6 +17,26 @@ public static class ColorExtensions
             (float)color.A * GMath.ColorDivisor);
     }
 
+    public static Color Darken(this Color color, float amount, float alphaAmount = 0f)
+    {
+        var colorFloat = ToColorF(color);
+        
+        return new Color(colorFloat.R - amount,
+            colorFloat.G - amount, 
+            colorFloat.B - amount, 
+            colorFloat.A - alphaAmount);
+    }
+    
+    public static Color Brighten(this Color color, float amount, float alphaAmount = 0f)
+    {
+        var colorFloat = ToColorF(color);
+        
+        return new Color(colorFloat.R + amount,
+            colorFloat.G + amount, 
+            colorFloat.B + amount, 
+            colorFloat.A + alphaAmount);
+    }
+
     public static ColorF ToColorF(this Color color)
     {
         color.Deconstruct(out float red, out float green, out float blue, out float alpha);
