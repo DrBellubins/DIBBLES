@@ -12,6 +12,7 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Debug = DIBBLES.Utils.Debug;
+using ImGuiNET;
 
 namespace DIBBLES.Scenes;
 
@@ -45,6 +46,7 @@ public class GameScene : Scene
     
     // Debug menu
     private DebugMenu debugMenu = new();
+    private ImGuiViewport imguiRenderer;
     
     public override void Start()
     {

@@ -1,3 +1,6 @@
+using ImGuiNET;
+using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Inventory;
@@ -14,6 +17,11 @@ public class DebugMenu
     // Group buttons by the Type that registered them
     private static readonly Dictionary<Type, Button> buttonsByOwner = new();
     
+    private static readonly Dictionary<Type, List<IDebugParam>> paramsByOwner = new();
+    private static readonly Dictionary<Texture2D, IntPtr> imguiTextureIds = new();
+    
+    private static Func<Texture2D, IntPtr> _bindTextureFunc;
+    
     public bool Open = true;
     
     private const float width = 400.0f;
@@ -24,6 +32,8 @@ public class DebugMenu
     
     private const float ButtonPaddingW = 16.0f; // Width
     private const float ButtonPaddingH = 8.0f; // Height
+    
+    private Type? activeOwner;
     
     public void Start()
     {
@@ -60,6 +70,12 @@ public class DebugMenu
         {
             var button = kv.Value;
             
+            if (isButtonClicked(button.Rect))
+            {
+                activeOwner = kv.Key;
+                Open = true;
+            }
+            
             var widthPadding = ButtonPaddingW * 0.5f;
                 
             button.Rect = new RectangleF(sideMenuX + widthPadding,
@@ -82,6 +98,50 @@ public class DebugMenu
         }
     }
     
+    // Draw IMGUI window for the active owner:
+    public void DrawIMGUI()
+    {
+        if (!Open || activeOwner == null)
+            return;
+
+        string title = $"{activeOwner.Name} Debug";
+        ImGui.Begin(title, ref Open, ImGuiWindowFlags.AlwaysAutoResize);
+
+        if (paramsByOwner.TryGetValue(activeOwner, out var items))
+        {
+            foreach (var p in items)
+            {
+                p.Draw();
+            }
+        }
+        else
+        {
+            ImGui.TextDisabled("No registered parameters for this type.");
+        }
+
+        ImGui.End();
+    }
+    
+    // Setter to provide the bind function from ImGui renderer
+    public static void SetBindTextureFunc(Func<Texture2D, IntPtr> bindFunc)
+    {
+        _bindTextureFunc = bindFunc;
+    }
+    
+    // Register params for caller type
+    public static void RegisterParams(params IDebugParam[] items)
+    {
+        var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
+
+        if (!paramsByOwner.TryGetValue(callerType, out var list))
+        {
+            list = new List<IDebugParam>();
+            paramsByOwner[callerType] = list;
+        }
+
+        list.AddRange(items);
+    }
+    
     // Register a button and auto-categorize by the calling class (no generics, no explicit type parameter)
     public static void CreateButton()
     {
@@ -92,5 +152,37 @@ public class DebugMenu
             button = new Button(callerType.Name, new RectangleF());
             buttonsByOwner[callerType] = button;
         }
+    }
+    
+    // Optional: helper to wrap bind function for TextureDisplayParam creation
+    public static Func<Texture2D, IntPtr> GetBindTextureFunc()
+    {
+        return tex =>
+        {
+            if (tex == null || _bindTextureFunc == null)
+                return IntPtr.Zero;
+
+            if (!imguiTextureIds.TryGetValue(tex, out var id))
+            {
+                id = _bindTextureFunc(tex);
+                imguiTextureIds[tex] = id;
+            }
+            return id;
+        };
+    }
+    
+    // Simple click helper (UIBatch rectangles)
+    private bool isButtonClicked(RectangleF rect)
+    {
+        var ms = Mouse.GetState();
+        var mp = new Vector2(ms.X, ms.Y);
+
+        bool inside =
+            mp.X >= rect.X &&
+            mp.X <= rect.X + rect.Width &&
+            mp.Y >= rect.Y &&
+            mp.Y <= rect.Y + rect.Height;
+
+        return inside && ms.LeftButton == ButtonState.Pressed;
     }
 }
