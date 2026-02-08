@@ -29,6 +29,8 @@ public class GameScene : Scene
     public static bool UIEnabled = true;
     
     // Buffers
+    public static readonly SurfaceFormat BackBufferFormat = SurfaceFormat.HdrBlendable;
+    
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
     public static RenderTarget2D NormalBuffer;
@@ -47,7 +49,7 @@ public class GameScene : Scene
             Engine.ScreenWidth,
             Engine.ScreenHeight,
             false,
-            SurfaceFormat.HdrBlendable,
+            BackBufferFormat,
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents

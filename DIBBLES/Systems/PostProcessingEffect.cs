@@ -1,3 +1,4 @@
+using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
@@ -43,7 +44,7 @@ public abstract class PostProcessingEffect
             input.Width,
             input.Height,
             false,
-            SurfaceFormat.HdrBlendable,
+            GameScene.BackBufferFormat,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents

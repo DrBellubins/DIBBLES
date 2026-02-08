@@ -161,8 +161,9 @@ float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
 
     bloom.rgb *= Intensity;
 
-    float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
-    return float4(screenRgb, scene.a);
+    //float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
+
+    return float4(scene.rgb + bloom.rbg, scene.a);
 }
 
 technique BloomThreshold

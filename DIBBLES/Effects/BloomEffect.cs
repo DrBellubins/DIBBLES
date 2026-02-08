@@ -11,7 +11,7 @@ public class BloomEffect : PostProcessingEffect
     public const int SampleCount = 6;
     
     public float Intensity { get; set; } = 1.0f; // Overall intensity
-    public float Strength { get; set; } = 1.0f;  // Per sample intensity
+    public float Strength { get; set; } = 0.7f;  // Per sample intensity
     public float Radius { get; set; } = 2.0f;
     
     public float Threshold { get; set; } = 0.1f;
@@ -43,7 +43,7 @@ public class BloomEffect : PostProcessingEffect
             input.Width,
             input.Height,
             false,
-            SurfaceFormat.HdrBlendable,
+            GameScene.BackBufferFormat,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
@@ -202,7 +202,7 @@ public class BloomEffect : PostProcessingEffect
                 dsW,
                 dsH,
                 false,
-                SurfaceFormat.HdrBlendable,
+                GameScene.BackBufferFormat,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents
@@ -222,7 +222,7 @@ public class BloomEffect : PostProcessingEffect
                 usW,
                 usH,
                 false,
-                SurfaceFormat.HdrBlendable,
+                GameScene.BackBufferFormat,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents
