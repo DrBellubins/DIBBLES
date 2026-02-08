@@ -13,13 +13,15 @@ public class BloomEffect : PostProcessingEffect
     public float Intensity { get; set; } = 2.0f;
     public float Radius { get; set; } = 2.0f;
     
-    public float Threshold { get; set; } = 1.0f;
+    public float Threshold { get; set; } = 0.1f;
     public float ThresholdSoftKnee { get; set; } = 0.5f;
     
     public RenderTarget2D BloomOutput;
 
     public List<RenderTarget2D> DownsampleRTs = new();
     public List<RenderTarget2D> UpsampleRTs = new();
+    
+    private RenderTarget2D thresholdRT;
     
     private Effect bloomEffect;
     private VertexBuffer quadVertexBuffer;
@@ -33,6 +35,18 @@ public class BloomEffect : PostProcessingEffect
         bloomEffect = Engine.Instance.Content.Load<Effect>("Shaders/Bloom");
         ensureFullscreenQuad();
         buildChain(input.Width, input.Height);
+        
+        // Full-res threshold buffer
+        thresholdRT = new RenderTarget2D(
+            Graphics,
+            input.Width,
+            input.Height,
+            false,
+            SurfaceFormat.HdrBlendable,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
     }
 
     // Main draw
@@ -61,29 +75,26 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
     
-        // 1) Quadratic threshold
-        //    Take input color and smoothly threshold it to only bright spots.
-        RenderTarget2D thresholdRT = ColorBuffer;
-        
+        // 1) Threshold: ColorBuffer -> thresholdRT
+        EffectParams.SetTexture(bloomEffect, "SourceTex", ColorBuffer);
+        EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / ColorBuffer.Width, 1f / ColorBuffer.Height));
         EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);
         EffectParams.SetVector3(bloomEffect, "ThresholdCurve", genThresholdCurve(Threshold, ThresholdSoftKnee));
-        
-        drawPass(thresholdRT, bloomEffect, "BloomDownsample");
-        
-        // 1.5) Blit full-res threshold texture to lower downsample res
-        Blit(thresholdRT, DownsampleRTs[0]);
+
+        drawPass(thresholdRT, bloomEffect, "BloomThreshold");
         
         // 2) Downsample chain:
         //    DownsampleRTs[0] samples from ColorBuffer (scene), subsequent levels sample previous downsample level
         for (int i = 0; i < DownsampleRTs.Count; i++)
         {
-            var target = DownsampleRTs[i];
+            var src = DownsampleRTs[SafeI(i - 1)];
+            var dst = DownsampleRTs[i];
     
             // Set source and texel size for the current sampling input
-            EffectParams.SetTexture(bloomEffect, "SourceTex", target);
-            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / target.Width, 1f / target.Height));
+            EffectParams.SetTexture(bloomEffect, "SourceTex", src);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / src.Width, 1f / src.Height));
     
-            drawPass(target, bloomEffect, "BloomDownsample");
+            drawPass(dst, bloomEffect, "BloomDownsample");
         }
     
         // 3) Upsample chain:

@@ -78,6 +78,11 @@ public abstract class PostProcessingEffect
     {
         Graphics.SetRenderTarget(null);
     }
+
+    public int SafeI(int i)
+    {
+        return i < 0 ? 0 : i;
+    }
     
     /// <summary>
     /// GPU blit with scaling: copies 'source' into 'dest' (any size) with a shader.
