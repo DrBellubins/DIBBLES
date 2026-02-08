@@ -19,6 +19,8 @@ public class BloomEffect : PostProcessingEffect
     public const float Threshold = 0.6f;
     public const float ThresholdSoftKnee = 0.05f; // Lower = softer
     
+    public const float LayerDecay = 1.0f; // Decay factor per layer for accumulation
+    
     public RenderTarget2D BloomOutput;
 
     public List<RenderTarget2D> DownsampleRTs = new();
@@ -106,9 +108,35 @@ public class BloomEffect : PostProcessingEffect
             drawPass(dst, bloomEffect, "BloomDownsample");
         }
         
+        // 2.5) Accumulate all downsample layers into a single full-res BloomOutput
+        // Clear accumulation target
+        BloomOutput = DownsampleRTs[^1];
+        Graphics.SetRenderTarget(BloomOutput);
+        Graphics.Clear(Color.Black);
+
+        // Switch to additive blending for accumulation
+        Graphics.BlendState = BlendState.Additive;
+
+        for (int i = 0; i < UpsampleRTs.Count; i++)
+        {
+            var src = UpsampleRTs[i];
+
+            // Bind source texture and per-layer weighting parameters
+            EffectParams.SetTexture(bloomEffect, "SourceTex", src);
+            EffectParams.SetFloat(bloomEffect, "Strength", Strength);
+            EffectParams.SetFloat(bloomEffect, "LayerDecay", LayerDecay);
+            EffectParams.SetInt(bloomEffect, "LayerIndex", i);
+
+            // Accumulate this layer into BloomOutput (additive)
+            drawPass(BloomOutput, bloomEffect, "BloomAccumulate");
+        }
+
+        // Restore opaque for combine
+        Graphics.BlendState = BlendState.Opaque;
+        
         // 3) Upsample chain:
         //    Start from the smallest downsample result and progressively upsample to larger targets
-        RenderTarget2D upsampleSrc = DownsampleRTs[^1]; // last downsample RT (smallest)
+        RenderTarget2D upsampleSrc = BloomOutput;
     
         for (int i = UpsampleRTs.Count - 1; i >= 0; i--)
         {
@@ -127,9 +155,6 @@ public class BloomEffect : PostProcessingEffect
             // Prepare for next stage
             upsampleSrc = target;
         }
-    
-        // Full-res bloom layer for buffer debug and combine
-        BloomOutput = UpsampleRTs[0];
     
         // 4) Combine bloom with the scene into OutputBuffer
         var previousViewport = Graphics.Viewport;

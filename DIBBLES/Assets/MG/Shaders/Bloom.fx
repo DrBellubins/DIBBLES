@@ -20,6 +20,9 @@ float3 ThresholdCurve;
 
 float2 TexelSize;
 
+float LayerDecay;
+int LayerIndex;
+
 texture SourceTex;
 sampler2D SourceSampler = sampler_state
 {
@@ -160,21 +163,35 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float2 u7 = uv + float2( 0,  1) * o;
     float2 u8 = uv + float2( 1,  1) * o;
 
-    float4 c0 = tex2D(SourceSampler, u0) + tex2D(StageSampler, u0);
-    float4 c1 = tex2D(SourceSampler, u1) + tex2D(StageSampler, u1);
-    float4 c2 = tex2D(SourceSampler, u2) + tex2D(StageSampler, u2);
-    float4 c3 = tex2D(SourceSampler, u3) + tex2D(StageSampler, u3);
-    float4 c4 = tex2D(SourceSampler, u4) + tex2D(StageSampler, u4);
-    float4 c5 = tex2D(SourceSampler, u5) + tex2D(StageSampler, u5);
-    float4 c6 = tex2D(SourceSampler, u6) + tex2D(StageSampler, u6);
-    float4 c7 = tex2D(SourceSampler, u7) + tex2D(StageSampler, u7);
-    float4 c8 = tex2D(SourceSampler, u8) + tex2D(StageSampler, u8);
+    float4 c0 = tex2D(SourceSampler, u0);
+    float4 c1 = tex2D(SourceSampler, u1);
+    float4 c2 = tex2D(SourceSampler, u2);
+    float4 c3 = tex2D(SourceSampler, u3);
+    float4 c4 = tex2D(SourceSampler, u4);
+    float4 c5 = tex2D(SourceSampler, u5);
+    float4 c6 = tex2D(SourceSampler, u6);
+    float4 c7 = tex2D(SourceSampler, u7);
+    float4 c8 = tex2D(SourceSampler, u8);
 
     float4 tent = 0.0625f * (c0 + 2*c1 + c2 + 2*c3 + 4*c4 + 2*c5 + c6 + 2*c7 + c8);
     float3 rgb = tent.rgb * Strength;
 
     // Force visible alpha
     return float4(rgb, 1.0f);
+}
+
+// Accumulation PS: add a weighted contribution per layer.
+// Use additive blending on the render target for safe accumulation.
+// Weight falls off by pow(LayerDecay, LayerIndex); multiply by Strength for per-layer control.
+float4 AccumulatePS(float2 uv : TEXCOORD0) : COLOR0
+{
+    float4 src = tex2D(SourceSampler, uv);
+
+    // Decay weight per layer, keep within [0..1]
+    float w = saturate(Strength * pow(saturate(LayerDecay), (float)LayerIndex));
+
+    // Return weighted contribution; additive blending composes layers
+    return float4(src.rgb * w, 1.0f);
 }
 
 float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
@@ -205,6 +222,15 @@ technique BloomDownsample
     {
         VertexShader = compile vs_3_0 FullscreenVS();
         PixelShader  = compile ps_3_0 DownsamplePS();
+    }
+}
+
+technique BloomAccumulate
+{
+    pass P0
+    {
+        VertexShader = compile vs_3_0 FullscreenVS();
+        PixelShader  = compile ps_3_0 AccumulatePS();
     }
 }
 
