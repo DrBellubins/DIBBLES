@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Effects;
 
+// TODO: Implement quadratic threshold
 public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 4;
@@ -86,10 +87,11 @@ public class BloomEffect : PostProcessingEffect
         {
             var target = UpsampleRTs[i];
     
-            bloomEffect.Parameters["SourceTex"]?.SetValue(upsampleSrc);
-            bloomEffect.Parameters["TexelSize"]?.SetValue(new Vector2(1f / upsampleSrc.Width, 1f / upsampleSrc.Height));
-            bloomEffect.Parameters["Intensity"]?.SetValue(intensityIter);
-            bloomEffect.Parameters["Radius"]?.SetValue(radiusIter);
+            EffectParams.SetTexture(bloomEffect, "SourceTex", upsampleSrc);
+            EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / upsampleSrc.Width, 1f / upsampleSrc.Height));
+            
+            EffectParams.SetFloat(bloomEffect, "Intensity", intensityIter);
+            EffectParams.SetFloat(bloomEffect, "Radius", radiusIter);
     
             drawPass(target, bloomEffect, "BloomUpsample");
     
@@ -109,10 +111,11 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Viewport = new Viewport(0, 0, OutputBuffer.Width, OutputBuffer.Height);
         Graphics.Clear(Color.Black);
-    
-        bloomEffect.Parameters["SceneTex"]?.SetValue(ColorBuffer);
-        bloomEffect.Parameters["BloomTex"]?.SetValue(BloomOutput);
-        bloomEffect.Parameters["BloomIntensity"]?.SetValue(Intensity);
+
+        EffectParams.SetTexture(bloomEffect, "SceneTex", ColorBuffer);
+        EffectParams.SetTexture(bloomEffect, "BloomTex", BloomOutput);
+        
+        EffectParams.SetFloat(bloomEffect, "Intensity", Intensity);
     
         bloomEffect.CurrentTechnique = bloomEffect.Techniques["BloomCombine"];
     
@@ -274,15 +277,13 @@ public class BloomEffect : PostProcessingEffect
         base.Dispose();
 
         foreach (var rt in DownsampleRTs)
-        {
             rt?.Dispose();
-        }
+        
         DownsampleRTs.Clear();
 
         foreach (var rt in UpsampleRTs)
-        {
             rt?.Dispose();
-        }
+        
         UpsampleRTs.Clear();
 
         BloomOutput?.Dispose();

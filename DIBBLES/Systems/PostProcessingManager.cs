@@ -31,7 +31,7 @@ public class PostProcessingManager
         
         foreach (var effect in PostProcessingEffect.All)
         {
-            effect.SetBuffers(color);
+            effect.SetBuffers(inputTexture);
             effect.DrawStart();
             
             // Derived effects perform their draw here (override DrawStart/DrawEnd or render between)
