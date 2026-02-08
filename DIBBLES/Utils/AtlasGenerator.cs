@@ -18,10 +18,8 @@ public static class AtlasGenerator
         if (blockTypes == null || blockTypes.Length == 0)
             throw new ArgumentException("blockTypes must not be empty.");
     
-        // Unique tiles (dedup identical content) and emissive scale per unique tile
         var uniqueTiles = new List<Color[]>(); // normalized to tileSize
         var uniqueRects = new List<RectangleF>();
-        var uniqueScales = new List<float>();  // emissive scale per unique tile (1.0 for non-emissive)
         var hashToIndex = new Dictionary<ulong, int>();
         var keyToIndex = new Dictionary<(BlockType, int), int>();
     
@@ -43,13 +41,6 @@ public static class AtlasGenerator
                 idx = uniqueTiles.Count;
                 hashToIndex[h] = idx;
                 uniqueTiles.Add(tilePixels);
-    
-                // Emissive scale: 1.0 for non-emissive, full emissive strength for now,
-                // could be LightEmission / 7.5f (max ~2.0x)
-                var info = BlockData.Prefabs[key.Item1];
-                //float scale = (info.LightEmission > 0) ? (info.LightEmission * 0.06f) : 1.0f;
-                float scale = (info.LightEmission > 0) ? (info.LightEmission) : 1.0f;
-                uniqueScales.Add(scale);
             }
     
             keyToIndex[key] = idx;
@@ -60,7 +51,6 @@ public static class AtlasGenerator
         if (uniqueCount == 0)
             throw new InvalidOperationException("No textures found to pack into atlas.");
     
-        // Near-square layout, clamp to next power-of-two
         int atlasCols = (int)Math.Ceiling(Math.Sqrt(uniqueCount));
         int atlasRows = (int)Math.Ceiling(uniqueCount / (float)atlasCols);
     
@@ -76,16 +66,13 @@ public static class AtlasGenerator
         if (effCols * effRows < uniqueCount)
             throw new InvalidOperationException("Power-of-two atlas is too small to fit all tiles.");
     
-        // Allocate HDR atlas data (HalfVector4 supports >1.0 values)
         var atlasData = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4[atlasWidth * atlasHeight];
     
-        // Initialize to transparent
         for (int i = 0; i < atlasData.Length; i++)
         {
             atlasData[i] = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(0f, 0f, 0f, 0f);
         }
     
-        // Blit each unique tile with emissive scaling into the HDR atlas
         for (int i = 0; i < uniqueCount; i++)
         {
             int col = i % effCols;
@@ -95,7 +82,6 @@ public static class AtlasGenerator
             int startY = row * tileSize;
     
             var src = uniqueTiles[i];
-            float scale = uniqueScales[i];
     
             for (int y = 0; y < tileSize; y++)
             {
@@ -107,10 +93,10 @@ public static class AtlasGenerator
     
                     var c = src[y * tileSize + x];
     
-                    // Convert to float, apply emissive scale to RGB, preserve alpha
-                    float r = (c.R / 255f) * scale;
-                    float g = (c.G / 255f) * scale;
-                    float b = (c.B / 255f) * scale;
+                    // Store raw texture color (no emission scaling)
+                    float r = (c.R / 255f);
+                    float g = (c.G / 255f);
+                    float b = (c.B / 255f);
                     float a = (c.A / 255f);
     
                     atlasData[destY * atlasWidth + destX] = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(r, g, b, a);
@@ -125,11 +111,9 @@ public static class AtlasGenerator
             uniqueRects.Add(new RectangleF(u, v, uSize, vSize));
         }
     
-        // Create HDR Texture2D atlas
         var atlasTex = new Texture2D(graphicsDevice, atlasWidth, atlasHeight, false, SurfaceFormat.HalfVector4);
         atlasTex.SetData(atlasData);
     
-        // Map (BlockType, faceIdx) -> rect
         var blockUVs = new Dictionary<(BlockType, int), RectangleF>(textures.Count);
     
         foreach (var kv in keyToIndex)
