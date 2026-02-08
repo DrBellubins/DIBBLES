@@ -1,6 +1,8 @@
+using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
+using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
 
@@ -12,8 +14,14 @@ public class PostProcessingManager
     
     public void Initialize(int width, int height)
     {
-        foreach (var effect in PostProcessingEffect.All)
-            effect.Start(width, height);
+        for (int i = 0; i < PostProcessingEffect.All.Count; i++)
+        {
+            var effect = PostProcessingEffect.All[i];
+            var inputRT = i == 0 ?GameScene.BackBuffer :
+                PostProcessingEffect.All[GMath.Clamp(i - 1, 0, PostProcessingEffect.All.Count)].OutputBuffer;
+            
+            effect.Start(inputRT);
+        }
     }
 
     // Pass the G-buffer textures to each effect and allow them to render to their backbuffer

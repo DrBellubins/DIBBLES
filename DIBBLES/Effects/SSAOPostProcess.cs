@@ -46,16 +46,16 @@ public class SSAOPostProcess : PostProcessingEffect
     public RenderTarget2D? SSAOTarget;
     public RenderTarget2D? SSAOBlurTarget;
 
-    public override void Start(int width, int height)
+    public override void Start(RenderTarget2D input)
     {
-        base.Start(width, height);
+        base.Start(input);
 
         effect = Engine.Instance.Content.Load<Effect>("Shaders/SSAOPostProcess");
         blueNoiseTex = Engine.Instance.Content.Load<Texture2D>("Textures/BlueNoise");
 
         // Allocate intermediate AO buffers
-        SSAOTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
-        SSAOBlurTarget = new RenderTarget2D(Graphics, width, height, false, SurfaceFormat.Color, DepthFormat.None);
+        SSAOTarget = new RenderTarget2D(Graphics, input.Width, input.Height, false, SurfaceFormat.Color, DepthFormat.None);
+        SSAOBlurTarget = new RenderTarget2D(Graphics, input.Width, input.Height, false, SurfaceFormat.Color, DepthFormat.None);
         
         var verts = new VertexPositionTexture[]
         {

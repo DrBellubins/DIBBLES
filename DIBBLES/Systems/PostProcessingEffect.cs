@@ -32,12 +32,12 @@ public abstract class PostProcessingEffect
         _colorBuffer = color;
     }
 
-    public virtual void Start(int width, int height)
+    public virtual void Start(RenderTarget2D input)
     {
         effectBuffer = new RenderTarget2D(
             Graphics,
-            width,
-            height,
+            input.Width,
+            input.Height,
             false,
             SurfaceFormat.HdrBlendable,
             DepthFormat.None,

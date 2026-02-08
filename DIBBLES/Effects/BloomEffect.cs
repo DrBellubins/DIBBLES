@@ -21,14 +21,14 @@ public class BloomEffect : PostProcessingEffect
     private VertexBuffer quadVertexBuffer;
     private IndexBuffer quadIndexBuffer;
     
-    public override void Start(int width, int height)
+    public override void Start(RenderTarget2D input)
     {
         // Allocate OutputBuffer (effectBuffer) in base
-        base.Start(width, height);
+        base.Start(input);
         
         bloomEffect = Engine.Instance.Content.Load<Effect>("Shaders/Bloom");
         ensureFullscreenQuad();
-        buildChain(width, height);
+        buildChain(input.Width, input.Height);
     }
 
     // Main draw
