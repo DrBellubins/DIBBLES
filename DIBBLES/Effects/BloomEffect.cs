@@ -54,7 +54,7 @@ public class BloomEffect : PostProcessingEffect
             RenderTargetUsage.PreserveContents
         );
         
-        DebugMenu.CreateButton("Bloom Effect");
+        DebugMenu.CreateButton();
     }
 
     // Main draw

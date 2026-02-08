@@ -83,13 +83,13 @@ public class DebugMenu
     }
     
     // Register a button and auto-categorize by the calling class (no generics, no explicit type parameter)
-    public static void CreateButton(string buttonName)
+    public static void CreateButton()
     {
         var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
 
         if (!buttonsByOwner.TryGetValue(callerType, out var button))
         {
-            button = new Button(buttonName, new RectangleF());
+            button = new Button(callerType.Name, new RectangleF());
             buttonsByOwner[callerType] = button;
         }
     }
