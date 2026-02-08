@@ -186,7 +186,9 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.Clear(Color.Transparent);
         
         EffectParams.SetTexture(effect, "AOTex", SSAOTarget);
-        EffectParams.SetTexture(effect, "ColorTex", GameScene.BackBuffer);
+        
+        // IMPORTANT: Sample color from the chained input (previous effect output or BackBuffer if first)
+        EffectParams.SetTexture(effect, "ColorTex", ColorBuffer);
         
         effect.CurrentTechnique = effect.Techniques["Composite"];
     

@@ -17,7 +17,7 @@ public class PostProcessingManager
         for (int i = 0; i < PostProcessingEffect.All.Count; i++)
         {
             var effect = PostProcessingEffect.All[i];
-            var inputRT = i == 0 ?GameScene.BackBuffer :
+            var inputRT = i == 0 ? GameScene.BackBuffer :
                 PostProcessingEffect.All[GMath.Clamp(i - 1, 0, PostProcessingEffect.All.Count)].OutputBuffer;
             
             effect.Start(inputRT);
@@ -27,6 +27,8 @@ public class PostProcessingManager
     // Pass the G-buffer textures to each effect and allow them to render to their backbuffer
     public void ApplyAll(RenderTarget2D color)
     {
+        Texture2D inputTexture = color;
+        
         foreach (var effect in PostProcessingEffect.All)
         {
             effect.SetBuffers(color);
@@ -34,31 +36,29 @@ public class PostProcessingManager
             
             // Derived effects perform their draw here (override DrawStart/DrawEnd or render between)
             effect.DrawEnd();
+            
+            // Next stage reads from the output of the previous stage
+            inputTexture = effect.OutputBuffer;
         }
     }
 
     // Composite all effects' outputs over the scene (caller should enclose in a UIBatch)
     public void Draw()
     {
-        // Force opaque compositing for post buffers so alpha=0 won’t hide them.
+        // Composite only the final output in the chain
         UIBatch.SetBlendState(BlendState.Opaque);
-        
-        foreach (var effect in PostProcessingEffect.All)
-        {
-            var output = effect.OutputBuffer;
 
-            if (output != null)
-            {
-                UIBatch.Draw(
-                    output,
-                    Vector2.Zero,
-                    new Vector2(Engine.ScreenWidth, Engine.ScreenHeight),
-                    Color.White
-                );
-            }
-        }
-        
-        // Restore default for subsequent UI draws
+        Texture2D finalOutput = (PostProcessingEffect.All.Count > 0)
+            ? PostProcessingEffect.All[PostProcessingEffect.All.Count - 1].OutputBuffer
+            : GameScene.BackBuffer;
+
+        UIBatch.Draw(
+            finalOutput,
+            Vector2.Zero,
+            new Vector2(Engine.ScreenWidth, Engine.ScreenHeight),
+            Color.White
+        );
+
         UIBatch.SetBlendState(BlendState.AlphaBlend);
     }
 }
