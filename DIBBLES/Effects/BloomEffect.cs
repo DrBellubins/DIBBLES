@@ -11,14 +11,14 @@ public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 8;
     
-    public const float PreBrightness = 15f; // Color gets multiplied by this number after threshold stage
+    public const float PreBrightness = 1f; // Color gets multiplied by this number after threshold stage
     
-    public const float Intensity = 0.9f; // Overall intensity
-    public const float Strength = 1.0f;  // Per sample intensity
-    public const float Radius = 2.0f;
+    public float Intensity = 0.9f; // Overall intensity
+    public float Strength = 1.0f;  // Per sample intensity
+    public float Radius = 2.0f;
     
-    public const float Threshold = 2.0f;
-    public const float ThresholdSoftKnee = 0.9f; // Lower = softer
+    public float Threshold = 2.0f;
+    public float ThresholdSoftKnee = 0.9f; // Lower = softer
     
     public const float LayerDecay = 1.0f; // Decay factor for per layer accumulation
     
@@ -55,6 +55,17 @@ public class BloomEffect : PostProcessingEffect
         );
         
         DebugMenu.CreateButton();
+        
+        DebugMenu.RegisterParams
+        (
+            new SliderParam("Intensity", 0.0f, 10.0f, () => Intensity, v => Intensity = v),
+            new SliderParam("Strength", 0.0f, 10.0f, () => Strength, v => Strength = v),
+            new SliderParam("Radius", 0.0f, 10.0f, () => Radius, v => Radius = v),
+            new SliderParam("Threshold", 0.0f, 5.0f, () => Threshold, v => Threshold = v),
+            new SliderParam("ThresholdSoftKnee", 0.0f, 1.0f, () => ThresholdSoftKnee, v => ThresholdSoftKnee = v)
+            //new CheckBoxParam("Test 2", () => test2, v => test2 = v),
+            //new TextureDisplayParam("BackBuffer", GameScene.BackBuffer, DebugMenu.GetBindTextureFunc(), 256f)
+        );
     }
 
     // Main draw
