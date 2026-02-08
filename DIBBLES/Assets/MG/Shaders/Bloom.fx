@@ -89,7 +89,7 @@ VertOut FullscreenVS(VertIn i)
 
 float4 Box4(float4 a, float4 b, float4 c, float4 d)
 {
-    return (a + b + c + d) * 0.25f;
+    return (a + b + c + d) * 0.25;
 }
 
 float Max3(float a, float b, float c)
@@ -139,19 +139,19 @@ float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float4 c12 = tex2D(SourceSampler, uv + float2( 2,  2) * o);
 
     float4 r =
-    Box4(c0, c1, c5, c6)   * 0.125f +
-    Box4(c1, c2, c6, c7)   * 0.125f +
-    Box4(c5, c6, c10, c11) * 0.125f +
-    Box4(c6, c7, c11, c12) * 0.125f +
-    Box4(c3, c4, c8, c9)   * 0.5f;
+    Box4(c0, c1, c5, c6)   * 0.125 +
+    Box4(c1, c2, c6, c7)   * 0.125 +
+    Box4(c5, c6, c10, c11) * 0.125 +
+    Box4(c6, c7, c11, c12) * 0.125 +
+    Box4(c3, c4, c8, c9)   * 0.5;
 
     // Force visible alpha so debug draw with AlphaBlend shows content
-    return float4(r.rgb, 1.0f);
+    return float4(r.rgb, 1.0);
 }
 
 float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
-    float2 o = TexelSize * max(Radius, 0.0001f);
+    float2 o = TexelSize * max(Radius, 0.0001);
 
     float2 u0 = uv + float2(-1, -1) * o;
     float2 u1 = uv + float2( 0, -1) * o;
@@ -173,11 +173,11 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float4 c7 = tex2D(SourceSampler, u7);
     float4 c8 = tex2D(SourceSampler, u8);
 
-    float4 tent = 0.0625f * (c0 + 2*c1 + c2 + 2*c3 + 4*c4 + 2*c5 + c6 + 2*c7 + c8);
+    float4 tent = 0.0625 * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8);
     float3 rgb = tent.rgb * Strength;
 
     // Force visible alpha
-    return float4(rgb, 1.0f);
+    return float4(rgb, 1.0);
 }
 
 // Accumulation PS: add a weighted contribution per layer.
@@ -191,7 +191,7 @@ float4 AccumulatePS(float2 uv : TEXCOORD0) : COLOR0
     float w = saturate(Strength * pow(saturate(LayerDecay), (float)LayerIndex));
 
     // Return weighted contribution; additive blending composes layers
-    return float4(src.rgb * w, 1.0f);
+    return float4(src.rgb * w, 1.0);
 }
 
 float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0

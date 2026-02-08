@@ -180,6 +180,8 @@
 ./Artwork/Blocks/Feeb.pxo
 ./Artwork/Blocks/Grass.pxo
 ./Artwork/Blocks/CheckerboardBrush.pxo
+./Systems/DebugMenu/SideMenu.cs
+./Systems/DebugMenu/DebugMenu.cs
 ./Systems/RuntimeModel.cs
 ./Systems/CursorManager.cs
 ./Systems/Camera3D.cs

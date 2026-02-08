@@ -5,6 +5,7 @@ using DIBBLES.Systems;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Gameplay.Player;
+using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
@@ -41,6 +42,9 @@ public class GameScene : Scene
     
     private Chat gameChat = new();
     private UIBlur uiBlur = new();
+    
+    // Debug menu
+    private DebugMenu debugMenu = new();
     
     public override void Start()
     {
@@ -101,6 +105,8 @@ public class GameScene : Scene
         // Initialize all post processing effects before PostProcessingManager.Initialize!
         postProcessingManager.Initialize(Engine.ScreenWidth, Engine.ScreenHeight);
         
+        debugMenu.Start();
+        
         Commands.Register("help", "Lists all available commands", Chat.WriteHelp);
         Commands.Register("db", "Toggle debug information", Debug.ToggleDebugCMD);
         Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebugCMD);
@@ -138,6 +144,7 @@ public class GameScene : Scene
         if (!Chat.IsOpen && Input.IsKeyPressed(Keys.L))
             WorldSave.SaveWorldData("test");
         
+        debugMenu.Update();
         Debug.Update(PlayerCharacter.Camera); // Must run after everything
     }
 
@@ -212,6 +219,8 @@ public class GameScene : Scene
         
             Debug.Draw2D();
             Debug.Clear2D();
+            
+            debugMenu.Draw();
         
             UIBatch.End();
         

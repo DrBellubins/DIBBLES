@@ -8,18 +8,18 @@ namespace DIBBLES.Effects;
 // TODO: Try blending all upsample RTs together for more detailed bloom.
 public class BloomEffect : PostProcessingEffect
 {
-    public const int SampleCount = 6;
+    public const int SampleCount = 8;
     
-    public const float PreBrightness = 15.0f; // Color gets multiplied by this number in threshold stage
+    public const float PreBrightness = 15f; // Color gets multiplied by this number after threshold stage
     
-    public const float Intensity = 0.5f; // Overall intensity
+    public const float Intensity = 0.9f; // Overall intensity
     public const float Strength = 1.0f;  // Per sample intensity
     public const float Radius = 2.0f;
     
-    public const float Threshold = 0.6f;
-    public const float ThresholdSoftKnee = 0.05f; // Lower = softer
+    public const float Threshold = 2.0f;
+    public const float ThresholdSoftKnee = 0.9f; // Lower = softer
     
-    public const float LayerDecay = 1.0f; // Decay factor per layer for accumulation
+    public const float LayerDecay = 1.0f; // Decay factor for per layer accumulation
     
     public RenderTarget2D BloomOutput;
 
@@ -116,9 +116,9 @@ public class BloomEffect : PostProcessingEffect
         // Switch to additive blending for accumulation
         Graphics.BlendState = BlendState.Additive;
 
-        for (int i = 0; i < UpsampleRTs.Count; i++)
+        for (int i = 0; i < DownsampleRTs.Count; i++)
         {
-            var src = UpsampleRTs[i];
+            var src = DownsampleRTs[i];
 
             // Bind source texture and per-layer weighting parameters
             EffectParams.SetTexture(bloomEffect, "SourceTex", src);
