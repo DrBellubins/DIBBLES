@@ -6,10 +6,6 @@ namespace DIBBLES.Effects;
 
 public class TonemappingEffect : PostProcessingEffect
 {
-    public const float ExposureEV  = 0.5f;  // stops
-    public const int AgxLook = 0;           // 0=Low, 1=Medium, 2=High, 3=VeryHigh
-    public const float Saturation = 1.0f;
-    
     private Effect tonemapEffect;
     
     private VertexBuffer quadVertexBuffer;
@@ -42,31 +38,29 @@ public class TonemappingEffect : PostProcessingEffect
     {
         if (tonemapEffect == null || quadVertexBuffer == null || quadIndexBuffer == null)
             return;
-    
+
         var graphics = Engine.Graphics;
-    
+
         // States for a clean fullscreen draw
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.None;
         graphics.RasterizerState = RasterizerState.CullNone;
         graphics.SamplerStates[0] = SamplerState.LinearClamp;
-    
+
         // Bind geometry
         graphics.SetVertexBuffer(quadVertexBuffer);
         graphics.Indices = quadIndexBuffer;
-    
+
         // Output target (display-referred)
         graphics.SetRenderTarget(OutputBuffer);
         graphics.Clear(Color.Transparent);
-    
-        // Set effect params
+
+        // Set effect params (only the source texture is needed)
         EffectParams.SetTexture(tonemapEffect, "SourceTex", ColorBuffer);
-        EffectParams.SetFloat(tonemapEffect, "ExposureEV", ExposureEV);
-        EffectParams.SetInt(tonemapEffect, "AgxLook", AgxLook);
-        EffectParams.SetFloat(tonemapEffect, "Saturation", Saturation);
-    
-        tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["TonemapAgX"];
-    
+
+        // Use the ACES technique implemented in Tonemap.fx
+        tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["TonemapACES"];
+
         foreach (var pass in tonemapEffect.CurrentTechnique.Passes)
         {
             pass.Apply();

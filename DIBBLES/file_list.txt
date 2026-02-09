@@ -138,6 +138,7 @@
 ./Assets/MG/Shaders/Tonemap.fx
 ./Assets/MG/Shaders/UIBlur.fx
 ./Assets/MG/Shaders/Terrain.fx
+./Assets/MG/Shaders/Tonemap_.fx
 ./Assets/MG/Shaders/MainSurfaceEffect.fx
 ./Assets/MG/Textures/BlueNoise.png
 ./Assets/MG/.mgstats
