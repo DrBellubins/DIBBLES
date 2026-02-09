@@ -51,9 +51,9 @@ public class Interactions
             //CursorManager.ReleaseCursor();
             InventorySystem.StateMachine.CloseAll();
             Frozen = true;
+            
+            wasClosedAndFrozen = true;
         }
-        
-        wasClosedAndFrozen = true;
     }
 
     public static void Unfreeze()
