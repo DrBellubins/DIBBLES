@@ -130,6 +130,47 @@ public class BlockData
         TextureAtlas = result.AtlasTexture;
         AtlasUVs = result.BlockUVs;
         
+        // Generate emissive atlas
+        EmissiveTextures.Clear();
+
+        foreach (BlockType blockType in atlasBlockTypes)
+        {
+            var info = Prefabs[blockType];
+            var emisFaceNames = getEmissiveFaceTextureNamesForBlock(blockType);
+
+            for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+            {
+                Texture2D tex;
+
+                if (emisFaceNames != null)
+                {
+                    tex = Resource.Load<Texture2D>(emisFaceNames[faceIdx]);
+                }
+                else if (info.LightEmission > 0)
+                {
+                    // Fallback: use base face texture when emissive not defined but block emits light
+                    tex = Textures[(blockType, faceIdx)];
+                }
+                else
+                {
+                    // Non-emissive: use transparent 16x16
+                    tex = getTransparent16x16();
+                }
+
+                EmissiveTextures[(blockType, faceIdx)] = tex;
+            }
+        }
+
+        // Generate emissive atlas using THE SAME UV layout and dimensions as the base atlas
+        EmissiveTextureAtlas = AtlasGenerator.GenerateAtlasFromLayout(
+            Engine.Graphics,
+            TextureAtlas.Width,
+            TextureAtlas.Height,
+            AtlasUVs,
+            EmissiveTextures,
+            16 // tile size
+        );
+        
         // DEBUG: Save generated atlas to file
         using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
             TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
@@ -241,7 +282,7 @@ public class BlockData
 
         using var reader = new StreamReader(tomlPath);
         
-        var toml = Tommy.TOML.Parse(reader);
+        var toml = TOML.Parse(reader);
 
         if (!toml.HasKey(blockType.ToString()))
             return null;
@@ -286,7 +327,7 @@ public class BlockData
             throw new FileNotFoundException($"TOML file '{tomlPath}' not found.");
 
         using var reader = new StreamReader(tomlPath);
-        var toml = Tommy.TOML.Parse(reader);
+        var toml = TOML.Parse(reader);
 
         if (!toml.HasKey(blockType.ToString()))
             return null;
