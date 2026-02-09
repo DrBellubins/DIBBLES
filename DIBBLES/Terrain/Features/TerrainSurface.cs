@@ -22,49 +22,76 @@ public class TerrainSurface
         var snowlandsBiome = new SnowlandsBiome();
         
         var biomeNoise = new FastNoiseLite(Seed);
-        biomeNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        biomeNoise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
+        biomeNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
+        biomeNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
+        biomeNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
+        biomeNoise.SetDomainWarpAmp(130f);
+    
+        // Drive average biome size; we’ll scale inputs per sample in TerrainSurface
+        biomeNoise.SetFrequency(2f);
         
         for (int x = 0; x < ChunkSize; x++)
         {
             for (int z = 0; z < ChunkSize; z++)
             {
-                var blockReturnData = new BlockReturnData();
-                blockReturnData.RNG = rng;
-                blockReturnData.Noise = biomeNoise;
-                
+                var bRet = new BlockReturnData();
+                bRet.RNG = rng;
+                bRet.Noise = biomeNoise;
+        
+                bool biomeSelected = false;
+                TerrainBiome selectedBiome = TerrainBiome.Plains;
+        
                 for (int y = ChunkSize - 1; y >= 0; y--)
                 {
-                    var worldX = chunk.Position.X + x;
-                    var worldY = chunk.Position.Y + y;
-                    var worldZ = chunk.Position.Z + z;
-    
-                    blockReturnData.LocalPos = new Vector3Int(x, y, z);
-    
-                    var currentType = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY, worldZ));
-                    if (currentType.Item1 != BlockType.Stone)
+                    int worldX = chunk.Position.X + x;
+                    int worldY = chunk.Position.Y + y;
+                    int worldZ = chunk.Position.Z + z;
+        
+                    bRet.LocalPos = new Vector3Int(x, y, z);
+        
+                    var current = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY, worldZ));
+                    if (current.Item1 != BlockType.Stone)
                         continue;
-    
-                    // 3D biome selection at the block’s world XYZ
-                    var selectedBiome = ComputeBiomeAt(new Vector3Int(worldX, worldY, worldZ), biomeNoise);
-    
+        
+                    // Select biome only when this voxel is the surface (Air above)
+                    if (!biomeSelected)
+                    {
+                        var above = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY + 1, worldZ));
+                        if (above.Item1 == BlockType.Air && above.Item2)
+                        {
+                            selectedBiome = ComputeBiomeAtCell3D(new Vector3Int(worldX, worldY, worldZ), biomeNoise);
+                            biomeSelected = true;
+                        }
+                        else
+                        {
+                            continue; // Not surface yet; skip until we find it
+                        }
+                    }
+        
+                    // Route to the chosen biome generator for surface + lower 2–3 layers
                     switch (selectedBiome)
                     {
                         case TerrainBiome.Plains:
                         {
-                            plainsBiome.Generate(chunk, ref blockReturnData);
+                            plainsBiome.Generate(chunk, ref bRet);
                             break;
                         }
                         case TerrainBiome.Desert:
                         {
-                            desertBiome.Generate(chunk, ref blockReturnData);
+                            desertBiome.Generate(chunk, ref bRet);
                             break;
                         }
                         case TerrainBiome.Snowlands:
                         {
-                            snowlandsBiome.Generate(chunk, ref blockReturnData);
+                            snowlandsBiome.Generate(chunk, ref bRet);
                             break;
                         }
                     }
+        
+                    // Stop once the biome’s lower layer thickness is placed (<= 3)
+                    if (bRet.FoundSurface && bRet.IslandDepth >= 3)
+                        break;
                 }
             }
         }
@@ -77,6 +104,21 @@ public class TerrainSurface
         TerrainBiome.Snowlands
     };
 
+    public TerrainBiome ComputeBiomeAtCell3D(Vector3Int worldPos, FastNoiseLite biomeNoise)
+    {
+        // Scale inputs so Cellular frequency maps to ~BiomeCellSize voxels
+        float s = 1f / (float)BiomeCellSize;
+
+        // CellValue is constant inside each cellular region and changes only at organic cell borders.
+        float v = biomeNoise.GetNoise(worldPos.X * s, worldPos.Y * s, worldPos.Z * s); // [-1,1]
+
+        // Map to [0..N) evenly
+        int pick = (int)((v * 0.5f + 0.5f) * BiomeCycle.Length);
+        pick = Math.Clamp(pick, 0, BiomeCycle.Length - 1);
+
+        return BiomeCycle[pick];
+    }
+    
     // 3D Voronoi with domain warp to curve borders
     public TerrainBiome ComputeBiomeAt(Vector3Int worldPos, FastNoiseLite biomeNoise)
     {
