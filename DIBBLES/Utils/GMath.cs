@@ -176,4 +176,33 @@ public static class GMath
             return (int)h;
         }
     }
+    
+    public static int Hash3i(int x, int y, int z, int seed)
+    {
+        unchecked
+        {
+            uint h = (uint)seed;
+
+            // Mix X
+            h ^= (uint)x * 0x9E3779B1u;
+            h = (h << 13) | (h >> 19);
+
+            // Mix Y
+            h ^= (uint)y * 0x85EBCA77u;
+            h = (h << 15) | (h >> 17);
+
+            // Mix Z
+            h ^= (uint)z * 0xC2B2AE3Du;
+            h = (h << 16) | (h >> 16);
+
+            // Final avalanche
+            h ^= h >> 16;
+            h *= 0x9E3779B9u;
+            h ^= h >> 13;
+            h *= 0x85EBCA6Bu;
+            h ^= h >> 16;
+
+            return (int)h;
+        }
+    }
 }
