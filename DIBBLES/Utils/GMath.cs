@@ -163,4 +163,17 @@ public static class GMath
         else
             axis = Vector3.UnitY; // fallback axis
     }
+    
+    public static int Hash2i(int x, int z, int seed)
+    {
+        unchecked
+        {
+            int h = seed;
+            h ^= x * 0x27D4EB2D;
+            h = (h << 13) | (h >> 19);
+            h ^= z * 0x165667B1;
+            h *= 0x9E3779B9;
+            return h;
+        }
+    }
 }

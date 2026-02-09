@@ -145,6 +145,7 @@
 ./Assets/MG/Textures/BlueNoise.png
 ./Assets/MG/.mgstats
 ./Assets/MG/MG.mgcb
+./Assets/Textures/Blocks/Leaves_e2.png
 ./Assets/Textures/Blocks/Error.png
 ./Assets/Textures/Blocks/Feeb_e.png
 ./Assets/Textures/Blocks/Glass.png

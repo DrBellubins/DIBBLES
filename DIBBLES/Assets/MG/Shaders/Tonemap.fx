@@ -48,7 +48,7 @@ float4 TonemapPS(float2 uv : TEXCOORD0) : COLOR0
         src.rgb = TonemapACES(src.rgb);
         src.rgb = saturate(src.rgb * PostBrightness);
     }
-    else // AgX asf
+    else // AgX
     {
         src.rgb = TonemapAgX(src.rgb);
         src.rgb = saturate(src.rgb * PostBrightness);

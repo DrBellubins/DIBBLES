@@ -10,14 +10,14 @@ public class TonemappingEffect : PostProcessingEffect
     public bool Enabled = true;
     
     // ACES defaults
-    private float preBrightnessACES = 1.0f;
-    private float postBrightnessACES = 1.4f;
+    private float preBrightnessACES = 1.15f;
+    private float postBrightnessACES = 1.25f;
     
     // AgX defaults
     private float preBrightnessAgX = 1.0f;
     private float postBrightnessAgX = 1.2f;
     
-    private int algorithmSelectionIndex = 1; // 0 = ACES, 1 = AgX
+    private int algorithmSelectionIndex = 0; // 0 = ACES, 1 = AgX
     
     private float saturation = 1.0f;
     

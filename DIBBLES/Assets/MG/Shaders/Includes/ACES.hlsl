@@ -30,8 +30,5 @@ float3 TonemapACES(float3 color)
 
     color = mul(ACESOutputMat, color);
 
-    // Clamp to [0, 1]
-    color = saturate(color);
-
     return color;
 }

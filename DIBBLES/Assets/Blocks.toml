@@ -113,7 +113,7 @@ LightEmission = 15
 AntiTileUVsHorizontally = false
 AntiTileUVsVertically = false
 EmissiveTexture = "Feeb_e.png"
-Brightness = 0.4
+Brightness = 0.7
 
 [GrassBlades]
 Hardness = 1
