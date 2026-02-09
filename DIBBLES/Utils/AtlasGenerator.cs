@@ -128,6 +128,78 @@ public static class AtlasGenerator
         };
     }
     
+    public static Texture2D GenerateAtlasFromLayout(
+        GraphicsDevice graphicsDevice,
+        int atlasWidth,
+        int atlasHeight,
+        Dictionary<(BlockType, int), RectangleF> baseUVs,
+        Dictionary<(BlockType, int), Texture2D> sourceTextures,
+        int tileSize = 16)
+    {
+        // Allocate HDR atlas for emissives (so overlays can exceed 1.0 if desired)
+        var atlasData = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4[atlasWidth * atlasHeight];
+    
+        for (int i = 0; i < atlasData.Length; i++)
+        {
+            atlasData[i] = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(0f, 0f, 0f, 0f);
+        }
+    
+        // Deduplicate writes by rect to avoid multiple blocks sharing the same base tile from overwriting.
+        // Use exact pixel origin as the key.
+        var written = new HashSet<(int x, int y)>();
+    
+        foreach (var kv in baseUVs)
+        {
+            var key = kv.Key;
+            var rect = kv.Value;
+    
+            int startX = (int)Math.Round(rect.X * atlasWidth);
+            int startY = (int)Math.Round(rect.Y * atlasHeight);
+            int w = (int)Math.Round(rect.Width * atlasWidth);
+            int h = (int)Math.Round(rect.Height * atlasHeight);
+    
+            // Sanity clamp to tileSize if rounding pushed us a pixel off
+            w = Math.Max(1, w);
+            h = Math.Max(1, h);
+    
+            // Only write first occurrence for a given rect origin to keep layout deterministic
+            if (!written.Add((startX, startY)))
+                continue;
+    
+            // Resample/nearest to tileSize
+            var tex = sourceTextures.TryGetValue(key, out var srcTex) ? srcTex : null;
+    
+            if (tex == null)
+                continue;
+    
+            var tilePixels = getTilePixels(tex, tileSize);
+    
+            for (int y = 0; y < h && y < tileSize; y++)
+            {
+                int destY = startY + y;
+    
+                for (int x = 0; x < w && x < tileSize; x++)
+                {
+                    int destX = startX + x;
+                    var c = tilePixels[y * tileSize + x];
+    
+                    float r = (c.R / 255f);
+                    float g = (c.G / 255f);
+                    float b = (c.B / 255f);
+                    float a = (c.A / 255f);
+    
+                    atlasData[destY * atlasWidth + destX] =
+                        new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4(r, g, b, a);
+                }
+            }
+        }
+    
+        var atlasTex = new Texture2D(graphicsDevice, atlasWidth, atlasHeight, false, SurfaceFormat.HalfVector4);
+        atlasTex.SetData(atlasData);
+    
+        return atlasTex;
+    }
+    
     private static Color[] getTilePixels(Texture2D tex, int tileSize)
     {
         // Nearest-neighbor resample to tileSize if needed; otherwise return exact pixels.

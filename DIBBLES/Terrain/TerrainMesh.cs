@@ -20,6 +20,8 @@ public class TerrainMesh
     public const bool GreedyRespectAntiTileFlips = false;
     public const bool NonGreedyRespectAntiTileFlips = false;
     
+    public const float EmissiveStrength = 1.0f;
+    
     public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 
     public Dictionary<Vector3Int, RuntimeModel> OpaqueModels = new();
@@ -80,6 +82,8 @@ public class TerrainMesh
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
                 
                 EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+                EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
+                
                 EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
                 
                 EffectParams.SetMatrix(shader, "World", world);
@@ -90,6 +94,7 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
                 EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
                 
+                EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
                 EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
@@ -141,6 +146,8 @@ public class TerrainMesh
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
                 
                 EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+                EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
+                
                 EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
                 
                 EffectParams.SetMatrix(shader, "World", world);
@@ -151,6 +158,7 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
                 EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
                 
+                EffectParams.SetFloat(shader, "EmissiveStrength",EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
                 EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());

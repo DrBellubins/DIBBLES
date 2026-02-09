@@ -1,4 +1,6 @@
 texture AtlasTex;
+texture EmissiveAtlasTex;
+
 int UseGreedyMeshing; // Toggle (0 or 1). Set from TerrainMesh.UseGreedyMeshing
 
 float4x4 World;
@@ -9,6 +11,7 @@ float3 CameraPos;
 float CameraNear;
 float CameraFar;
 
+float EmissiveStrength;
 float FogNear;
 float FogFar;
 float4 FogColor;
@@ -19,6 +22,11 @@ static const float AlphaCutoff = 0.35f;
 sampler2D AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
+};
+
+sampler2D EmissiveAtlasSampler = sampler_state
+{
+    Texture = <EmissiveAtlasTex>;
 };
 
 struct VertexInput
@@ -102,7 +110,10 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
+    float4 emissiveColor = tex2D(EmissiveAtlasSampler, atlasUV);
+
     float4 blockColor = texColor * input.Color;
+    float3 emissiveRGB = emissiveColor.rgb * emissiveColor.a * EmissiveStrength;
 
     // Hard alpha cutout to prevent transparent texels from writing depth
     // Discards pixels with alpha below threshold so they don't occlude behind billboards.
@@ -125,6 +136,8 @@ PixelOutput PS_Color(PixelInput input)
     float3 normal01 = normal * 0.5f + 0.5f;
 
     PixelOutput output;
+
+    finalColor.rgb += emissiveColor;
 
     output.Color0 = finalColor;
     output.Color1 = float4(depth01, depth01, depth01, 1.0f); // SSAO samples .r

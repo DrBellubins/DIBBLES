@@ -40,10 +40,12 @@ public class BlockData
 {
     public static readonly Dictionary<BlockType, BlockInfo> Prefabs = new();
     public static readonly Dictionary<(BlockType, int), Texture2D> Textures = new();
+    public static readonly Dictionary<(BlockType, int), Texture2D> EmissiveTextures = new();
     public static readonly Dictionary<BlockType, BlockSounds> Sounds = new();
     
     // Store the atlas
     public static Texture2D TextureAtlas = new(Engine.Graphics, 1, 1);
+    public static Texture2D EmissiveTextureAtlas = new Texture2D(Engine.Graphics, 1, 1);
     
     // Store UV mappings
     public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new();
@@ -273,6 +275,57 @@ public class BlockData
         return null;
     }
     
+    private static string[]? getEmissiveFaceTextureNamesForBlock(BlockType blockType)
+    {
+        string tomlPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Blocks.toml");
+
+        if (!File.Exists(tomlPath))
+            throw new FileNotFoundException($"TOML file '{tomlPath}' not found.");
+
+        using var reader = new StreamReader(tomlPath);
+        var toml = Tommy.TOML.Parse(reader);
+
+        if (!toml.HasKey(blockType.ToString()))
+            return null;
+
+        var table = toml[blockType.ToString()].AsTable;
+
+        // Array form: EmissiveFaceTextures = [ ... ]
+        if (table.HasKey("EmissiveFaceTextures"))
+        {
+            var arr = table["EmissiveFaceTextures"].AsArray;
+            var result = new string[6];
+            int i = 0;
+
+            foreach (var item in arr)
+            {
+                if (i >= 6) break;
+
+                string? output = item.ToString();
+
+                if (output != null)
+                    result[i++] = output;
+            }
+
+            for (; i < 6; i++)
+                result[i] = result[0];
+
+            return result;
+        }
+
+        // Single texture for all faces
+        if (table.HasKey("EmissiveTexture"))
+        {
+            var t = table["EmissiveTexture"].ToString();
+            if (!string.IsNullOrWhiteSpace(t))
+            {
+                return new[] { t, t, t, t, t, t };
+            }
+        }
+
+        return null;
+    }
+    
     private static SoundEffect loadBlockSounds(BlockType blockType, int index)
     {
         var i = index + 1; // Sounds start at 1
@@ -318,6 +371,23 @@ public class BlockData
             
             Prefabs[type] = blockInfo;
         }
+    }
+    
+    private static Texture2D? _transparent16x16;
+    private static Texture2D getTransparent16x16()
+    {
+        if (_transparent16x16 == null)
+        {
+            _transparent16x16 = new Texture2D(Engine.Graphics, 16, 16, false, SurfaceFormat.Color);
+            var px = new Color[16 * 16];
+        
+            for (int i = 0; i < px.Length; i++)
+                px[i] = new Color(0, 0, 0, 0);
+        
+            _transparent16x16.SetData(px);
+        }
+    
+        return _transparent16x16;
     }
 }
 
