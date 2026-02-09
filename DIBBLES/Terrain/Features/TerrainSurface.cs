@@ -22,14 +22,14 @@ public class TerrainSurface
         var snowlandsBiome = new SnowlandsBiome();
         
         var biomeNoise = new FastNoiseLite(Seed);
-        biomeNoise.SetNoiseType(FastNoiseLite.NoiseType.Cellular);
-        biomeNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
-        biomeNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
-        biomeNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
-        biomeNoise.SetDomainWarpAmp(130f);
+        biomeNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        //biomeNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
+        //biomeNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
+        //biomeNoise.SetDomainWarpType(FastNoiseLite.DomainWarpType.OpenSimplex2);
+        //biomeNoise.SetDomainWarpAmp(130f);
     
         // Drive average biome size; we’ll scale inputs per sample in TerrainSurface
-        biomeNoise.SetFrequency(2f);
+        //biomeNoise.SetFrequency(2f);
         
         for (int x = 0; x < ChunkSize; x++)
         {
@@ -104,17 +104,34 @@ public class TerrainSurface
         TerrainBiome.Snowlands
     };
 
-    public TerrainBiome ComputeBiomeAtCell3D(Vector3Int worldPos, FastNoiseLite biomeNoise)
+    public TerrainBiome ComputeBiomeAtCell3D(Vector3Int worldPos, FastNoiseLite warpNoise)
     {
-        // Scale inputs so Cellular frequency maps to ~BiomeCellSize voxels
-        float s = 1f / (float)BiomeCellSize;
+        // Very low‑frequency warp so borders curve organically
+        float warpAmp = BiomeCellSize * 0.35f;
+        float warpFreq = 1f / (BiomeCellSize * 12f);
 
-        // CellValue is constant inside each cellular region and changes only at organic cell borders.
-        float v = biomeNoise.GetNoise(worldPos.X * s, worldPos.Y * s, worldPos.Z * s); // [-1,1]
+        float wx = warpNoise.GetNoise(worldPos.X * warpFreq,
+            worldPos.Y * warpFreq,
+            worldPos.Z * warpFreq) * warpAmp;
 
-        // Map to [0..N) evenly
-        int pick = (int)((v * 0.5f + 0.5f) * BiomeCycle.Length);
-        pick = Math.Clamp(pick, 0, BiomeCycle.Length - 1);
+        float wy = warpNoise.GetNoise((worldPos.X + 101) * warpFreq,
+            (worldPos.Y - 311) * warpFreq,
+            (worldPos.Z + 29) * warpFreq) * warpAmp;
+
+        float wz = warpNoise.GetNoise((worldPos.X - 73) * warpFreq,
+            (worldPos.Y + 421) * warpFreq,
+            (worldPos.Z - 199) * warpFreq) * warpAmp;
+
+        float qx = worldPos.X + wx;
+        float qy = worldPos.Y + wy;
+        float qz = worldPos.Z + wz;
+
+        int cellX = (int)MathF.Floor(qx / (float)BiomeCellSize);
+        int cellY = (int)MathF.Floor(qy / (float)BiomeCellSize);
+        int cellZ = (int)MathF.Floor(qz / (float)BiomeCellSize);
+
+        int h = GMath.Hash3i(cellX, cellY, cellZ, Seed);
+        int pick = Math.Abs(h) % BiomeCycle.Length;
 
         return BiomeCycle[pick];
     }
