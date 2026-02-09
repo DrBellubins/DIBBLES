@@ -11,7 +11,7 @@ public class Freecam
     
     public void Update(PlayerCharacter playerCharacter)
     {
-        if (Chat.IsOpen)
+        if (Chat.IsOpen || Interactions.PlayerFrozen)
             return;
         
         // Camera

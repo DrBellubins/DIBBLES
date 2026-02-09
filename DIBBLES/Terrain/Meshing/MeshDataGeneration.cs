@@ -195,7 +195,12 @@ public class MeshDataGeneration
                             VertexOffset = vertexOffset,
                             CenterDistance =  dist,
                             Type = blockType,
-                            FaceIdx = faceIdx
+                            FaceIdx = faceIdx,
+                            
+                            BaseRect = baseRect4,
+                            BaseBasis = baseBasis4,
+                            EmissiveRect = emisRect4,
+                            EmissiveBasis = emisBasis4
                         }));
                     }
                     else
@@ -253,13 +258,34 @@ public class MeshDataGeneration
                 normals.AddRange(Enumerable.Repeat(face.Normal, 4));
                 texcoords.AddRange(face.UVs);
                 colors.AddRange(face.Colors);
-                
+
                 indices.AddRange(new int[]
                 {
                     vertexOffset + 2, vertexOffset + 1, vertexOffset + 0,
                     vertexOffset + 3, vertexOffset + 2, vertexOffset + 0
                 });
-                
+
+                // NEW: append base and emissive UV data for transparent faces
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
+
+                uvBasis.Add(face.BaseBasis);
+                uvBasis.Add(face.BaseBasis);
+                uvBasis.Add(face.BaseBasis);
+                uvBasis.Add(face.BaseBasis);
+
+                emissiveUVRects.Add(face.EmissiveRect);
+                emissiveUVRects.Add(face.EmissiveRect);
+                emissiveUVRects.Add(face.EmissiveRect);
+                emissiveUVRects.Add(face.EmissiveRect);
+
+                emissiveUVBasis.Add(face.EmissiveBasis);
+                emissiveUVBasis.Add(face.EmissiveBasis);
+                emissiveUVBasis.Add(face.EmissiveBasis);
+                emissiveUVBasis.Add(face.EmissiveBasis);
+
                 vertexOffset += 4;
             }
         }

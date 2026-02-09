@@ -13,7 +13,7 @@ public class BloomEffect : PostProcessingEffect
     
     public const float PreBrightness = 1f; // Color gets multiplied by this number after threshold stage
     
-    public float Intensity = 0.2f; // Overall intensity
+    public float Intensity = 1.0f; // Overall intensity
     public float Strength = 1.0f;  // Per sample intensity
     public float Radius = 2.0f;
     

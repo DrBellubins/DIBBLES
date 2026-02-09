@@ -127,7 +127,7 @@ public class TerrainMesh
         graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
         
         // Disable culling so billboards render double-sided
-        graphics.RasterizerState = RasterizerState.CullNone;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         foreach (var tModel in Mesh.TransparentModels)
         {
