@@ -41,9 +41,9 @@ public class TonemappingEffect : PostProcessingEffect
         
         DebugMenu.RegisterParams
         (
+            new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
             new SliderParam("PreBrightness", 0.0f, 10.0f, () => PreBrightness, v => PreBrightness = v),
-            new SliderParam("PostBrightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v),
-            new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v)
+            new SliderParam("PostBrightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v)
         );
     }
 
@@ -55,17 +55,12 @@ public class TonemappingEffect : PostProcessingEffect
 
         if (!Enabled)
         {
-            // Ensure our output is transparent this frame so composite draws nothing.
-            Graphics.SetRenderTarget(OutputBuffer);
-            Graphics.Clear(Color.Transparent);
-        
-            // Restore default RT immediately.
-            Graphics.SetRenderTarget(null);
-        
-            // Also ensure no stray buffers are left bound.
+            // Pass-through: copy input color to output so downstream effects still get the scene
+            Blit(ColorBuffer, OutputBuffer);
+
             Graphics.SetVertexBuffer(null);
             Graphics.Indices = null;
-        
+            Graphics.SetRenderTarget(null);
             return;
         }
         

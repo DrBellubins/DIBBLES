@@ -80,17 +80,12 @@ public class BloomEffect : PostProcessingEffect
         
         if (!Enabled)
         {
-            // Ensure our output is transparent this frame so composite draws nothing.
-            Graphics.SetRenderTarget(OutputBuffer);
-            Graphics.Clear(Color.Transparent);
-        
-            // Restore default RT immediately.
-            Graphics.SetRenderTarget(null);
-        
-            // Also ensure no stray buffers are left bound.
+            // Pass-through: copy input color to output so downstream effects still get the scene
+            Blit(ColorBuffer, OutputBuffer);
+
             Graphics.SetVertexBuffer(null);
             Graphics.Indices = null;
-        
+            Graphics.SetRenderTarget(null);
             return;
         }
     

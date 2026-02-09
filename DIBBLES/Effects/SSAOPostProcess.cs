@@ -3,6 +3,7 @@ using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
+using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
@@ -29,10 +30,10 @@ public struct VertexPositionTexCoord :  IVertexType
 
 public class SSAOPostProcess : PostProcessingEffect
 {
-    public const float Radius = 0.5f;
-    public const float Bias = 0.02f;
-    public const float TotalStrength = 1.3f;
-    public const float BaseAO = 0.05f;
+    public float Radius = 0.5f;
+    public float Bias = 0.02f;
+    public float TotalStrength = 1.3f;
+    public float BaseAO = 0.05f;
     
     public static bool Enabled = true;
     
@@ -72,6 +73,17 @@ public class SSAOPostProcess : PostProcessingEffect
 
         indexBuffer = new IndexBuffer(Graphics, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
         indexBuffer.SetData(indices);
+        
+        DebugMenu.CreateButton();
+        
+        DebugMenu.RegisterParams
+        (
+            new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
+            new SliderParam("Radius", 0.0f, 5.0f, () => Radius, v => Radius = v),
+            new SliderParam("Bias", 0.0f, 0.1f, () => Bias, v => Bias = v),
+            new SliderParam("TotalStrength", 0.0f, 5.0f, () => TotalStrength, v => TotalStrength = v),
+            new SliderParam("BaseAO", 0.0f, 0.1f, () => BaseAO, v => BaseAO = v)
+        );
     }
 
     public override void DrawStart()
@@ -81,17 +93,12 @@ public class SSAOPostProcess : PostProcessingEffect
         
         if (!Enabled)
         {
-            // Ensure our output is transparent this frame so composite draws nothing.
-            Graphics.SetRenderTarget(OutputBuffer);
-            Graphics.Clear(Color.Transparent);
-        
-            // Restore default RT immediately.
-            Graphics.SetRenderTarget(null);
-        
-            // Also ensure no stray buffers are left bound.
+            // Pass-through: copy input color to output so downstream effects still get the scene
+            Blit(ColorBuffer, OutputBuffer);
+
             Graphics.SetVertexBuffer(null);
             Graphics.Indices = null;
-        
+            Graphics.SetRenderTarget(null);
             return;
         }
         
