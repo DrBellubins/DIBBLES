@@ -8,6 +8,11 @@ public class TerrainSurface
     // Average biome region size in blocks (XZ). Tune between 256 and 1024.
     public const int BiomeCellSize = 128;
     
+    // Width of the mixed band near biome borders (in blocks)
+    public const int BiomeTransitionWidth = 6;
+    
+    private FastNoiseLite biomeNoise = new(Seed);
+    
     public void Generate(Chunk chunk)
     {
         long chunkSeed = Seed 
@@ -21,7 +26,6 @@ public class TerrainSurface
         var desertBiome = new DesertBiome();
         var snowlandsBiome = new SnowlandsBiome();
         
-        var biomeNoise = new FastNoiseLite(Seed);
         biomeNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
         //biomeNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
         //biomeNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
@@ -60,7 +64,15 @@ public class TerrainSurface
                         var above = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY + 1, worldZ));
                         if (above.Item1 == BlockType.Air && above.Item2)
                         {
-                            selectedBiome = ComputeBiomeAtCell3D(new Vector3Int(worldX, worldY, worldZ), biomeNoise);
+                            // Compute a blended biome near borders
+                            var blend = ComputeBiomeBlend3D(new Vector3Int(worldX, worldY, worldZ), biomeNoise);
+
+                            // Deterministic dithering so the band doesn’t look like a hard line
+                            float dither = biomeNoise.GetNoise(worldX * 0.07f,
+                                worldY * 0.07f, worldZ * 0.07f) * 0.5f + 0.5f;
+                            
+                            selectedBiome = dither < blend.BlendT ? blend.Primary : blend.Secondary;
+
                             biomeSelected = true;
                         }
                         else
@@ -108,7 +120,7 @@ public class TerrainSurface
     {
         // Very low‑frequency warp so borders curve organically
         float warpAmp = BiomeCellSize * 0.35f;
-        float warpFreq = 1f / (BiomeCellSize * 12f);
+        float warpFreq = (1f / (BiomeCellSize)) * 12f;
 
         float wx = warpNoise.GetNoise(worldPos.X * warpFreq,
             worldPos.Y * warpFreq,
@@ -136,76 +148,80 @@ public class TerrainSurface
         return BiomeCycle[pick];
     }
     
-    // 3D Voronoi with domain warp to curve borders
-    public TerrainBiome ComputeBiomeAt(Vector3Int worldPos, FastNoiseLite biomeNoise)
+    private struct BiomeBlend
     {
-        // Domain warp parameters
-        float warpAmp = BiomeCellSize * 0.35f;            // 0.25–0.50 looks good
-        float warpFreq = 1f / (BiomeCellSize * 12f);      // very low-frequency warp
+        public TerrainBiome Primary;
+        public TerrainBiome Secondary;
+        
+        // 0 at the border (favor Secondary), 1 deep inside Primary
+        public float BlendT;
+    }
+
+    // Domain‑warp, then compute distance to nearest macro‑cell face to form a blend band.
+    // Secondary biome is the neighbor across that face. Borders become curved by the warp,
+    // but not harsh: we dither across BiomeTransitionWidth.
+    private BiomeBlend ComputeBiomeBlend3D(Vector3Int worldPos, FastNoiseLite warpNoise)
+    {
+        float warpAmp  = BiomeCellSize * 0.35f;
+        float warpFreq = 1f / (BiomeCellSize * 12f);
     
-        // Use shared noise; decorrelate vector components with fixed offsets
-        float wx = biomeNoise.GetNoise(worldPos.X * warpFreq,
-                                       worldPos.Y * warpFreq,
-                                       worldPos.Z * warpFreq) * warpAmp;
-    
-        float wy = biomeNoise.GetNoise((worldPos.X + 101) * warpFreq,
-                                       (worldPos.Y - 311) * warpFreq,
-                                       (worldPos.Z + 29) * warpFreq) * warpAmp;
-    
-        float wz = biomeNoise.GetNoise((worldPos.X - 73) * warpFreq,
-                                       (worldPos.Y + 421) * warpFreq,
-                                       (worldPos.Z - 199) * warpFreq) * warpAmp;
+        float wx = warpNoise.GetNoise(worldPos.X * warpFreq, worldPos.Y * warpFreq, worldPos.Z * warpFreq) * warpAmp;
+        float wy = warpNoise.GetNoise((worldPos.X + 101) * warpFreq, (worldPos.Y - 311) * warpFreq, (worldPos.Z + 29) * warpFreq) * warpAmp;
+        float wz = warpNoise.GetNoise((worldPos.X - 73) * warpFreq, (worldPos.Y + 421) * warpFreq, (worldPos.Z - 199) * warpFreq) * warpAmp;
     
         float qx = worldPos.X + wx;
         float qy = worldPos.Y + wy;
         float qz = worldPos.Z + wz;
     
-        int cellX = (int)MathF.Floor(qx / (float)BiomeCellSize);
-        int cellY = (int)MathF.Floor(qy / (float)BiomeCellSize);
-        int cellZ = (int)MathF.Floor(qz / (float)BiomeCellSize);
+        // Primary macro cell
+        int cx = (int)MathF.Floor(qx / (float)BiomeCellSize);
+        int cy = (int)MathF.Floor(qy / (float)BiomeCellSize);
+        int cz = (int)MathF.Floor(qz / (float)BiomeCellSize);
     
-        float bestDist2 = float.MaxValue;
-        TerrainBiome bestBiome = TerrainBiome.Plains;
+        // Local position within the cell [0..CellSize)
+        float lx = qx - cx * (float)BiomeCellSize;
+        float ly = qy - cy * (float)BiomeCellSize;
+        float lz = qz - cz * (float)BiomeCellSize;
     
-        // Search 3x3x3 macro-cell neighborhood
-        for (int dz = -1; dz <= 1; dz++)
+        // Distance to the nearest face along each axis
+        float dxFace = MathF.Min(lx, BiomeCellSize - lx);
+        float dyFace = MathF.Min(ly, BiomeCellSize - ly);
+        float dzFace = MathF.Min(lz, BiomeCellSize - lz);
+    
+        // Nearest axis determines which neighbor cell is the "other" biome across the boundary
+        int nx = cx, ny = cy, nz = cz;
+        float minFace = dxFace;
+        int axis = 0; // 0=X,1=Y,2=Z
+    
+        if (dyFace < minFace) { minFace = dyFace; axis = 1; }
+        if (dzFace < minFace) { minFace = dzFace; axis = 2; }
+    
+        // Direction to the neighbor (which side of the cell center we’re on)
+        if (axis == 0)
+            nx = cx + (lx < BiomeCellSize * 0.5f ? -1 : 1);
+        else if (axis == 1)
+            ny = cy + (ly < BiomeCellSize * 0.5f ? -1 : 1);
+        else
+            nz = cz + (lz < BiomeCellSize * 0.5f ? -1 : 1);
+    
+        // Pick biomes by hashing each macro cell
+        int hPrimary   = GMath.Hash3i(cx, cy, cz, Seed);
+        int hSecondary = GMath.Hash3i(nx, ny, nz, Seed);
+    
+        TerrainBiome primary   = BiomeCycle[Math.Abs(hPrimary)   % BiomeCycle.Length];
+        TerrainBiome secondary = BiomeCycle[Math.Abs(hSecondary) % BiomeCycle.Length];
+    
+        // Blend factor grows from 0 at the border to 1 inside the primary cell
+        float t = GMath.Clamp(minFace / (float)BiomeTransitionWidth, 0f, 1f);
+        
+        // Smooth falloff looks nicer than linear
+        t = GMath.Smoothstep(t);
+    
+        return new BiomeBlend
         {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    int nx = cellX + dx;
-                    int ny = cellY + dy;
-                    int nz = cellZ + dz;
-    
-                    int h = GMath.Hash3i(nx, ny, nz, Seed);
-    
-                    // Jitter centers slightly to avoid axis-aligned planes
-                    float jitterMag = BiomeCellSize * 0.20f;
-    
-                    float jx = biomeNoise.GetNoise(nx * 3.1f, ny * 3.1f, nz * 3.1f) * jitterMag;
-                    float jy = biomeNoise.GetNoise(nx * 3.1f + 57f, ny * 3.1f - 19f, nz * 3.1f + 83f) * jitterMag;
-                    float jz = biomeNoise.GetNoise(nx * 3.1f - 11f, ny * 3.1f + 23f, nz * 3.1f - 47f) * jitterMag;
-    
-                    float cx = nx * BiomeCellSize + BiomeCellSize * 0.5f + jx;
-                    float cy = ny * BiomeCellSize + BiomeCellSize * 0.5f + jy;
-                    float cz = nz * BiomeCellSize + BiomeCellSize * 0.5f + jz;
-    
-                    float dxw = qx - cx;
-                    float dyw = qy - cy;
-                    float dzw = qz - cz;
-                    float d2 = dxw * dxw + dyw * dyw + dzw * dzw;
-    
-                    if (d2 < bestDist2)
-                    {
-                        bestDist2 = d2;
-                        int pick = Math.Abs(h) % BiomeCycle.Length;
-                        bestBiome = BiomeCycle[pick];
-                    }
-                }
-            }
-        }
-    
-        return bestBiome;
+            Primary = primary,
+            Secondary = secondary,
+            BlendT = t
+        };
     }
 }
