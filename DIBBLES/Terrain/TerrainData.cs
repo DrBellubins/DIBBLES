@@ -131,8 +131,11 @@ public class BlockData
         AtlasUVs = result.BlockUVs;
         
         // DEBUG: Save generated atlas to file
-        //using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
-        //    TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
+        using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
+            TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
+        
+        using (var s = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
+            EmissiveTextureAtlas.SaveAsPng(s, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);
         
         FaceUVsOrdered.Clear();
         

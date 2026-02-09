@@ -137,7 +137,7 @@ PixelOutput PS_Color(PixelInput input)
 
     PixelOutput output;
 
-    finalColor.rgb += emissiveColor;
+    finalColor.rgb += emissiveRGB;
 
     output.Color0 = finalColor;
     output.Color1 = float4(depth01, depth01, depth01, 1.0f); // SSAO samples .r
