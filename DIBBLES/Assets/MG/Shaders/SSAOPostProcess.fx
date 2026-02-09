@@ -23,8 +23,6 @@
 //   BlurH  : horizontal bilateral blur (depth + normals)
 //   BlurV  : vertical bilateral blur and composite over color
 
-bool Enabled;
-
 float2 ScreenSize;
 
 float4x4 Projection;
@@ -307,15 +305,8 @@ float ComputeAO(float2 uv)
 // Pass 1: SSAO
 float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    if (Enabled)
-    {
-        float ao = ComputeAO(input.TexCoord);
-        return float4(ao, ao, ao, 1.0);
-    }
-    else
-    {
-        return float4(1.0, 1.0, 1.0, 1.0)
-    }
+    float ao = ComputeAO(input.TexCoord);
+    return float4(ao, ao, ao, 1.0f);
 }
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
@@ -354,202 +345,181 @@ float NormalSimilarity(float3 nc, float3 nn, float normalPow)
 // PS_BlurH to a 9-tap bilateral blur
 float4 PS_BlurH(VSOutput input) : SV_Target0
 {
-    if (Enabled)
+    float2 texel = float2(1.0f / ScreenSize.x, 0.0f);
+
+    float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
+    float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+
+    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
+
+    float sum  = wC * aoC;
+    float wsum = wC;
+
+    // Offsets ±1
+    [unroll]
+    for (int s = -1; s <= 1; s += 2)
     {
-        float2 texel = float2(1.0f / ScreenSize.x, 0.0f);
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
 
-        float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-        float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
-        float4 nCtex = tex2D(NormalSampler, input.TexCoord);
-        float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
-
-        float sum  = wC * aoC;
-        float wsum = wC;
-
-        // Offsets ±1
-        [unroll]
-        for (int s = -1; s <= 1; s += 2)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±2
-        [unroll]
-        for (int s = -2; s <= 2; s += 4)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±3
-        [unroll]
-        for (int s = -3; s <= 3; s += 6)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±4
-        [unroll]
-        for (int s = -4; s <= 4; s += 8)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        float ao = sum / max(wsum, 1e-4f);
-        return float4(ao, ao, ao, 1.0f);
+        float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
     }
-    else
+
+    // Offsets ±2
+    [unroll]
+    for (int s = -2; s <= 2; s += 4)
     {
-        return tex2D(AOSamplerLinear, uv);
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
     }
+
+    // Offsets ±3
+    [unroll]
+    for (int s = -3; s <= 3; s += 6)
+    {
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
+    }
+
+    // Offsets ±4
+    [unroll]
+    for (int s = -4; s <= 4; s += 8)
+    {
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
+    }
+
+    float ao = sum / max(wsum, 1e-4f);
+    return float4(ao, ao, ao, 1.0f);
 }
 
 // PS_BlurV to match the 9-tap kernel vertically
 float4 PS_BlurV(VSOutput input) : SV_Target0
 {
-    if (Enabled)
+    float2 texel = float2(0.0f, 1.0f / ScreenSize.y);
+
+    float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
+    float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+
+    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
+
+    float sum  = wC * aoC;
+    float wsum = wC;
+
+    // Offsets ±1
+    [unroll]
+    for (int s = -1; s <= 1; s += 2)
     {
-        float2 texel = float2(0.0f, 1.0f / ScreenSize.y);
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
 
-        float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-        float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
-        float4 nCtex = tex2D(NormalSampler, input.TexCoord);
-        float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
-
-        float sum  = wC * aoC;
-        float wsum = wC;
-
-        // Offsets ±1
-        [unroll]
-        for (int s = -1; s <= 1; s += 2)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±2
-        [unroll]
-        for (int s = -2; s <= 2; s += 4)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±3
-        [unroll]
-        for (int s = -3; s <= 3; s += 6)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        // Offsets ±4
-        [unroll]
-        for (int s = -4; s <= 4; s += 8)
-        {
-            float2 uv = input.TexCoord + texel * s;
-            float aoN = tex2D(AOSamplerLinear, uv).r;
-            float dN  = tex2D(DepthSampler,   uv).r;
-
-            float4 nNtex = tex2D(NormalSampler, uv);
-            float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
-
-            float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
-            sum  += w * aoN;
-            wsum += w;
-        }
-
-        float ao = sum / max(wsum, 1e-4f);
-        return float4(ao, ao, ao, 1.0f);
+        float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
     }
-    else
+
+    // Offsets ±2
+    [unroll]
+    for (int s = -2; s <= 2; s += 4)
     {
-        return tex2D(AOSamplerLinear, uv);
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
     }
+
+    // Offsets ±3
+    [unroll]
+    for (int s = -3; s <= 3; s += 6)
+    {
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
+    }
+
+    // Offsets ±4
+    [unroll]
+    for (int s = -4; s <= 4; s += 8)
+    {
+        float2 uv = input.TexCoord + texel * s;
+        float aoN = tex2D(AOSamplerLinear, uv).r;
+        float dN  = tex2D(DepthSampler,   uv).r;
+
+        float4 nNtex = tex2D(NormalSampler, uv);
+        float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
+
+        float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
+        sum  += w * aoN;
+        wsum += w;
+    }
+
+    float ao = sum / max(wsum, 1e-4f);
+    return float4(ao, ao, ao, 1.0f);
 }
 
 float4 PS_Composite(VSOutput input) : SV_Target0
 {
-    if (Enabled)
-    {
-        // Use blurred AO and mask where normals are invalid
-        float ao = tex2D(AOSamplerLinear, input.TexCoord).r;
+    // Use blurred AO and mask where normals are invalid
+    float ao = tex2D(AOSamplerLinear, input.TexCoord).r;
 
-        // If normal is missing (sky, BasicEffect geometry, etc.), do not darken
-        float4 nTex = tex2D(NormalSampler, input.TexCoord);
+    // If normal is missing (sky, BasicEffect geometry, etc.), do not darken
+    float4 nTex = tex2D(NormalSampler, input.TexCoord);
 
-        if (nTex.a < 0.5f)
-            ao = 1.0f;
+    if (nTex.a < 0.5f)
+        ao = 1.0f;
 
-        float4 color = tex2D(ColorSampler, input.TexCoord);
+    float4 color = tex2D(ColorSampler, input.TexCoord);
 
-        return float4(color.rgb * ao, 1.0f); // ensure alpha = 1
-    }
-    else
-    {
-        return tex2D(ColorSampler, input.TexCoord);
-    }
+    return float4(color.rgb * ao, 1.0f); // ensure alpha = 1
 }
 
 technique SSAO

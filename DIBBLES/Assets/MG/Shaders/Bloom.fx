@@ -9,8 +9,6 @@
 
 #define EPSILON 1.0e-4
 
-bool Enabled;
-
 float PreBrightness;
 
 float Intensity;
@@ -96,76 +94,62 @@ float4 Box4(float4 a, float4 b, float4 c, float4 d)
 
 float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
-    if (Enabled)
-    {
-        float2 o = TexelSize;
+    float2 o = TexelSize;
 
-        float4 c0  = tex2D(SourceSampler, uv + float2(-2, -2) * o);
-        float4 c1  = tex2D(SourceSampler, uv + float2( 0, -2) * o);
-        float4 c2  = tex2D(SourceSampler, uv + float2( 2, -2) * o);
-        float4 c3  = tex2D(SourceSampler, uv + float2(-1, -1) * o);
-        float4 c4  = tex2D(SourceSampler, uv + float2( 1, -1) * o);
-        float4 c5  = tex2D(SourceSampler, uv + float2(-2,  0) * o);
-        float4 c6  = tex2D(SourceSampler, uv + float2( 0,  0) * o);
-        float4 c7  = tex2D(SourceSampler, uv + float2( 2,  0) * o);
-        float4 c8  = tex2D(SourceSampler, uv + float2(-1,  1) * o);
-        float4 c9  = tex2D(SourceSampler, uv + float2( 1,  1) * o);
-        float4 c10 = tex2D(SourceSampler, uv + float2(-2,  2) * o);
-        float4 c11 = tex2D(SourceSampler, uv + float2( 0,  2) * o);
-        float4 c12 = tex2D(SourceSampler, uv + float2( 2,  2) * o);
+    float4 c0  = tex2D(SourceSampler, uv + float2(-2, -2) * o);
+    float4 c1  = tex2D(SourceSampler, uv + float2( 0, -2) * o);
+    float4 c2  = tex2D(SourceSampler, uv + float2( 2, -2) * o);
+    float4 c3  = tex2D(SourceSampler, uv + float2(-1, -1) * o);
+    float4 c4  = tex2D(SourceSampler, uv + float2( 1, -1) * o);
+    float4 c5  = tex2D(SourceSampler, uv + float2(-2,  0) * o);
+    float4 c6  = tex2D(SourceSampler, uv + float2( 0,  0) * o);
+    float4 c7  = tex2D(SourceSampler, uv + float2( 2,  0) * o);
+    float4 c8  = tex2D(SourceSampler, uv + float2(-1,  1) * o);
+    float4 c9  = tex2D(SourceSampler, uv + float2( 1,  1) * o);
+    float4 c10 = tex2D(SourceSampler, uv + float2(-2,  2) * o);
+    float4 c11 = tex2D(SourceSampler, uv + float2( 0,  2) * o);
+    float4 c12 = tex2D(SourceSampler, uv + float2( 2,  2) * o);
 
-        float4 r =
-        Box4(c0, c1, c5, c6)   * 0.125 +
-        Box4(c1, c2, c6, c7)   * 0.125 +
-        Box4(c5, c6, c10, c11) * 0.125 +
-        Box4(c6, c7, c11, c12) * 0.125 +
-        Box4(c3, c4, c8, c9)   * 0.5;
+    float4 r =
+    Box4(c0, c1, c5, c6)   * 0.125 +
+    Box4(c1, c2, c6, c7)   * 0.125 +
+    Box4(c5, c6, c10, c11) * 0.125 +
+    Box4(c6, c7, c11, c12) * 0.125 +
+    Box4(c3, c4, c8, c9)   * 0.5;
 
-        // Force visible alpha so debug draw with AlphaBlend shows content
-        return float4(r.rgb, 1.0);
-    }
-    else
-    {
-        return tex2D(SourceSampler, uv);
-    }
+    // Force visible alpha so debug draw with AlphaBlend shows content
+    return float4(r.rgb, 1.0);
 }
 
 float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
-    if (Enabled)
-    {
-        float2 o = TexelSize * max(Radius, 0.0001);
+    float2 o = TexelSize * max(Radius, 0.0001);
 
-        float2 u0 = uv + float2(-1, -1) * o;
-        float2 u1 = uv + float2( 0, -1) * o;
-        float2 u2 = uv + float2( 1, -1) * o;
-        float2 u3 = uv + float2(-1,  0) * o;
-        float2 u4 = uv + float2( 0,  0) * o;
-        float2 u5 = uv + float2( 1,  0) * o;
-        float2 u6 = uv + float2(-1,  1) * o;
-        float2 u7 = uv + float2( 0,  1) * o;
-        float2 u8 = uv + float2( 1,  1) * o;
+    float2 u0 = uv + float2(-1, -1) * o;
+    float2 u1 = uv + float2( 0, -1) * o;
+    float2 u2 = uv + float2( 1, -1) * o;
+    float2 u3 = uv + float2(-1,  0) * o;
+    float2 u4 = uv + float2( 0,  0) * o;
+    float2 u5 = uv + float2( 1,  0) * o;
+    float2 u6 = uv + float2(-1,  1) * o;
+    float2 u7 = uv + float2( 0,  1) * o;
+    float2 u8 = uv + float2( 1,  1) * o;
 
-        float4 c0 = tex2D(SourceSampler, u0);
-        float4 c1 = tex2D(SourceSampler, u1);
-        float4 c2 = tex2D(SourceSampler, u2);
-        float4 c3 = tex2D(SourceSampler, u3);
-        float4 c4 = tex2D(SourceSampler, u4);
-        float4 c5 = tex2D(SourceSampler, u5);
-        float4 c6 = tex2D(SourceSampler, u6);
-        float4 c7 = tex2D(SourceSampler, u7);
-        float4 c8 = tex2D(SourceSampler, u8);
+    float4 c0 = tex2D(SourceSampler, u0);
+    float4 c1 = tex2D(SourceSampler, u1);
+    float4 c2 = tex2D(SourceSampler, u2);
+    float4 c3 = tex2D(SourceSampler, u3);
+    float4 c4 = tex2D(SourceSampler, u4);
+    float4 c5 = tex2D(SourceSampler, u5);
+    float4 c6 = tex2D(SourceSampler, u6);
+    float4 c7 = tex2D(SourceSampler, u7);
+    float4 c8 = tex2D(SourceSampler, u8);
 
-        float4 tent = 0.0625 * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8);
-        float3 rgb = tent.rgb * Strength;
+    float4 tent = 0.0625 * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8);
+    float3 rgb = tent.rgb * Strength;
 
-        // Force visible alpha
-        return float4(rgb, 1.0);
-    }
-    else
-    {
-        return tex2D(SourceSampler, uv);
-    }
+    // Force visible alpha
+    return float4(rgb, 1.0);
 }
 
 // Accumulation PS: add a weighted contribution per layer.
@@ -173,40 +157,25 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 // Weight falls off by pow(LayerDecay, LayerIndex); multiply by Strength for per-layer control.
 float4 AccumulatePS(float2 uv : TEXCOORD0) : COLOR0
 {
-    if (enabled)
-    {
-        float4 src = tex2D(SourceSampler, uv);
+    float4 src = tex2D(SourceSampler, uv);
 
-        // Decay weight per layer, keep within [0..1]
-        float w = saturate(Strength * pow(saturate(LayerDecay), (float)LayerIndex));
+    // Decay weight per layer, keep within [0..1]
+    float w = saturate(Strength * pow(saturate(LayerDecay), (float)LayerIndex));
 
-        // Return weighted contribution; additive blending composes layers
-        return float4(src.rgb * w, 1.0);
-    }
-    else
-    {
-        return tex2D(SourceSampler, uv);
-    }
+    // Return weighted contribution; additive blending composes layers
+    return float4(src.rgb * w, 1.0);
 }
 
 float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 scene = tex2D(SceneSampler, uv);
+    float4 bloom = tex2D(BloomSampler, uv);
 
-    if (Enabled)
-    {
-        float4 bloom = tex2D(BloomSampler, uv);
+    bloom.rgb *= Intensity;
 
-        bloom.rgb *= Intensity;
+    //float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
 
-        //float3 screenRgb = scene.rgb + bloom.rgb - scene.rgb * bloom.rgb;
-
-        return float4(scene.rgb + bloom.rgb, scene.a);
-    }
-    else
-    {
-        return Enabled;
-    }
+    return float4(scene.rgb + bloom.rgb, scene.a);
 }
 
 technique BloomDownsample
