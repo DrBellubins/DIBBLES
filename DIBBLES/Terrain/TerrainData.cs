@@ -51,6 +51,9 @@ public class BlockData
     public static Dictionary<(BlockType, int), RectangleF> AtlasUVs = new();
     public static readonly Dictionary<(BlockType, int), Vector2[]> FaceUVsOrdered = new();
     
+    public static Dictionary<(BlockType, int), RectangleF> EmissiveAtlasUVs = new();
+    public static readonly Dictionary<(BlockType, int), Vector2[]> EmissiveFaceUVsOrdered = new();
+    
     public static void InitializeBlockPrefabs()
     {
         // Initialize block prefabs
@@ -131,45 +134,20 @@ public class BlockData
         AtlasUVs = result.BlockUVs;
         
         // Generate emissive atlas
-        EmissiveTextures.Clear();
+        var emissiveBlockTypes = Enum.GetValuesAsUnderlyingType(typeof(BlockType))
+            .Cast<BlockType>()
+            .Where(t => t != BlockType.Air && t != BlockType.Water)
+            .ToArray();
 
-        foreach (BlockType blockType in atlasBlockTypes)
-        {
-            var info = Prefabs[blockType];
-            var emisFaceNames = getEmissiveFaceTextureNamesForBlock(blockType);
-
-            for (int faceIdx = 0; faceIdx < 6; faceIdx++)
-            {
-                Texture2D tex;
-
-                if (emisFaceNames != null)
-                {
-                    tex = Resource.Load<Texture2D>(emisFaceNames[faceIdx]);
-                }
-                else if (info.LightEmission > 0)
-                {
-                    // Fallback: use base face texture when emissive not defined but block emits light
-                    tex = Textures[(blockType, faceIdx)];
-                }
-                else
-                {
-                    // Non-emissive: use transparent 16x16
-                    tex = getTransparent16x16();
-                }
-
-                EmissiveTextures[(blockType, faceIdx)] = tex;
-            }
-        }
-
-        // Generate emissive atlas using THE SAME UV layout and dimensions as the base atlas
-        EmissiveTextureAtlas = AtlasGenerator.GenerateAtlasFromLayout(
+        var emissiveResult = AtlasGenerator.GenerateBlockAtlas(
             Engine.Graphics,
-            TextureAtlas.Width,
-            TextureAtlas.Height,
-            AtlasUVs,
+            emissiveBlockTypes,
             EmissiveTextures,
-            16 // tile size
+            16
         );
+        
+        EmissiveTextureAtlas = emissiveResult.AtlasTexture;
+        EmissiveAtlasUVs = emissiveResult.BlockUVs;
         
         // DEBUG: Save generated atlas to file
         using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
@@ -178,6 +156,7 @@ public class BlockData
         using (var s = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
             EmissiveTextureAtlas.SaveAsPng(s, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);
         
+        // Regular face UVs
         FaceUVsOrdered.Clear();
         
         foreach (BlockType blockType in atlasBlockTypes)
@@ -264,6 +243,81 @@ public class BlockData
             // Write back the per-face rects to the prefab (BlockInfo is a struct)
             info.FaceUVs = faceRects;
             Prefabs[blockType] = info;
+        }
+        
+        // Emissive face UVs
+        // Build ordered face UVs for emissive atlas (mirrors base orientation rules, but uses EmissiveAtlasUVs)
+        EmissiveFaceUVsOrdered.Clear();
+        
+        foreach (BlockType blockType in atlasBlockTypes)
+        {
+            for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+            {
+                RectangleF emRect;
+        
+                if (!EmissiveAtlasUVs.TryGetValue((blockType, faceIdx), out emRect))
+                    emRect = new RectangleF(0, 0, 1, 1);
+        
+                // Canonical BL, TL, TR, BR within the emissive rect
+                Vector2 tl = new Vector2(emRect.X, emRect.Y);
+                Vector2 tr = new Vector2(emRect.X + emRect.Width, emRect.Y);
+                Vector2 bl = new Vector2(emRect.X, emRect.Y + emRect.Height);
+                Vector2 br = new Vector2(emRect.X + emRect.Width, emRect.Y + emRect.Height);
+                var emisFaceUVs = new[] { bl, tl, tr, br };
+        
+                switch (faceIdx)
+                {
+                    case 0:
+                    {
+                        emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 1);
+                        break;
+                    }
+                    case 1:
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 1);
+                        else
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 0);
+                        break;
+                    }
+                    case 2:
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 1, 1);
+                        else
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 1);
+                        break;
+                    }
+                    case 3:
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 1, 2);
+                        else
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 0);
+                        break;
+                    }
+                    case 4:
+                    {
+                        if (TerrainMesh.UseGreedyMeshing)
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 1);
+                        else
+                            emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 2, 0);
+                        break;
+                    }
+                    case 5:
+                    {
+                        emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 1, 1);
+                        break;
+                    }
+                    default:
+                    {
+                        emisFaceUVs = FaceUtils.ApplyUVTransform(emisFaceUVs, faceIdx, 0, 0);
+                        break;
+                    }
+                }
+        
+                EmissiveFaceUVsOrdered[(blockType, faceIdx)] = emisFaceUVs;
+            }
         }
     }
     

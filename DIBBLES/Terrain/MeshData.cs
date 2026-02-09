@@ -14,7 +14,8 @@ public struct MeshData
     public float[] UVRects;
     public float[] UVBasis;
     
-    public float[] Emissives;
+    public float[] EmissiveUVRects;
+    public float[] EmissiveUVBasis;
     
     public int VertexCount;
     public int TriangleCount;
@@ -30,7 +31,8 @@ public struct MeshData
         UVRects = new float[vertCount * 4];
         UVBasis = new float[vertCount * 4];
         
-        Emissives = new float[vertCount];
+        EmissiveUVRects = new float[vertCount * 4];
+        EmissiveUVBasis = new float[vertCount * 4];
         
         VertexCount = vertCount;
         TriangleCount = triCount;

@@ -202,8 +202,12 @@ public struct VertexPositionNormalTextureColor : IVertexType
     public Vector3 Normal;
     public Vector2 TexCoord;
     public Color   Color;
+    
     public Vector4 UVRect;   // (x,y,w,h)
     public Vector4 UVBasis;  // (uX,uY,vX,vY)
+    
+    public Vector4 EmissiveUVRect;
+    public Vector4 EmissiveUVBasis;
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
@@ -212,19 +216,33 @@ public struct VertexPositionNormalTextureColor : IVertexType
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
         new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color,             0),
         new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
-        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2)
+        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
+        new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
+        new VertexElement(84, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
 
-    public VertexPositionNormalTextureColor(Vector3 pos, Vector3 norm, Vector2 tex, Color color, Vector4 uvRect, Vector4 uvBasis)
+    public VertexPositionNormalTextureColor(
+        Vector3 pos,
+        Vector3 norm,
+        Vector2 tex,
+        Color color,
+        Vector4 uvRect,
+        Vector4 uvBasis,
+        Vector4 emissiveUVRect,
+        Vector4 emissiveUVBasis)
     {
         Position = pos;
         Normal = norm;
         TexCoord = tex;
         Color = color;
+        
         UVRect = uvRect;
         UVBasis = uvBasis;
+        
+        EmissiveUVRect = emissiveUVRect;
+        EmissiveUVBasis = emissiveUVBasis;
     }
 }
 

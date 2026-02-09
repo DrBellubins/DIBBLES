@@ -35,8 +35,12 @@ struct VertexInput
     float3 Normal   : NORMAL0;
     float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
     float4 Color    : COLOR0;
+
     float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
     float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
+
+    float4 EmisUVRect  : TEXCOORD3;
+    float4 EmisUVBasis : TEXCOORD4;
 };
 
 // Add CameraNear/Far are already declared; reuse them to write normalized linear depth to RT1.
@@ -50,8 +54,12 @@ struct PixelInput
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
+
     float4 UVRect       : TEXCOORD4;
     float4 UVBasis      : TEXCOORD5;
+
+    float4 EmisUVRect   : TEXCOORD6;
+    float4 EmisUVBasis  : TEXCOORD7;
 };
 
 PixelInput VS(VertexInput input)
@@ -74,8 +82,12 @@ PixelInput VS(VertexInput input)
     float3 viewNormal = mul(float4(worldNormal, 0), View).xyz;
 
     output.ViewNormal = normalize(viewNormal);
+
     output.UVRect = input.UVRect;
     output.UVBasis = input.UVBasis;
+
+    output.EmisUVRect = input.EmisUVRect;
+    output.EmisUVBasis = input.EmisUVBasis;
 
     return output;
 }
@@ -87,51 +99,91 @@ struct PixelOutput
     float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
 };
 
+float2 projectToLocal(float2 uv, float2 rectOrigin, float2 basisU, float2 basisV)
+{
+    float2 d = uv - rectOrigin;
+
+    float a = basisU.x;
+    float b = basisV.x;
+    float c = basisU.y;
+    float d2 = basisV.y;
+
+    float det = a * d2 - b * c;
+
+    if (abs(det) < 1e-6)
+    {
+        return float2(0, 0);
+    }
+
+    float invDet = 1.0 / det;
+
+    float u = ( d2 * (d.x) - b * (d.y)) * invDet;
+    float v = (-c  * (d.x) + a * (d.y)) * invDet;
+
+    return float2(u, v);
+}
+
 PixelOutput PS_Color(PixelInput input)
 {
-    // Compose atlas UV
+    // Base atlas UV
     float2 atlasUV;
 
-    // Use tiling when toggle is on AND rect has nonzero size
     if (UseGreedyMeshing > 0.5 && (input.UVRect.z > 0.0 || input.UVRect.w > 0.0))
     {
         float2 basisU = float2(input.UVBasis.x, input.UVBasis.y);
         float2 basisV = float2(input.UVBasis.z, input.UVBasis.w);
 
-        // BL origin + frac(local) projected by per-face basis (matches non-greedy orientation)
         atlasUV = float2(input.UVRect.x, input.UVRect.y)
                 + frac(input.TexCoord.x) * basisU
                 + frac(input.TexCoord.y) * basisV;
     }
     else
     {
-        // Non-greedy path: TexCoord already absolute atlas UV
         atlasUV = input.TexCoord;
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
-    float4 emissiveColor = tex2D(EmissiveAtlasSampler, atlasUV);
-
     float4 blockColor = texColor * input.Color;
-    float3 emissiveRGB = emissiveColor.rgb * emissiveColor.a * EmissiveStrength;
 
-    // Hard alpha cutout to prevent transparent texels from writing depth
-    // Discards pixels with alpha below threshold so they don't occlude behind billboards.
     float alpha = blockColor.a;
 
-    if (alpha < 1.0) // We're not opaque (hopefully)
+    if (alpha < 1.0)
         clip(alpha - AlphaCutoff);
 
-    // Fog
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
     finalColor.a = blockColor.a;
 
-    // Normalized linear depth (near=0, far=1)
-    float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
+    // Emissive atlas UV (separate layout)
+    float2 emisUV;
 
-    // Encode view-space normal from [-1,1] to [0,1]
+    if (UseGreedyMeshing > 0.5 && (input.EmisUVRect.z > 0.0 || input.EmisUVRect.w > 0.0))
+    {
+        float2 eU = float2(input.EmisUVBasis.x, input.EmisUVBasis.y);
+        float2 eV = float2(input.EmisUVBasis.z, input.EmisUVBasis.w);
+
+        emisUV = float2(input.EmisUVRect.x, input.EmisUVRect.y)
+               + frac(input.TexCoord.x) * eU
+               + frac(input.TexCoord.y) * eV;
+    }
+    else
+    {
+        // Non-greedy: project base UV into local (u,v) of base rect, then remap to emissive rect/basis
+        float2 bU = float2(input.UVBasis.x, input.UVBasis.y);
+        float2 bV = float2(input.UVBasis.z, input.UVBasis.w);
+        float2 local = projectToLocal(atlasUV, float2(input.UVRect.x, input.UVRect.y), bU, bV);
+
+        float2 eU = float2(input.EmisUVBasis.x, input.EmisUVBasis.y);
+        float2 eV = float2(input.EmisUVBasis.z, input.EmisUVBasis.w);
+
+        emisUV = float2(input.EmisUVRect.x, input.EmisUVRect.y) + local.x * eU + local.y * eV;
+    }
+
+    float4 emissiveColor = tex2D(EmissiveAtlasSampler, emisUV);
+    float3 emissiveRGB = emissiveColor.rgb * emissiveColor.a * EmissiveStrength;
+
+    float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 normal = normalize(input.ViewNormal);
     float3 normal01 = normal * 0.5f + 0.5f;
 
@@ -140,7 +192,7 @@ PixelOutput PS_Color(PixelInput input)
     finalColor.rgb += emissiveRGB;
 
     output.Color0 = finalColor;
-    output.Color1 = float4(depth01, depth01, depth01, 1.0f); // SSAO samples .r
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
     output.Color2 = float4(normal01, 1.0f);
 
     return output;

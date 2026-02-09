@@ -249,8 +249,39 @@ public class TerrainMesh
                     data.UVBasis[i * 4 + 2],
                     data.UVBasis[i * 4 + 3]);
             }
+            
+            Vector4 emisRect = Vector4.Zero;
+            Vector4 emisBasis = Vector4.Zero;
 
-            verts[i] = new VertexPositionNormalTextureColor(pos, norm, tex, color, uvRect, uvBasis);
+            if (data.EmissiveUVRects != null && data.EmissiveUVRects.Length >= (i + 1) * 4)
+            {
+                emisRect = new Vector4(
+                    data.EmissiveUVRects[i * 4 + 0],
+                    data.EmissiveUVRects[i * 4 + 1],
+                    data.EmissiveUVRects[i * 4 + 2],
+                    data.EmissiveUVRects[i * 4 + 3]);
+            }
+
+            if (data.EmissiveUVBasis != null && data.EmissiveUVBasis.Length >= (i + 1) * 4)
+            {
+                emisBasis = new Vector4(
+                    data.EmissiveUVBasis[i * 4 + 0],
+                    data.EmissiveUVBasis[i * 4 + 1],
+                    data.EmissiveUVBasis[i * 4 + 2],
+                    data.EmissiveUVBasis[i * 4 + 3]);
+            }
+
+            if (emisRect == Vector4.Zero && uvRect != Vector4.Zero)
+            {
+                emisRect = uvRect;
+                emisBasis = uvBasis;
+            }
+
+            verts[i] = new VertexPositionNormalTextureColor(
+                pos, norm, tex, color,
+                uvRect, uvBasis,
+                emisRect, emisBasis
+            );
         }
 
         // Create buffers
