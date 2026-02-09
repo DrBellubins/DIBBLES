@@ -2,6 +2,11 @@
 // Converted from GLSL to HLSL and wired for fullscreen blit usage.
 // Ignore sampler binding issues as requested.
 
+bool Enabled;
+
+float PreBrightness;
+float PostBrightness;
+
 texture SourceTex;
 
 sampler2D SourceSampler = sampler_state
@@ -34,42 +39,64 @@ VertOut FullscreenVS(VertIn i)
     return o;
 }
 
-// ACES tonemap (HLSL)
-float3 tonemap_aces(float3 rgb)
+// sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
+static const float3x3 ACESInputMat =
 {
-    // sRGB => XYZ => D65_2_D60 => AP1 => RRT_SAT
-    const float3x3 IN = float3x3(
-        0.59719, 0.07600, 0.02840,
-        0.35458, 0.90834, 0.13383,
-        0.04823, 0.01566, 0.83777
-    );
+    {0.59719, 0.35458, 0.04823},
+    {0.07600, 0.90834, 0.01566},
+    {0.02840, 0.13383, 0.83777}
+};
 
-    // ODT_SAT => XYZ => D60_2_D65 => sRGB
-    const float3x3 OUT = float3x3(
-        1.60475, -0.10208, -0.00327,
-        -0.53108,  1.10813, -0.07276,
-        -0.07367, -0.00605,  1.07602
-    );
+// ODT_SAT => XYZ => D60_2_D65 => sRGB
+static const float3x3 ACESOutputMat =
+{
+    { 1.60475, -0.53108, -0.07367},
+    {-0.10208,  1.10813, -0.00605},
+    {-0.00327, -0.07276,  1.07602}
+};
 
-    float3 col = mul(IN, rgb);
+float3 RRTAndODTFit(float3 v)
+{
+    float3 a = v * (v + 0.0245786f) - 0.000090537f;
+    float3 b = v * (0.983729f * v + 0.4329510f) + 0.238081f;
+    return a / b;
+}
 
-    // Filmic curve
-    float3 a = col * (col + 0.0245786) - 0.000090537;
-    float3 b = col * (0.983729 * col + 0.4329510) + 0.238081;
-    col = a / b;
+float3 ACESFitted(float3 color)
+{
+    color = mul(ACESInputMat, color);
 
-    return saturate(mul(OUT, col));
+    // Apply RRT and ODT
+    color = RRTAndODTFit(color);
+
+    color = mul(ACESOutputMat, color);
+
+    // Clamp to [0, 1]
+    color = saturate(color);
+
+    return color;
 }
 
 float4 TonemapACESPS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 src = tex2D(SourceSampler, uv);
 
-    // Assume src.rgb is in linear sRGB (HDR possible); apply ACES curve
-    float3 mapped = tonemap_aces(src.rgb);
+    if (Enabled)
+    {
+        src.rgb = src.rgb * PreBrightness;
 
-    // Preserve source alpha
-    return float4(mapped, src.a);
+        // Assume src.rgb is in linear sRGB (HDR possible); apply ACES curve
+        float3 mapped = ACESFitted(src.rgb);
+
+        mapped = saturate(mapped * PostBrightness);
+
+        // Preserve source alpha
+        return float4(mapped, src.a);
+    }
+    else
+    {
+        return src;
+    }
 }
 
 technique TonemapACES

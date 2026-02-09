@@ -15,6 +15,7 @@ public class EffectParams
         public Dictionary<string, Color> Colors = new();
         public Dictionary<string, float> Floats = new();
         public Dictionary<string, int> Ints = new();
+        public Dictionary<string, bool> Bools = new();
         public Dictionary<string, Texture2D> Textures = new();
     }
     
@@ -111,6 +112,18 @@ public class EffectParams
             return false;
     
         cache.Ints[name] = value;
+        effect.Parameters[name]?.SetValue(value);
+        return true;
+    }
+    
+    public static bool SetBool(Effect effect, string name, bool value)
+    {
+        var cache = Get(effect);
+    
+        if (cache.Bools.TryGetValue(name, out var old) && old == value)
+            return false;
+    
+        cache.Bools[name] = value;
         effect.Parameters[name]?.SetValue(value);
         return true;
     }

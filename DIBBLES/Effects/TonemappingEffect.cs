@@ -1,3 +1,4 @@
+using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,6 +7,11 @@ namespace DIBBLES.Effects;
 
 public class TonemappingEffect : PostProcessingEffect
 {
+    public float PreBrightness = 1.4f;
+    public float PostBrightness = 1.3f;
+
+    public bool Enabled = true;
+    
     private Effect tonemapEffect;
     
     private VertexBuffer quadVertexBuffer;
@@ -31,6 +37,15 @@ public class TonemappingEffect : PostProcessingEffect
         short[] idx = { 0, 1, 2, 0, 2, 3 };
         quadIndexBuffer = new IndexBuffer(Engine.Graphics, IndexElementSize.SixteenBits, idx.Length, BufferUsage.WriteOnly);
         quadIndexBuffer.SetData(idx);
+        
+        DebugMenu.CreateButton();
+        
+        DebugMenu.RegisterParams
+        (
+            new SliderParam("PreBrightness", 0.0f, 10.0f, () => PreBrightness, v => PreBrightness = v),
+            new SliderParam("PostBrightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v),
+            new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v)
+        );
     }
 
     // Main drawing here
@@ -57,7 +72,12 @@ public class TonemappingEffect : PostProcessingEffect
 
         // Set effect params (only the source texture is needed)
         EffectParams.SetTexture(tonemapEffect, "SourceTex", ColorBuffer);
-
+        
+        EffectParams.SetFloat(tonemapEffect, "PreBrightness", PreBrightness);
+        EffectParams.SetFloat(tonemapEffect, "PostBrightness", PostBrightness);
+        
+        EffectParams.SetBool(tonemapEffect, "Enabled", Enabled);
+        
         // Use the ACES technique implemented in Tonemap.fx
         tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["TonemapACES"];
 

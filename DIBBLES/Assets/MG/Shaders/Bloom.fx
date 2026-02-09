@@ -92,34 +92,6 @@ float4 Box4(float4 a, float4 b, float4 c, float4 d)
     return (a + b + c + d) * 0.25;
 }
 
-float Max3(float a, float b, float c)
-{
-    return max(max(a, b), c);
-}
-
-float3 QuadraticThreshold(float3 color, float threshold, float3 curve)
-{
-    // Pixel brightness
-    float br = Max3(color.r, color.g, color.b);
-
-    // Under-threshold part: quadratic curve
-    float rq = clamp(br - curve.x, 0.0, curve.y);
-    rq = curve.z * rq * rq;
-
-    // Combine and apply the brightness response curve.
-    color *= max(rq, br - threshold) / max(br, EPSILON);
-
-    return color;
-}
-
-float4 ThresholdPS(float2 uv : TEXCOORD0) : COLOR0
-{
-    float4 color = tex2D(SourceSampler, uv);
-    color.rgb = QuadraticThreshold(color.rgb, Threshold, ThresholdCurve) * PreBrightness;
-
-    return color;
-}
-
 float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
     float2 o = TexelSize;
@@ -205,16 +177,6 @@ float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
 
     return float4(scene.rgb + bloom.rgb, scene.a);
 }
-
-technique BloomThreshold
-{
-    pass P0
-    {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 ThresholdPS();
-    }
-}
-
 
 technique BloomDownsample
 {

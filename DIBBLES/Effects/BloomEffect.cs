@@ -6,19 +6,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace DIBBLES.Effects;
 
-// TODO: Try blending all upsample RTs together for more detailed bloom.
+// TODO: Implement ability to define EffectedByEmission
+// TODO: Which controls if the block's non emissive texture glows or not.
+
 public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 8;
     
-    public const float PreBrightness = 1f; // Color gets multiplied by this number after threshold stage
-    
-    public float Intensity = 1.0f; // Overall intensity
+    public float Intensity = 0.2f; // Overall intensity
     public float Strength = 1.0f;  // Per sample intensity
     public float Radius = 2.0f;
-    
-    public float Threshold = 5.0f;
-    public float ThresholdSoftKnee = 0.9f; // Lower = softer
     
     public const float LayerDecay = 1.0f; // Decay factor for per layer accumulation
     
@@ -58,11 +55,9 @@ public class BloomEffect : PostProcessingEffect
         
         DebugMenu.RegisterParams
         (
-            new SliderParam("Intensity", 0.0f, 10.0f, () => Intensity, v => Intensity = v),
+            new SliderParam("Intensity", 0.0f, 1.0f, () => Intensity, v => Intensity = v),
             new SliderParam("Strength", 0.0f, 10.0f, () => Strength, v => Strength = v),
-            new SliderParam("Radius", 0.0f, 10.0f, () => Radius, v => Radius = v),
-            new SliderParam("Threshold", 0.0f, 5.0f, () => Threshold, v => Threshold = v),
-            new SliderParam("ThresholdSoftKnee", 0.0f, 1.0f, () => ThresholdSoftKnee, v => ThresholdSoftKnee = v)
+            new SliderParam("Radius", 0.0f, 10.0f, () => Radius, v => Radius = v)
             //new CheckBoxParam("Test 2", () => test2, v => test2 = v),
             //new TextureDisplayParam("BackBuffer", GameScene.BackBuffer, DebugMenu.GetBindTextureFunc(), 256f)
         );
@@ -93,23 +88,15 @@ public class BloomEffect : PostProcessingEffect
         // Bind fullscreen quad
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
-    
-        // 1) Threshold: GameScene.EmissionBuffer -> thresholdRT
-        EffectParams.SetFloat(bloomEffect, "PreBrightness", PreBrightness);
-        EffectParams.SetTexture(bloomEffect, "SourceTex", GameScene.EmissiveBuffer);
+        
+        // 1) Downsample chain:
+        //    First level: thresholdRT -> DownsampleRTs[0]
+        var downsampleInput = GameScene.EmissiveBuffer;
+        
+        EffectParams.SetTexture(bloomEffect, "SourceTex", downsampleInput);
         
         EffectParams.SetVector2(bloomEffect, "TexelSize",
-            new Vector2(1f / GameScene.EmissiveBuffer.Width, 1f / GameScene.EmissiveBuffer.Height));
-        
-        EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);
-        EffectParams.SetVector3(bloomEffect, "ThresholdCurve", genThresholdCurve(Threshold, ThresholdSoftKnee));
-
-        drawPass(thresholdRT, bloomEffect, "BloomThreshold");
-        
-        // 2) Downsample chain:
-        //    First level: thresholdRT -> DownsampleRTs[0]
-        EffectParams.SetTexture(bloomEffect, "SourceTex", thresholdRT);
-        EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / thresholdRT.Width, 1f / thresholdRT.Height));
+            new Vector2(1f / downsampleInput.Width, 1f / downsampleInput.Height));
         
         drawPass(DownsampleRTs[0], bloomEffect, "BloomDownsample");
     
@@ -125,7 +112,7 @@ public class BloomEffect : PostProcessingEffect
             drawPass(dst, bloomEffect, "BloomDownsample");
         }
         
-        // 2.5) Accumulate all downsample layers into a single full-res BloomOutput
+        // 1.5) Accumulate all downsample layers into a single full-res BloomOutput
         // Clear accumulation target
         Graphics.SetRenderTarget(BloomOutput);
         Graphics.Clear(Color.Black);
@@ -157,7 +144,7 @@ public class BloomEffect : PostProcessingEffect
         // Restore opaque for combine
         Graphics.BlendState = BlendState.Opaque;
         
-        // 3) Upsample chain:
+        // 2) Upsample chain:
         //    Start from the smallest downsample result and progressively upsample to larger targets
         RenderTarget2D upsampleSrc = BloomOutput;
     
@@ -179,7 +166,7 @@ public class BloomEffect : PostProcessingEffect
             upsampleSrc = target;
         }
     
-        // 4) Combine bloom with the scene into OutputBuffer
+        // 3) Combine bloom with the scene into OutputBuffer
         var previousViewport = Graphics.Viewport;
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Viewport = new Viewport(0, 0, OutputBuffer.Width, OutputBuffer.Height);
@@ -247,8 +234,8 @@ public class BloomEffect : PostProcessingEffect
 
         for (int i = 0; i < count; i++)
         {
-            int dsW = Math.Max(1, width >> (i + 1));   // /2, /4, /8...
-            int dsH = Math.Max(1, height >> (i + 1));
+            int dsW = Math.Max(1, width >> (i + 2));   // /2, /4, /8...
+            int dsH = Math.Max(1, height >> (i + 2));
 
             var ds = new RenderTarget2D(
                 Graphics,
