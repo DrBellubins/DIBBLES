@@ -134,6 +134,37 @@ public class BlockData
         AtlasUVs = result.BlockUVs;
         
         // Generate emissive atlas
+        EmissiveTextures.Clear();
+
+        foreach (BlockType blockType in atlasBlockTypes)
+        {
+            var info = Prefabs[blockType];
+            var emisFaceNames = getEmissiveFaceTextureNamesForBlock(blockType);
+
+            for (int faceIdx = 0; faceIdx < 6; faceIdx++)
+            {
+                Texture2D tex;
+
+                if (emisFaceNames != null && !string.IsNullOrWhiteSpace(emisFaceNames[faceIdx]))
+                {
+                    // Explicit emissive texture from TOML
+                    tex = Resource.Load<Texture2D>(emisFaceNames[faceIdx]);
+                }
+                else if (info.LightEmission > 0)
+                {
+                    // Emits light but no emissive texture defined: fall back to regular face texture
+                    tex = Textures[(blockType, faceIdx)];
+                }
+                else
+                {
+                    // Non-emissive: transparent tile so overlay samples to zero
+                    tex = getTransparent16x16();
+                }
+
+                EmissiveTextures[(blockType, faceIdx)] = tex;
+            }
+        }
+        
         var emissiveBlockTypes = Enum.GetValuesAsUnderlyingType(typeof(BlockType))
             .Cast<BlockType>()
             .Where(t => t != BlockType.Air && t != BlockType.Water)
@@ -153,8 +184,8 @@ public class BlockData
         using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
             TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
         
-        using (var s = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
-            EmissiveTextureAtlas.SaveAsPng(s, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);
+        using (var emissivePngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
+            EmissiveTextureAtlas.SaveAsPng(emissivePngStr, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);
         
         // Regular face UVs
         FaceUVsOrdered.Clear();
