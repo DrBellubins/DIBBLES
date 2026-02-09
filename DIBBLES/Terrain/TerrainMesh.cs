@@ -20,7 +20,7 @@ public class TerrainMesh
     public const bool GreedyRespectAntiTileFlips = false;
     public const bool NonGreedyRespectAntiTileFlips = false;
     
-    public const float EmissiveStrength = 1.0f;
+    public const float EmissiveStrength = 5.0f;
     
     public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 
@@ -60,7 +60,8 @@ public class TerrainMesh
         
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
+        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         foreach (var oModel in Mesh.OpaqueModels)
@@ -122,7 +123,8 @@ public class TerrainMesh
         
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.SamplerStates[0] = SamplerState.PointClamp;
+        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
+        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
         
         // Disable culling so billboards render double-sided
         graphics.RasterizerState = RasterizerState.CullNone;

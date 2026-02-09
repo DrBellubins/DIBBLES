@@ -13,11 +13,11 @@ public class BloomEffect : PostProcessingEffect
     
     public const float PreBrightness = 1f; // Color gets multiplied by this number after threshold stage
     
-    public float Intensity = 0.9f; // Overall intensity
+    public float Intensity = 0.2f; // Overall intensity
     public float Strength = 1.0f;  // Per sample intensity
     public float Radius = 2.0f;
     
-    public float Threshold = 2.0f;
+    public float Threshold = 5.0f;
     public float ThresholdSoftKnee = 0.9f; // Lower = softer
     
     public const float LayerDecay = 1.0f; // Decay factor for per layer accumulation
@@ -72,17 +72,17 @@ public class BloomEffect : PostProcessingEffect
     public override void DrawStart()
     {
         // Early out if no source
-        if (ColorBuffer == null)
+        if (ColorBuffer == null || GameScene.EmissiveBuffer == null)
         {
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
-            Debug.Error("Bloom ColorBuffer NULL");
+            Debug.Error("Bloom GameScene.EmissiveBuffer NULL");
             return;
         }
     
         // Ensure chain matches source size
-        ensureChainMatchesSource(ColorBuffer.Width, ColorBuffer.Height);
+        ensureChainMatchesSource(GameScene.EmissiveBuffer.Width, GameScene.EmissiveBuffer.Height);
     
         // Render states
         Graphics.BlendState = BlendState.Opaque;
@@ -94,10 +94,13 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetVertexBuffer(quadVertexBuffer);
         Graphics.Indices = quadIndexBuffer;
     
-        // 1) Threshold: ColorBuffer -> thresholdRT
+        // 1) Threshold: GameScene.EmissionBuffer -> thresholdRT
         EffectParams.SetFloat(bloomEffect, "PreBrightness", PreBrightness);
-        EffectParams.SetTexture(bloomEffect, "SourceTex", ColorBuffer);
-        EffectParams.SetVector2(bloomEffect, "TexelSize", new Vector2(1f / ColorBuffer.Width, 1f / ColorBuffer.Height));
+        EffectParams.SetTexture(bloomEffect, "SourceTex", GameScene.EmissiveBuffer);
+        
+        EffectParams.SetVector2(bloomEffect, "TexelSize",
+            new Vector2(1f / GameScene.EmissiveBuffer.Width, 1f / GameScene.EmissiveBuffer.Height));
+        
         EffectParams.SetFloat(bloomEffect, "Threshold", Threshold);
         EffectParams.SetVector3(bloomEffect, "ThresholdCurve", genThresholdCurve(Threshold, ThresholdSoftKnee));
 

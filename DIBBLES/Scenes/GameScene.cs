@@ -37,6 +37,7 @@ public class GameScene : Scene
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
     public static RenderTarget2D NormalBuffer;
+    public static RenderTarget2D EmissiveBuffer;
     
     public static RenderTarget2D UIBuffer;
     
@@ -79,6 +80,17 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+        
+        EmissiveBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.HdrBlendable,   // emissive can exceed 1.0
             DepthFormat.Depth24,
             0,
             RenderTargetUsage.PreserveContents
@@ -169,7 +181,8 @@ public class GameScene : Scene
         graphics.SetRenderTargets(
             new RenderTargetBinding(BackBuffer),
             new RenderTargetBinding(DepthBuffer),
-            new RenderTargetBinding(NormalBuffer)
+            new RenderTargetBinding(NormalBuffer),
+            new RenderTargetBinding(EmissiveBuffer)
         );
 
         // 1) Clear the depth-stencil actually used by the geometry pass (attached to the first RT)
@@ -184,9 +197,12 @@ public class GameScene : Scene
 
         graphics.SetRenderTarget(NormalBuffer);
         graphics.Clear(Color.Transparent);   // mark "no normal" with a=0
+        
+        graphics.SetRenderTarget(EmissiveBuffer);
+        graphics.Clear(Color.Black);
 
         // 3) Rebind MRTs for drawing, and draw world-space
-        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer);
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer, EmissiveBuffer);
         
         TerrainGen.Draw();
 
@@ -273,8 +289,8 @@ public class GameScene : Scene
             UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
                 new Vector2(bufferWidth, bufferHeight), Color.White);
             
-            //UIBatch.Draw(tesBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
-            //    new Vector2(bufferWidth, bufferHeight), Color.White);
+            UIBatch.Draw(EmissiveBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
         }
         
         UIBatch.End();

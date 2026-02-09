@@ -94,6 +94,7 @@ Thickness = 0.0
 MaxStack = 64
 IsTransparent = true
 LightEmission = 15
+EmissiveTexture = "Leaves_e.png"
 
 [Glass]
 Hardness = 2
@@ -110,14 +111,7 @@ IsTransparent = false
 LightEmission = 15
 AntiTileUVsHorizontally = false
 AntiTileUVsVertically = false
-EmissiveFaceTextures = [
-    "Leaves.png", # 0 - Front (-Z)
-    "WoodLog_Side.png", # 1 - Back (+Z)
-    "Wisp.png", # 2 - Left (-X)
-    "WoodLog_Side.png", # 3 - Right (+X)
-    "WoodLog_Top.png",  # 4 - Bottom (-Y)
-    "WoodLog_Top.png"   # 5 - Top (+Y)
-]
+EmissiveTexture = "Feeb_e.png"
 
 [GrassBlades]
 Hardness = 1

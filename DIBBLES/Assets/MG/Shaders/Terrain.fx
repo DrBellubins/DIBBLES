@@ -62,6 +62,14 @@ struct PixelInput
     float4 EmisUVBasis  : TEXCOORD7;
 };
 
+struct PixelOutput
+{
+    float4 Color0 : COLOR0; // scene color
+    float4 Color1 : COLOR1; // linear depth in [0..1]
+    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
+    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
+};
+
 PixelInput VS(VertexInput input)
 {
     PixelInput output;
@@ -91,13 +99,6 @@ PixelInput VS(VertexInput input)
 
     return output;
 }
-
-struct PixelOutput
-{
-    float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth in [0..1]
-    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
-};
 
 float2 projectToLocal(float2 uv, float2 rectOrigin, float2 basisU, float2 basisV)
 {
@@ -189,11 +190,12 @@ PixelOutput PS_Color(PixelInput input)
 
     PixelOutput output;
 
-    finalColor.rgb += emissiveRGB;
+    //finalColor.rgb += emissiveRGB;
 
     output.Color0 = finalColor;
     output.Color1 = float4(depth01, depth01, depth01, 1.0f);
     output.Color2 = float4(normal01, 1.0f);
+    output.Color3 = float4(emissiveRGB, emissiveColor.a);
 
     return output;
 }

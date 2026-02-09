@@ -143,6 +143,7 @@
 ./Assets/MG/.mgstats
 ./Assets/MG/MG.mgcb
 ./Assets/Textures/Blocks/Error.png
+./Assets/Textures/Blocks/Feeb_e.png
 ./Assets/Textures/Blocks/Glass.png
 ./Assets/Textures/Blocks/Grass_Side.png
 ./Assets/Textures/Blocks/Leaves.png
@@ -153,6 +154,7 @@
 ./Assets/Textures/Blocks/Snow.png
 ./Assets/Textures/Blocks/Stone.png
 ./Assets/Textures/Blocks/Wisp.png
+./Assets/Textures/Blocks/Leaves_e.png
 ./Assets/Textures/Blocks/Wood.png
 ./Assets/Textures/Blocks/Feeb.png
 ./Assets/Textures/Blocks/Water.png
@@ -169,12 +171,14 @@
 ./Artwork/Blocks/Grass_Top.pxo
 ./Artwork/Blocks/Wood.pxo
 ./Artwork/Blocks/Sand.pxo
+./Artwork/Blocks/LeavesBlue_e.pxo
 ./Artwork/Blocks/WoodLog_Top.pxo
 ./Artwork/Blocks/Error.pxo
 ./Artwork/Blocks/RedFlower.pxo
 ./Artwork/Blocks/Snow.pxo
 ./Artwork/Blocks/Dirt.pxo
 ./Artwork/Blocks/LeavesBlue.pxo
+./Artwork/Blocks/Feeb_e.pxo
 ./Artwork/Blocks/BlueFlower.pxo
 ./Artwork/Blocks/TitleScreen.pxo
 ./Artwork/Blocks/Leaves.pxo
