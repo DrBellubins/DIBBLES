@@ -8,10 +8,22 @@ namespace DIBBLES.Effects;
 public class TonemappingEffect : PostProcessingEffect
 {
     public bool Enabled = true;
-    public float PreBrightness = 1.4f;
-    public float PostBrightness = 1.3f;
     
-    private int algorithmSelectionIndex = 0; // ACES by default
+    // ACES defaults
+    private float preBrightnessACES = 1.0f;
+    private float postBrightnessACES = 1.4f;
+    
+    // AgX defaults
+    private float preBrightnessAgX = 1.0f;
+    private float postBrightnessAgX = 1.2f;
+    
+    private int algorithmSelectionIndex = 1; // 0 = ACES, 1 = AgX
+    
+    private float saturation = 1.0f;
+    
+    // AgX
+    private float exposureEV = 0.5f;    // Stops
+    private int agxLook = 1;            // 0=Low, 1=Medium, 2=High, 3=VeryHigh
     
     private Effect tonemapEffect;
     
@@ -44,14 +56,22 @@ public class TonemappingEffect : PostProcessingEffect
         DebugMenu.RegisterParams
         (
             new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
-            new SliderParam("Pre-Brightness", 0.0f, 10.0f, () => PreBrightness, v => PreBrightness = v),
-            new SliderParam("Post-Brightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v),
             
             new DropdownParam("Algorithm", new []
             {
                 "ACES",
                 "AgX"
-            }, algorithmSelectionIndex, () => algorithmSelectionIndex, v => algorithmSelectionIndex = v)
+            }, algorithmSelectionIndex, () => algorithmSelectionIndex, v => algorithmSelectionIndex = v),
+            
+            new SeparatorParam("ACES"),
+            
+            new SliderParam("Pre-Brightness ACES", 0.0f, 4.0f, () => preBrightnessACES, v => preBrightnessACES = v),
+            new SliderParam("Post-Brightness ACES", 0.0f, 4.0f, () => postBrightnessACES, v => postBrightnessACES = v),
+            
+            new SeparatorParam("AgX"),
+            
+            new SliderParam("Pre-Brightness AgX", 0.0f, 4.0f, () => preBrightnessAgX, v => preBrightnessAgX = v),
+            new SliderParam("Post-Brightness AgX", 0.0f, 4.0f, () => postBrightnessAgX, v => postBrightnessAgX = v)
         );
     }
 
@@ -91,11 +111,24 @@ public class TonemappingEffect : PostProcessingEffect
         // Set effect params (only the source texture is needed)
         EffectParams.SetTexture(tonemapEffect, "SourceTex", ColorBuffer);
         
-        EffectParams.SetFloat(tonemapEffect, "PreBrightness", PreBrightness);
-        EffectParams.SetFloat(tonemapEffect, "PostBrightness", PostBrightness);
+        EffectParams.SetInt(tonemapEffect, "Algorithm", algorithmSelectionIndex);
         
-        // Use the ACES technique implemented in Tonemap.fx
-        tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["TonemapACES"];
+        if (algorithmSelectionIndex == 0) // ACES
+        {
+            EffectParams.SetFloat(tonemapEffect, "PreBrightness", preBrightnessACES);
+            EffectParams.SetFloat(tonemapEffect, "PostBrightness", postBrightnessACES);
+        }
+        else if (algorithmSelectionIndex == 1) // AgX
+        {
+            EffectParams.SetFloat(tonemapEffect, "PreBrightness", preBrightnessAgX);
+            EffectParams.SetFloat(tonemapEffect, "PostBrightness", postBrightnessAgX);
+            
+            EffectParams.SetFloat(tonemapEffect, "ExposureEV", exposureEV);
+            EffectParams.SetInt(tonemapEffect, "AgxLook", agxLook);
+            EffectParams.SetFloat(tonemapEffect, "Saturation", saturation);
+        }
+        
+        tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["Tonemap"];
 
         foreach (var pass in tonemapEffect.CurrentTechnique.Passes)
         {

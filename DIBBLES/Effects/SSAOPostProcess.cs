@@ -32,7 +32,7 @@ public class SSAOPostProcess : PostProcessingEffect
 {
     public float Radius = 0.5f;
     public float Bias = 0.02f;
-    public float TotalStrength = 1.3f;
+    public float TotalStrength = 0.8f;
     public float BaseAO = 0.05f;
     
     public static bool Enabled = true;

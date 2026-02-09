@@ -1,4 +1,7 @@
-#include "ACES.hlsl"
+#include "Includes/ACES.hlsl"
+#include "Includes/AgX.hlsl"
+
+int Algorithm; // 0 = ACES, 1 = AgX
 
 float PreBrightness;
 float PostBrightness;
@@ -35,26 +38,31 @@ VertOut FullscreenVS(VertIn i)
     return o;
 }
 
-float4 TonemapACESPS(float2 uv : TEXCOORD0) : COLOR0
+float4 TonemapPS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 src = tex2D(SourceSampler, uv);
-
     src.rgb = src.rgb * PreBrightness;
 
-    // Assume src.rgb is in linear sRGB (HDR possible); apply ACES curve
-    float3 mapped = ACESFitted(src.rgb);
-
-    mapped = saturate(mapped * PostBrightness);
+    if (Algorithm == 0) // ACES
+    {
+        src.rgb = TonemapACES(src.rgb);
+        src.rgb = saturate(src.rgb * PostBrightness);
+    }
+    else // AgX asf
+    {
+        src.rgb = TonemapAgX(src.rgb);
+        src.rgb = saturate(src.rgb * PostBrightness);
+    }
 
     // Preserve source alpha
-    return float4(mapped, src.a);
+    return src;
 }
 
-technique TonemapACES
+technique Tonemap
 {
     pass P0
     {
         VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 TonemapACESPS();
+        PixelShader  = compile ps_3_0 TonemapPS();
     }
 }

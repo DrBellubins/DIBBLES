@@ -21,7 +21,7 @@ float3 RRTAndODTFit(float3 v)
     return a / b;
 }
 
-float3 ACESFitted(float3 color)
+float3 TonemapACES(float3 color)
 {
     color = mul(ACESInputMat, color);
 

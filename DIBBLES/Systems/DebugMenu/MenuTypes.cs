@@ -22,6 +22,21 @@ public interface IDebugParam
     void Draw();
 }
 
+public sealed class SeparatorParam : IDebugParam
+{
+    private readonly string _label;
+
+    public SeparatorParam(string label)
+    {
+        _label = label;
+    }
+    
+    public void Draw()
+    {
+        ImGui.SeparatorText(_label);
+    }
+}
+
 public sealed class DropdownParam : IDebugParam
 {
     private readonly string _label;
@@ -43,6 +58,8 @@ public sealed class DropdownParam : IDebugParam
     {
         //ImGui.
         int v = _get();
+        
+        //ImGui
         
         if (ImGui.Combo(_label, ref v, _items, _items.Length))
             _set(v);
