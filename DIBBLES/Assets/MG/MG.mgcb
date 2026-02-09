@@ -42,13 +42,13 @@
 /build:Shaders/Tonemap.fx
 
 #----------------------------- Includes/ACES.hlsl ----------------------------#
-/copy:Includes/ACES.hlsl
+/copy:Shaders/Includes/ACES.hlsl
 /importer:TextImporter
 /processor:PassThroughProcessor
-/build:Includes/ACES.hlsl
+/build:Shaders/Includes/ACES.hlsl
 
 #----------------------------- Includes/AgX.hlsl -----------------------------#
-/copy:Includes/AgX.hlsl
+/copy:Shaders/Includes/AgX.hlsl
 /importer:TextImporter
 /processor:PassThroughProcessor
-/build:Includes/AgX.hlsl
+/build:Shaders/Includes/AgX.hlsl
