@@ -28,6 +28,11 @@ public class MeshDataGeneration
         List<Vector2> texcoords = [];
         List<Color> colors = [];
         
+        List<Vector4> uvRects = new();
+        List<Vector4> uvBasis = new();
+        List<Vector4> emissiveUVRects = new();
+        List<Vector4> emissiveUVBasis = new();
+        
         var rng = new SeededRandom(1337); // TEMP
         
         for (int x = 0; x < ChunkSize; x++)
@@ -139,6 +144,42 @@ public class MeshDataGeneration
                         );
                     }*/
                     
+                    // Base atlas rect + basis (ordered per-face UVs already computed in baseUVs)
+                    RectangleF baseRect;
+
+                    if (blockInfo.FaceUVs != null && blockInfo.FaceUVs.TryGetValue(faceIdx, out baseRect))
+                    {
+                    }
+                    else if (!BlockData.AtlasUVs.TryGetValue((blockType, faceIdx), out baseRect))
+                    {
+                        baseRect = new RectangleF(0, 0, 1, 1);
+                    }
+
+                    Vector2 baseBL = baseUVs[0];
+                    Vector4 baseBasis4 = FaceUtils.ComputeUVBasis(baseUVs);
+                    Vector4 baseRect4 = new Vector4(baseBL.X, baseBL.Y, baseRect.Width, baseRect.Height);
+
+                    // Emissive atlas rect + basis
+                    Vector2[] emisUVs;
+
+                    if (!BlockData.EmissiveFaceUVsOrdered.TryGetValue((blockType, faceIdx), out emisUVs))
+                    {
+                        // Fallback to base orientation if emissive face UVs are missing
+                        emisUVs = baseUVs;
+                    }
+
+                    RectangleF emisRect;
+
+                    if (!BlockData.EmissiveAtlasUVs.TryGetValue((blockType, faceIdx), out emisRect))
+                    {
+                        // Fallback: use base rect (means emissive atlas layout matches or is absent)
+                        emisRect = baseRect;
+                    }
+
+                    Vector2 emisBL = emisUVs[0];
+                    Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
+                    Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+                    
                     if (isTransparencyPass)
                     {
                         // For transparent faces, store for sorting
@@ -152,7 +193,9 @@ public class MeshDataGeneration
                             UVs = new[] { uv0, uv1, uv2, uv3 },
                             Colors = faceColors,
                             VertexOffset = vertexOffset,
-                            CenterDistance =  dist
+                            CenterDistance =  dist,
+                            Type = blockType,
+                            FaceIdx = faceIdx
                         }));
                     }
                     else
@@ -171,6 +214,26 @@ public class MeshDataGeneration
                             vertexOffset + 3, vertexOffset + 2, vertexOffset + 0
                         });
         
+                        uvRects.Add(baseRect4);
+                        uvRects.Add(baseRect4);
+                        uvRects.Add(baseRect4);
+                        uvRects.Add(baseRect4);
+
+                        uvBasis.Add(baseBasis4);
+                        uvBasis.Add(baseBasis4);
+                        uvBasis.Add(baseBasis4);
+                        uvBasis.Add(baseBasis4);
+
+                        emissiveUVRects.Add(emisRect4);
+                        emissiveUVRects.Add(emisRect4);
+                        emissiveUVRects.Add(emisRect4);
+                        emissiveUVRects.Add(emisRect4);
+
+                        emissiveUVBasis.Add(emisBasis4);
+                        emissiveUVBasis.Add(emisBasis4);
+                        emissiveUVBasis.Add(emisBasis4);
+                        emissiveUVBasis.Add(emisBasis4);
+                        
                         vertexOffset += 4;
                     }
                 }
@@ -237,6 +300,38 @@ public class MeshDataGeneration
         for (int i = 0; i < indices.Count; i++)
             meshData.Indices[i] = (ushort)indices[i];
 
+        for (int i = 0; i < uvRects.Count; i++)
+        {
+            meshData.UVRects[i * 4 + 0] = uvRects[i].X;
+            meshData.UVRects[i * 4 + 1] = uvRects[i].Y;
+            meshData.UVRects[i * 4 + 2] = uvRects[i].Z;
+            meshData.UVRects[i * 4 + 3] = uvRects[i].W;
+        }
+
+        for (int i = 0; i < uvBasis.Count; i++)
+        {
+            meshData.UVBasis[i * 4 + 0] = uvBasis[i].X;
+            meshData.UVBasis[i * 4 + 1] = uvBasis[i].Y;
+            meshData.UVBasis[i * 4 + 2] = uvBasis[i].Z;
+            meshData.UVBasis[i * 4 + 3] = uvBasis[i].W;
+        }
+
+        for (int i = 0; i < emissiveUVRects.Count; i++)
+        {
+            meshData.EmissiveUVRects[i * 4 + 0] = emissiveUVRects[i].X;
+            meshData.EmissiveUVRects[i * 4 + 1] = emissiveUVRects[i].Y;
+            meshData.EmissiveUVRects[i * 4 + 2] = emissiveUVRects[i].Z;
+            meshData.EmissiveUVRects[i * 4 + 3] = emissiveUVRects[i].W;
+        }
+
+        for (int i = 0; i < emissiveUVBasis.Count; i++)
+        {
+            meshData.EmissiveUVBasis[i * 4 + 0] = emissiveUVBasis[i].X;
+            meshData.EmissiveUVBasis[i * 4 + 1] = emissiveUVBasis[i].Y;
+            meshData.EmissiveUVBasis[i * 4 + 2] = emissiveUVBasis[i].Z;
+            meshData.EmissiveUVBasis[i * 4 + 3] = emissiveUVBasis[i].W;
+        }
+        
         return meshData;
     }
 }

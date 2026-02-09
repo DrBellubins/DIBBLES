@@ -12,7 +12,9 @@ public struct FaceData
     public Color[] Colors;
     public int VertexOffset;
     public float CenterDistance;   // For sorting
-    //public Texture2D Texture;      // If faces may use different textures
+    
+    public BlockType Type;
+    public int FaceIdx;
 }
 
 public static class TerrainUtils
