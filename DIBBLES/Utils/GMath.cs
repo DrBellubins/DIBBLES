@@ -168,12 +168,12 @@ public static class GMath
     {
         unchecked
         {
-            int h = seed;
-            h ^= x * 0x27D4EB2D;
+            uint h = (uint)seed;
+            h ^= (uint)x * 0x27D4EB2Du;
             h = (h << 13) | (h >> 19);
-            h ^= z * 0x165667B1;
-            h *= 0x9E3779B9;
-            return h;
+            h ^= (uint)z * 0x165667B1u;
+            h *= 0x9E3779B9u; // Knuth's golden ratio (uint)
+            return (int)h;
         }
     }
 }

@@ -47,9 +47,6 @@ public class TerrainGeneration
     
     public float VisualLoadProgress { get; private set; } = 0f;
     
-    // Average biome region size in blocks (XZ). Tune between 256 and 1024.
-    public const int BiomeCellSize = 512;
-    
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
@@ -484,58 +481,7 @@ public class TerrainGeneration
             }
         }
     }
-    
-    public static TerrainBiome[] BiomeCycle = new TerrainBiome[]
-    {
-        TerrainBiome.Plains,
-        TerrainBiome.Desert,
-        TerrainBiome.Snowlands
-    };
-    
-    
-    public static TerrainBiome ComputeBiomeAt(Vector3Int worldPos)
-    {
-        // Work on XZ; biomes vary horizontally
-        int cellX = (int)MathF.Floor(worldPos.X / (float)BiomeCellSize);
-        int cellZ = (int)MathF.Floor(worldPos.Z / (float)BiomeCellSize);
 
-        float bestDist2 = float.MaxValue;
-        TerrainBiome bestBiome = TerrainBiome.Plains;
-
-        // Search 3x3 neighborhood of macro cells for nearest jittered center
-        for (int dz = -1; dz <= 1; dz++)
-        {
-            for (int dx = -1; dx <= 1; dx++)
-            {
-                int nx = cellX + dx;
-                int nz = cellZ + dz;
-
-                int h = GMath.Hash2i(nx, nz, Seed);
-
-                // Deterministic jitter inside the macro cell (keep below cell size)
-                float jx = (((h & 0xFFFF) / 65535f) - 0.5f) * BiomeCellSize * 0.8f;
-                float jz = ((((h >> 16) & 0xFFFF) / 65535f) - 0.5f) * BiomeCellSize * 0.8f;
-
-                float cx = nx * BiomeCellSize + BiomeCellSize * 0.5f + jx;
-                float cz = nz * BiomeCellSize + BiomeCellSize * 0.5f + jz;
-
-                float dxw = worldPos.X - cx;
-                float dzw = worldPos.Z - cz;
-                float d2 = dxw * dxw + dzw * dzw;
-
-                if (d2 < bestDist2)
-                {
-                    bestDist2 = d2;
-                    int pick = Math.Abs(h) % BiomeCycle.Length;
-                    bestBiome = BiomeCycle[pick];
-                }
-            }
-        }
-
-        return bestBiome;
-    }
-
-    
     private void rebuildActiveView(Vector3Int centerChunk)
     {
         activeViewChunks.Clear();

@@ -16,6 +16,8 @@ public class TerrainMesh
 {
     public const bool SmoothLighting = true;
     public const bool UseGreedyMeshing = false;
+
+    public const bool Fullbright = true;
     
     public const bool GreedyRespectAntiTileFlips = false;
     public const bool NonGreedyRespectAntiTileFlips = false;

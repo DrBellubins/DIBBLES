@@ -29,7 +29,7 @@ public class DesertBiome
             returnData.IslandDepth++;
         }
         
-        chunk.SetBiomeAt(returnData.LocalPos.X, returnData.LocalPos.Y, returnData.LocalPos.Z, TerrainBiome.Plains);
+        chunk.SetBiomeAt(returnData.LocalPos.X, returnData.LocalPos.Y, returnData.LocalPos.Z, TerrainBiome.Desert);
         
         bRetData = returnData;
     }
