@@ -7,10 +7,9 @@ namespace DIBBLES.Effects;
 
 public class TonemappingEffect : PostProcessingEffect
 {
+    public bool Enabled = true;
     public float PreBrightness = 1.4f;
     public float PostBrightness = 1.3f;
-
-    public bool Enabled = true;
     
     private Effect tonemapEffect;
     
@@ -54,6 +53,22 @@ public class TonemappingEffect : PostProcessingEffect
         if (tonemapEffect == null || quadVertexBuffer == null || quadIndexBuffer == null)
             return;
 
+        if (!Enabled)
+        {
+            // Ensure our output is transparent this frame so composite draws nothing.
+            Graphics.SetRenderTarget(OutputBuffer);
+            Graphics.Clear(Color.Transparent);
+        
+            // Restore default RT immediately.
+            Graphics.SetRenderTarget(null);
+        
+            // Also ensure no stray buffers are left bound.
+            Graphics.SetVertexBuffer(null);
+            Graphics.Indices = null;
+        
+            return;
+        }
+        
         var graphics = Engine.Graphics;
 
         // States for a clean fullscreen draw
@@ -75,8 +90,6 @@ public class TonemappingEffect : PostProcessingEffect
         
         EffectParams.SetFloat(tonemapEffect, "PreBrightness", PreBrightness);
         EffectParams.SetFloat(tonemapEffect, "PostBrightness", PostBrightness);
-        
-        EffectParams.SetBool(tonemapEffect, "Enabled", Enabled);
         
         // Use the ACES technique implemented in Tonemap.fx
         tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["TonemapACES"];

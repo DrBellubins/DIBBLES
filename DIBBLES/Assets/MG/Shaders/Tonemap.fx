@@ -2,8 +2,6 @@
 // Converted from GLSL to HLSL and wired for fullscreen blit usage.
 // Ignore sampler binding issues as requested.
 
-bool Enabled;
-
 float PreBrightness;
 float PostBrightness;
 
@@ -81,22 +79,15 @@ float4 TonemapACESPS(float2 uv : TEXCOORD0) : COLOR0
 {
     float4 src = tex2D(SourceSampler, uv);
 
-    if (Enabled)
-    {
-        src.rgb = src.rgb * PreBrightness;
+    src.rgb = src.rgb * PreBrightness;
 
-        // Assume src.rgb is in linear sRGB (HDR possible); apply ACES curve
-        float3 mapped = ACESFitted(src.rgb);
+    // Assume src.rgb is in linear sRGB (HDR possible); apply ACES curve
+    float3 mapped = ACESFitted(src.rgb);
 
-        mapped = saturate(mapped * PostBrightness);
+    mapped = saturate(mapped * PostBrightness);
 
-        // Preserve source alpha
-        return float4(mapped, src.a);
-    }
-    else
-    {
-        return src;
-    }
+    // Preserve source alpha
+    return float4(mapped, src.a);
 }
 
 technique TonemapACES

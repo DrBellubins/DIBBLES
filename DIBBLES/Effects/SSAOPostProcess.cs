@@ -34,7 +34,7 @@ public class SSAOPostProcess : PostProcessingEffect
     public const float TotalStrength = 1.3f;
     public const float BaseAO = 0.05f;
     
-    public static bool AOEnabled = true;
+    public static bool Enabled = true;
     
     private Effect? effect;
 
@@ -79,7 +79,7 @@ public class SSAOPostProcess : PostProcessingEffect
         if (effect == null || blueNoiseTex == null || SSAOTarget == null || SSAOBlurTarget == null)
             return;
         
-        if (!AOEnabled)
+        if (!Enabled)
         {
             // Ensure our output is transparent this frame so composite draws nothing.
             Graphics.SetRenderTarget(OutputBuffer);

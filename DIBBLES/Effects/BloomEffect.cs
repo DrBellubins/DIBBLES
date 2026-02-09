@@ -12,7 +12,8 @@ namespace DIBBLES.Effects;
 public class BloomEffect : PostProcessingEffect
 {
     public const int SampleCount = 8;
-    
+
+    public bool Enabled = true;
     public float Intensity = 0.2f; // Overall intensity
     public float Strength = 1.0f;  // Per sample intensity
     public float Radius = 2.0f;
@@ -55,6 +56,7 @@ public class BloomEffect : PostProcessingEffect
         
         DebugMenu.RegisterParams
         (
+            new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
             new SliderParam("Intensity", 0.0f, 1.0f, () => Intensity, v => Intensity = v),
             new SliderParam("Strength", 0.0f, 10.0f, () => Strength, v => Strength = v),
             new SliderParam("Radius", 0.0f, 10.0f, () => Radius, v => Radius = v)
@@ -73,6 +75,22 @@ public class BloomEffect : PostProcessingEffect
             Graphics.Clear(Color.Black);
             Graphics.SetRenderTarget(null);
             Debug.Error("Bloom GameScene.EmissiveBuffer NULL");
+            return;
+        }
+        
+        if (!Enabled)
+        {
+            // Ensure our output is transparent this frame so composite draws nothing.
+            Graphics.SetRenderTarget(OutputBuffer);
+            Graphics.Clear(Color.Transparent);
+        
+            // Restore default RT immediately.
+            Graphics.SetRenderTarget(null);
+        
+            // Also ensure no stray buffers are left bound.
+            Graphics.SetVertexBuffer(null);
+            Graphics.Indices = null;
+        
             return;
         }
     

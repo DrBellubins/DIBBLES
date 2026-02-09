@@ -322,8 +322,8 @@ public class GameScene : Scene
 
     private void toggleAOCMD(string[] args)
     {
-        SSAOPostProcess.AOEnabled = !SSAOPostProcess.AOEnabled;
-        Chat.Write($"Toggled ambient occlusion: {SSAOPostProcess.AOEnabled}", ChatMessageType.Command);
+        SSAOPostProcess.Enabled = !SSAOPostProcess.Enabled;
+        Chat.Write($"Toggled ambient occlusion: {SSAOPostProcess.Enabled}", ChatMessageType.Command);
     }
     
     private void takeScreenshot(GraphicsDevice graphicsDevice)
