@@ -13,6 +13,7 @@ public class TerrainSurface
     public const int BiomeTransitionWidth = 6;
     
     private FastNoiseLite biomeNoise = new(Seed);
+    private FastNoiseLite biomeDitherNoise = new(Seed);
 
     public TerrainSurface()
     {
@@ -24,6 +25,10 @@ public class TerrainSurface
         biomeNoise.SetCellularDistanceFunction(FastNoiseLite.CellularDistanceFunction.Euclidean);
         biomeNoise.SetCellularReturnType(FastNoiseLite.CellularReturnType.CellValue);
         biomeNoise.SetFrequency(freq);
+        
+        biomeDitherNoise.SetSeed(Seed);
+        biomeDitherNoise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2);
+        biomeDitherNoise.SetFrequency(0.07f); // tune as desired
     }
     
     public void Generate(Chunk chunk)
@@ -79,8 +84,7 @@ public class TerrainSurface
                             var blend = ComputeBiomeBlendCell(
                                 new Vector3Int(worldX, worldY, worldZ), biomeNoise, biomeWarpNoise);
                             
-                            float dither = biomeNoise.GetNoise(worldX * 0.07f,
-                                worldY * 0.07f, worldZ * 0.07f) * 0.5f + 0.5f;
+                            float dither = biomeDitherNoise.GetNoise(worldX, worldY, worldZ) * 0.5f + 0.5f;
                             
                             selectedBiome = dither < blend.BlendT ? blend.Primary : blend.Secondary;
                             biomeSelected = true;
