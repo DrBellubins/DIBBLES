@@ -29,12 +29,11 @@ public struct VertexPositionTexCoord :  IVertexType
 
 public class SSAOPostProcess : PostProcessingEffect
 {
+    public bool Enabled = true;
     public const float Radius = 0.5f;
     public const float Bias = 0.02f;
     public const float TotalStrength = 1.3f;
     public const float BaseAO = 0.05f;
-    
-    public static bool AOEnabled = true;
     
     private Effect? effect;
 
@@ -79,7 +78,7 @@ public class SSAOPostProcess : PostProcessingEffect
         if (effect == null || blueNoiseTex == null || SSAOTarget == null || SSAOBlurTarget == null)
             return;
         
-        if (!AOEnabled)
+        if (!Enabled)
         {
             // Ensure our output is transparent this frame so composite draws nothing.
             Graphics.SetRenderTarget(OutputBuffer);
