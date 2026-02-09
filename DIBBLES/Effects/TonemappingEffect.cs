@@ -11,6 +11,8 @@ public class TonemappingEffect : PostProcessingEffect
     public float PreBrightness = 1.4f;
     public float PostBrightness = 1.3f;
     
+    private int algorithmSelectionIndex = 0; // ACES by default
+    
     private Effect tonemapEffect;
     
     private VertexBuffer quadVertexBuffer;
@@ -42,8 +44,14 @@ public class TonemappingEffect : PostProcessingEffect
         DebugMenu.RegisterParams
         (
             new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
-            new SliderParam("PreBrightness", 0.0f, 10.0f, () => PreBrightness, v => PreBrightness = v),
-            new SliderParam("PostBrightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v)
+            new SliderParam("Pre-Brightness", 0.0f, 10.0f, () => PreBrightness, v => PreBrightness = v),
+            new SliderParam("Post-Brightness", 0.0f, 10.0f, () => PostBrightness, v => PostBrightness = v),
+            
+            new DropdownParam("Algorithm", new []
+            {
+                "ACES",
+                "AgX"
+            }, algorithmSelectionIndex, () => algorithmSelectionIndex, v => algorithmSelectionIndex = v)
         );
     }
 

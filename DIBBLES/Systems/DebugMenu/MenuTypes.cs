@@ -22,6 +22,33 @@ public interface IDebugParam
     void Draw();
 }
 
+public sealed class DropdownParam : IDebugParam
+{
+    private readonly string _label;
+    private readonly int _selectionIndex;
+    private readonly string[] _items;
+    private readonly Func<int> _get;
+    private readonly Action<int> _set;
+
+    public DropdownParam(string label, string[] itmes, int selectionIndex, Func<int> getter, Action<int> setter)
+    {
+        _label = label;
+        _selectionIndex = selectionIndex;
+        _items = itmes;
+        _get = getter;
+        _set = setter;
+    }
+
+    public void Draw()
+    {
+        //ImGui.
+        int v = _get();
+        
+        if (ImGui.Combo(_label, ref v, _items, _items.Length))
+            _set(v);
+    }
+}
+
 // Slider (float)
 public sealed class SliderParam : IDebugParam
 {
@@ -42,11 +69,11 @@ public sealed class SliderParam : IDebugParam
 
     public void Draw()
     {
+        //ImGui.
         float v = _get();
+        
         if (ImGui.SliderFloat(_label, ref v, _min, _max))
-        {
             _set(v);
-        }
     }
 }
 
@@ -67,10 +94,9 @@ public sealed class CheckBoxParam : IDebugParam
     public void Draw()
     {
         bool v = _get();
+        
         if (ImGui.Checkbox(_label, ref v))
-        {
             _set(v);
-        }
     }
 }
 

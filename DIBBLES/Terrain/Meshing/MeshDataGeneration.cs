@@ -120,12 +120,18 @@ public class MeshDataGeneration
                         }
                     }
                     
-                    float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx); // samples surrounding voxels
-                    Color flatColor = FaceUtils.ToColor(faceLight);
-
-                    Color[] faceColors = SmoothLighting
-                        ? FaceUtils.GetFaceColors(chunk, pos, faceIdx)
-                        : new[] { flatColor, flatColor, flatColor, flatColor };
+                    // samples surrounding voxels
+                    Color[] faceColors;
+                    
+                    if (SmoothLighting)
+                        faceColors = FaceUtils.GetFaceColors(chunk, pos, faceIdx, blockInfo.Brightness);
+                    else
+                    {
+                        float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx, blockInfo.Brightness);
+                        Color flatColor = FaceUtils.ToColor(faceLight);
+                        
+                        faceColors = new[] { flatColor, flatColor, flatColor, flatColor };
+                    }
                     
                     // Ambient occlusion - Disabled because it looks to "grungey"
                     /*float[] ao = FaceUtils.GetFaceAmbientOcclusion(chunk, neighborCache, pos, faceIdx); // AO factors [0..1]
@@ -265,7 +271,7 @@ public class MeshDataGeneration
                     vertexOffset + 3, vertexOffset + 2, vertexOffset + 0
                 });
 
-                // NEW: append base and emissive UV data for transparent faces
+                // Append base and emissive UV data for transparent faces
                 uvRects.Add(face.BaseRect);
                 uvRects.Add(face.BaseRect);
                 uvRects.Add(face.BaseRect);

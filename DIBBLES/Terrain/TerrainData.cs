@@ -17,6 +17,7 @@ public struct BlockInfo
     public int MaxStack;
     public bool IsTransparent;   // True if light can pass through
     public byte LightEmission;   // Light level emitted by this block (0-15)
+    public float Brightness;     // Brightness of the face as a multiplier of light level [0..1]
     
     // Key = FaceIdx
     public Dictionary<int, RectangleF>? FaceUVs; // Used for per-face texturing, if null, use same texture for all faces.
@@ -25,7 +26,8 @@ public struct BlockInfo
     
     public bool IsBillboard;
     
-    public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false, byte lightEmission = 0, bool isBillboard = false)
+    public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false,
+        byte lightEmission = 0, bool isBillboard = false, float brightness = 1f)
     {
         Hardness = hardness;
         Thickness = thickness;
@@ -33,6 +35,7 @@ public struct BlockInfo
         IsTransparent = isTransparent;
         LightEmission = lightEmission;
         IsBillboard = isBillboard;
+        Brightness = brightness;
     }
 }
 
@@ -484,17 +487,19 @@ public class BlockData
             //if (table == null)
             //    continue; // Not a table
 
-            int hardness = table.HasKey("Hardness") ? (int)table["Hardness"].AsInteger.Value : 0;
+            int hardness = table.HasKey("Hardness") ? (int)table["Hardness"].AsInteger.Value : 1;
             float thickness = table.HasKey("Thickness") ? (float)table["Thickness"].AsFloat.Value : 0f;
-            int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 0;
+            int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 64;
             bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
+            float brightness = table.HasKey("Brightness") ? (float)table["Brightness"].AsFloat.Value : 1f;
             bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
             bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? table["AntiTileUVsVertically"].AsBoolean.Value : true;
             bool isBillboard = table.HasKey("IsBillboard") ? table["IsBillboard"].AsBoolean.Value : false;
             
+            var blockInfo = new BlockInfo(hardness, thickness, maxStack,
+                isTransparent, lightEmission, isBillboard, brightness);
             
-            var blockInfo = new BlockInfo(hardness, thickness, maxStack, isTransparent, lightEmission, isBillboard);
             blockInfo.AntiTileUVsHorizontally =  antiTileUVsHorizontally;
             blockInfo.AntiTileUVsVertically = antiTileUVsVertically;
             

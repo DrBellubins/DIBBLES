@@ -40,3 +40,15 @@
 
 # Build the tonemap shader
 /build:Shaders/Tonemap.fx
+
+#----------------------------- Includes/ACES.hlsl ----------------------------#
+/copy:Includes/ACES.hlsl
+/importer:TextImporter
+/processor:PassThroughProcessor
+/build:Includes/ACES.hlsl
+
+#----------------------------- Includes/AgX.hlsl -----------------------------#
+/copy:Includes/AgX.hlsl
+/importer:TextImporter
+/processor:PassThroughProcessor
+/build:Includes/AgX.hlsl

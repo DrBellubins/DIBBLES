@@ -220,7 +220,7 @@ public static class FaceUtils
         }
     }
     
-    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx)
+    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx, float brightness = 1f)
     {
         // Lighting calculation for each face (copied from TerrainMesh.cs)
         float l0, l1, l2, l3;
@@ -228,40 +228,40 @@ public static class FaceUtils
         switch (faceIdx)
         {
             case 0: // Front (-Z)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
                 break;
             case 1: // Back (+Z)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
                 break;
             case 2: // Left (-X)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
                 break;
             case 3: // Right (+X)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
                 break;
             case 4: // Bottom (-Y)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
                 break;
             case 5: // Top (+Y)
-                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z);
-                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1);
-                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1);
-                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z);
+                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z, brightness);
+                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
+                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
+                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
                 break;
             default:
                 l0 = l1 = l2 = l3 = 1f;
@@ -370,7 +370,7 @@ public static class FaceUtils
     }
     
     // Flat face light from neighbor cell in face direction
-    public static float GetFaceLightFlat(Chunk chunk, Vector3Int pos, int faceIdx)
+    public static float GetFaceLightFlat(Chunk chunk, Vector3Int pos, int faceIdx, float brightness = 1f)
     {
         // Map faceIdx to neighbor offset (same ordering as VoxelFaceInfos)
         Vector3Int neighborOffset = faceIdx switch
@@ -410,11 +410,11 @@ public static class FaceUtils
         }
 
         // Normalize to [0..1]
-        return lightLevel / 15f;
+        return (lightLevel / 15f) * brightness;
     }
     
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz)
+    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz, float brightness = 1f)
     {
         float total = 0f;
         int count = 0;
@@ -451,11 +451,11 @@ public static class FaceUtils
             count++;
         }
         
-        return total / (count * 15f); // Normalize to [0,1]
+        return (total / (count * 15f)) * brightness; // Normalize to [0,1]
     }
     
     // TODO: Bottom blocks do not run this check
-    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz)
+    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz, float brightness = 1f)
     {
         float total = 0f;
         int count = 0;
@@ -491,7 +491,7 @@ public static class FaceUtils
             count++;
         }
 
-        return total / (count * 15f); // Normalize to [0,1]
+        return (total / (count * 15f)) * brightness; // Normalize to [0,1]
     }
     
     public static float[] GetFaceAmbientOcclusion(Chunk chunk, NeighborCache cache, Vector3Int pos, int faceIdx)

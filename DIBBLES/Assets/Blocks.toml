@@ -95,6 +95,7 @@ MaxStack = 64
 IsTransparent = true
 LightEmission = 15
 EmissiveTexture = "Leaves_e.png"
+Brightness = 0.6
 
 [Glass]
 Hardness = 2
@@ -112,6 +113,7 @@ LightEmission = 15
 AntiTileUVsHorizontally = false
 AntiTileUVsVertically = false
 EmissiveTexture = "Feeb_e.png"
+Brightness = 0.4
 
 [GrassBlades]
 Hardness = 1
