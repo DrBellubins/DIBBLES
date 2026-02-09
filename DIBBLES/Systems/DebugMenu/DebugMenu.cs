@@ -47,7 +47,7 @@ public class DebugMenu
         
         if (Open)
             Interactions.CloseMenusAndFreeze();
-        else
+        else if (Interactions.Frozen)
             Interactions.Unfreeze();
     }
 

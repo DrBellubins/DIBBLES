@@ -58,6 +58,9 @@ public class Interactions
 
     public static void Unfreeze()
     {
+        if (!Frozen && !wasClosedAndFrozen)
+            return;
+
         CursorManager.LockCursor();
         Frozen = false;
         wasClosedAndFrozen = false;
