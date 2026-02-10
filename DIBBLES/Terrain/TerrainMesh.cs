@@ -38,6 +38,8 @@ public class TerrainMesh
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
     public readonly ConcurrentQueue<(Vector3Int chunkPos, BlockType type, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
     
+    private readonly List<Vector3Int> transparentDrawOrder = new();
+    
     public void Generate(Chunk chunk)
     {
         var meshData = MeshDataGen.Generate(chunk, false);
@@ -123,61 +125,85 @@ public class TerrainMesh
         //Debug.TimerStart("Terrain transparent");
         var graphics = Engine.Graphics;
         
-        graphics.BlendState = BlendState.Opaque;
-        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.DepthRead;
         graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
         graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
         
         // Disable culling so billboards render double-sided
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
-        foreach (var tModel in Mesh.TransparentModels)
+        // Transparency sorting
+        var camPos = GameScene.PlayerCharacter.Camera.Position.ToVector3();
+
+        transparentDrawOrder.Clear();
+
+        foreach (var kv in Mesh.TransparentModels)
         {
-            // Chunk center in world space
-            Vector3 center = tModel.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            // Skip if chunk is outside view frustum
-            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
-                continue;
-            
-            // tModel.Value is a RuntimeModel
-            if (tModel.Value != null)
+            if (kv.Value == null)
             {
-                var world = Matrix.CreateTranslation(tModel.Key.ToVector3());
-                var shader = tModel.Value.Shader;
-
-                var view = GameScene.PlayerCharacter.Camera.View;
-                var projection = GameScene.PlayerCharacter.Camera.Projection;
-                
-                EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
-                EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
-                
-                EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
-                
-                EffectParams.SetMatrix(shader, "World", world);
-                EffectParams.SetMatrix(shader, "View", view);
-                EffectParams.SetMatrix(shader, "Projection", projection);
-                
-                EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-                EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
-                
-                EffectParams.SetFloat(shader, "EmissiveStrength",EmissiveStrength);
-                EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
-                EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-                EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
-                
-                // Ensure technique is set
-                var terrainTech = shader.Techniques["Terrain"];
-                
-                if (terrainTech != null && shader.CurrentTechnique != terrainTech)
-                    shader.CurrentTechnique = terrainTech;
-                
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                    pass.Apply();
-                
-                tModel.Value.Draw(world, view, projection);
+                continue;
             }
+
+            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
+            {
+                continue;
+            }
+
+            transparentDrawOrder.Add(kv.Key);
+        }
+
+        transparentDrawOrder.Sort((a, b) =>
+        {
+            Vector3 ca = a.ToVector3() + new Vector3(ChunkSize * 0.5f);
+            Vector3 cb = b.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+            float da = Vector3.DistanceSquared(camPos, ca);
+            float db = Vector3.DistanceSquared(camPos, cb);
+
+            // Back-to-front: far first
+            return db.CompareTo(da);
+        });
+        
+        foreach (var chunkPos in transparentDrawOrder)
+        {
+            var model = Mesh.TransparentModels[chunkPos];
+
+            var world = Matrix.CreateTranslation(chunkPos.ToVector3());
+            var shader = model.Shader;
+
+            var view = GameScene.PlayerCharacter.Camera.View;
+            var projection = GameScene.PlayerCharacter.Camera.Projection;
+
+            EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+            EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
+
+            EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
+
+            EffectParams.SetMatrix(shader, "World", world);
+            EffectParams.SetMatrix(shader, "View", view);
+            EffectParams.SetMatrix(shader, "Projection", projection);
+
+            EffectParams.SetVector3(shader, "CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
+            EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+            EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+
+            EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
+            EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
+            EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
+            EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
+
+            var terrainTech = shader.Techniques["Terrain"];
+
+            if (terrainTech != null && shader.CurrentTechnique != terrainTech)
+                shader.CurrentTechnique = terrainTech;
+
+            foreach (var pass in shader.CurrentTechnique.Passes)
+                pass.Apply();
+
+            model.Draw(world, view, projection);
         }
         
         //Debug.TimerStop();

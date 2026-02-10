@@ -17,11 +17,9 @@ public class MeshDataGeneration
         if (UseGreedyMeshing)
             return GreedyMeshing.Generate(chunk, isTransparencyPass);
         
-        var cameraPosition = GameScene.PlayerCharacter.Camera.Position.ToVector3();
-        
         var neighborCache = NeighborCache.Build(chunk);
         
-        List<(float dist, FaceData face)> transparentFaces = new();
+        List<FaceData> transparentFaces = new();
         List<Vector3> vertices = [];
         List<int> indices = [];
         List<Vector3> normals = [];
@@ -188,18 +186,13 @@ public class MeshDataGeneration
                     
                     if (isTransparencyPass)
                     {
-                        // For transparent faces, store for sorting
-                        var center = (faceVerts[0] + faceVerts[1] + faceVerts[2] + faceVerts[3]) / 4f;
-                        var dist = Vector3.Distance(cameraPosition, center);
-                        
-                        transparentFaces.Add((dist, new FaceData
+                        transparentFaces.Add(new FaceData
                         {
                             Verts = faceVerts,
                             Normal = normal,
                             UVs = new[] { uv0, uv1, uv2, uv3 },
                             Colors = faceColors,
                             VertexOffset = vertexOffset,
-                            CenterDistance =  dist,
                             Type = blockType,
                             FaceIdx = faceIdx,
                             
@@ -207,7 +200,7 @@ public class MeshDataGeneration
                             BaseBasis = baseBasis4,
                             EmissiveRect = emisRect4,
                             EmissiveBasis = emisBasis4
-                        }));
+                        });
                     }
                     else
                     {
@@ -254,11 +247,9 @@ public class MeshDataGeneration
         // If transparent: sort faces back-to-front and build arrays
         if (isTransparencyPass)
         {
-            transparentFaces.Sort((a, b) => b.dist.CompareTo(a.dist));
-            
             int vertexOffset = 0;
             
-            foreach (var (_, face) in transparentFaces)
+            foreach (var face in transparentFaces)
             {
                 vertices.AddRange(face.Verts);
                 normals.AddRange(Enumerable.Repeat(face.Normal, 4));
