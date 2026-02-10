@@ -146,10 +146,10 @@ PixelOutput PS_Color(PixelInput input)
     float4 texColor = tex2D(AtlasSampler, atlasUV);
     float4 blockColor = texColor * input.Color;
 
-    float alpha = blockColor.a;
+    /*float alpha = blockColor.a;
 
     if (alpha < 1.0)
-        clip(alpha - AlphaCutoff);
+        clip(alpha - AlphaCutoff);*/
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));

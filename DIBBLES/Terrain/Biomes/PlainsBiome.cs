@@ -1,7 +1,7 @@
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
-namespace DIBBLES.Terrain;
+namespace DIBBLES.Terrain.Biomes;
 
 public class PlainsBiome
 {

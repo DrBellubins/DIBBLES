@@ -22,11 +22,9 @@
 ./Terrain/TerrainGeneration.cs
 ./Terrain/TerrainData.cs
 ./Terrain/NeighborCache.cs
-./Terrain/DesertBiome.cs
 ./Terrain/TerrainSkyfill.cs
 ./Terrain/TerrainLighting.cs
 ./Terrain/TerrainBiomes.cs
-./Terrain/PlainsBiome.cs
 ./Terrain/TerrainMesh.cs
 ./Terrain/Features/TerrainIsland.cs
 ./Terrain/Features/TerrainDecorations.cs
@@ -38,8 +36,10 @@
 ./Terrain/Blocks/CraftingTable.cs
 ./Terrain/Blocks/Water.cs
 ./Terrain/TerrainTick.cs
+./Terrain/Biomes/DesertBiome.cs
+./Terrain/Biomes/PlainsBiome.cs
+./Terrain/Biomes/SnowlandsBiome.cs
 ./Terrain/BlockTypes.cs
-./Terrain/SnowlandsBiome.cs
 ./Terrain/TerrainUtils.cs
 ./Terrain/TerrainTypes.cs
 ./Terrain/Meshing/Billboards.cs
@@ -149,6 +149,7 @@
 ./Assets/Textures/Blocks/Error.png
 ./Assets/Textures/Blocks/Feeb_e.png
 ./Assets/Textures/Blocks/Glass.png
+./Assets/Textures/Blocks/Ice.png
 ./Assets/Textures/Blocks/Grass_Side.png
 ./Assets/Textures/Blocks/Leaves.png
 ./Assets/Textures/Blocks/Leaves__e.png
@@ -166,10 +167,13 @@
 ./Assets/Textures/Blocks/Dirt.png
 ./Assets/Textures/Blocks/WoodLog_Top.png
 ./Assets/Textures/Blocks/GrassBlades.png
+./Assets/Textures/Blocks/Sandstone.png
 ./Assets/Textures/Blocks/WoodLog_Side.png
 ./Assets/Blocks.toml
+./Artwork/Blocks/Ice.pxo
 ./Artwork/Blocks/Feeb_e.png
 ./Artwork/Blocks/GrassBlades.pxo
+./Artwork/Blocks/Sandstone.pxo
 ./Artwork/Blocks/Wisp.pxo
 ./Artwork/Blocks/WoodLog_Side.pxo
 ./Artwork/Blocks/Stone.pxo

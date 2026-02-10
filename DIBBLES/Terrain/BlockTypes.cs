@@ -17,5 +17,7 @@ public enum BlockType
     Feeb,
     GrassBlades,
     RedFlower,
-    BlueFlower
+    BlueFlower,
+    Sandstone,
+    Ice
 }

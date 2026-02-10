@@ -1,7 +1,7 @@
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
-namespace DIBBLES.Terrain;
+namespace DIBBLES.Terrain.Biomes;
 
 public class DesertBiome
 {
@@ -25,7 +25,7 @@ public class DesertBiome
         }
         else if (returnData.IslandDepth < 3) // lower sand thickness = 3
         {
-            chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Sand);
+            chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Sandstone);
             returnData.IslandDepth++;
         }
         

@@ -138,3 +138,18 @@ MaxStack = 64
 IsTransparent = true
 LightEmission = 0
 IsBillboard = true
+
+[Sandstone]
+Hardness = 4
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+
+[Ice]
+Hardness = 4
+Thickness = 0.0
+MaxStack = 64
+IsTransparent = false
+LightEmission = 0
+

@@ -337,6 +337,15 @@ public class FastNoiseLite
         ComputeF1F2(mSeed, x, y, z, out f1, out f2);
     }
     
+    public void GetF1F2Cells(float x, float y, float z,
+        out int cx, out int cy, out int cz,
+        out int sx, out int sy, out int sz,
+        out float f1, out float f2)
+    {
+        TransformNoiseCoordinate(ref x, ref y, ref z);
+        ComputeF1F2WithCells(mSeed, x, y, z, out cx, out cy, out cz, out sx, out sy, out sz, out f1, out f2);
+    }
+    
     /// <summary>
     /// 2D warps the input position using current domain warp settings
     /// </summary>
@@ -2131,6 +2140,179 @@ public class FastNoiseLite
             distance1 = FastSqrt(distance1);
         }
 
+        f1 = distance0;
+        f2 = distance1;
+    }
+    
+    private void ComputeF1F2WithCells(long seed, float x, float y, float z,
+        out int cx, out int cy, out int cz,
+        out int sx, out int sy, out int sz,
+        out float f1, out float f2)
+    {
+        int xr = FastRound(x);
+        int yr = FastRound(y);
+        int zr = FastRound(z);
+
+        float distance0 = float.MaxValue;
+        float distance1 = float.MaxValue;
+        float jitter = 0.39614353f * mCellularJitterModifier;
+
+        int bestX = 0, bestY = 0, bestZ = 0;
+        int secondX = 0, secondY = 0, secondZ = 0;
+
+        int xPrimed = (xr - 1) * PrimeX;
+        int yPrimedBase = (yr - 1) * PrimeY;
+        int zPrimedBase = (zr - 1) * PrimeZ;
+
+        switch (mCellularDistanceFunction)
+        {
+            default:
+            case CellularDistanceFunction.Euclidean:
+            case CellularDistanceFunction.EuclideanSq:
+            {
+                for (int xi = xr - 1; xi <= xr + 1; xi++)
+                {
+                    int yPrimed = yPrimedBase;
+
+                    for (int yi = yr - 1; yi <= yr + 1; yi++)
+                    {
+                        int zPrimed = zPrimedBase;
+
+                        for (int zi = zr - 1; zi <= zr + 1; zi++)
+                        {
+                            long hash = Hash(seed, xPrimed, yPrimed, zPrimed);
+                            long idx = hash & (255 << 2);
+
+                            float vecX = (xi - x) + RandVecs3D[idx] * jitter;
+                            float vecY = (yi - y) + RandVecs3D[idx | 1] * jitter;
+                            float vecZ = (zi - z) + RandVecs3D[idx | 2] * jitter;
+
+                            float newDistance = vecX * vecX + vecY * vecY + vecZ * vecZ;
+
+                            if (newDistance < distance0)
+                            {
+                                distance1 = distance0;
+                                secondX = bestX; secondY = bestY; secondZ = bestZ;
+
+                                distance0 = newDistance;
+                                bestX = xi; bestY = yi; bestZ = zi;
+                            }
+                            else if (newDistance < distance1)
+                            {
+                                distance1 = newDistance;
+                                secondX = xi; secondY = yi; secondZ = zi;
+                            }
+
+                            zPrimed += PrimeZ;
+                        }
+
+                        yPrimed += PrimeY;
+                    }
+
+                    xPrimed += PrimeX;
+                }
+                break;
+            }
+            case CellularDistanceFunction.Manhattan:
+            {
+                for (int xi = xr - 1; xi <= xr + 1; xi++)
+                {
+                    int yPrimed = yPrimedBase;
+
+                    for (int yi = yr - 1; yi <= yr + 1; yi++)
+                    {
+                        int zPrimed = zPrimedBase;
+
+                        for (int zi = zr - 1; zi <= zr + 1; zi++)
+                        {
+                            long hash = Hash(seed, xPrimed, yPrimed, zPrimed);
+                            long idx = hash & (255 << 2);
+
+                            float vecX = (xi - x) + RandVecs3D[idx] * jitter;
+                            float vecY = (yi - y) + RandVecs3D[idx | 1] * jitter;
+                            float vecZ = (zi - z) + RandVecs3D[idx | 2] * jitter;
+
+                            float newDistance = FastAbs(vecX) + FastAbs(vecY) + FastAbs(vecZ);
+
+                            if (newDistance < distance0)
+                            {
+                                distance1 = distance0;
+                                secondX = bestX; secondY = bestY; secondZ = bestZ;
+
+                                distance0 = newDistance;
+                                bestX = xi; bestY = yi; bestZ = zi;
+                            }
+                            else if (newDistance < distance1)
+                            {
+                                distance1 = newDistance;
+                                secondX = xi; secondY = yi; secondZ = zi;
+                            }
+
+                            zPrimed += PrimeZ;
+                        }
+
+                        yPrimed += PrimeY;
+                    }
+
+                    xPrimed += PrimeX;
+                }
+                break;
+            }
+            case CellularDistanceFunction.Hybrid:
+            {
+                for (int xi = xr - 1; xi <= xr + 1; xi++)
+                {
+                    int yPrimed = yPrimedBase;
+
+                    for (int yi = yr - 1; yi <= yr + 1; yi++)
+                    {
+                        int zPrimed = zPrimedBase;
+
+                        for (int zi = zr - 1; zi <= zr + 1; zi++)
+                        {
+                            long hash = Hash(seed, xPrimed, yPrimed, zPrimed);
+                            long idx = hash & (255 << 2);
+
+                            float vecX = (xi - x) + RandVecs3D[idx] * jitter;
+                            float vecY = (yi - y) + RandVecs3D[idx | 1] * jitter;
+                            float vecZ = (zi - z) + RandVecs3D[idx | 2] * jitter;
+
+                            float newDistance = (FastAbs(vecX) + FastAbs(vecY) + FastAbs(vecZ)) + (vecX * vecX + vecY * vecY + vecZ * vecZ);
+
+                            if (newDistance < distance0)
+                            {
+                                distance1 = distance0;
+                                secondX = bestX; secondY = bestY; secondZ = bestZ;
+
+                                distance0 = newDistance;
+                                bestX = xi; bestY = yi; bestZ = zi;
+                            }
+                            else if (newDistance < distance1)
+                            {
+                                distance1 = newDistance;
+                                secondX = xi; secondY = yi; secondZ = zi;
+                            }
+
+                            zPrimed += PrimeZ;
+                        }
+
+                        yPrimed += PrimeY;
+                    }
+
+                    xPrimed += PrimeX;
+                }
+                break;
+            }
+        }
+
+        if (mCellularDistanceFunction == CellularDistanceFunction.Euclidean)
+        {
+            distance0 = FastSqrt(distance0);
+            distance1 = FastSqrt(distance1);
+        }
+
+        cx = bestX; cy = bestY; cz = bestZ;
+        sx = secondX; sy = secondY; sz = secondZ;
         f1 = distance0;
         f2 = distance1;
     }

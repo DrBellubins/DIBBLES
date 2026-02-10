@@ -1,7 +1,7 @@
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
-namespace DIBBLES.Terrain;
+namespace DIBBLES.Terrain.Biomes;
 
 public class SnowlandsBiome
 {
@@ -25,7 +25,7 @@ public class SnowlandsBiome
         }
         else if (returnData.IslandDepth < 3) // lower snow thickness = 3
         {
-            chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Snow); // TODO: Should be ice!
+            chunk.SetTypeAt(returnData.LocalPos.X,  returnData.LocalPos.Y, returnData.LocalPos.Z, BlockType.Ice);
             returnData.IslandDepth++;
         }
         
