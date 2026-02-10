@@ -127,6 +127,7 @@ public class TerrainMesh
         
         graphics.BlendState = BlendState.NonPremultiplied;
         graphics.DepthStencilState = DepthStencilState.DepthRead;
+        
         graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
         graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
         

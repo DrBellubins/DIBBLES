@@ -8,6 +8,7 @@
         <PublishAot>true</PublishAot>
         <OptimizationPreference>Speed</OptimizationPreference>
         <InvariantGlobalization>true</InvariantGlobalization>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

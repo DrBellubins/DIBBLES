@@ -150,6 +150,6 @@ LightEmission = 0
 Hardness = 4
 Thickness = 0.0
 MaxStack = 64
-IsTransparent = false
+IsTransparent = true
 LightEmission = 0
 
