@@ -581,8 +581,8 @@ public class TerrainGeneration
     {
         // Draw every mesh in the mesh queue
         Mesh.DrawOpaque();
-        Mesh.DrawTransparent();
         Mesh.BillboardGen.Draw();
+        Mesh.DrawTransparent();
         
         // Chunk border debug
         if (Debug.ShowChunkDebug)

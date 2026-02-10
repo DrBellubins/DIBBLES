@@ -190,11 +190,11 @@ PixelOutput PS_Color(PixelInput input)
 
     PixelOutput output;
 
-    //finalColor.rgb += emissiveRGB;
-
     output.Color0 = finalColor;
+
     output.Color1 = float4(depth01, depth01, depth01, 1.0f);
     output.Color2 = float4(normal01, 1.0f);
+
     output.Color3 = float4(emissiveRGB, 1.0f);
 
     return output;

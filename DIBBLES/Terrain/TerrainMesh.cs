@@ -141,16 +141,12 @@ public class TerrainMesh
         foreach (var kv in Mesh.TransparentModels)
         {
             if (kv.Value == null)
-            {
                 continue;
-            }
 
             Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
 
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
-            {
                 continue;
-            }
 
             transparentDrawOrder.Add(kv.Key);
         }

@@ -69,7 +69,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Single,   // 32-bit float
-            DepthFormat.Depth24,
+            DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
         );
@@ -80,7 +80,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.Depth24,
+            DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
         );
@@ -91,7 +91,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.HdrBlendable,   // emissive can exceed 1.0
-            DepthFormat.Depth24,
+            DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
         );
@@ -102,7 +102,7 @@ public class GameScene : Scene
             Engine.ScreenHeight,
             false,
             SurfaceFormat.Color,
-            DepthFormat.Depth24,
+            DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
         );
