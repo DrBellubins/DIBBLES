@@ -127,7 +127,7 @@ public class TerrainMesh
         
         foreach (var chunkPos in renderSet)
         {
-            if (!OpaqueModels.TryGetValue(chunkPos, out var model) || model == null)
+            if (!TransparentModels.TryGetValue(chunkPos, out var model) || model == null)
                 continue;
 
             var world = Matrix.CreateTranslation(chunkPos.ToVector3());
