@@ -251,15 +251,13 @@ public struct VertexBillboardInstance : IVertexType
 {
     public Vector3 Center;
     public float Angle;
-    //public Vector2 Size;   // X = half width, Y = height
     public Color Color;
-    public int Type;
 
     public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
         new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position,          1), // POSITION1
         new VertexElement(12, VertexElementFormat.Single,  VertexElementUsage.TextureCoordinate, 1), // TEXCOORD1
-        new VertexElement(24, VertexElementFormat.Color,   VertexElementUsage.Color,             1)  // COLOR1
+        new VertexElement(16, VertexElementFormat.Color,   VertexElementUsage.Color,             1)  // COLOR1
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;

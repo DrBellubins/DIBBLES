@@ -67,9 +67,7 @@ public class Billboards
             var billboardTech = shader.Techniques["BillboardInstanced"];
             
             if (billboardTech != null && shader.CurrentTechnique != billboardTech)
-            {
                 shader.CurrentTechnique = billboardTech;
-            }
             
             foreach (var pass in shader.CurrentTechnique.Passes)
             {
@@ -120,8 +118,7 @@ public class Billboards
             {
                 Center = worldCenter,
                 Angle = angle,
-                Color = color,
-                Type = typeIndex
+                Color = color
             };
 
             instances.Add(inst);
