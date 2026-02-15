@@ -52,27 +52,17 @@ public class Billboards
             Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
     
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
+            {
                 continue;
+            }
     
-            (var instanceBuffer, int instanceCount) = kv.Value;
-            
+            (VertexBuffer instanceBuffer, int instanceCount) = kv.Value;
+    
             if (instanceBuffer == null || instanceCount == 0)
+            {
                 continue;
+            }
     
-            // You can cache these; here we recreate, but for reuse, just allocate once & update SetData()
-            instanceBuffer = new VertexBuffer(
-                Engine.Graphics,
-                VertexBillboardInstance.VertexDeclaration,
-                instances.Length,
-                BufferUsage.WriteOnly
-            );
-            
-            instanceBuffer.SetData(instances);
-    
-            // Atlas lookup and shader expects the Type field per instance
-            // The shader will do: float4 rect = atlasRects[Instance.Type];
-    
-            // Bind: crossed-quad mesh and instance buffer
             graphics.SetVertexBuffers
             (
                 new VertexBufferBinding(BillboardVB, 0, 0),
@@ -82,21 +72,18 @@ public class Billboards
             graphics.Indices = BillboardIB;
     
             var billboardTech = shader.Techniques["BillboardInstanced"];
-            
             if (billboardTech != null && shader.CurrentTechnique != billboardTech)
+            {
                 shader.CurrentTechnique = billboardTech;
+            }
     
             foreach (var pass in shader.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                
                 graphics.DrawInstancedPrimitives(
-                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instances.Length
+                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instanceCount
                 );
             }
-    
-            // Clean up if needed (if pooling, skip Dispose)
-            instanceBuffer.Dispose();
         }
     
         graphics.SetVertexBuffer(null);

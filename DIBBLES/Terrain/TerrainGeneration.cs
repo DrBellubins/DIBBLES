@@ -153,20 +153,19 @@ public class TerrainGeneration
         // Billboard pass: throttle to 1 upload per frame
         for (int uploads = 0; uploads < 1; uploads++)
         {
-            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+            if (!Mesh.BillboardGen.BillboardUploadQueue.TryDequeue(out var entry))
                 break;
 
             var chunkPos = entry.chunkPos;
             var instances = entry.instances;
 
-            // Remove old buffer if rewriting (or if empty, just dispose and remove)
+            // Remove old buffer if rewriting, or if empty just dispose and remove
             if (Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var oldBatch))
             {
                 oldBatch.InstanceBuffer?.Dispose();
                 Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
             }
 
-            // Remove/skip empty batch (no billboards to render for this chunk)
             if (instances == null || instances.Length == 0)
                 continue;
 
