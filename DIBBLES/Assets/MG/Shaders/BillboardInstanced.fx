@@ -49,7 +49,6 @@ struct VertexInput
     // Stream 1: per-instance data
     float3 Center     : POSITION1;     // world-space center
     float  Angle      : TEXCOORD1;     // rotation around Y
-    float2 Size       : TEXCOORD2;     // halfWidth, height
     float4 InstanceCol: COLOR1;        // vertex color (lighting)
 };
 
@@ -141,12 +140,25 @@ PixelInput VS(VertexInput input)
     rotatedPosition.z = -localPosition.x * sinAngle + localPosition.z * cosAngle;
 
     // Scale: XZ by halfWidth, Y by height (base quad is halfWidth=0.5, height=1.0)
-    float widthScale  = input.Size.x / 0.5f;
+    /*float widthScale  = input.Size.x / 0.5f;
     float heightScale = input.Size.y / 1.0f;
 
     rotatedPosition.x *= widthScale;
     rotatedPosition.y *= heightScale;
-    rotatedPosition.z *= widthScale;
+    rotatedPosition.z *= widthScale;*/
+
+    static const float BillboardHalfWidth = 0.5f;
+    static const float BillboardHeight    = 1.0f;
+
+    // Base mesh is already built with halfW = 0.5 and height = 1.0,
+    // so scale = 1 keeps current visual size.
+    // If we want bigger/smaller globally, change these multipliers.
+    static const float WidthScale  = 1.0f;
+    static const float HeightScale = 1.0f;
+
+    rotatedPosition.x *= WidthScale;
+    rotatedPosition.y *= HeightScale;
+    rotatedPosition.z *= WidthScale;
 
     // World position without wind deformation (used to sample the wind field)
     float3 worldPositionUnbent = input.Center + rotatedPosition;
@@ -173,7 +185,7 @@ PixelInput VS(VertexInput input)
     float gustStrength = saturate(0.5f + 0.5f * randomWavesGust(windFieldCoord, Time, gustSeed));
 
     // Height factor along the blade so the base stays anchored (0 at base, 1 at tip)
-    float heightFactor = saturate(rotatedPosition.y / max(input.Size.y, 1e-4f));
+    float heightFactor = saturate(rotatedPosition.y / max(BillboardHeight * HeightScale, 1e-4f));
 
     // Bend increases toward the tip
     float bendMask = pow(heightFactor, BendExponent);
