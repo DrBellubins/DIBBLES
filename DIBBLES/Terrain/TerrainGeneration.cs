@@ -119,11 +119,8 @@ public class TerrainGeneration
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass: throttle to 2 uploads per frame
-        for (int uploads = 0; uploads < 2; uploads++)
+        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
         {
-            if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
-                break;
-        
             //Debug.TimerStart("Opaque upload");
             
             var chunkPos = entry.chunkPos;
@@ -135,11 +132,8 @@ public class TerrainGeneration
         }
         
         // Transparent pass: throttle to 2 uploads per frame
-        for (int uploads = 0; uploads < 2; uploads++)
+        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
         {
-            if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
-                break;
-        
             //Debug.TimerStart("Transparent upload");
             
             var chunkPos = entry.chunkPos;
@@ -151,13 +145,8 @@ public class TerrainGeneration
         }
         
         // Billboard pass: throttle to 1 upload per frame
-        for (int uploads = 0; uploads < 1; uploads++)
+        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
         {
-            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
-            {
-                break;
-            }
-
             var chunkPos = entry.chunkPos;
             var instancesByType = entry.instancesByType;
 
@@ -165,18 +154,14 @@ public class TerrainGeneration
             foreach (var key in Mesh.BillboardGen.BillboardBatches.Keys.ToList())
             {
                 if (key.ChunkPos != chunkPos)
-                {
                     continue;
-                }
 
                 Mesh.BillboardGen.BillboardBatches[key].Dispose();
                 Mesh.BillboardGen.BillboardBatches.Remove(key);
             }
 
             if (instancesByType == null || instancesByType.Count == 0)
-            {
                 continue;
-            }
 
             foreach (var kv in instancesByType)
             {
@@ -184,9 +169,7 @@ public class TerrainGeneration
                 var instances = kv.Value;
 
                 if (instances == null || instances.Length == 0)
-                {
                     continue;
-                }
 
                 var vb = new VertexBuffer(
                     Engine.Graphics,
