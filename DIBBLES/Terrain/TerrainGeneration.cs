@@ -159,26 +159,24 @@ public class TerrainGeneration
             var chunkPos = entry.chunkPos;
             var instances = entry.instances;
 
-            // Remove old buffer if rewriting, or if empty just dispose and remove
-            if (Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var oldBatch))
+            if (Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var oldBuffer))
             {
-                oldBatch.InstanceBuffer?.Dispose();
+                oldBuffer.Dispose();
                 Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
             }
-
+            
             if (instances == null || instances.Length == 0)
                 continue;
-
+            
             var vb = new VertexBuffer(
                 Engine.Graphics,
                 VertexBillboardInstance.VertexDeclaration,
                 instances.Length,
                 BufferUsage.WriteOnly
             );
-
+            
             vb.SetData(instances);
-
-            Mesh.BillboardGen.BillboardBatches[chunkPos] = (vb, instances.Length);
+            Mesh.BillboardGen.BillboardBatches[chunkPos] = vb;
         }
     }
     
@@ -263,9 +261,9 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
                 
-                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var batch))
+                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
                 {
-                    batch.InstanceBuffer?.Dispose();
+                    buffer.Dispose();
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
                 }
             }

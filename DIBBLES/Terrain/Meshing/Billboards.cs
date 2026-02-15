@@ -16,7 +16,7 @@ public class Billboards
     
     //public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
     
-    public Dictionary<Vector3Int, VertexBillboardInstance[]> BillboardBatches = new();
+    public Dictionary<Vector3Int, VertexBuffer> BillboardBatches = new();
     
     public void Draw()
     {
@@ -50,42 +50,35 @@ public class Billboards
         foreach (var kv in BillboardBatches)
         {
             Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-    
+            
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
-            {
                 continue;
-            }
-    
-            (VertexBuffer instanceBuffer, int instanceCount) = kv.Value;
-    
-            if (instanceBuffer == null || instanceCount == 0)
-            {
+            
+            VertexBuffer instanceBuffer = kv.Value;
+            
+            if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
                 continue;
-            }
-    
-            graphics.SetVertexBuffers
-            (
+            
+            graphics.SetVertexBuffers(
                 new VertexBufferBinding(BillboardVB, 0, 0),
-                new VertexBufferBinding(instanceBuffer, 0, 1)
-            );
-    
+                new VertexBufferBinding(instanceBuffer, 0, 1));
             graphics.Indices = BillboardIB;
-    
+            
             var billboardTech = shader.Techniques["BillboardInstanced"];
+            
             if (billboardTech != null && shader.CurrentTechnique != billboardTech)
             {
                 shader.CurrentTechnique = billboardTech;
             }
-    
+            
             foreach (var pass in shader.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 graphics.DrawInstancedPrimitives(
-                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instanceCount
-                );
+                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instanceBuffer.VertexCount);
             }
         }
-    
+        
         graphics.SetVertexBuffer(null);
         graphics.Indices = null;
     }
