@@ -54,13 +54,10 @@ public class Billboards
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
                 continue;
     
-            VertexBillboardInstance[] instances = kv.Value as VertexBillboardInstance[];
+            (var instanceBuffer, int instanceCount) = kv.Value;
             
-            if (instances == null || instances.Length == 0)
+            if (instanceBuffer == null || instanceCount == 0)
                 continue;
-    
-            // Ensure the instance buffer is created/reused
-            VertexBuffer instanceBuffer = null;
     
             // You can cache these; here we recreate, but for reuse, just allocate once & update SetData()
             instanceBuffer = new VertexBuffer(
