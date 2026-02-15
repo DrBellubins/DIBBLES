@@ -259,7 +259,6 @@ public struct VertexBillboardInstance : IVertexType
     (
         new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position,          1), // POSITION1
         new VertexElement(12, VertexElementFormat.Single,  VertexElementUsage.TextureCoordinate, 1), // TEXCOORD1
-        new VertexElement(16, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 2), // TEXCOORD2
         new VertexElement(24, VertexElementFormat.Color,   VertexElementUsage.Color,             1)  // COLOR1
     );
 
