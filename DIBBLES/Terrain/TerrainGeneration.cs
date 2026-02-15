@@ -282,11 +282,11 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
                 
-                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
+                /*if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
                 {
                     buffer.Dispose();
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
-                }
+                }*/
             }
         }
     }
