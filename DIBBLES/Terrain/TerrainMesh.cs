@@ -40,8 +40,6 @@ public class TerrainMesh
     public readonly ConcurrentQueue<(Vector3Int chunkPos, 
         Dictionary<BlockType, VertexBillboardInstance[]> instancesByType)> BillboardUploadQueue = new(); // Billboards
     
-    private readonly List<Vector3Int> transparentDrawOrder = new();
-    
     public void Generate(Chunk chunk)
     {
         var meshData = MeshDataGen.Generate(chunk, false);
@@ -59,22 +57,25 @@ public class TerrainMesh
             BillboardUploadQueue.Enqueue((kv.Key, kv.Value));
     }
     
-    public void DrawOpaque()
+    public void DrawOpaque(HashSet<Vector3Int> renderSet)
     {
-        foreach (var oModel in Mesh.OpaqueModels)
+        foreach (var chunkPos in renderSet)
         {
+            if (!OpaqueModels.TryGetValue(chunkPos, out var oModel) || oModel == null)
+                continue;
+            
             // Chunk center in world space
-            Vector3 center = oModel.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
+            Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
 
             // Skip if chunk is outside view frustum
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
                 continue;
             
             // oModel.Value is a RuntimeModel
-            if (oModel.Value != null)
+            if (oModel != null)
             {
-                var world = Matrix.CreateTranslation(oModel.Key.ToVector3());
-                var shader = oModel.Value.Shader;
+                var world = Matrix.CreateTranslation(chunkPos.ToVector3());
+                var shader = terrainShader;
                 
                 var view = GameScene.PlayerCharacter.Camera.View;
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
@@ -106,12 +107,12 @@ public class TerrainMesh
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
-                oModel.Value.Draw(world, view, projection);
+                oModel.Draw(world, view, projection);
             }
         }
     }
 
-    public void DrawTransparent()
+    public void DrawTransparent(HashSet<Vector3Int> renderSet)
     {
         var graphics = Engine.Graphics;
         
@@ -124,42 +125,13 @@ public class TerrainMesh
         // Disable culling so billboards render double-sided
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
-        // Transparency sorting
-        var camPos = GameScene.PlayerCharacter.Camera.Position.ToVector3();
-
-        transparentDrawOrder.Clear();
-
-        foreach (var kv in Mesh.TransparentModels)
+        foreach (var chunkPos in renderSet)
         {
-            if (kv.Value == null)
+            if (!OpaqueModels.TryGetValue(chunkPos, out var model) || model == null)
                 continue;
-
-            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
-                continue;
-
-            transparentDrawOrder.Add(kv.Key);
-        }
-
-        transparentDrawOrder.Sort((a, b) =>
-        {
-            Vector3 ca = a.ToVector3() + new Vector3(ChunkSize * 0.5f);
-            Vector3 cb = b.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            float da = Vector3.DistanceSquared(camPos, ca);
-            float db = Vector3.DistanceSquared(camPos, cb);
-
-            // Back-to-front: far first
-            return db.CompareTo(da);
-        });
-        
-        foreach (var chunkPos in transparentDrawOrder)
-        {
-            var model = Mesh.TransparentModels[chunkPos];
 
             var world = Matrix.CreateTranslation(chunkPos.ToVector3());
-            var shader = model.Shader;
+            var shader = terrainShader;
 
             var view = GameScene.PlayerCharacter.Camera.View;
             var projection = GameScene.PlayerCharacter.Camera.Projection;
@@ -322,7 +294,7 @@ public class TerrainMesh
             VertexBuffer = vertexBuffer,
             IndexBuffer = indexBuffer,
             TriangleCount = data.TriangleCount,
-            Shader = terrainShader.Clone(),
+            Shader = null, // We reference the global TerrainGeneration.terrainShader instead!
             Texture = BlockData.TextureAtlas
         };
     }

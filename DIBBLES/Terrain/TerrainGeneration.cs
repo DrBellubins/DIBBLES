@@ -617,7 +617,7 @@ public class TerrainGeneration
 
     public void DrawOpaque()
     {
-        Mesh.DrawOpaque();
+        Mesh.DrawOpaque(activeViewChunks);
     }
 
     public void DrawBillboards()
@@ -627,7 +627,7 @@ public class TerrainGeneration
     
     public void DrawTransparent()
     {
-        Mesh.DrawTransparent();
+        Mesh.DrawTransparent(activeViewChunks);
     }
     
     public void DrawDebug()
