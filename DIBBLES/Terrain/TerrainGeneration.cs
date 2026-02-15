@@ -153,7 +153,7 @@ public class TerrainGeneration
         // Billboard pass: throttle to 1 upload per frame
         for (int uploads = 0; uploads < 1; uploads++)
         {
-            if (!Mesh.BillboardGen.BillboardUploadQueue.TryDequeue(out var entry))
+            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
                 break;
 
             var chunkPos = entry.chunkPos;
