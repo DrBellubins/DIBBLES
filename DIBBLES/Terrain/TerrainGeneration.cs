@@ -155,45 +155,31 @@ public class TerrainGeneration
         {
             if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
                 break;
-        
-            //Debug.TimerStart("Billboard upload");
-            
+
             var chunkPos = entry.chunkPos;
-            var type = entry.type;
             var instances = entry.instances;
-        
-            if (!Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var batchesByType))
+
+            // Remove old buffer if rewriting (or if empty, just dispose and remove)
+            if (Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var oldBatch))
             {
-                batchesByType = new Dictionary<BlockType, (VertexBuffer, int)>();
-                Mesh.BillboardGen.BillboardBatches[chunkPos] = batchesByType;
+                oldBatch.InstanceBuffer?.Dispose();
+                Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
             }
-        
-            // Remove empty types, otherwise upload buffer
+
+            // Remove/skip empty batch (no billboards to render for this chunk)
             if (instances == null || instances.Length == 0)
-            {
-                if (batchesByType.TryGetValue(type, out var old))
-                {
-                    old.Item1?.Dispose();
-                    batchesByType.Remove(type);
-                }
-        
-                if (batchesByType.Count == 0)
-                    Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
-        
                 continue;
-            }
-        
+
             var vb = new VertexBuffer(
                 Engine.Graphics,
                 VertexBillboardInstance.VertexDeclaration,
                 instances.Length,
                 BufferUsage.WriteOnly
             );
-        
+
             vb.SetData(instances);
-            batchesByType[type] = (vb, instances.Length);
-            
-            //Debug.TimerStop();
+
+            Mesh.BillboardGen.BillboardBatches[chunkPos] = (vb, instances.Length);
         }
     }
     
@@ -278,11 +264,9 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
                 
-                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var batchesByType))
+                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var batch))
                 {
-                    foreach (var kv2 in batchesByType)
-                        kv2.Value.InstanceBuffer?.Dispose();
-
+                    batch.InstanceBuffer?.Dispose();
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
                 }
             }

@@ -20,11 +20,9 @@ public class Billboards
     
     public void Draw()
     {
-        //Debug.TimerStart("Terrain billboard");
         EnsureBillboardMesh();
     
         var graphics = Engine.Graphics;
-    
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
         graphics.SamplerStates[0] = SamplerState.PointClamp;
@@ -35,70 +33,77 @@ public class Billboards
         var projection = GameScene.PlayerCharacter.Camera.Projection;
     
         EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
-        
+    
         EffectParams.SetMatrix(shader, "View", view);
         EffectParams.SetMatrix(shader, "Projection", projection);
-                
-        EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
+    
+        EffectParams.SetVector3(shader, "CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
         EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
         EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
-                
+    
         EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
         EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
         EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
     
         EffectParams.SetFloat(shader, "Time", Time.time);
-        
+    
         foreach (var kv in BillboardBatches)
         {
-            // kv.Key is the chunk position
             Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            // Skip if chunk is outside view frustum
+    
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
                 continue;
+    
+            VertexBillboardInstance[] instances = kv.Value as VertexBillboardInstance[];
             
-            var batchesByType = kv.Value;
+            if (instances == null || instances.Length == 0)
+                continue;
     
-            foreach (var typeBatch in batchesByType)
+            // Ensure the instance buffer is created/reused
+            VertexBuffer instanceBuffer = null;
+    
+            // You can cache these; here we recreate, but for reuse, just allocate once & update SetData()
+            instanceBuffer = new VertexBuffer(
+                Engine.Graphics,
+                VertexBillboardInstance.VertexDeclaration,
+                instances.Length,
+                BufferUsage.WriteOnly
+            );
+            
+            instanceBuffer.SetData(instances);
+    
+            // Atlas lookup and shader expects the Type field per instance
+            // The shader will do: float4 rect = atlasRects[Instance.Type];
+    
+            // Bind: crossed-quad mesh and instance buffer
+            graphics.SetVertexBuffers
+            (
+                new VertexBufferBinding(BillboardVB, 0, 0),
+                new VertexBufferBinding(instanceBuffer, 0, 1)
+            );
+    
+            graphics.Indices = BillboardIB;
+    
+            var billboardTech = shader.Techniques["BillboardInstanced"];
+            
+            if (billboardTech != null && shader.CurrentTechnique != billboardTech)
+                shader.CurrentTechnique = billboardTech;
+    
+            foreach (var pass in shader.CurrentTechnique.Passes)
             {
-                var type = typeBatch.Key;
-                var batch = typeBatch.Value;
-    
-                if (batch.InstanceBuffer == null || batch.InstanceCount <= 0)
-                    continue;
-    
-                var rect = BlockData.AtlasUVs[(type, 0)];
+                pass.Apply();
                 
-                EffectParams.SetVector4(billboardShader, "UVRect",
-                    new Vector4(rect.X, rect.Y, rect.Width, rect.Height));
-    
-                graphics.SetVertexBuffers
-                (
-                    new VertexBufferBinding(BillboardVB, 0, 0),
-                    new VertexBufferBinding(batch.InstanceBuffer, 0, 1)
+                graphics.DrawInstancedPrimitives(
+                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instances.Length
                 );
-    
-                graphics.Indices = BillboardIB;
-    
-                // Ensure technique is set
-                var billboardTech = shader.Techniques["BillboardInstanced"];
-                
-                if (billboardTech != null && shader.CurrentTechnique != billboardTech)
-                    shader.CurrentTechnique = billboardTech;
-                
-                foreach (var pass in shader.CurrentTechnique.Passes)
-                {
-                    pass.Apply();
-                    graphics.DrawInstancedPrimitives(PrimitiveType.TriangleList, 0, 0, 8, 0, 4, batch.InstanceCount);
-                }
             }
+    
+            // Clean up if needed (if pooling, skip Dispose)
+            instanceBuffer.Dispose();
         }
     
         graphics.SetVertexBuffer(null);
         graphics.Indices = null;
-        
-        //Debug.TimerStop();
     }
     
     // Generates per-chunk billboard instance data
