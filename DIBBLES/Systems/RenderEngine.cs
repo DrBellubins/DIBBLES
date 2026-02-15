@@ -63,10 +63,14 @@ public class RenderEngine
         graphics.SetRenderTarget(BackBuffer);
         
         drawTransparent();
+        
+        graphics.SetRenderTarget(null);
         drawPostProcessing();
         
         if (UIEnabled)
             drawUI();
+        
+        graphics.SetRenderTarget(null);
     }
     
     private void drawOpaque()
@@ -172,8 +176,6 @@ public class RenderEngine
         _DebugMenu.Draw();
         
         UIBatch.End();
-        
-        graphics.SetRenderTarget(null);
         
         GameScene.UIBlur.Apply(BackBuffer, UIBuffer);
     }
