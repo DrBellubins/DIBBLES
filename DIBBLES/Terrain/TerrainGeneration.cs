@@ -118,75 +118,82 @@ public class TerrainGeneration
         }
         
         // Try to upload any queued meshes (must be done on main thread)
-        // Opaque pass
-        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
+        // Opaque pass: throttle to 2 uploads per frame
+        for (int uploads = 0; uploads < 2; uploads++)
         {
-            Debug.TimerStart("Opaque upload");
+            if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
+                break;
+        
+            //Debug.TimerStart("Opaque upload");
             
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
-            
-            // Upload mesh on main thread
+        
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
             
-            Debug.TimerStop();
+            //Debug.TimerStop();
         }
         
-        // Transparent pass
-        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+        // Transparent pass: throttle to 2 uploads per frame
+        for (int uploads = 0; uploads < 2; uploads++)
         {
-            Debug.TimerStart("Transparent upload");
+            if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+                break;
+        
+            //Debug.TimerStart("Transparent upload");
             
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
-            
-            // Upload mesh on main thread
+        
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
             
-            Debug.TimerStop();
+            //Debug.TimerStop();
         }
         
-        // Billboard pass
-        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        // Billboard pass: throttle to 1 upload per frame
+        for (int uploads = 0; uploads < 1; uploads++)
         {
-            Debug.TimerStart("Billboard upload");
+            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+                break;
+        
+            //Debug.TimerStart("Billboard upload");
             
             var chunkPos = entry.chunkPos;
             var type = entry.type;
             var instances = entry.instances;
-
+        
             if (!Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var batchesByType))
             {
-                batchesByType = new Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>();
+                batchesByType = new Dictionary<BlockType, (VertexBuffer, int)>();
                 Mesh.BillboardGen.BillboardBatches[chunkPos] = batchesByType;
             }
-
+        
             // Remove empty types, otherwise upload buffer
             if (instances == null || instances.Length == 0)
             {
                 if (batchesByType.TryGetValue(type, out var old))
                 {
-                    old.InstanceBuffer?.Dispose();
+                    old.Item1?.Dispose();
                     batchesByType.Remove(type);
                 }
-
+        
                 if (batchesByType.Count == 0)
                     Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
-
+        
                 continue;
             }
-
+        
             var vb = new VertexBuffer(
                 Engine.Graphics,
                 VertexBillboardInstance.VertexDeclaration,
                 instances.Length,
                 BufferUsage.WriteOnly
             );
-
+        
             vb.SetData(instances);
             batchesByType[type] = (vb, instances.Length);
             
-            Debug.TimerStop();
+            //Debug.TimerStop();
         }
     }
     
