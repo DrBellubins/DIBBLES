@@ -20,6 +20,8 @@ public class RenderEngine
     public static RenderTarget2D EmissiveBuffer;
     
     public static RenderTarget2D UIBuffer;
+
+    public static bool PostProcessingEnabled = true;
     
     public static readonly SurfaceFormat BackBufferFormat = SurfaceFormat.HdrBlendable;
     
@@ -56,21 +58,24 @@ public class RenderEngine
         // 3) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer, EmissiveBuffer);
         
+        // 4) Draw opaque + cutout
         drawOpaque();
         drawCutout();
         
         // Switch to single target with the same depth-stencil to preserve terrain depth
         graphics.SetRenderTarget(BackBuffer);
         
+        // 5) Draw transparent
         drawTransparent();
         
-        graphics.SetRenderTarget(null);
-        drawPostProcessing();
-        
+        // 6) Draw UI
         if (UIEnabled)
             drawUI();
         
         graphics.SetRenderTarget(null);
+        
+        // 7) Draw post processing
+        drawPostProcessing();
     }
     
     private void drawOpaque()
@@ -107,6 +112,8 @@ public class RenderEngine
         // Disable culling so billboards render double-sided
         graphics.RasterizerState = RasterizerState.CullNone;
     
+        TerrainGen.DrawTransparent();
+        
         // Draw block overlays here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
         TerrainGeneration.Gameplay.Draw();
         Debug.Draw3D();
@@ -115,8 +122,8 @@ public class RenderEngine
     private void drawPostProcessing()
     {
         // Apply all registered post-processing effects, sampling color/normal/depth
-        //Debug.TimerStart("Post processing");
-        postProcessingManager.ApplyAll(BackBuffer);
+        if (PostProcessingEnabled)
+            postProcessingManager.ApplyAll(BackBuffer);
         
         UIBatch.Begin();
         
@@ -124,7 +131,8 @@ public class RenderEngine
         UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
         
         // Composite all post-processing outputs
-        postProcessingManager.Draw();
+        if (PostProcessingEnabled)
+            postProcessingManager.Draw();
         
         if (UIEnabled)
         {

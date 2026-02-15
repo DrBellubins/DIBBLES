@@ -121,26 +121,36 @@ public class TerrainGeneration
         // Opaque pass
         while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
         {
+            Debug.TimerStart("Opaque upload");
+            
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
             
             // Upload mesh on main thread
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
+            
+            Debug.TimerStop();
         }
         
         // Transparent pass
         while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
         {
+            Debug.TimerStart("Transparent upload");
+            
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
             
             // Upload mesh on main thread
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
+            
+            Debug.TimerStop();
         }
         
         // Billboard pass
         while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
         {
+            Debug.TimerStart("Billboard upload");
+            
             var chunkPos = entry.chunkPos;
             var type = entry.type;
             var instances = entry.instances;
@@ -175,6 +185,8 @@ public class TerrainGeneration
 
             vb.SetData(instances);
             batchesByType[type] = (vb, instances.Length);
+            
+            Debug.TimerStop();
         }
     }
     

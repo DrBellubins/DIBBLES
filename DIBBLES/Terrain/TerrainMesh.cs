@@ -59,9 +59,6 @@ public class TerrainMesh
     
     public void DrawOpaque()
     {
-        //Debug.TimerStart("Terrain opaque");
-        var graphics = Engine.Graphics;
-        
         foreach (var oModel in Mesh.OpaqueModels)
         {
             // Chunk center in world space
@@ -110,13 +107,10 @@ public class TerrainMesh
                 oModel.Value.Draw(world, view, projection);
             }
         }
-        
-        //Debug.TimerStop();
     }
 
     public void DrawTransparent()
     {
-        //Debug.TimerStart("Terrain transparent");
         var graphics = Engine.Graphics;
         
         graphics.BlendState = BlendState.NonPremultiplied;
@@ -196,8 +190,6 @@ public class TerrainMesh
 
             model.Draw(world, view, projection);
         }
-        
-        //Debug.TimerStop();
     }
     
     public void RemeshBorderingChunks(Vector3Int chunkPos, Vector3Int localPos)
