@@ -59,9 +59,12 @@ public class Billboards
             if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
                 continue;
             
+            EffectParams.SetVector4(shader, "UVRect", getBillboardUVRect(type));
+            
             graphics.SetVertexBuffers(
                 new VertexBufferBinding(BillboardVB, 0, 0),
                 new VertexBufferBinding(instanceBuffer, 0, 1));
+            
             graphics.Indices = BillboardIB;
             
             var billboardTech = shader.Techniques["BillboardInstanced"];
@@ -173,5 +176,19 @@ public class Billboards
 
         BillboardIB = new IndexBuffer(gd, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
         BillboardIB.SetData(indices);
+    }
+    
+    private static Vector4 getBillboardUVRect(BlockType type)
+    {
+        // Choose faceIdx=0 (front) since billboard textures aren’t per-face,
+        // but your atlas generator stored entries for each face.
+        RectangleF rect;
+    
+        if (!BlockData.AtlasUVs.TryGetValue((type, 0), out rect))
+        {
+            rect = new RectangleF(0f, 0f, 1f, 1f);
+        }
+
+        return new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
     }
 }
