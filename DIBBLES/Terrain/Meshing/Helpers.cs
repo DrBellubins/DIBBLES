@@ -251,8 +251,9 @@ public struct VertexBillboardInstance : IVertexType
 {
     public Vector3 Center;
     public float Angle;
-    public Vector2 Size;   // X = half width, Y = height
+    //public Vector2 Size;   // X = half width, Y = height
     public Color Color;
+    public int Type;
 
     public static readonly VertexDeclaration VertexDeclaration = new VertexDeclaration
     (

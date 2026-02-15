@@ -14,7 +14,9 @@ public class Billboards
     public VertexBuffer BillboardVB;
     public IndexBuffer BillboardIB;
     
-    public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
+    //public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
+    
+    public Dictionary<Vector3Int, VertexBillboardInstance[]> BillboardBatches = new();
     
     public void Draw()
     {
@@ -100,9 +102,9 @@ public class Billboards
     }
     
     // Generates per-chunk billboard instance data
-    public Dictionary<BlockType, VertexBillboardInstance[]> Generate(Chunk chunk)
+    public Dictionary<Vector3Int, VertexBillboardInstance[]> Generate(Chunk chunk)
     {
-        var grouped = new Dictionary<BlockType, List<VertexBillboardInstance>>();
+        List<VertexBillboardInstance> instances = new();
 
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
@@ -111,12 +113,9 @@ public class Billboards
             var type = chunk.GetTypeAt(x, y, z);
             var info = chunk.GetInfoAt(x, y, z);
 
-            if (type == BlockType.Air || !info.IsBillboard)
-                continue;
-
             var localCenter = new Vector3(x + 0.5f, y + 0.0f, z + 0.5f);
             var worldCenter = chunk.Position.ToVector3() + localCenter;
-
+            
             long seed = Seed
                         ^ (x * 73428767L)
                         ^ (y * 9127841L)
@@ -124,36 +123,35 @@ public class Billboards
 
             var rng = new SeededRandom(seed);
             float angle = rng.NextFloat() * MathF.PI;
-
+            
             float light = FaceUtils.GetFaceLightFlat(chunk, new Vector3Int(x, y, z), 5);
             var color = FaceUtils.ToColor(light);
+            
+            if (type == BlockType.Air || !info.IsBillboard)
+                continue;
 
-            // Optional: different size per type (keep same if unsure)
-            var size = type == BlockType.GrassBlades
-                ? new Vector2(0.5f, 1.0f)
-                : new Vector2(0.5f, 0.8f);
+            // Get UV index or type index (can just be (int)type)
+            int typeIndex = (int)type;
 
+            // ... build the instance as before ...
             var inst = new VertexBillboardInstance
             {
                 Center = worldCenter,
                 Angle = angle,
-                Size = size,
-                Color = color
+                Color = color,
+                Type = typeIndex
             };
 
-            if (!grouped.TryGetValue(type, out var list))
-            {
-                list = new List<VertexBillboardInstance>();
-                grouped[type] = list;
-            }
-
-            list.Add(inst);
+            instances.Add(inst);
         }
 
-        var result = new Dictionary<BlockType, VertexBillboardInstance[]>();
-
-        foreach (var kv in grouped)
-            result[kv.Key] = kv.Value.ToArray();
+        // For the chunk, store: chunkPos -> VertexBillboardInstance[]
+        
+        var result = new Dictionary<Vector3Int, VertexBillboardInstance[]>();
+        result[chunk.Position] = instances.ToArray();
+        
+        //foreach (var kv in grouped)
+        //    result[kv.Key] = kv.Value.ToArray();
 
         return result;
     }

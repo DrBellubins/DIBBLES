@@ -36,7 +36,7 @@ public class TerrainMesh
     // Main-thread mesh upload queue
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
-    public readonly ConcurrentQueue<(Vector3Int chunkPos, BlockType type, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
     
     private readonly List<Vector3Int> transparentDrawOrder = new();
     
@@ -51,10 +51,10 @@ public class TerrainMesh
             TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
         }
         
-        var billboardInstancesByType = BillboardGen.Generate(chunk);
+        var billboardInstances = BillboardGen.Generate(chunk);
 
-        foreach (var kv in billboardInstancesByType)
-            BillboardUploadQueue.Enqueue((chunk.Position, kv.Key, kv.Value));
+        foreach (var kv in billboardInstances)
+            BillboardUploadQueue.Enqueue((kv.Key, kv.Value));
     }
     
     public void DrawOpaque()
