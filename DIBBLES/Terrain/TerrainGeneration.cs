@@ -154,29 +154,50 @@ public class TerrainGeneration
         for (int uploads = 0; uploads < 1; uploads++)
         {
             if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+            {
                 break;
+            }
 
             var chunkPos = entry.chunkPos;
-            var instances = entry.instances;
+            var instancesByType = entry.instancesByType;
 
-            if (Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var oldBuffer))
+            // Dispose existing buffers for this chunk (all types)
+            foreach (var key in Mesh.BillboardGen.BillboardBatches.Keys.ToList())
             {
-                oldBuffer.Dispose();
-                Mesh.BillboardGen.BillboardBatches.Remove(chunkPos);
+                if (key.ChunkPos != chunkPos)
+                {
+                    continue;
+                }
+
+                Mesh.BillboardGen.BillboardBatches[key].Dispose();
+                Mesh.BillboardGen.BillboardBatches.Remove(key);
             }
-            
-            if (instances == null || instances.Length == 0)
+
+            if (instancesByType == null || instancesByType.Count == 0)
+            {
                 continue;
-            
-            var vb = new VertexBuffer(
-                Engine.Graphics,
-                VertexBillboardInstance.VertexDeclaration,
-                instances.Length,
-                BufferUsage.WriteOnly
-            );
-            
-            vb.SetData(instances);
-            Mesh.BillboardGen.BillboardBatches[chunkPos] = vb;
+            }
+
+            foreach (var kv in instancesByType)
+            {
+                var type = kv.Key;
+                var instances = kv.Value;
+
+                if (instances == null || instances.Length == 0)
+                {
+                    continue;
+                }
+
+                var vb = new VertexBuffer(
+                    Engine.Graphics,
+                    VertexBillboardInstance.VertexDeclaration,
+                    instances.Length,
+                    BufferUsage.WriteOnly
+                );
+
+                vb.SetData(instances);
+                Mesh.BillboardGen.BillboardBatches[(chunkPos, type)] = vb;
+            }
         }
     }
     

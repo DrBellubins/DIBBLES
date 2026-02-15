@@ -16,7 +16,7 @@ public class Billboards
     
     //public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
     
-    public Dictionary<Vector3Int, VertexBuffer> BillboardBatches = new();
+    public Dictionary<(Vector3Int ChunkPos, BlockType Type), VertexBuffer> BillboardBatches = new();
     
     public void Draw()
     {
@@ -49,29 +49,32 @@ public class Billboards
     
         foreach (var kv in BillboardBatches)
         {
-            Vector3 center = kv.Key.ToVector3() + new Vector3(ChunkSize * 0.5f);
-            
+            var chunkPos = kv.Key.ChunkPos;
+            var type = kv.Key.Type;
+
+            Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
                 continue;
-            
+
             VertexBuffer instanceBuffer = kv.Value;
-            
+
             if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
                 continue;
-            
+
             EffectParams.SetVector4(shader, "UVRect", getBillboardUVRect(type));
-            
+
             graphics.SetVertexBuffers(
                 new VertexBufferBinding(BillboardVB, 0, 0),
                 new VertexBufferBinding(instanceBuffer, 0, 1));
-            
+
             graphics.Indices = BillboardIB;
-            
+
             var billboardTech = shader.Techniques["BillboardInstanced"];
-            
+
             if (billboardTech != null && shader.CurrentTechnique != billboardTech)
                 shader.CurrentTechnique = billboardTech;
-            
+
             foreach (var pass in shader.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -85,9 +88,9 @@ public class Billboards
     }
     
     // Generates per-chunk billboard instance data
-    public Dictionary<Vector3Int, VertexBillboardInstance[]> Generate(Chunk chunk)
+    public Dictionary<Vector3Int, Dictionary<BlockType, VertexBillboardInstance[]>> Generate(Chunk chunk)
     {
-        List<VertexBillboardInstance> instances = new();
+        Dictionary<BlockType, List<VertexBillboardInstance>> grouped = new();
 
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
@@ -96,9 +99,14 @@ public class Billboards
             var type = chunk.GetTypeAt(x, y, z);
             var info = chunk.GetInfoAt(x, y, z);
 
+            if (type == BlockType.Air || !info.IsBillboard)
+            {
+                continue;
+            }
+
             var localCenter = new Vector3(x + 0.5f, y + 0.0f, z + 0.5f);
             var worldCenter = chunk.Position.ToVector3() + localCenter;
-            
+
             long seed = Seed
                         ^ (x * 73428767L)
                         ^ (y * 9127841L)
@@ -106,17 +114,10 @@ public class Billboards
 
             var rng = new SeededRandom(seed);
             float angle = rng.NextFloat() * MathF.PI;
-            
+
             float light = FaceUtils.GetFaceLightFlat(chunk, new Vector3Int(x, y, z), 5);
             var color = FaceUtils.ToColor(light);
-            
-            if (type == BlockType.Air || !info.IsBillboard)
-                continue;
 
-            // Get UV index or type index (can just be (int)type)
-            int typeIndex = (int)type;
-
-            // ... build the instance as before ...
             var inst = new VertexBillboardInstance
             {
                 Center = worldCenter,
@@ -124,16 +125,24 @@ public class Billboards
                 Color = color
             };
 
-            instances.Add(inst);
+            if (!grouped.TryGetValue(type, out var list))
+            {
+                list = new List<VertexBillboardInstance>();
+                grouped[type] = list;
+            }
+
+            list.Add(inst);
         }
 
-        // For the chunk, store: chunkPos -> VertexBillboardInstance[]
-        
-        var result = new Dictionary<Vector3Int, VertexBillboardInstance[]>();
-        result[chunk.Position] = instances.ToArray();
-        
-        //foreach (var kv in grouped)
-        //    result[kv.Key] = kv.Value.ToArray();
+        var perChunk = new Dictionary<BlockType, VertexBillboardInstance[]>();
+
+        foreach (var kv in grouped)
+        {
+            perChunk[kv.Key] = kv.Value.ToArray();
+        }
+
+        var result = new Dictionary<Vector3Int, Dictionary<BlockType, VertexBillboardInstance[]>>();
+        result[chunk.Position] = perChunk;
 
         return result;
     }

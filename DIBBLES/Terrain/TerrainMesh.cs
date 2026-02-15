@@ -36,7 +36,9 @@ public class TerrainMesh
     // Main-thread mesh upload queue
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> MeshUploadQueue = new(); // Opaque
     public readonly ConcurrentQueue<(Vector3Int chunkPos, MeshData meshData)> TMeshUploadQueue = new(); // Transparent
-    public readonly ConcurrentQueue<(Vector3Int chunkPos, VertexBillboardInstance[] instances)> BillboardUploadQueue = new(); // Billboards
+    
+    public readonly ConcurrentQueue<(Vector3Int chunkPos, 
+        Dictionary<BlockType, VertexBillboardInstance[]> instancesByType)> BillboardUploadQueue = new(); // Billboards
     
     private readonly List<Vector3Int> transparentDrawOrder = new();
     
