@@ -50,10 +50,15 @@ public class TerrainGeneration
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks
     
-    private readonly object _pqLock = new object();
+    private readonly object _pqLock = new();
     private readonly PriorityQueue<(Vector3Int chunkPos, ChunkGenerationStage targetStage), int> taskQueue = new();
     
     private static readonly ChunkGenerationStage freezeStage = ChunkGenerationStage.Surface;
+    
+    // Optimization
+    private static Vector3Int[] _viewOffsetsSorted = Array.Empty<Vector3Int>();
+    private static int _viewOffsetsHalf = -1;
+    private readonly Queue<IDisposable> _disposeQueue = new();
     
     public void Start()
     {
@@ -117,10 +122,16 @@ public class TerrainGeneration
             }
         }
         
+        ProcessDisposeQueue(2);
+        
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass: throttle to 2 uploads per frame
-        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
+        //while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
+        for (int i = 0; i < 1; i++)
         {
+            if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
+                break;
+            
             //Debug.TimerStart("Opaque upload");
             
             var chunkPos = entry.chunkPos;
@@ -132,8 +143,12 @@ public class TerrainGeneration
         }
         
         // Transparent pass: throttle to 2 uploads per frame
-        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+        //while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+        for (int i = 0; i < 1; i++)
         {
+            if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+                break;
+            
             //Debug.TimerStart("Transparent upload");
             
             var chunkPos = entry.chunkPos;
@@ -145,8 +160,12 @@ public class TerrainGeneration
         }
         
         // Billboard pass: throttle to 1 upload per frame
-        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        //while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        for (int i = 0; i < 1; i++)
         {
+            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+                break;
+            
             var chunkPos = entry.chunkPos;
             var instancesByType = entry.instancesByType;
 
@@ -189,36 +208,42 @@ public class TerrainGeneration
         return activeViewChunks.Contains(pos);
     }
     
-    private void QueueChunksInView(Vector3Int center)
+    private static void EnsureViewOffsets()
     {
         int half = RenderDistance / 2;
 
-        // Collect all candidate chunk positions
-        var positions = new List<Vector3Int>();
+        if (_viewOffsetsHalf == half && _viewOffsetsSorted.Length > 0)
+            return;
 
-        for (int cx = center.X - half; cx <= center.X + half; cx++)
-        for (int cy = center.Y - half; cy <= center.Y + half; cy++)
-        for (int cz = center.Z - half; cz <= center.Z + half; cz++)
+        var offsets = new List<Vector3Int>((2 * half + 1) * (2 * half + 1) * (2 * half + 1));
+
+        for (int dx = -half; dx <= half; dx++)
+        for (int dy = -half; dy <= half; dy++)
+        for (int dz = -half; dz <= half; dz++)
+            offsets.Add(new Vector3Int(dx, dy, dz));
+
+        offsets.Sort((a, b) =>
         {
-            positions.Add(new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize));
-        }
-
-        // Sort by squared distance in chunk space (nearest first)
-        positions.Sort((a, b) =>
-        {
-            var aC = new Vector3(a.X / (float)ChunkSize, a.Y / (float)ChunkSize, a.Z / (float)ChunkSize);
-            var bC = new Vector3(b.X / (float)ChunkSize, b.Y / (float)ChunkSize, b.Z / (float)ChunkSize);
-            var cC = new Vector3(center.X, center.Y, center.Z);
-
-            var da = Vector3.DistanceSquared(aC, cC);
-            var db = Vector3.DistanceSquared(bC, cC);
-
+            int da = a.X * a.X + a.Y * a.Y + a.Z * a.Z;
+            int db = b.X * b.X + b.Y * b.Y + b.Z * b.Z;
             return da.CompareTo(db);
         });
 
-        // Ensure chunk exists and enqueue in sorted order
-        foreach (var pos in positions)
+        _viewOffsetsSorted = offsets.ToArray();
+        _viewOffsetsHalf = half;
+    }
+
+    private void QueueChunksInView(Vector3Int center)
+    {
+        EnsureViewOffsets();
+
+        foreach (var off in _viewOffsetsSorted)
         {
+            var pos = new Vector3Int(
+                (center.X + off.X) * ChunkSize,
+                (center.Y + off.Y) * ChunkSize,
+                (center.Z + off.Z) * ChunkSize);
+
             if (!ChunkBuffer.TryGetValue(pos, out var chunk))
             {
                 chunk = new Chunk(pos);
@@ -226,14 +251,23 @@ public class TerrainGeneration
             }
 
             if (chunk.IsFrozen)
-            {
                 chunk.IsFrozen = false;
-            }
 
             EnqueueAdvance(pos, ChunkGenerationStage.Meshing, center);
         }
     }
 
+    private void ProcessDisposeQueue(int maxPerFrame)
+    {
+        for (int i = 0; i < maxPerFrame; i++)
+        {
+            if (_disposeQueue.Count == 0)
+                return;
+
+            _disposeQueue.Dequeue().Dispose();
+        }
+    }
+    
     private void UnloadAndFreezeDistant(Vector3Int center)
     {
         foreach (var kv in ChunkBuffer)
@@ -255,13 +289,13 @@ public class TerrainGeneration
                 // Dispose meshes (existing logic)
                 if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
                 {
-                    oModel.Dispose();
+                    _disposeQueue.Enqueue(oModel);
                     Mesh.OpaqueModels.Remove(pos);
                 }
-                
+
                 if (Mesh.TransparentModels.TryGetValue(pos, out var tModel) && tModel != null)
                 {
-                    tModel.Dispose();
+                    _disposeQueue.Enqueue(tModel);
                     Mesh.TransparentModels.Remove(pos);
                 }
                 
