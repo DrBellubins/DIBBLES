@@ -126,11 +126,11 @@ public class TerrainGeneration
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass: throttle to 2 uploads per frame
-        //while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
-        for (int i = 0; i < 1; i++)
+        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
+        //for (int i = 0; i < 1; i++)
         {
-            if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
-                break;
+            //if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
+            //    break;
             
             //Debug.TimerStart("Opaque upload");
             
@@ -143,11 +143,11 @@ public class TerrainGeneration
         }
         
         // Transparent pass: throttle to 2 uploads per frame
-        //while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
-        for (int i = 0; i < 1; i++)
+        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+        //for (int i = 0; i < 1; i++)
         {
-            if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
-                break;
+            //if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+            //    break;
             
             //Debug.TimerStart("Transparent upload");
             
@@ -160,11 +160,11 @@ public class TerrainGeneration
         }
         
         // Billboard pass: throttle to 1 upload per frame
-        //while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
-        for (int i = 0; i < 1; i++)
+        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        //for (int i = 0; i < 1; i++)
         {
-            if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
-                break;
+            //if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+            //    break;
             
             var chunkPos = entry.chunkPos;
             var instancesByType = entry.instancesByType;

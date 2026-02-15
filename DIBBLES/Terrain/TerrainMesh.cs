@@ -107,7 +107,7 @@ public class TerrainMesh
                 foreach (var pass in shader.CurrentTechnique.Passes)
                     pass.Apply();
                 
-                oModel.Draw(world, view, projection);
+                oModel.DrawRaw();
             }
         }
     }
@@ -162,7 +162,7 @@ public class TerrainMesh
             foreach (var pass in shader.CurrentTechnique.Passes)
                 pass.Apply();
 
-            model.Draw(world, view, projection);
+            model.DrawRaw();
         }
     }
     
