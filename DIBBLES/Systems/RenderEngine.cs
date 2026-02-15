@@ -1,0 +1,255 @@
+using DIBBLES.Effects;
+using DIBBLES.Gameplay;
+using DIBBLES.Scenes;
+using DIBBLES.Terrain;
+using DIBBLES.Utils;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+
+using static DIBBLES.Scenes.GameScene;
+
+namespace DIBBLES.Systems;
+
+public class RenderEngine
+{
+    public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
+    
+    public static RenderTarget2D BackBuffer;
+    public static RenderTarget2D DepthBuffer;
+    public static RenderTarget2D NormalBuffer;
+    public static RenderTarget2D EmissiveBuffer;
+    
+    public static RenderTarget2D UIBuffer;
+    
+    public static readonly SurfaceFormat BackBufferFormat = SurfaceFormat.HdrBlendable;
+    
+    private bool backBuffersDebug = false;
+
+    private GraphicsDevice graphics;
+    
+    public void DrawAll()
+    {
+        // Bind MRTs
+        graphics.SetRenderTargets(
+            new RenderTargetBinding(BackBuffer),
+            new RenderTargetBinding(DepthBuffer),
+            new RenderTargetBinding(NormalBuffer),
+            new RenderTargetBinding(EmissiveBuffer)
+        );
+
+        // 1) Clear the depth-stencil actually used by the geometry pass (attached to the first RT)
+        graphics.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1.0f, 0);
+
+        // 2) Clear each color target individually
+        graphics.SetRenderTarget(BackBuffer);
+        graphics.Clear(SkyColor);
+
+        graphics.SetRenderTarget(DepthBuffer);
+        graphics.Clear(Color.White);         // far = 1.0 for the sampled depth texture
+
+        graphics.SetRenderTarget(NormalBuffer);
+        graphics.Clear(Color.Transparent);   // mark "no normal" with a=0
+        
+        graphics.SetRenderTarget(EmissiveBuffer);
+        graphics.Clear(Color.Black);
+
+        // 3) Rebind MRTs for drawing, and draw world-space
+        graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer, EmissiveBuffer);
+        
+        drawOpaque();
+        drawCutout();
+        
+        // Switch to single target with the same depth-stencil to preserve terrain depth
+        graphics.SetRenderTarget(BackBuffer);
+        
+        drawTransparent();
+        drawPostProcessing();
+        
+        if (UIEnabled)
+            drawUI();
+    }
+    
+    private void drawOpaque()
+    {
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
+        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        
+        TerrainGen.DrawOpaque();
+        PlayerCharacter.Draw();
+    }
+
+    private void drawCutout()
+    {
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
+        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        
+        TerrainGen.DrawBillboards();
+    }
+
+    private void drawTransparent()
+    {
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.DepthRead;
+        
+        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
+        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
+        
+        // Disable culling so billboards render double-sided
+        graphics.RasterizerState = RasterizerState.CullNone;
+    
+        // Draw block overlays here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
+        TerrainGeneration.Gameplay.Draw();
+        Debug.Draw3D();
+    }
+
+    private void drawPostProcessing()
+    {
+        // Apply all registered post-processing effects, sampling color/normal/depth
+        //Debug.TimerStart("Post processing");
+        postProcessingManager.ApplyAll(BackBuffer);
+        
+        UIBatch.Begin();
+        
+        // Draw buffers
+        UIBatch.Draw(BackBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        
+        // Composite all post-processing outputs
+        postProcessingManager.Draw();
+        
+        if (UIEnabled)
+        {
+            GameScene.UIBlur.Draw();
+            UIBatch.Draw(UIBuffer, Vector2.Zero, new Vector2(Engine.ScreenWidth, Engine.ScreenHeight), Color.White);
+        }
+
+        if (backBuffersDebug)
+        {
+            var bufferWidth = Engine.ScreenWidth / 4.0f;
+            var bufferHeight = Engine.ScreenHeight / 4.0f;
+            //var tesBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            var tesBuffer = postProcessingManager.bloom.BloomOutput;
+            
+            UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
+            
+            UIBatch.Draw(NormalBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
+            
+            UIBatch.Draw(tesBuffer, UI.TopRightPivot - new Vector2(bufferWidth, -bufferHeight * 2.0f), 
+                new Vector2(bufferWidth, bufferHeight), Color.White);
+        }
+        
+        UIBatch.End();
+    }
+
+    private void drawUI()
+    {
+        graphics.BlendState = BlendState.NonPremultiplied;
+        graphics.DepthStencilState = DepthStencilState.Default;
+        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
+        
+        graphics.SetRenderTarget(UIBuffer);
+        graphics.Clear(Color.Transparent);
+        
+        UIBatch.Begin();
+        
+        PlayerCharacter.DrawUI();
+        
+        Inventory.Draw();
+        
+        GameChat.DrawBG();
+        GameChat.Draw();
+        
+        Debug.Draw2D();
+        Debug.Clear2D();
+        
+        _DebugMenu.Draw();
+        
+        UIBatch.End();
+        
+        graphics.SetRenderTarget(null);
+        
+        GameScene.UIBlur.Apply(BackBuffer, UIBuffer);
+    }
+    
+    public void Initialize()
+    {
+        graphics = Engine.Graphics;
+        
+        BackBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            BackBufferFormat,
+            DepthFormat.Depth24,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+        
+        DepthBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Single,   // 32-bit float
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+        
+        NormalBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+        
+        EmissiveBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.HdrBlendable,   // emissive can exceed 1.0
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents
+        );
+
+        UIBuffer = new RenderTarget2D(
+            Engine.Graphics,
+            Engine.ScreenWidth,
+            Engine.ScreenHeight,
+            false,
+            SurfaceFormat.Color,
+            DepthFormat.None,
+            0,
+            RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
+        );
+        
+        Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
+        Commands.Register("ao", "Toggle ambient occlusion", toggleAOCMD);
+    }
+    
+    private void toggleBBDCMD(string[] args)
+    {
+        backBuffersDebug = !backBuffersDebug;
+        Chat.Write($"Toggled back buffer debug: {backBuffersDebug}", ChatMessageType.Command);
+    }
+
+    private void toggleAOCMD(string[] args)
+    {
+        SSAOPostProcess.Enabled = !SSAOPostProcess.Enabled;
+        Chat.Write($"Toggled ambient occlusion: {SSAOPostProcess.Enabled}", ChatMessageType.Command);
+    }
+}

@@ -576,14 +576,24 @@ public class TerrainGeneration
 
         return sum / set.Count;
     }
-    
-    public void Draw()
+
+    public void DrawOpaque()
     {
-        // Draw every mesh in the mesh queue
         Mesh.DrawOpaque();
+    }
+
+    public void DrawBillboards()
+    {
         Mesh.BillboardGen.Draw();
+    }
+    
+    public void DrawTransparent()
+    {
         Mesh.DrawTransparent();
-        
+    }
+    
+    public void DrawDebug()
+    {
         // Chunk border debug
         if (Debug.ShowChunkDebug)
         {

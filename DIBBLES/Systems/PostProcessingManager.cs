@@ -18,7 +18,7 @@ public class PostProcessingManager
         for (int i = 0; i < PostProcessingEffect.All.Count; i++)
         {
             var effect = PostProcessingEffect.All[i];
-            var inputRT = i == 0 ? GameScene.BackBuffer :
+            var inputRT = i == 0 ? RenderEngine.BackBuffer :
                 PostProcessingEffect.All[GMath.Clamp(i - 1, 0, PostProcessingEffect.All.Count)].OutputBuffer;
             
             effect.Start(inputRT);
@@ -51,7 +51,7 @@ public class PostProcessingManager
 
         Texture2D finalOutput = (PostProcessingEffect.All.Count > 0)
             ? PostProcessingEffect.All[PostProcessingEffect.All.Count - 1].OutputBuffer
-            : GameScene.BackBuffer;
+            : RenderEngine.BackBuffer;
 
         UIBatch.Draw(
             finalOutput,

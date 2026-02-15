@@ -62,12 +62,6 @@ public class TerrainMesh
         //Debug.TimerStart("Terrain opaque");
         var graphics = Engine.Graphics;
         
-        graphics.BlendState = BlendState.Opaque;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
-        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        
         foreach (var oModel in Mesh.OpaqueModels)
         {
             // Chunk center in world space

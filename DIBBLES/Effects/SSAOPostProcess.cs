@@ -112,8 +112,8 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.Indices = indexBuffer;
         
         // Set G-buffer textures
-        EffectParams.SetTexture(effect, "DepthTex", GameScene.DepthBuffer);
-        EffectParams.SetTexture(effect, "NormalTex", GameScene.NormalBuffer);
+        EffectParams.SetTexture(effect, "DepthTex", RenderEngine.DepthBuffer);
+        EffectParams.SetTexture(effect, "NormalTex", RenderEngine.NormalBuffer);
         EffectParams.SetTexture(effect, "RandomTex", blueNoiseTex);
     
         // Camera params

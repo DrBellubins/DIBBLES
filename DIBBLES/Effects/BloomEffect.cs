@@ -1,4 +1,5 @@
 using DIBBLES.Scenes;
+using DIBBLES.Systems;
 using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
@@ -46,7 +47,7 @@ public class BloomEffect : PostProcessingEffect
             input.Width,
             input.Height,
             false,
-            GameScene.BackBufferFormat,
+            RenderEngine.BackBufferFormat,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
@@ -69,7 +70,7 @@ public class BloomEffect : PostProcessingEffect
     public override void DrawStart()
     {
         // Early out if no source
-        if (ColorBuffer == null || GameScene.EmissiveBuffer == null)
+        if (ColorBuffer == null || RenderEngine.EmissiveBuffer == null)
         {
             Graphics.SetRenderTarget(OutputBuffer);
             Graphics.Clear(Color.Black);
@@ -90,7 +91,7 @@ public class BloomEffect : PostProcessingEffect
         }
     
         // Ensure chain matches source size
-        ensureChainMatchesSource(GameScene.EmissiveBuffer.Width, GameScene.EmissiveBuffer.Height);
+        ensureChainMatchesSource(RenderEngine.EmissiveBuffer.Width, RenderEngine.EmissiveBuffer.Height);
     
         // Render states
         Graphics.BlendState = BlendState.Opaque;
@@ -104,7 +105,7 @@ public class BloomEffect : PostProcessingEffect
         
         // 1) Downsample chain:
         //    First level: thresholdRT -> DownsampleRTs[0]
-        var downsampleInput = GameScene.EmissiveBuffer;
+        var downsampleInput = RenderEngine.EmissiveBuffer;
         
         EffectParams.SetTexture(bloomEffect, "SourceTex", downsampleInput);
         
@@ -255,7 +256,7 @@ public class BloomEffect : PostProcessingEffect
                 dsW,
                 dsH,
                 false,
-                GameScene.BackBufferFormat,
+                RenderEngine.BackBufferFormat,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents
@@ -275,7 +276,7 @@ public class BloomEffect : PostProcessingEffect
                 usW,
                 usH,
                 false,
-                GameScene.BackBufferFormat,
+                RenderEngine.BackBufferFormat,
                 DepthFormat.None,
                 0,
                 RenderTargetUsage.PreserveContents

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
+using DIBBLES.Systems;
 
 namespace DIBBLES.Effects;
 
@@ -14,7 +15,7 @@ public class FogEffect
 
     public static Vector4 FogColor()
     {
-        var colorVec = new Vector4(GameScene.SkyColor.R / 255f, GameScene.SkyColor.G / 255f, GameScene.SkyColor.B / 255f, 1.0f);
+        var colorVec = new Vector4(RenderEngine.SkyColor.R / 255f, RenderEngine.SkyColor.G / 255f, RenderEngine.SkyColor.B / 255f, 1.0f);
         return colorVec;
     }
 }

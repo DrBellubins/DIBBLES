@@ -206,6 +206,7 @@
 ./Systems/WorldSave.cs
 ./Systems/UIBatch.cs
 ./Systems/PostProcessingEffect.cs
+./Systems/RenderEngine.cs
 ./Systems/PostProcessingManager.cs
 ./Systems/UIStateMachine.cs
 ./Systems/Scene.cs

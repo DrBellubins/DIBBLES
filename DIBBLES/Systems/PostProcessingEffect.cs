@@ -44,7 +44,7 @@ public abstract class PostProcessingEffect
             input.Width,
             input.Height,
             false,
-            GameScene.BackBufferFormat,
+            RenderEngine.BackBufferFormat,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents
