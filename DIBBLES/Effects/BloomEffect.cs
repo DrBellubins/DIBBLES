@@ -55,7 +55,7 @@ public class BloomEffect : PostProcessingEffect
         
         DebugMenu.CreateButton();
         
-        DebugMenu.RegisterParams
+        DebugMenu.RegisterMenuItem("Bloom",
         (
             new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
             new SliderParam("Intensity", 0.0f, 1.0f, () => Intensity, v => Intensity = v),

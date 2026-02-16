@@ -16,6 +16,20 @@ public class Button
     }
 }
 
+public class MenuItem
+{
+    public string Name;
+    public Button Button;
+    public List<IDebugParam> Params;
+    
+    public MenuItem(string name, Button button, List<IDebugParam> _params)
+    {
+        Name = name;
+        Button = button;
+        Params = _params;
+    }
+}
+
 // IMGUI param interface
 public interface IDebugParam
 {

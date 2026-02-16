@@ -15,9 +15,11 @@ namespace DIBBLES.Systems.DebugMenu;
 public class DebugMenu
 {
     // Group buttons by the Type that registered them
-    private static readonly Dictionary<Type, Button> buttonsByOwner = new();
+    private static readonly Dictionary<string, MenuItem> menuItems = new();
     
-    private static readonly Dictionary<Type, List<IDebugParam>> paramsByOwner = new();
+    //private static readonly Dictionary<Type, Button> buttonsByOwner = new();
+    //private static readonly Dictionary<Type, List<IDebugParam>> paramsByOwner = new();
+    
     private static readonly Dictionary<Texture2D, IntPtr> imguiTextureIds = new();
     
     private static Func<Texture2D, IntPtr> _bindTextureFunc;
@@ -33,7 +35,7 @@ public class DebugMenu
     private const float ButtonPaddingW = 16.0f; // Width
     private const float ButtonPaddingH = 8.0f; // Height
     
-    private Type? activeOwner;
+    private string? activeOwner;
     
     public void Start()
     {
@@ -66,13 +68,13 @@ public class DebugMenu
         float buttonWidth = sideMenuWidth - ButtonPaddingW;
         
         // Draw buttons grouped by owner type
-        foreach (var kv in buttonsByOwner)
+        foreach (var item in menuItems.Values)
         {
-            var button = kv.Value;
+            var button = item.Button;
             
             if (isButtonClicked(button.Rect))
             {
-                activeOwner = kv.Key;
+                activeOwner = item.Key;
                 Open = true;
             }
             
@@ -104,13 +106,14 @@ public class DebugMenu
         if (!Open || activeOwner == null)
             return;
 
-        string title = $"{activeOwner.Name} Debug";
+        string title = $"{activeOwner} Debug";
+        
         ImGui.Begin(title, ref Open, ImGuiWindowFlags.AlwaysAutoResize);
 
-        if (paramsByOwner.TryGetValue(activeOwner, out var items))
+        if (menuItems.TryGetValue(activeOwner, out var item))
         {
-            foreach (var p in items)
-                p.Draw();
+            foreach (var param in item.Params)
+                param.Draw();
         }
         else
             ImGui.TextDisabled("No registered parameters for this type.");
@@ -123,31 +126,43 @@ public class DebugMenu
     {
         _bindTextureFunc = bindFunc;
     }
+
+    public static void RegisterMenuItem(string name, params List<IDebugParam> _params)
+    {
+        var button = new Button(name, new RectangleF());
+        var menuItem = new MenuItem(name, button, _params);
+        
+        menuItems.Add(name, menuItem);
+        
+        /*if (!menuItems.TryGetValue(name, out var item) && item != null)
+        {
+            item.Params = new List<IDebugParam>();
+            //menuItems[name]
+        }*/
+    }
     
     // Register params for caller type
-    public static void RegisterParams(params IDebugParam[] items)
+    public static void RegisterParams(Type name, params IDebugParam[] items)
     {
-        var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
-
-        if (!paramsByOwner.TryGetValue(callerType, out var list))
+        /*if (!paramsByOwner.TryGetValue(name, out var list))
         {
             list = new List<IDebugParam>();
-            paramsByOwner[callerType] = list;
+            paramsByOwner[name] = list;
         }
 
-        list.AddRange(items);
+        list.AddRange(items);*/
     }
     
     // Register a button and auto-categorize by the calling class (no generics, no explicit type parameter)
     public static void CreateButton()
     {
-        var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
+        /*var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
 
         if (!buttonsByOwner.TryGetValue(callerType, out var button))
         {
             button = new Button(callerType.Name, new RectangleF());
             buttonsByOwner[callerType] = button;
-        }
+        }*/
     }
     
     // Optional: helper to wrap bind function for TextureDisplayParam creation
