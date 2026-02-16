@@ -60,7 +60,6 @@ public class RenderEngine
         
         // 4) Draw opaque + cutout
         drawOpaque();
-        drawCutout();
         
         // Switch to single target with the same depth-stencil to preserve terrain depth
         graphics.SetRenderTarget(BackBuffer);
@@ -87,18 +86,9 @@ public class RenderEngine
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         TerrainGen.DrawOpaque();
-        PlayerCharacter.Draw();
-    }
-
-    private void drawCutout()
-    {
-        graphics.BlendState = BlendState.Opaque;
-        graphics.DepthStencilState = DepthStencilState.Default;
-        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
-        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        
         TerrainGen.DrawBillboards();
+        
+        PlayerCharacter.Draw();
     }
 
     private void drawTransparent()
