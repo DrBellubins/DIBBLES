@@ -16,6 +16,8 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
+bool IsTranslucentPass;
+
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
@@ -146,15 +148,17 @@ PixelOutput PS_Color(PixelInput input)
     float4 texColor = tex2D(AtlasSampler, atlasUV);
     float4 blockColor = texColor * input.Color;
 
-    /*float alpha = blockColor.a;
+    // Hand cutoff vs transparency
+    float alpha = blockColor.a;
 
-    if (alpha < 1.0)
-        clip(alpha - AlphaCutoff);*/
+    if (!IsTranslucentPass && alpha < 1.0)
+        clip(alpha - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
     float4 finalColor = lerp(blockColor, FogColor, fogFactor);
-    finalColor.a = blockColor.a;
+
+    finalColor.a = alpha;
 
     // Emissive atlas UV (separate layout)
     float2 emisUV;
@@ -192,6 +196,7 @@ PixelOutput PS_Color(PixelInput input)
 
     output.Color0 = finalColor;
 
+    // Only draw depth/normal on opaque
     if (finalColor.a >= 1.0)
     {
         output.Color1 = float4(depth01, depth01, depth01, 1.0f);

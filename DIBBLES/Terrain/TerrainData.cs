@@ -25,17 +25,19 @@ public struct BlockInfo
     public bool AntiTileUVsVertically;
     
     public bool IsBillboard;
+    public bool IsTranslucent;
     
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false,
-        byte lightEmission = 0, bool isBillboard = false, float brightness = 1f)
+        byte lightEmission = 0, float brightness = 1f, bool isBillboard = false, bool isTranslucent = false)
     {
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
         IsTransparent = isTransparent;
         LightEmission = lightEmission;
-        IsBillboard = isBillboard;
         Brightness = brightness;
+        IsBillboard = isBillboard;
+        IsTranslucent = isTranslucent;
     }
 }
 
@@ -496,9 +498,10 @@ public class BlockData
             bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
             bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? table["AntiTileUVsVertically"].AsBoolean.Value : true;
             bool isBillboard = table.HasKey("IsBillboard") ? table["IsBillboard"].AsBoolean.Value : false;
+            bool isTranslucent = table.HasKey("IsTranslucent") ? table["IsTranslucent"].AsBoolean.Value : false;
             
             var blockInfo = new BlockInfo(hardness, thickness, maxStack,
-                isTransparent, lightEmission, isBillboard, brightness);
+                isTransparent, lightEmission, brightness, isBillboard, isTranslucent);
             
             blockInfo.AntiTileUVsHorizontally =  antiTileUVsHorizontally;
             blockInfo.AntiTileUVsVertically = antiTileUVsVertically;
