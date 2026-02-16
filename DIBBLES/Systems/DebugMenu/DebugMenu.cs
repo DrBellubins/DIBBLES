@@ -74,7 +74,7 @@ public class DebugMenu
             
             if (isButtonClicked(button.Rect))
             {
-                activeOwner = item.Key;
+                activeOwner = item.Name;
                 Open = true;
             }
             
@@ -127,42 +127,12 @@ public class DebugMenu
         _bindTextureFunc = bindFunc;
     }
 
-    public static void RegisterMenuItem(string name, params List<IDebugParam> _params)
+    public static void RegisterMenuItem(string name,  params IDebugParam[] _params)
     {
         var button = new Button(name, new RectangleF());
-        var menuItem = new MenuItem(name, button, _params);
+        var menuItem = new MenuItem(name, button, _params.ToList());
         
         menuItems.Add(name, menuItem);
-        
-        /*if (!menuItems.TryGetValue(name, out var item) && item != null)
-        {
-            item.Params = new List<IDebugParam>();
-            //menuItems[name]
-        }*/
-    }
-    
-    // Register params for caller type
-    public static void RegisterParams(Type name, params IDebugParam[] items)
-    {
-        /*if (!paramsByOwner.TryGetValue(name, out var list))
-        {
-            list = new List<IDebugParam>();
-            paramsByOwner[name] = list;
-        }
-
-        list.AddRange(items);*/
-    }
-    
-    // Register a button and auto-categorize by the calling class (no generics, no explicit type parameter)
-    public static void CreateButton()
-    {
-        /*var callerType = new StackFrame(1, false).GetMethod()?.DeclaringType ?? typeof(DebugMenu);
-
-        if (!buttonsByOwner.TryGetValue(callerType, out var button))
-        {
-            button = new Button(callerType.Name, new RectangleF());
-            buttonsByOwner[callerType] = button;
-        }*/
     }
     
     // Optional: helper to wrap bind function for TextureDisplayParam creation

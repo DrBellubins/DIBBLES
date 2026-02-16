@@ -51,10 +51,8 @@ public class TonemappingEffect : PostProcessingEffect
         quadIndexBuffer = new IndexBuffer(Engine.Graphics, IndexElementSize.SixteenBits, idx.Length, BufferUsage.WriteOnly);
         quadIndexBuffer.SetData(idx);
         
-        DebugMenu.CreateButton();
-        
-        DebugMenu.RegisterParams
-        (
+        DebugMenu.RegisterMenuItem(
+            "Tonemapping",
             new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
             
             new DropdownParam("Algorithm", new []

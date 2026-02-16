@@ -73,11 +73,9 @@ public class SSAOPostProcess : PostProcessingEffect
 
         indexBuffer = new IndexBuffer(Graphics, IndexElementSize.SixteenBits, indices.Length, BufferUsage.WriteOnly);
         indexBuffer.SetData(indices);
-        
-        DebugMenu.CreateButton();
-        
-        DebugMenu.RegisterParams
-        (
+
+        DebugMenu.RegisterMenuItem(
+            "SSAO",
             new CheckBoxParam("Enabled", () => Enabled, v => Enabled = v),
             new SliderParam("Radius", 0.0f, 5.0f, () => Radius, v => Radius = v),
             new SliderParam("Bias", 0.0f, 0.1f, () => Bias, v => Bias = v),
