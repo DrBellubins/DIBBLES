@@ -171,11 +171,17 @@ PixelInput VS(VertexInput input)
     // World position without wind deformation (used to sample the wind field)
     float3 worldPositionUnbent = input.Center + rotatedPosition;
 
+    // Compute windDirection2D (world-space):
+    float2 windDirection2DWorld = normalize(rotate2(WindDir, Time * WindDirRotateSpeed));
+
+    // Rotate wind into the instance's local yaw space (so deformation is coherent with the quad)
+    float2 windDirection2DLocal = normalize(rotate2(windDirection2DWorld, -input.Angle));
+
     // Wind direction basis in XZ: forward direction and a perpendicular axis
     //float2 windDirection2D = normalize(WindDir);
     float2 windDirection2D = normalize(rotate2(WindDir, Time * WindDirRotateSpeed));
-    float3 windDirection3D = float3(windDirection2D.x, 0.0f, windDirection2D.y);
-    float3 windPerpendicular3D = float3(-windDirection2D.y, 0.0f, windDirection2D.x);
+    float3 windDirection3D = float3(windDirection2DLocal.x, 0.0f, windDirection2DLocal.y);
+    float3 windPerpendicular3D = float3(-windDirection2DLocal.y, 0.0f, windDirection2DLocal.x);
 
     // Coherent advection over time (moves the wind field, not the geometry directly)
     float3 windFlowOffset = windDirection3D * (Time * WindSpeed);
@@ -184,8 +190,11 @@ PixelInput VS(VertexInput input)
     float2 windFieldCoord = (worldPositionUnbent.xz) + windFlowOffset.xz;
 
     // Per-instance base seeds to keep motion stable per blade and decorrelate fields
-    float baseSeed = 37.0f + 97.0f * hash1(input.Angle * 0.773f);   // main field
-    float gustSeed = 113.0f + 59.0f * hash1(input.Angle * 1.337f);  // gust field
+    float h0 = hash1(dot(input.Center.xz, float2(12.9898f, 78.233f)));
+    float h1 = hash1(dot(input.Center.xz, float2(39.3468f, 11.135f)));
+
+    float baseSeed = 37.0f + 97.0f * h0;
+    float gustSeed = 113.0f + 59.0f * h1;
 
     // Isotropic multi-wave sway in [-1,1]
     float windSignal = randomWaves(windFieldCoord, Time, baseSeed, 0.6f, 1.6f, 0.7f, 2.0f);
