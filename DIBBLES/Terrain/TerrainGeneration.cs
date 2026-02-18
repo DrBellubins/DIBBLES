@@ -5,6 +5,7 @@ using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Terrain.Biomes;
 using DIBBLES.Terrain.Features;
 using DIBBLES.Utils;
 using DIBBLES.Terrain.Meshing;
@@ -46,6 +47,11 @@ public class TerrainGeneration
     private readonly HashSet<Vector3Int> activeViewChunks = new();
     
     public float VisualLoadProgress { get; private set; } = 0f;
+    
+    // Biomes
+    public static PlainsBiome plainsBiome = new();
+    public static DesertBiome desertBiome = new();
+    public static SnowlandsBiome snowlandsBiome = new();
     
     // Multi-threading/queues
     private SemaphoreSlim semaphore = new(4); // Max 4 concurrent tasks

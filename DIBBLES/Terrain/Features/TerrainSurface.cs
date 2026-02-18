@@ -1,6 +1,7 @@
 using DIBBLES.Terrain.Biomes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
+
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Features;
@@ -38,10 +39,6 @@ public class TerrainSurface
                          ^ (chunk.Position.Z * 192837465L);
     
         var rng = new SeededRandom(chunkSeed);
-    
-        var plainsBiome = new PlainsBiome();
-        var desertBiome = new DesertBiome();
-        var snowlandsBiome = new SnowlandsBiome();
     
         FastNoiseLite biomeWarpNoise = new(Seed);
         biomeWarpNoise.SetSeed(Seed);

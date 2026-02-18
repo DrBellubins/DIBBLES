@@ -38,6 +38,7 @@
 ./Terrain/TerrainTick.cs
 ./Terrain/Biomes/DesertBiome.cs
 ./Terrain/Biomes/PlainsBiome.cs
+./Terrain/Biomes/BiomeUtils.cs
 ./Terrain/Biomes/SnowlandsBiome.cs
 ./Terrain/BlockTypes.cs
 ./Terrain/TerrainUtils.cs
