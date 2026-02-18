@@ -10,6 +10,8 @@ using static DIBBLES.Scenes.GameScene;
 
 namespace DIBBLES.Systems;
 
+// TODO: SSAO appears on opaque transparent blocks.
+
 public class RenderEngine
 {
     public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
@@ -62,7 +64,7 @@ public class RenderEngine
         drawOpaque();
         
         // Switch to single target with the same depth-stencil to preserve terrain depth
-        graphics.SetRenderTarget(BackBuffer);
+        //graphics.SetRenderTarget(BackBuffer);
         
         // 5) Draw transparent
         drawTransparent();
@@ -81,8 +83,10 @@ public class RenderEngine
     {
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.Default;
+        
         graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
         graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
+        
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         TerrainGen.DrawOpaque();
@@ -93,8 +97,8 @@ public class RenderEngine
 
     private void drawTransparent()
     {
-        graphics.BlendState = BlendState.NonPremultiplied;
-        graphics.DepthStencilState = DepthStencilState.DepthRead;
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.Default;
         
         graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
         graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas

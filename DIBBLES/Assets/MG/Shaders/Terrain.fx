@@ -16,8 +16,6 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
-bool IsTranslucentPass;
-
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
@@ -151,7 +149,7 @@ PixelOutput PS_Color(PixelInput input)
     // Hand cutoff vs transparency
     float alpha = blockColor.a;
 
-    if (!IsTranslucentPass && alpha < 1.0)
+    if (alpha < 1.0)
         clip(alpha - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
@@ -196,12 +194,8 @@ PixelOutput PS_Color(PixelInput input)
 
     output.Color0 = finalColor;
 
-    // Only draw depth/normal on opaque
-    if (finalColor.a >= 1.0)
-    {
-        output.Color1 = float4(depth01, depth01, depth01, 1.0f);
-        output.Color2 = float4(normal01, 1.0f);
-    }
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(normal01, 1.0f);
 
     output.Color3 = float4(emissiveRGB, 1.0f);
 

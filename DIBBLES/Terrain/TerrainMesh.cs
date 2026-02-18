@@ -116,15 +116,6 @@ public class TerrainMesh
     {
         var graphics = Engine.Graphics;
         
-        graphics.BlendState = BlendState.NonPremultiplied;
-        graphics.DepthStencilState = DepthStencilState.DepthRead;
-        
-        graphics.SamplerStates[0] = SamplerState.PointClamp; // Base atlas
-        graphics.SamplerStates[1] = SamplerState.PointClamp; // Emissive atlas
-        
-        // Disable culling so billboards render double-sided
-        graphics.RasterizerState = RasterizerState.CullCounterClockwise;
-        
         foreach (var chunkPos in renderSet)
         {
             if (!TransparentModels.TryGetValue(chunkPos, out var model) || model == null)
