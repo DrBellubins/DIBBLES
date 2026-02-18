@@ -1,6 +1,8 @@
+using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using ImGuiNET;
 using Microsoft.Xna.Framework.Graphics;
+using MonoGame.ImGuiNet;
 
 namespace DIBBLES.Systems.DebugMenu;
 
@@ -136,16 +138,14 @@ public sealed class TextureDisplayParam : IDebugParam
 {
     private readonly string _label;
     private readonly Texture2D _texture;
-    private readonly Func<Texture2D, IntPtr> _bindTexture;
     private readonly float _width;
     private readonly float _height;
 
-    public TextureDisplayParam(string label, Texture2D texture, Func<Texture2D, IntPtr> bindTexture,
+    public TextureDisplayParam(string label, Texture2D texture,
         float width = 256f, float height = 256f)
     {
         _label = label;
         _texture = texture;
-        _bindTexture = bindTexture;
         _width = width;
         _height = height;
     }
@@ -160,7 +160,14 @@ public sealed class TextureDisplayParam : IDebugParam
             return;
         }
 
-        var id = _bindTexture(_texture);
+        var id = DebugMenu.BindImGuiTexture(_texture);
+
+        if (id == IntPtr.Zero)
+        {
+            ImGui.TextDisabled("texture not bound (DebugMenu.SetBindTextureFunc was not called)");
+            return;
+        }
+
         ImGui.Image(id, new System.Numerics.Vector2(_width, _height));
     }
 }

@@ -127,6 +127,20 @@ public class DebugMenu
         _bindTextureFunc = bindFunc;
     }
 
+    public static IntPtr BindImGuiTexture(Texture2D tex)
+    {
+        if (tex == null || _bindTextureFunc == null)
+            return IntPtr.Zero;
+
+        if (!imguiTextureIds.TryGetValue(tex, out var id))
+        {
+            id = _bindTextureFunc(tex);
+            imguiTextureIds[tex] = id;
+        }
+
+        return id;
+    }
+    
     public static void RegisterMenuItem(string name,  params IDebugParam[] _params)
     {
         var button = new Button(name, new RectangleF());

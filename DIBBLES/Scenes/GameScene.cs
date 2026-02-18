@@ -35,20 +35,20 @@ public class GameScene : Scene
     
     // Debug menu
     public static DebugMenu _DebugMenu = new();
-    private ImGuiRenderer imguiRenderer;
+    public static ImGuiRenderer ImguiRenderer;
     
     public override void Start()
     {
         Renderer.Initialize();
         
         // IMGUI
-        imguiRenderer = new ImGuiRenderer(Engine.Instance);
-        imguiRenderer.RebuildFontAtlas();
+        ImguiRenderer = new ImGuiRenderer(Engine.Instance);
+        ImguiRenderer.RebuildFontAtlas();
 
         // Provide the texture binder so TextureDisplayParam can draw images
         DebugMenu.SetBindTextureFunc(tex =>
         {
-            return imguiRenderer.BindTexture(tex);
+            return ImguiRenderer.BindTexture(tex);
         });
         
         UIBatch.Initialize();
@@ -112,12 +112,12 @@ public class GameScene : Scene
         Renderer.DrawAll();
         
         // Draw IMGUI
-        imguiRenderer.BeginLayout(Engine.MonoGameTime);
+        ImguiRenderer.BeginLayout(Engine.MonoGameTime);
 
         // Draw the IMGUI panel for the active type
         _DebugMenu.DrawIMGUI();
 
-        imguiRenderer.EndLayout();
+        ImguiRenderer.EndLayout();
         
         // Toggle UI
         if (Input.IsKeyPressed(Keys.F1))
