@@ -28,6 +28,7 @@ static const bool WindDebug = false;
 
 // Wind parameters (kept simple and fast)
 static const float2 WindDir = float2(1.0f, 0.0f); // XZ direction
+static const float  WindDirRotateSpeed = 0.06f;   // radians/sec (slow)
 static const float  WindSpeed = 0.6f;             // advection speed
 static const float  WindFrequency = 0.4f;         // spatial scale
 static const float  WindAmplitude = 0.15f;        // lateral bend scale
@@ -76,6 +77,13 @@ float2 unitDir(float h)
 {
     float a = 6.2831853f * frac(sin(h * 19.19f) * 43758.5453f);
     return float2(cos(a), sin(a));
+}
+
+float2 rotate2(float2 v, float a)
+{
+    float s = sin(a);
+    float c = cos(a);
+    return float2(v.x * c - v.y * s, v.x * s + v.y * c);
 }
 
 // Parameters for multi-wave sums
@@ -164,7 +172,8 @@ PixelInput VS(VertexInput input)
     float3 worldPositionUnbent = input.Center + rotatedPosition;
 
     // Wind direction basis in XZ: forward direction and a perpendicular axis
-    float2 windDirection2D = normalize(WindDir);
+    //float2 windDirection2D = normalize(WindDir);
+    float2 windDirection2D = normalize(rotate2(WindDir, Time * WindDirRotateSpeed));
     float3 windDirection3D = float3(windDirection2D.x, 0.0f, windDirection2D.y);
     float3 windPerpendicular3D = float3(-windDirection2D.y, 0.0f, windDirection2D.x);
 
