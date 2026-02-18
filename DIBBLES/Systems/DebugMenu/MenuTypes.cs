@@ -136,15 +136,18 @@ public sealed class TextureDisplayParam : IDebugParam
 {
     private readonly string _label;
     private readonly Texture2D _texture;
-    private readonly System.Func<Texture2D, IntPtr> _bindTexture;
-    private readonly float _uniformSize;
+    private readonly Func<Texture2D, IntPtr> _bindTexture;
+    private readonly float _width;
+    private readonly float _height;
 
-    public TextureDisplayParam(string label, Texture2D texture, Func<Texture2D, IntPtr> bindTexture, float uniformSize = 256f)
+    public TextureDisplayParam(string label, Texture2D texture, Func<Texture2D, IntPtr> bindTexture,
+        float width = 256f, float height = 256f)
     {
         _label = label;
         _texture = texture;
         _bindTexture = bindTexture;
-        _uniformSize = uniformSize;
+        _width = width;
+        _height = height;
     }
 
     public void Draw()
@@ -158,6 +161,6 @@ public sealed class TextureDisplayParam : IDebugParam
         }
 
         var id = _bindTexture(_texture);
-        ImGui.Image(id, new System.Numerics.Vector2(_uniformSize, _uniformSize));
+        ImGui.Image(id, new System.Numerics.Vector2(_width, _height));
     }
 }
