@@ -28,9 +28,11 @@ public class TerrainDecorations
             for (int y = ChunkSize - 1; y >= 0; y--)
             {
                 var currentBlockType =  chunk.GetTypeAt(x, y, z);
+                var currentBiome = chunk.GetBiomeAt(x, y, z);
                 var pos = new Vector3Int(x, y, z);
 
-                if (currentBlockType == BlockType.Grass)
+                // Plains
+                if (currentBiome == TerrainBiome.Plains && currentBlockType == BlockType.Grass)
                 {
                     // Grass blades/flowers
                     if (rng.NextChance(35f))
@@ -38,6 +40,7 @@ public class TerrainDecorations
                         var worldAbove = chunk.Position + pos + new Vector3Int(0, 1, 0);
                         var aboveType = Chunk.GetBlockTypeGlobal(worldAbove);
 
+                        
                         if (aboveType.Item1 == BlockType.Air)
                         {
                             float pick = rng.NextFloat(); // [0,1)

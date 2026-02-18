@@ -10,8 +10,6 @@ using static DIBBLES.Scenes.GameScene;
 
 namespace DIBBLES.Systems;
 
-// TODO: SSAO appears on opaque transparent blocks.
-
 public class RenderEngine
 {
     public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
