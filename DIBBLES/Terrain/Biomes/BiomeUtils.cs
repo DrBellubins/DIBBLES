@@ -91,4 +91,23 @@ public class BiomeUtils
                 Chunk.SetBlockTypeGlobal(pos, BlockType.Leaves);
         }
     }
+    
+    public static void GenerateBlockAbove(Vector3Int localSurfacePos, Chunk chunk, int heightAbove, BlockType blockType)
+    {
+        if (blockType == BlockType.Air)
+            return;
+
+        // Convert local chunk pos to world pos
+        Vector3Int worldSurfacePos = chunk.Position + localSurfacePos;
+
+        // Target position is "heightAbove" blocks above the current block
+        Vector3Int targetPos = worldSurfacePos + new Vector3Int(0, heightAbove, 0);
+
+        // Check for 1x1x1 free space at target
+        if (!CheckSpace(targetPos, Vector3Int.One))
+            return;
+
+        // Place block
+        Chunk.SetBlockTypeGlobal(targetPos, blockType);
+    }
 }

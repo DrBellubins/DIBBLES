@@ -67,11 +67,12 @@ IsTransparent = true
 LightEmission = 0
 
 [Wisp]
-Hardness = 10
-Thickness = 0.5
+Hardness = 1
+Thickness = 0.0
 MaxStack = 64
 IsTransparent = true
 LightEmission = 15
+IsCollidable = false
 
 [WoodLog]
 Hardness = 3
@@ -122,6 +123,7 @@ MaxStack = 64
 IsTransparent = true
 LightEmission = 0
 IsBillboard = true
+IsCollidable = false
 
 [RedFlower]
 Hardness = 1
@@ -130,6 +132,7 @@ MaxStack = 64
 IsTransparent = true
 LightEmission = 0
 IsBillboard = true
+IsCollidable = false
 
 [BlueFlower]
 Hardness = 1
@@ -138,6 +141,7 @@ MaxStack = 64
 IsTransparent = true
 LightEmission = 0
 IsBillboard = true
+IsCollidable = false
 
 [Sandstone]
 Hardness = 4

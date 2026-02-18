@@ -60,7 +60,6 @@ public class PlainsBiome
                 var currentBiome = chunk.GetBiomeAt(x, y, z);
                 var pos = new Vector3Int(x, y, z);
 
-                // Plains
                 if (currentBiome == TerrainBiome.Plains && currentBlockType == BlockType.Grass)
                 {
                     // Grass blades/flowers

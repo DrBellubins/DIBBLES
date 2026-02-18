@@ -13,5 +13,6 @@ public class TerrainDecorations
     {
         // TODO: This is really messy, should be done in some cleaner way.
         plainsBiome.GenerateDecorations(chunk);
+        desertBiome.GenerateDecorations(chunk);
     }
 }

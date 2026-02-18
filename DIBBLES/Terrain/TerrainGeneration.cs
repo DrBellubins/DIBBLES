@@ -18,7 +18,8 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     
-    public static int Seed = -1888248476;
+    //public static int Seed = -1888248476;
+    public static int Seed = -785760068;
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ChunkBuffer = new();
     
     // Generation engine
@@ -76,10 +77,10 @@ public class TerrainGeneration
         foreach (var kv in WorldSave.Data.ModifiedChunks)
             ChunkBuffer[kv.Key] = kv.Value;
         
-        if (WorldSave.Exists)
-            Seed = WorldSave.Data.Seed;
-        else
-            Seed = new Random().Next(Int32.MinValue, int.MaxValue);
+        //if (WorldSave.Exists)
+        //    Seed = WorldSave.Data.Seed;
+        //else
+        //    Seed = new Random().Next(Int32.MinValue, int.MaxValue);
         
         terrainShader = Engine.Instance.Content.Load<Effect>("Shaders/Terrain");
         billboardShader = Engine.Instance.Content.Load<Effect>("Shaders/BillboardInstanced");
