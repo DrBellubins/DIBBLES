@@ -94,7 +94,7 @@ float4 Box4(float4 a, float4 b, float4 c, float4 d)
 
 float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
 {
-    float2 o = TexelSize;
+    float2 o = TexelSize * max(Radius, 0.0001);
 
     float4 c0  = tex2D(SourceSampler, uv + float2(-2, -2) * o);
     float4 c1  = tex2D(SourceSampler, uv + float2( 0, -2) * o);

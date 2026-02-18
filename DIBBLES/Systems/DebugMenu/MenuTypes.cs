@@ -137,15 +137,14 @@ public sealed class CheckBoxParam : IDebugParam
 public sealed class TextureDisplayParam : IDebugParam
 {
     private readonly string _label;
-    private readonly Texture2D _texture;
+    private readonly Func<Texture2D> _getTexture;
     private readonly float _width;
     private readonly float _height;
 
-    public TextureDisplayParam(string label, Texture2D texture,
-        float width = 256f, float height = 256f)
+    public TextureDisplayParam(string label, Func<Texture2D> getTexture, float width = 256f, float height = 256f)
     {
         _label = label;
-        _texture = texture;
+        _getTexture = getTexture;
         _width = width;
         _height = height;
     }
@@ -154,17 +153,19 @@ public sealed class TextureDisplayParam : IDebugParam
     {
         ImGui.Text(_label);
 
-        if (_texture == null)
+        Texture2D texture = _getTexture();
+
+        if (texture == null)
         {
             ImGui.TextDisabled("null texture");
             return;
         }
 
-        var id = DebugMenu.BindImGuiTexture(_texture);
+        var id = DebugMenu.BindImGuiTexture(texture);
 
         if (id == IntPtr.Zero)
         {
-            ImGui.TextDisabled("texture not bound (DebugMenu.SetBindTextureFunc was not called)");
+            ImGui.TextDisabled("texture not bound");
             return;
         }
 

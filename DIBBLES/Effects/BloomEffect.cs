@@ -59,7 +59,7 @@ public class BloomEffect : PostProcessingEffect
             new SliderParam("Intensity", 0.0f, 1.0f, () => Intensity, v => Intensity = v),
             new SliderParam("Strength", 0.0f, 10.0f, () => Strength, v => Strength = v),
             new SliderParam("Radius", 0.0f, 10.0f, () => Radius, v => Radius = v),
-            new TextureDisplayParam("Output", RenderEngine.DepthBuffer)
+            new TextureDisplayParam("Output", () => BloomOutput)
             //new CheckBoxParam("Test 2", () => test2, v => test2 = v),
             //new TextureDisplayParam("BackBuffer", GameScene.BackBuffer, DebugMenu.GetBindTextureFunc(), 256f)
         );
@@ -291,7 +291,7 @@ public class BloomEffect : PostProcessingEffect
             width,
             height,
             false,
-            SurfaceFormat.HdrBlendable,
+            RenderEngine.BackBufferFormat,
             DepthFormat.None,
             0,
             RenderTargetUsage.PreserveContents

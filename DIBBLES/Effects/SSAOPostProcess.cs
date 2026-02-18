@@ -80,7 +80,8 @@ public class SSAOPostProcess : PostProcessingEffect
             new SliderParam("Radius", 0.0f, 5.0f, () => Radius, v => Radius = v),
             new SliderParam("Bias", 0.0f, 0.1f, () => Bias, v => Bias = v),
             new SliderParam("TotalStrength", 0.0f, 5.0f, () => TotalStrength, v => TotalStrength = v),
-            new SliderParam("BaseAO", 0.0f, 0.1f, () => BaseAO, v => BaseAO = v)
+            new SliderParam("BaseAO", 0.0f, 0.1f, () => BaseAO, v => BaseAO = v),
+            new TextureDisplayParam("SSAOTarget", () => SSAOBlurTarget)
         );
     }
 
