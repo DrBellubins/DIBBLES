@@ -18,23 +18,31 @@ public class TerrainGameplay
     }
 
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
+    // Needs to be depth tested against terrain
     public void Draw()
+    {
+        if (SelectedBlock.Type != BlockType.Air && GameScene.UIEnabled)
+        {
+            Primatives3D.DrawCubeWiresThick(
+                SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
+                1f, 1f, 1f, Color.Black, 0.025f);
+        }
+    }
+
+    // Rendered into the UI buffer.
+    public void DrawPlane()
     {
         if (SelectedBlock.Type != BlockType.Air && GameScene.UIEnabled)
         {
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
-
+            
             var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
             var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
             var faceSelectionColor = new Color(1f, 1f, 1f, smoothStepDist * 0.35f);
 
             if (!SelectedBlock.Info.IsBillboard)
                 Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
-            
-            Primatives3D.DrawCubeWiresThick(
-                SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
-                1f, 1f, 1f, Color.Black, 0.025f);
         }
     }
     

@@ -106,7 +106,7 @@ public class RenderEngine
     
         TerrainGen.DrawTransparent();
         
-        // Draw block overlays here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
+        // Draw block outline here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
         TerrainGeneration.Gameplay.Draw();
         Debug.Draw3D();
     }
@@ -161,6 +161,9 @@ public class RenderEngine
         
         graphics.SetRenderTarget(UIBuffer);
         graphics.Clear(Color.Transparent);
+        
+        // 3D UI
+        TerrainGeneration.Gameplay.DrawPlane();
         
         UIBatch.Begin();
         

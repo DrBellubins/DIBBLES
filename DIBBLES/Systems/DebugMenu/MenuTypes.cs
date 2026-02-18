@@ -138,15 +138,13 @@ public sealed class TextureDisplayParam : IDebugParam
 {
     private readonly string _label;
     private readonly Func<Texture2D> _getTexture;
-    private readonly float _width;
-    private readonly float _height;
+    private readonly float _targetHeight;
 
-    public TextureDisplayParam(string label, Func<Texture2D> getTexture, float width = 256f, float height = 256f)
+    public TextureDisplayParam(string label, Func<Texture2D> getTexture, float targetHeight = 256f)
     {
         _label = label;
         _getTexture = getTexture;
-        _width = width;
-        _height = height;
+        _targetHeight = targetHeight;
     }
 
     public void Draw()
@@ -169,6 +167,14 @@ public sealed class TextureDisplayParam : IDebugParam
             return;
         }
 
-        ImGui.Image(id, new System.Numerics.Vector2(_width, _height));
+        float h = _targetHeight;
+
+        if (h <= 0f)
+            h = 256f;
+
+        float aspect = (float)texture.Width / MathF.Max(1f, texture.Height);
+        float w = h * aspect;
+
+        ImGui.Image(id, new System.Numerics.Vector2(w, h));
     }
 }
