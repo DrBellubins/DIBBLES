@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Concurrent;
+using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
@@ -130,6 +131,19 @@ public class TerrainGeneration
         }
         
         ProcessDisposeQueue(2);
+        
+        // Day/Night cycle light regen marshall
+        if (DayNightCycle.NeedsRelight)
+        {
+            // Rewind all loaded chunks to before lighting  
+            foreach (var chunk in ChunkBuffer.Values)
+            {
+                if (chunk.GenerationStage >= ChunkGenerationStage.Lighting)
+                    chunk.ResetToStage(ChunkGenerationStage.Decorations);
+            }
+            
+            DayNightCycle.NeedsRelight = false;
+        }
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass: throttle to 2 uploads per frame

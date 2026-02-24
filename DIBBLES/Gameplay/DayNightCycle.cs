@@ -15,9 +15,16 @@ public class DayNightCycle
     public const float RealSecondsPerGameHour = 60f; // 1 min = 1 hour
     public const float RealSecondsPerFullDay = RealSecondsPerGameHour * FullDayHours;
 
-    private static bool _lastIsDay = true;
+    public static bool NeedsRelight = false;
     
-    public static void Update()
+    private static bool _lastIsDay = true;
+
+    public void Start()
+    {
+        Commands.Register("time", "Set time of day", timeCMD);
+    }
+    
+    public void Update()
     {
         // Advance time
         TimeOfDay += (Time.DeltaTime / RealSecondsPerGameHour);
@@ -49,12 +56,25 @@ public class DayNightCycle
             {
                 chunk.SetSkyLightAt(x, y, z, level);
             }
+        }
+        
+        NeedsRelight = true;
+    }
 
-            // Re-run light generation for the new skylight state
-            TerrainGeneration.Lighting.Generate(chunk);
+    private void timeCMD(string[] args)
+    {
+        if (args.Length < 1 || args[0] == string.Empty)
+            Chat.Write("No time set! Usage: /time [time]", ChatMessageType.Error);
+        else
+        {
+            float time = 0f;
 
-            // Remesh so lighting is visible (do it on next tick if you want async)
-            TerrainGeneration.Mesh.Generate(chunk);
+            if (float.TryParse(args[0], out time))
+                TimeOfDay = time;
+            else
+            {
+                Chat.Write("Couldn't parse time! Usage: /time [0.0 - 24.0]", ChatMessageType.Error);
+            }
         }
     }
 }
