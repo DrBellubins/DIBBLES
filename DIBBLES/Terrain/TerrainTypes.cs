@@ -44,7 +44,7 @@ public class Chunk
     public byte[] Biomes;
     
     public bool[] Caves;
-    public byte[] SkyLights;
+    public bool[] SkyLights;
     
     public bool IsFrozen = false;
     public bool IsModified = false;
@@ -62,7 +62,7 @@ public class Chunk
         Biomes =  new byte[ChunkSize * ChunkSize * ChunkSize];
         
         Caves =  new bool[ChunkSize * ChunkSize * ChunkSize];
-        SkyLights =  new byte[ChunkSize * ChunkSize * ChunkSize];
+        SkyLights =  new bool[ChunkSize * ChunkSize * ChunkSize];
     }
 
     // Helper for flat indexing
@@ -145,12 +145,12 @@ public class Chunk
         }
     }
     
-    public byte GetSkyLightAt(int x, int y, int z)
+    public bool GetSkyLightAt(int x, int y, int z)
     {
         if (x < 0 || x >= ChunkSize ||
             y < 0 || y >= ChunkSize ||
             z < 0 || z >= ChunkSize)
-            return 0;
+            return false;
         
         return SkyLights[ToIndex(x, y, z)];
     }
@@ -211,14 +211,14 @@ public class Chunk
         }
     }
     
-    public void SetSkyLightAt(int x, int y, int z, byte lightLevel)
+    public void SetSkyLightAt(int x, int y, int z, bool skyLight)
     {
         if (x < 0 || x >= ChunkSize ||
             y < 0 || y >= ChunkSize ||
             z < 0 || z >= ChunkSize)
             return;
         
-        SkyLights[ToIndex(x, y, z)] = lightLevel;
+        SkyLights[ToIndex(x, y, z)] = skyLight;
     }
 
     public void SetBiomeAt(int x, int y, int z, TerrainBiome biome)

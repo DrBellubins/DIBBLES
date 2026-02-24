@@ -39,38 +39,37 @@ public class DayNightCycle
         if (currentlyDay != _lastIsDay)
         {
             IsDay = currentlyDay;
-            SetGlobalSkyLight(IsDay ? (byte)15 : (byte)0);
+            NeedsRelight = true;
             _lastIsDay = currentlyDay;
         }
-    }
-    
-    // Sets all skylights and regenerates lighting for all loaded chunks
-    private static void SetGlobalSkyLight(byte level)
-    {
-        foreach (var chunk in TerrainGeneration.ChunkBuffer.Values)
-        {
-            // Set all skylights in the chunk
-            for (int x = 0; x < TerrainGeneration.ChunkSize; x++)
-            for (int y = 0; y < TerrainGeneration.ChunkSize; y++)
-            for (int z = 0; z < TerrainGeneration.ChunkSize; z++)
-            {
-                chunk.SetSkyLightAt(x, y, z, level);
-            }
-        }
-        
-        NeedsRelight = true;
     }
 
     private void timeCMD(string[] args)
     {
         if (args.Length < 1 || args[0] == string.Empty)
+        {
             Chat.Write("No time set! Usage: /time [time]", ChatMessageType.Error);
+        }
         else
         {
             float time = 0f;
-
             if (float.TryParse(args[0], out time))
+            {
+                // Change time and check for day/night transition
                 TimeOfDay = time;
+
+                // Determine current day/night after command
+                bool currentlyDay = TimeOfDay >= DayStart && TimeOfDay < NightStart;
+            
+                if (currentlyDay != IsDay)
+                {
+                    IsDay = currentlyDay;
+                    NeedsRelight = true;
+                }
+            
+                // Keep state consistent for next Update
+                _lastIsDay = IsDay;
+            }
             else
             {
                 Chat.Write("Couldn't parse time! Usage: /time [0.0 - 24.0]", ChatMessageType.Error);

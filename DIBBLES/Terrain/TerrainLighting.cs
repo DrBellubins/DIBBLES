@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading;
+using DIBBLES.Gameplay;
 using DIBBLES.Utils;
 using static DIBBLES.Terrain.TerrainGeneration;
 
@@ -39,7 +40,7 @@ public class TerrainLighting
             }
 
             if (openToSky)
-                chunk.SetSkyLightAt(x, y, z, 15);
+                chunk.SetSkyLightAt(x, y, z, true);
         }
     }
     
@@ -49,7 +50,11 @@ public class TerrainLighting
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var currentLightLevel = Math.Max(chunk.GetLightLevelAt(x, y, z), chunk.GetSkyLightAt(x, y, z));
+            var currentLightLevel = chunk.GetLightLevelAt(x, y, z);
+            var skyLight = chunk.GetSkyLightAt(x, y, z);
+
+            currentLightLevel = skyLight && DayNightCycle.IsDay ? (byte)15 : (byte)0;
+            
             var emission = chunk.GetInfoAt(x, y, z).LightEmission;
             
             if (emission > 0)
