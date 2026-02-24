@@ -151,7 +151,7 @@ public class TerrainGeneration
             }
             
             foreach (var pos in activeViewChunks)
-                EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
+                EnqueueAdvance(pos, ChunkGenerationStage.Lighting, lastCameraChunk);
             
             GameScene.DayNightCycle.NeedsRelight = false;
             pendingDayNightPrevLightsSync = true;
@@ -160,12 +160,16 @@ public class TerrainGeneration
         if (pendingDayNightPrevLightsSync)
         {
             float sunBlend = GameScene.DayNightCycle.SunIntensity;
-            
+
             if (sunBlend == 0f || sunBlend == 1f)
             {
                 foreach (var chunk in ChunkBuffer.Values)
                     Array.Copy(chunk.LightLevels, chunk.PreviousLightLevels, chunk.LightLevels.Length);
-                
+
+                // Now queue ALL active view chunks for meshing
+                foreach (var pos in activeViewChunks)
+                    EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
+
                 pendingDayNightPrevLightsSync = false;
             }
         }
