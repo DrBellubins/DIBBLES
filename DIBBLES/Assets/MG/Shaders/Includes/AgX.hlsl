@@ -15,7 +15,7 @@ static const float3x3 AgX2RGB =
 
 float ExposureEV = 0.0f;  // + stops
 int   AgxLook    = 1;     // 0=Low, 1=Medium (default), 2=High, 3=VeryHigh
-float Saturation = 1.0f;  // 1.0 = neutral, <1 desaturates
+float agxSaturation = 1.0f;  // 1.0 = neutral, <1 desaturates
 
 #define EPSILON 1.0e-6
 
@@ -104,7 +104,7 @@ float3 TonemapAgX(float3 color)
     float3 agx_out = agx * scale;
 
     // Optional saturation adjustment (global)
-    agx_out = lerp(Yout.xxx, agx_out, Saturation);
+    agx_out = lerp(Yout.xxx, agx_out, agxSaturation);
 
     // Mild highlight desaturation to mimic AgX hue behavior
     float hDesat = HighlightDesatFactor(Yout);

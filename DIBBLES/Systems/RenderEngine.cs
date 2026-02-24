@@ -23,7 +23,7 @@ public class RenderEngine
 
     public static bool PostProcessingEnabled = true;
     
-    public static readonly SurfaceFormat BackBufferFormat = SurfaceFormat.HdrBlendable;
+    public static readonly SurfaceFormat BackBufferFormat = SurfaceFormat.HalfVector4;
     
     private bool backBuffersDebug = false;
 

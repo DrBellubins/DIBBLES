@@ -17,8 +17,13 @@ public class TonemappingEffect : PostProcessingEffect
     private float preBrightnessAgX = 1.0f;
     private float postBrightnessAgX = 1.2f;
     
-    private int algorithmSelectionIndex = 0; // 0 = ACES, 1 = AgX
+    // Hable defaults
+    private float preBrightnessHable = 1.875f;
+    private float postBrightnessHable = 2.26f;
     
+    private int algorithmSelectionIndex = 2; // 0 = ACES, 1 = AgX, 2 = Hable
+    
+    private float contrast = 0.04f;
     private float saturation = 1.0f;
     
     // AgX
@@ -58,7 +63,8 @@ public class TonemappingEffect : PostProcessingEffect
             new DropdownParam("Algorithm", new []
             {
                 "ACES",
-                "AgX"
+                "AgX",
+                "Hable"
             }, algorithmSelectionIndex, () => algorithmSelectionIndex, v => algorithmSelectionIndex = v),
             
             new SeparatorParam("ACES"),
@@ -69,7 +75,16 @@ public class TonemappingEffect : PostProcessingEffect
             new SeparatorParam("AgX"),
             
             new SliderParam("Pre-Brightness AgX", 0.0f, 4.0f, () => preBrightnessAgX, v => preBrightnessAgX = v),
-            new SliderParam("Post-Brightness AgX", 0.0f, 4.0f, () => postBrightnessAgX, v => postBrightnessAgX = v)
+            new SliderParam("Post-Brightness AgX", 0.0f, 4.0f, () => postBrightnessAgX, v => postBrightnessAgX = v),
+            
+            new SeparatorParam("Hable"),
+            
+            new SliderParam("Pre-Brightness Hable", 0.0f, 4.0f, () => preBrightnessHable, v => preBrightnessHable = v),
+            new SliderParam("Post-Brightness Hable", 0.0f, 4.0f, () => postBrightnessHable, v => postBrightnessHable = v),
+            
+            new SeparatorParam("Color Corrections"),
+            new SliderParam("Contrast", 0.0f, 4.0f, () => contrast, v => contrast = v),
+            new SliderParam("Saturation", 0.0f, 4.0f, () => saturation, v => saturation = v)
         );
     }
 
@@ -111,6 +126,9 @@ public class TonemappingEffect : PostProcessingEffect
         
         EffectParams.SetInt(tonemapEffect, "Algorithm", algorithmSelectionIndex);
         
+        EffectParams.SetFloat(tonemapEffect, "Contrast", contrast);
+        EffectParams.SetFloat(tonemapEffect, "Saturation", saturation);
+        
         if (algorithmSelectionIndex == 0) // ACES
         {
             EffectParams.SetFloat(tonemapEffect, "PreBrightness", preBrightnessACES);
@@ -123,7 +141,12 @@ public class TonemappingEffect : PostProcessingEffect
             
             EffectParams.SetFloat(tonemapEffect, "ExposureEV", exposureEV);
             EffectParams.SetInt(tonemapEffect, "AgxLook", agxLook);
-            EffectParams.SetFloat(tonemapEffect, "Saturation", saturation);
+            EffectParams.SetFloat(tonemapEffect, "agxSaturation", 1.0f);
+        }
+        else if (algorithmSelectionIndex == 2) // Hable
+        {
+            EffectParams.SetFloat(tonemapEffect, "PreBrightness", preBrightnessHable);
+            EffectParams.SetFloat(tonemapEffect, "PostBrightness", postBrightnessHable);
         }
         
         tonemapEffect.CurrentTechnique = tonemapEffect.Techniques["Tonemap"];

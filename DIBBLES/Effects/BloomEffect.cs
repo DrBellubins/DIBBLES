@@ -15,7 +15,7 @@ public class BloomEffect : PostProcessingEffect
     public const int SampleCount = 8;
 
     public bool Enabled = true;
-    public float Intensity = 0.2f; // Overall intensity
+    public float Intensity = 0.3f; // Overall intensity
     public float Strength = 1.0f;  // Per sample intensity
     public float Radius = 2.0f;
     

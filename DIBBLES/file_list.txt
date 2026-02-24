@@ -138,10 +138,11 @@
 ./Assets/MG/Shaders/SSAOPostProcess.fx
 ./Assets/MG/Shaders/Includes/AgX.hlsl
 ./Assets/MG/Shaders/Includes/ACES.hlsl
+./Assets/MG/Shaders/Includes/Hable.hlsl
+./Assets/MG/Shaders/Includes/ColorCorrection.hlsl
 ./Assets/MG/Shaders/Tonemap.fx
 ./Assets/MG/Shaders/UIBlur.fx
 ./Assets/MG/Shaders/Terrain.fx
-./Assets/MG/Shaders/Tonemap_.fx
 ./Assets/MG/Shaders/MainSurfaceEffect.fx
 ./Assets/MG/Textures/BlueNoise.png
 ./Assets/MG/.mgstats
@@ -172,7 +173,6 @@
 ./Assets/Textures/Blocks/WoodLog_Side.png
 ./Assets/Blocks.toml
 ./Artwork/Blocks/Ice.pxo
-./Artwork/Blocks/Feeb_e.png
 ./Artwork/Blocks/GrassBlades.pxo
 ./Artwork/Blocks/Sandstone.pxo
 ./Artwork/Blocks/Wisp.pxo
@@ -194,6 +194,7 @@
 ./Artwork/Blocks/TitleScreen.pxo
 ./Artwork/Blocks/Leaves.pxo
 ./Artwork/Blocks/Feeb.pxo
+./Artwork/Blocks/Glass.pxo
 ./Artwork/Blocks/Grass.pxo
 ./Artwork/Blocks/CheckerboardBrush.pxo
 ./Systems/DebugMenu/MenuTypes.cs

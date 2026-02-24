@@ -1,10 +1,14 @@
+#include "Includes/ColorCorrection.hlsl"
 #include "Includes/ACES.hlsl"
 #include "Includes/AgX.hlsl"
+#include "Includes/Hable.hlsl"
 
 int Algorithm; // 0 = ACES, 1 = AgX
 
 float PreBrightness;
 float PostBrightness;
+float Contrast;
+float Saturation;
 
 texture SourceTex;
 
@@ -48,11 +52,22 @@ float4 TonemapPS(float2 uv : TEXCOORD0) : COLOR0
         src.rgb = TonemapACES(src.rgb);
         src.rgb = saturate(src.rgb * PostBrightness);
     }
-    else // AgX
+    else if (Algorithm == 1) // AgX
     {
         src.rgb = TonemapAgX(src.rgb);
         src.rgb = saturate(src.rgb * PostBrightness);
     }
+    else if (Algorithm == 2) // Hable
+    {
+        src.rgb = HableTonemap(src.rgb);
+        src.rgb = saturate(src.rgb * PostBrightness);
+    }
+
+    // Apply color correction
+    //src = AdjustColor(src, PostBrightness, Contrast, Saturation);
+    src = ApplyContrast(src, Contrast);
+    src = ApplySaturation(src, Saturation);
+    src.rgb = saturate(src.rgb);
 
     // Preserve source alpha
     return src;
