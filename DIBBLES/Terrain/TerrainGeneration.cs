@@ -539,7 +539,9 @@ public class TerrainGeneration
                 }
 
                 // Also ensure this chunk proceeds to meshing after lighting
-                EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
+                if (!pendingDayNightPrevLightsSync)
+                    EnqueueAdvance(chunk.Position, ChunkGenerationStage.Meshing, lastCameraChunk);
+                
                 break;
             }
             case ChunkGenerationStage.Meshing:
