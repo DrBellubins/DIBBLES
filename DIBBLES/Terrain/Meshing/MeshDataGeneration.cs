@@ -261,7 +261,9 @@ public class MeshDataGeneration
                 vertices.AddRange(face.Verts);
                 normals.AddRange(Enumerable.Repeat(face.Normal, 4));
                 texcoords.AddRange(face.UVs);
+                
                 colors.AddRange(face.Colors);
+                previousColors.AddRange(face.Colors);
 
                 indices.AddRange(new int[]
                 {
