@@ -13,6 +13,7 @@ using DIBBLES.Terrain.Meshing;
 
 namespace DIBBLES.Terrain;
 
+// TODO: Billboards don't unload on distance.
 public class TerrainGeneration
 {
     public const int RenderDistance = 12;

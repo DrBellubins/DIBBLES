@@ -197,12 +197,19 @@ public class Chat
         if (IsOpen || IsClosedButShown)
         {
             // Draw messages
-            int maxLines = (int)(Height / FontSize);
-            int start = Math.Max(0, ChatMessages.Count - maxLines); // auto-scroll
-            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+            int totalLines = (int)(Height / FontSize);
+            int maxScroll = Math.Max(0, ChatMessages.Count - totalLines);
+            int start = Math.Max(0, ChatMessages.Count - totalLines - (int)scrollOffset);
 
+            if (start < 0)
+                start = 0;
+            
+            if (start > maxScroll)
+                start = maxScroll;
+            
+            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+            
             int index = 0;
-        
             foreach (var msg in toDisplay)
             {
                 var color = GetMsgColor(msg.Type);
