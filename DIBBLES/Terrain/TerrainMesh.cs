@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using DIBBLES.Effects;
 using DIBBLES.Gameplay;
@@ -293,6 +294,9 @@ public class TerrainMesh
 
         indexBuffer.SetData(data.Indices);
 
+        Debug.Info($"Vertex stride: {VertexPositionNormalTextureColor.VertexDeclaration.VertexStride} struct size: {Marshal.SizeOf(typeof(VertexPositionNormalTextureColor))}");
+        Debug.Info($"Verts.Length: {verts.Length}");
+        
         // Return as RuntimeModel
         return new RuntimeModel
         {
