@@ -19,6 +19,8 @@ public class TerrainGeneration
     public const int ChunkSize = 16;
     public const float ReachDistance = 5f; // Has to be finite!
     
+    public const int MeshesPerFrameBudget = 5 * 3; // Multiplied by opaque, transparent, billboard
+    
     //public static int Seed = -1888248476;
     public static int Seed = -785760068;
     public static readonly ConcurrentDictionary<Vector3Int, Chunk> ChunkBuffer = new();
@@ -151,26 +153,30 @@ public class TerrainGeneration
         }
         
         // Try to upload any queued meshes (must be done on main thread)
+        int meshUploadBudget = MeshesPerFrameBudget;
+        
         // Opaque pass: throttle to 2 uploads per frame
-        while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
+        while (meshUploadBudget > 0 && Mesh.MeshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
         
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
+            meshUploadBudget--;
         }
         
         // Transparent pass: throttle to 2 uploads per frame
-        while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
+        while (meshUploadBudget > 0 && Mesh.TMeshUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
         
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
+            meshUploadBudget--;
         }
         
         // Billboard pass: throttle to 1 upload per frame
-        while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
+        while (meshUploadBudget > 0 && Mesh.BillboardUploadQueue.TryDequeue(out var entry))
         {
             var chunkPos = entry.chunkPos;
             var instancesByType = entry.instancesByType;
@@ -206,6 +212,8 @@ public class TerrainGeneration
                 vb.SetData(instances);
                 Mesh.BillboardGen.BillboardBatches[(chunkPos, type)] = vb;
             }
+            
+            meshUploadBudget--;
         }
     }
     
