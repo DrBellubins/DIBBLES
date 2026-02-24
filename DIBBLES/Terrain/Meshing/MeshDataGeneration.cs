@@ -321,6 +321,14 @@ public class MeshDataGeneration
             meshData.TexCoords[i * 2 + 1] = texcoords[i].Y;
         }
         
+        // Sanity check
+        if (previousColors.Count != colors.Count)
+        {
+            // Fill missing entries with opaque/empty/default color
+            while (previousColors.Count < colors.Count)
+                previousColors.Add(colors[previousColors.Count]);
+        }
+        
         for (int i = 0; i < colors.Count; i++)
         {
             meshData.Colors[i * 4 + 0] = colors[i].R;
