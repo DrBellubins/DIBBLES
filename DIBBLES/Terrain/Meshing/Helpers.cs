@@ -202,7 +202,6 @@ public struct VertexPositionNormalTextureColor : IVertexType
     public Vector3 Normal;          // 12
     public Vector2 TexCoord;        // 24
     public Color   Color;           // 32
-    public Color   PreviousColor;   // 36
 
     public Vector4 UVRect;          // 40
     public Vector4 UVBasis;         // 56
@@ -215,7 +214,6 @@ public struct VertexPositionNormalTextureColor : IVertexType
         new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
         new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color, 0),
-        new VertexElement(36, VertexElementFormat.Color,   VertexElementUsage.Color, 1),
         new VertexElement(40, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
         new VertexElement(56, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
         new VertexElement(72, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
@@ -229,7 +227,6 @@ public struct VertexPositionNormalTextureColor : IVertexType
         Vector3 norm,
         Vector2 tex,
         Color color,
-        Color previousColor,
         Vector4 uvRect,
         Vector4 uvBasis,
         Vector4 emissiveUVRect,
@@ -239,7 +236,6 @@ public struct VertexPositionNormalTextureColor : IVertexType
         Normal = norm;
         TexCoord = tex;
         Color = color;
-        PreviousColor = previousColor;
         
         UVRect = uvRect;
         UVBasis = uvBasis;

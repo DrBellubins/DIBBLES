@@ -36,7 +36,6 @@ struct VertexInput
     float3 Normal   : NORMAL0;
     float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
     float4 Color    : COLOR0;
-    float4 PrevColor: COLOR1;
 
     float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
     float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
@@ -53,7 +52,6 @@ struct PixelInput
     float4 Position     : POSITION0;
     float2 TexCoord     : TEXCOORD0;
     float4 Color        : COLOR0;
-    float4 PrevColor    : COLOR1;
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
@@ -83,7 +81,6 @@ PixelInput VS(VertexInput input)
     output.Position = mul(viewPos, Projection);
     output.TexCoord = input.TexCoord;
     output.Color = input.Color;
-    output.PrevColor = input.PrevColor;
     output.WorldPos = worldPos.xyz;
 
     // View-space forward is -Z; use -viewPos.z for positive distance
@@ -148,7 +145,7 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
-    float4 blockColor = texColor * lerp(input.PrevColor, input.Color, DayNightBlend);
+    float4 blockColor = texColor * input.Color;
 
     // Hand cutoff vs transparency
     float alpha = blockColor.a;
