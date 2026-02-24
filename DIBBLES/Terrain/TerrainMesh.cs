@@ -258,8 +258,19 @@ public class TerrainMesh
                 emisBasis = uvBasis;
             }
 
+            Color previousColor = Color.White;
+            
+            if (data.PreviousColors != null && data.PreviousColors.Length >= (i + 1) * 4)
+            {
+                previousColor = new Color(
+                    data.PreviousColors[i * 4 + 0],
+                    data.PreviousColors[i * 4 + 1],
+                    data.PreviousColors[i * 4 + 2],
+                    data.PreviousColors[i * 4 + 3]);
+            }
+            
             verts[i] = new VertexPositionNormalTextureColor(
-                pos, norm, tex, color,
+                pos, norm, tex, color, previousColor,
                 uvRect, uvBasis,
                 emisRect, emisBasis
             );

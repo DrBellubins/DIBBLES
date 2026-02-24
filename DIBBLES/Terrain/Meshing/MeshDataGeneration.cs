@@ -132,8 +132,9 @@ public class MeshDataGeneration
                     {
                         float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx, blockInfo.Brightness);
                         Color flatColor = FaceUtils.ToColor(faceLight);
-                        
+
                         faceColors = new[] { flatColor, flatColor, flatColor, flatColor };
+                        prevFaceColors = new[] { flatColor, flatColor, flatColor, flatColor };
                     }
                     
                     // Ambient occlusion - Disabled because it looks to "grungey"

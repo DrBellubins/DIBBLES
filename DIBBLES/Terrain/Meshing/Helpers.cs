@@ -230,6 +230,7 @@ public struct VertexPositionNormalTextureColor : IVertexType
         Vector3 norm,
         Vector2 tex,
         Color color,
+        Color previousColor,
         Vector4 uvRect,
         Vector4 uvBasis,
         Vector4 emissiveUVRect,
@@ -239,6 +240,7 @@ public struct VertexPositionNormalTextureColor : IVertexType
         Normal = norm;
         TexCoord = tex;
         Color = color;
+        PreviousColor = previousColor;
         
         UVRect = uvRect;
         UVBasis = uvBasis;
