@@ -89,6 +89,8 @@ public class GameScene : Scene
         Debug.Draw2DText($"FPS: {fpsCounter}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
         
+        DayNightCycle.Update();
+        
         PlayerCharacter.Update();
         
         Inventory.Update();
