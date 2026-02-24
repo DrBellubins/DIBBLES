@@ -53,6 +53,7 @@ struct PixelInput
     float4 Position     : POSITION0;
     float2 TexCoord     : TEXCOORD0;
     float4 Color        : COLOR0;
+    float4 PrevColor    : COLOR1;
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
