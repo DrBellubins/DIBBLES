@@ -202,13 +202,14 @@ public struct VertexPositionNormalTextureColor : IVertexType
     public Vector3 Normal;
     public Vector2 TexCoord;
     public Color   Color;
-    public Color PreviousColor;
     
     public Vector4 UVRect;   // (x,y,w,h)
     public Vector4 UVBasis;  // (uX,uY,vX,vY)
     
     public Vector4 EmissiveUVRect;
     public Vector4 EmissiveUVBasis;
+    
+    public Color PreviousColor;
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
@@ -220,7 +221,7 @@ public struct VertexPositionNormalTextureColor : IVertexType
         new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
         new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
         new VertexElement(84, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4),
-        new VertexElement(88, VertexElementFormat.Color, VertexElementUsage.Color, 1)
+        new VertexElement(104, VertexElementFormat.Color, VertexElementUsage.Color, 1)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;

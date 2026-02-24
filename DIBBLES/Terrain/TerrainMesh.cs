@@ -293,9 +293,6 @@ public class TerrainMesh
             BufferUsage.WriteOnly);
 
         indexBuffer.SetData(data.Indices);
-
-        Debug.Info($"Vertex stride: {VertexPositionNormalTextureColor.VertexDeclaration.VertexStride} struct size: {Marshal.SizeOf(typeof(VertexPositionNormalTextureColor))}");
-        Debug.Info($"Verts.Length: {verts.Length}");
         
         // Return as RuntimeModel
         return new RuntimeModel
