@@ -93,7 +93,6 @@ public class GameScene : Scene
         Debug.Draw2DText($"Time: {DayNightCycle.TimeOfDay}");
         
         DayNightCycle.Update();
-        Renderer.Update();
         
         PlayerCharacter.Update();
         

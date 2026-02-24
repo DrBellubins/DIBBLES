@@ -11,6 +11,7 @@ float3 CameraPos;
 float CameraNear;
 float CameraFar;
 
+float SunIntensity;
 float EmissiveStrength;
 float FogNear;
 float FogFar;
@@ -145,6 +146,8 @@ PixelOutput PS_Color(PixelInput input)
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
     float4 blockColor = texColor * input.Color;
+
+    blockColor.rgb *= SunIntensity;
 
     // Hand cutoff vs transparency
     float alpha = blockColor.a;
