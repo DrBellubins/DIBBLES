@@ -25,6 +25,7 @@ public class MeshDataGeneration
         List<Vector3> normals = [];
         List<Vector2> texcoords = [];
         List<Color> colors = [];
+        List<Color> previousColors = [];
         
         List<Vector4> uvRects = new();
         List<Vector4> uvBasis = new();
@@ -120,9 +121,13 @@ public class MeshDataGeneration
                     
                     // samples surrounding voxels
                     Color[] faceColors;
-                    
+                    Color[] prevFaceColors;
+
                     if (SmoothLighting)
+                    {
                         faceColors = FaceUtils.GetFaceColors(chunk, pos, faceIdx, blockInfo.Brightness);
+                        prevFaceColors = FaceUtils.GetFaceColors(chunk, pos, faceIdx, blockInfo.Brightness, true);
+                    }
                     else
                     {
                         float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx, blockInfo.Brightness);
@@ -211,6 +216,7 @@ public class MeshDataGeneration
                         //texcoords.AddRange(faceUVs);
                         
                         colors.AddRange(faceColors);
+                        previousColors.AddRange(prevFaceColors);
                         
                         indices.AddRange(new int[]
                         {
@@ -318,6 +324,11 @@ public class MeshDataGeneration
             meshData.Colors[i * 4 + 1] = colors[i].G;
             meshData.Colors[i * 4 + 2] = colors[i].B;
             meshData.Colors[i * 4 + 3] = colors[i].A;
+
+            meshData.PreviousColors[i * 4 + 0] = previousColors[i].R;
+            meshData.PreviousColors[i * 4 + 1] = previousColors[i].G;
+            meshData.PreviousColors[i * 4 + 2] = previousColors[i].B;
+            meshData.PreviousColors[i * 4 + 3] = previousColors[i].A;
         }
         
         for (int i = 0; i < indices.Count; i++)

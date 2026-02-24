@@ -19,6 +19,9 @@ public struct MeshData
     
     public int VertexCount;
     public int TriangleCount;
+    
+    // Utils
+    public byte[] PreviousColors; // Second color set for previous lighting per-vertex
 
     public MeshData(int vertCount, int triCount)
     {
@@ -36,5 +39,8 @@ public struct MeshData
         
         VertexCount = vertCount;
         TriangleCount = triCount;
+        
+        // Utils
+        PreviousColors = new byte[vertCount * 4];
     }
 }

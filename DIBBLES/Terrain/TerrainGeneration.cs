@@ -139,7 +139,12 @@ public class TerrainGeneration
             foreach (var chunk in ChunkBuffer.Values)
             {
                 if (chunk.GenerationStage >= ChunkGenerationStage.Lighting)
+                {
+                    Array.Copy(chunk.LightLevels, 
+                        chunk.PreviousLightLevels, chunk.LightLevels.Length);
+                    
                     chunk.ResetToStage(ChunkGenerationStage.Decorations);
+                }
             }
             
             foreach (var pos in activeViewChunks)

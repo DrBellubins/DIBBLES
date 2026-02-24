@@ -94,7 +94,7 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
                 EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
                 
-                EffectParams.SetFloat(shader, "SunIntensity", GameScene.DayNightCycle.SunIntensity);
+                EffectParams.SetFloat(shader, "DayNightBlend", GameScene.DayNightCycle.SunIntensity);
                 EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);

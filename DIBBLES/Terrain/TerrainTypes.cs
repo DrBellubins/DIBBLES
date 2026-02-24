@@ -50,6 +50,9 @@ public class Chunk
     public bool IsModified = false;
     public ChunkGenerationStage GenerationStage = ChunkGenerationStage.Uninitialized;
     
+    // Utils
+    public byte[] PreviousLightLevels;
+    
     private readonly object _skyLock = new();
     private readonly object _lightLock = new();
     
@@ -63,6 +66,9 @@ public class Chunk
         
         Caves =  new bool[ChunkSize * ChunkSize * ChunkSize];
         SkyLights =  new bool[ChunkSize * ChunkSize * ChunkSize];
+        
+        // Utils
+        PreviousLightLevels = new byte[ChunkSize * ChunkSize * ChunkSize];
     }
 
     // Helper for flat indexing
@@ -143,6 +149,16 @@ public class Chunk
         {
             return LightLevels[ToIndex(x, y, z)];
         }
+    }
+    
+    public byte GetPreviousLightLevelAt(int x, int y, int z)
+    {
+        if (x < 0 || x >= ChunkSize ||
+            y < 0 || y >= ChunkSize ||
+            z < 0 || z >= ChunkSize)
+            return 0;
+        
+        return PreviousLightLevels[ToIndex(x, y, z)];
     }
     
     public bool GetSkyLightAt(int x, int y, int z)

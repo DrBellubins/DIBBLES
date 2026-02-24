@@ -11,7 +11,7 @@ float3 CameraPos;
 float CameraNear;
 float CameraFar;
 
-float SunIntensity;
+float DayNightBlend;
 float EmissiveStrength;
 float FogNear;
 float FogFar;
@@ -36,6 +36,7 @@ struct VertexInput
     float3 Normal   : NORMAL0;
     float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
     float4 Color    : COLOR0;
+    float4 PrevColor: COLOR1;
 
     float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
     float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
@@ -145,13 +146,7 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
-    float4 blockColor = texColor * input.Color;
-
-    float sunStrength = SunIntensity;
-
-    sunStrength = clamp(sunStrength, 0.5, 1.0);
-
-    blockColor.rgb *= sunStrength;
+    float4 blockColor = texColor * lerp(input.PrevColor, input.Color, DayNightBlend);
 
     // Hand cutoff vs transparency
     float alpha = blockColor.a;

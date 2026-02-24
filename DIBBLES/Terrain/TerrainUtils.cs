@@ -220,7 +220,8 @@ public static class FaceUtils
         }
     }
     
-    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx, float brightness = 1f)
+    public static Color[] GetFaceColors(Chunk chunk, Vector3Int pos, int faceIdx,
+        float brightness = 1f, bool isPrevious = false)
     {
         // Lighting calculation for each face (copied from TerrainMesh.cs)
         float l0, l1, l2, l3;
@@ -228,40 +229,40 @@ public static class FaceUtils
         switch (faceIdx)
         {
             case 0: // Front (-Z)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness, isPrevious);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness, isPrevious);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness, isPrevious);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness, isPrevious);
                 break;
             case 1: // Back (+Z)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness, isPrevious);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness, isPrevious);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness, isPrevious);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness, isPrevious);
                 break;
             case 2: // Left (-X)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness);
-                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness);
-                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness, isPrevious);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z + 1, brightness, isPrevious);
+                l2 = GetVertexLight(chunk, pos.X, pos.Y + 1, pos.Z, brightness, isPrevious);
+                l3 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness, isPrevious);
                 break;
             case 3: // Right (+X)
-                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
-                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
+                l0 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness, isPrevious);
+                l1 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z, brightness, isPrevious);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y + 1, pos.Z + 1, brightness, isPrevious);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness, isPrevious);
                 break;
             case 4: // Bottom (-Y)
-                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
-                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness);
-                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
-                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
+                l0 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z + 1, brightness, isPrevious);
+                l1 = GetVertexLight(chunk, pos.X, pos.Y, pos.Z, brightness, isPrevious);
+                l2 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z, brightness, isPrevious);
+                l3 = GetVertexLight(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness, isPrevious);
                 break;
             case 5: // Top (+Y)
-                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z, brightness);
-                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1, brightness);
-                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness);
-                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z, brightness);
+                l0 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z, brightness, isPrevious);
+                l1 = GetVertexLightTopFace(chunk, pos.X, pos.Y, pos.Z + 1, brightness, isPrevious);
+                l2 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z + 1, brightness, isPrevious);
+                l3 = GetVertexLightTopFace(chunk, pos.X + 1, pos.Y, pos.Z, brightness, isPrevious);
                 break;
             default:
                 l0 = l1 = l2 = l3 = 1f;
@@ -362,7 +363,8 @@ public static class FaceUtils
     public static Color ToColor(float light)
     {
         if (!TerrainMesh.Fullbright)
-            light = MathF.Max(0.1f, light); // Prevent fully dark
+            light = light;
+            //light = MathF.Max(0.1f, light); // Prevent fully dark
         else
             light = MathF.Max(1f, light);
         
@@ -372,7 +374,8 @@ public static class FaceUtils
     }
     
     // Flat face light from neighbor cell in face direction
-    public static float GetFaceLightFlat(Chunk chunk, Vector3Int pos, int faceIdx, float brightness = 1f)
+    public static float GetFaceLightFlat(Chunk chunk, Vector3Int pos, int faceIdx,
+        float brightness = 1f, bool isPrevious = false)
     {
         // Map faceIdx to neighbor offset (same ordering as VoxelFaceInfos)
         Vector3Int neighborOffset = faceIdx switch
@@ -397,7 +400,10 @@ public static class FaceUtils
             ny >= 0 && ny < TerrainGeneration.ChunkSize &&
             nz >= 0 && nz < TerrainGeneration.ChunkSize)
         {
-            lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
+            if (isPrevious)
+                lightLevel = chunk.GetPreviousLightLevelAt(nx, ny, nz);
+            else
+                lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
         }
         else
         {
@@ -407,8 +413,10 @@ public static class FaceUtils
                 chunk.Position.Y + ny,
                 chunk.Position.Z + nz
             );
-
-            lightLevel = GetLightLevelAtWorldPos(worldPos);
+            if (isPrevious)
+                lightLevel = GetPrevLightLevelAtWorldPos(worldPos);
+            else
+                lightLevel = GetLightLevelAtWorldPos(worldPos);
         }
 
         // Normalize to [0..1]
@@ -416,7 +424,8 @@ public static class FaceUtils
     }
     
     // This computes the average light at a vertex, by sampling the 8 blocks touching it
-    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz, float brightness = 1f)
+    public static float GetVertexLight(Chunk chunk, int vx, int vy, int vz,
+        float brightness = 1f, bool isPrevious = false)
     {
         float total = 0f;
         int count = 0;
@@ -435,7 +444,10 @@ public static class FaceUtils
                 ny >= 0 && ny < TerrainGeneration.ChunkSize &&
                 nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
-                lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
+                if (isPrevious)
+                    lightLevel = chunk.GetPreviousLightLevelAt(nx, ny, nz);
+                else
+                    lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
             }
             else
             {
@@ -445,8 +457,11 @@ public static class FaceUtils
                     chunk.Position.Y + ny,
                     chunk.Position.Z + nz
                 );
-                
-                lightLevel = GetLightLevelAtWorldPos(worldPos);
+
+                if (isPrevious)
+                    lightLevel = GetPrevLightLevelAtWorldPos(worldPos);
+                else
+                    lightLevel = GetLightLevelAtWorldPos(worldPos);
             }
 
             total += lightLevel;
@@ -457,7 +472,8 @@ public static class FaceUtils
     }
     
     // TODO: Bottom blocks do not run this check
-    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz, float brightness = 1f)
+    public static float GetVertexLightTopFace(Chunk chunk, int vx, int vy, int vz,
+        float brightness = 1f, bool isPrevious = false)
     {
         float total = 0f;
         int count = 0;
@@ -475,7 +491,10 @@ public static class FaceUtils
                 ny >= 0 && ny < TerrainGeneration.ChunkSize &&
                 nz >= 0 && nz < TerrainGeneration.ChunkSize)
             {
-                lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
+                if (isPrevious)
+                    lightLevel = chunk.GetPreviousLightLevelAt(nx, ny, nz);
+                else
+                    lightLevel = chunk.GetLightLevelAt(nx, ny, nz);
             }
             else
             {
@@ -486,7 +505,10 @@ public static class FaceUtils
                     chunk.Position.Z + nz
                 );
                 
-                lightLevel = GetLightLevelAtWorldPos(worldPos);
+                if (isPrevious)
+                    lightLevel = GetPrevLightLevelAtWorldPos(worldPos);
+                else
+                    lightLevel = GetLightLevelAtWorldPos(worldPos);
             }
 
             total += lightLevel;
@@ -655,6 +677,31 @@ public static class FaceUtils
                 localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
             {
                 return chunk.GetLightLevelAt(localX, localY, localZ);
+            }
+        }
+        
+        return 0; // Treat as out-of-bounds
+    }
+    
+    public static byte GetPrevLightLevelAtWorldPos(Vector3Int worldPos)
+    {
+        int chunkX = (int)Math.Floor((float)worldPos.X / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkY = (int)Math.Floor((float)worldPos.Y / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        int chunkZ = (int)Math.Floor((float)worldPos.Z / TerrainGeneration.ChunkSize) * TerrainGeneration.ChunkSize;
+        
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (TerrainGeneration.ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        {
+            int localX = worldPos.X - chunkX;
+            int localY = worldPos.Y - chunkY;
+            int localZ = worldPos.Z - chunkZ;
+            
+            if (localX >= 0 && localX < TerrainGeneration.ChunkSize &&
+                localY >= 0 && localY < TerrainGeneration.ChunkSize &&
+                localZ >= 0 && localZ < TerrainGeneration.ChunkSize)
+            {
+                return chunk.GetPreviousLightLevelAt(localX, localY, localZ);
             }
         }
         
