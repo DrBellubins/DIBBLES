@@ -19,16 +19,22 @@ public class TerrainLighting
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            var emission = chunk.GetInfoAt(x, y, z).LightEmission;
+            //var emission = chunk.GetInfoAt(x, y, z).LightEmission;
 
-            if (emission > 0)
+            var isCave = chunk.GetCaveAt(x, y, z);
+            
+            if (!isCave)
+                chunk.SetLightLevelAt(x, y, z, 15);
+            
+            
+            /*if (emission > 0)
             {
                 // Preserve any previously propagated light: take the max of existing and emission
                 var current = chunk.GetLightLevelAt(x, y, z);
                 var newLevel = (byte)Math.Max(current, emission);
 
                 chunk.SetLightLevelAt(x, y, z, newLevel);
-            }
+            }*/
 
             // IMPORTANT: do NOT write 0 to non-emissive cells here; that would erase cross-chunk propagation
         }
