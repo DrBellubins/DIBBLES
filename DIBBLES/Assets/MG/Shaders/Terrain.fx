@@ -32,17 +32,17 @@ sampler2D EmissiveAtlasSampler = sampler_state
 
 struct VertexInput
 {
-    float3 Position : POSITION0;     // 0
-    float3 Normal   : NORMAL0;       // 12
-    float2 TexCoord : TEXCOORD0;     // 24
-    float4 Color    : COLOR0;        // 32
+    float3 Position : POSITION0;
+    float3 Normal   : NORMAL0;
+    float2 TexCoord : TEXCOORD0; // local tile-space for greedy OR absolute atlas for non-greedy
+    float4 Color    : COLOR0;
+    float4 PrevColor: COLOR1;
 
-    float4 UVRect   : TEXCOORD1;     // 36
-    float4 UVBasis  : TEXCOORD2;     // 52
-    float4 EmisUVRect  : TEXCOORD3;  // 68
-    float4 EmisUVBasis : TEXCOORD4;  // 84
+    float4 UVRect   : TEXCOORD1; // (x,y,w,h) atlas sub-rect; zero for non-greedy
+    float4 UVBasis  : TEXCOORD2; // (uX,uY,vX,vY) atlas-space basis from BR-BL and TL-BL
 
-    float4 PrevColor: COLOR1;        // 100
+    float4 EmisUVRect  : TEXCOORD3;
+    float4 EmisUVBasis : TEXCOORD4;
 };
 
 // Add CameraNear/Far are already declared; reuse them to write normalized linear depth to RT1.
@@ -53,6 +53,7 @@ struct PixelInput
     float4 Position     : POSITION0;
     float2 TexCoord     : TEXCOORD0;
     float4 Color        : COLOR0;
+    float4 PrevColor    : COLOR1;
     float3 WorldPos     : TEXCOORD1;
     float  ViewDepth    : TEXCOORD2;   // +Z forward distance in view space
     float3 ViewNormal   : TEXCOORD3;
@@ -62,8 +63,6 @@ struct PixelInput
 
     float4 EmisUVRect   : TEXCOORD6;
     float4 EmisUVBasis  : TEXCOORD7;
-
-    float4 PrevColor: COLOR1;
 };
 
 struct PixelOutput

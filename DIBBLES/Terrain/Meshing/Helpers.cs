@@ -198,30 +198,28 @@ public class Helpers
 [StructLayout(LayoutKind.Sequential)]
 public struct VertexPositionNormalTextureColor : IVertexType
 {
-    public Vector3 Position;
-    public Vector3 Normal;
-    public Vector2 TexCoord;
-    public Color   Color;
-    
-    public Vector4 UVRect;   // (x,y,w,h)
-    public Vector4 UVBasis;  // (uX,uY,vX,vY)
-    
-    public Vector4 EmissiveUVRect;
-    public Vector4 EmissiveUVBasis;
-    
-    public Color PreviousColor;
+    public Vector3 Position;        // 0
+    public Vector3 Normal;          // 12
+    public Vector2 TexCoord;        // 24
+    public Color   Color;           // 32
+    public Color   PreviousColor;   // 36
+
+    public Vector4 UVRect;          // 40
+    public Vector4 UVBasis;         // 56
+    public Vector4 EmissiveUVRect;  // 72
+    public Vector4 EmissiveUVBasis; // 88
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
-        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position,          0),
-        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal,            0),
+        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
         new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
-        new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color,             0),
-        new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
-        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
-        new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
-        new VertexElement(84, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4),
-        new VertexElement(104, VertexElementFormat.Color, VertexElementUsage.Color, 1)
+        new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color, 0),
+        new VertexElement(36, VertexElementFormat.Color,   VertexElementUsage.Color, 1),
+        new VertexElement(40, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
+        new VertexElement(56, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
+        new VertexElement(72, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
+        new VertexElement(88, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4)
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
