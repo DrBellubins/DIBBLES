@@ -14,6 +14,8 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
+float3 AmbientLightColor;
+
 // Atlas tile rect for GrassBlades: (x,y,w,h) in [0..1] atlas UV space
 float4 UVRect;
 
@@ -291,7 +293,8 @@ struct PixelOutput
 PixelOutput PS_Color(PixelInput input)
 {
     float4 texColor = tex2D(AtlasSampler, input.Tex);
-    float4 blockColor = texColor * input.Color;
+    float4 vertLighting = float4(lerp(input.Color.rgb, AmbientLightColor, 0.2f), texColor.a * input.Color.a);
+    float4 blockColor = texColor * vertLighting;
 
     // Hard alpha cutout so near-transparent texels don’t occlude
     clip(blockColor.a - AlphaCutoff);

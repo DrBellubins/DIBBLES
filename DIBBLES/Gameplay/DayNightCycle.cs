@@ -18,7 +18,7 @@ public class DayNightCycle
     public const float DayStart = 6.0f;
     public const float NightStart = 18.0f;
     public const float FullDayHours = 24f;
-    public const float RealSecondsPerGameHour = 1f; // 1 min = 1 hour
+    public const float RealSecondsPerGameHour = 30f; // 30 sec = 1 hour, 12 min = 24 hours
     public const float RealSecondsPerFullDay = RealSecondsPerGameHour * FullDayHours;
 
     public bool NeedsRelight = false;

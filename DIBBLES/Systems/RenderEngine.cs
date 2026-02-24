@@ -18,6 +18,17 @@ public class RenderEngine
     public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1.0f);
     public static Color DawnDuskSkyColor = new Color(0.98f, 0.6f, 0.41f, 1.0f);
     public static Color NightSkyColor = DaySkyColor.Multiply(0.2f);
+
+    public static Color AmbientLightColor
+    {
+        get
+        {
+            var ambientLightCol = CurrentSkyColor.Brighten(0.5f);
+            ambientLightCol.Multiply(0.35f);
+
+            return ambientLightCol;
+        }
+    }
     
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;

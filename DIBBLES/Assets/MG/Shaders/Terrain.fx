@@ -1,3 +1,5 @@
+#include "Includes/Utils.hlsl"
+
 texture AtlasTex;
 texture EmissiveAtlasTex;
 
@@ -11,7 +13,10 @@ float3 CameraPos;
 float CameraNear;
 float CameraFar;
 
-float DayNightBlend;
+float3 AmbientLightColor;
+
+float SunIntensity;
+float DayEmissiveStrengthMax;
 float EmissiveStrength;
 float FogNear;
 float FogFar;
@@ -145,7 +150,8 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
-    float4 blockColor = texColor * input.Color;
+    float4 vertLighting = float4(lerp(input.Color.rgb, AmbientLightColor, 0.2f), texColor.a * input.Color.a);
+    float4 blockColor = texColor * vertLighting;
 
     // Hand cutoff vs transparency
     float alpha = blockColor.a;
@@ -185,7 +191,10 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 emissiveColor = tex2D(EmissiveAtlasSampler, emisUV);
-    float3 emissiveRGB = emissiveColor.rgb * emissiveColor.a * EmissiveStrength;
+
+    float sunStrength = lerp(DayEmissiveStrengthMax, 1.0, 1.0 - SunIntensity);
+
+    float3 emissiveRGB = emissiveColor.rgb * emissiveColor.a * EmissiveStrength * sunStrength;
 
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 normal = normalize(input.ViewNormal);

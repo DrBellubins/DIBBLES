@@ -25,6 +25,7 @@ public class TerrainMesh
     public const bool NonGreedyRespectAntiTileFlips = true;
     
     public const float EmissiveStrength = 5.0f;
+    public const float DayEmissiveStrengthMax = 0.35f;
     
     public static float FrustumCullRadius = (float)(MathF.Sqrt(3f) * 0.5f * ChunkSize);
 
@@ -95,7 +96,10 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
                 EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
                 
-                EffectParams.SetFloat(shader, "DayNightBlend", GameScene.DayNightCycle.SunIntensity);
+                EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
+                
+                EffectParams.SetFloat(shader, "SunIntensity", GameScene.DayNightCycle.SunIntensity);
+                EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
                 EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
@@ -142,8 +146,11 @@ public class TerrainMesh
             EffectParams.SetVector3(shader, "CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
             EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
             EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+            
+            EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
 
-            EffectParams.SetFloat(shader, "DayNightBlend", GameScene.DayNightCycle.SunIntensity);
+            EffectParams.SetFloat(shader, "SunIntensity", GameScene.DayNightCycle.SunIntensity);
+            EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
             EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
             EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
             EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);

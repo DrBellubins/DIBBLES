@@ -44,7 +44,9 @@ public class Billboards
         EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
         EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
         EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
-    
+
+        EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
+        
         EffectParams.SetFloat(shader, "Time", Time.time);
     
         foreach (var kv in BillboardBatches)

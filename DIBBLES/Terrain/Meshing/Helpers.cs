@@ -210,14 +210,14 @@ public struct VertexPositionNormalTextureColor : IVertexType
 
     public readonly static VertexDeclaration VertexDeclaration = new VertexDeclaration
     (
-        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
-        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),
-        new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0),
-        new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color, 0),
-        new VertexElement(40, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1),
-        new VertexElement(56, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2),
-        new VertexElement(72, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3),
-        new VertexElement(88, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4)
+        new VertexElement(0,  VertexElementFormat.Vector3, VertexElementUsage.Position, 0),           // 0-11
+        new VertexElement(12, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0),            // 12-23
+        new VertexElement(24, VertexElementFormat.Vector2, VertexElementUsage.TextureCoordinate, 0), // 24-31
+        new VertexElement(32, VertexElementFormat.Color,   VertexElementUsage.Color, 0),             // 32-35
+        new VertexElement(36, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 1), // 36-51
+        new VertexElement(52, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 2), // 52-67
+        new VertexElement(68, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 3), // 68-83
+        new VertexElement(84, VertexElementFormat.Vector4, VertexElementUsage.TextureCoordinate, 4)  // 84-99
     );
 
     VertexDeclaration IVertexType.VertexDeclaration => VertexDeclaration;
