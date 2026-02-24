@@ -9,33 +9,57 @@ public class TerrainLighting
 {
     public void Generate(Chunk chunk)
     {
+        placeSkyLights(chunk);
         placeLights(chunk);
         PropagateLight(chunk);
     }
 
+    private void placeSkyLights(Chunk chunk)
+    {
+        for (int x = 0; x < ChunkSize; x++)
+        for (int y = 0; y < ChunkSize; y++)
+        for (int z = 0; z < ChunkSize; z++)
+        {
+            if (chunk.GetTypeAt(x, y, z) != BlockType.Air)
+                continue;
+            if (chunk.GetCaveAt(x, y, z))
+                continue;
+
+            bool openToSky = true;
+
+            // Check all blocks above (within this chunk only!)
+            for (int yy = y + 1; yy < ChunkSize; yy++)
+            {
+                if (chunk.GetTypeAt(x, yy, z) != BlockType.Air && 
+                    !chunk.GetCaveAt(x, yy, z))
+                {
+                    openToSky = false;
+                    break;
+                }
+            }
+
+            if (openToSky)
+                chunk.SetSkyLightAt(x, y, z, 15);
+        }
+    }
+    
     private void placeLights(Chunk chunk)
     {
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
-            byte currentLightLevel = 0;
-            
-            if (chunk.GetTypeAt(x, y, z) == BlockType.Air
-                && !chunk.GetCaveAt(x, y, z) && isOpenToSky(chunk, x, y, z))
-            {
-                currentLightLevel = 15;
-                chunk.SetLightLevelAt(x, y, z, currentLightLevel);
-            }
-            
-            /*var emission = chunk.GetInfoAt(x, y, z).LightEmission;
+            var currentLightLevel = Math.Max(chunk.GetLightLevelAt(x, y, z), chunk.GetSkyLightAt(x, y, z));
+            var emission = chunk.GetInfoAt(x, y, z).LightEmission;
             
             if (emission > 0)
             {
                 // Preserve any previously propagated light: take the max of existing and emission
                 var newLevel = (byte)Math.Max(currentLightLevel, emission);
-                chunk.SetLightLevelAt(x, y, z, newLevel);
-            }*/
+                currentLightLevel = newLevel;
+            }
+            
+            chunk.SetLightLevelAt(x, y, z, currentLightLevel);
 
             // IMPORTANT: do NOT write 0 to non-emissive cells here; that would erase cross-chunk propagation
         }
@@ -166,37 +190,5 @@ public class TerrainLighting
                 }
             }
         }
-    }
-    
-    private bool isOpenToSky(Chunk chunk, int x, int y, int z)
-    {
-        int worldY = chunk.Position.Y + y;
-
-        for (int cy = worldY + 1; ; cy++)
-        {
-            // Compute chunk coords for cy
-            int chunkY = (int)Math.Floor((float)cy / ChunkSize) * ChunkSize;
-            int localY = cy - chunkY;
-            var chunkCoord = new Vector3Int(chunk.Position.X, chunkY, chunk.Position.Z);
-
-            // If there's no chunk above, treat as "open to sky"
-            if (!ChunkBuffer.TryGetValue(chunkCoord, out var aboveChunk))
-                break;
-
-            // Move to next chunk in +Y
-            if (localY >= ChunkSize || localY < 0)
-                continue;
-
-            var blockType = aboveChunk.GetTypeAt(x, localY, z);
-            var isCave = aboveChunk.GetCaveAt(x, localY, z);
-
-            if (blockType != BlockType.Air && !isCave)
-                return false;
-
-            // Optionally, set a cutoff at some maximum world height
-            // Or make this configurable
-        }
-
-        return true;
     }
 }
