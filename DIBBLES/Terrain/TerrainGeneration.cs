@@ -138,21 +138,18 @@ public class TerrainGeneration
         // Day/Night cycle light regen marshall
         if (GameScene.DayNightCycle.NeedsRelight)
         {
-            // Rewind all loaded chunks to before lighting  
             foreach (var chunk in ChunkBuffer.Values)
             {
                 if (chunk.GenerationStage >= ChunkGenerationStage.Lighting)
                 {
-                    Array.Copy(chunk.LightLevels, 
-                        chunk.PreviousLightLevels, chunk.LightLevels.Length);
-                    
+                    Array.Copy(chunk.LightLevels, chunk.PreviousLightLevels, chunk.LightLevels.Length);
                     chunk.ResetToStage(ChunkGenerationStage.Decorations);
                 }
             }
-            
+
             foreach (var pos in activeViewChunks)
                 EnqueueAdvance(pos, ChunkGenerationStage.Lighting, lastCameraChunk);
-            
+
             GameScene.DayNightCycle.NeedsRelight = false;
             pendingDayNightPrevLightsSync = true;
         }
@@ -160,13 +157,12 @@ public class TerrainGeneration
         if (pendingDayNightPrevLightsSync)
         {
             float sunBlend = GameScene.DayNightCycle.SunIntensity;
-
+            
             if (sunBlend == 0f || sunBlend == 1f)
             {
                 foreach (var chunk in ChunkBuffer.Values)
                     Array.Copy(chunk.LightLevels, chunk.PreviousLightLevels, chunk.LightLevels.Length);
 
-                // Now queue ALL active view chunks for meshing
                 foreach (var pos in activeViewChunks)
                     EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
 
