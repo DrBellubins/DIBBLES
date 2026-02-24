@@ -68,6 +68,9 @@ public class TerrainGeneration
     private static int _viewOffsetsHalf = -1;
     private readonly Queue<IDisposable> _disposeQueue = new();
     
+    // Trash
+    private bool pendingDayNightPrevLightsSync = false;
+    
     public void Start()
     {
         BlockData.InitializeBlockPrefabs();
@@ -151,6 +154,20 @@ public class TerrainGeneration
                 EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
             
             GameScene.DayNightCycle.NeedsRelight = false;
+            pendingDayNightPrevLightsSync = true;
+        }
+        
+        if (pendingDayNightPrevLightsSync)
+        {
+            float sunBlend = GameScene.DayNightCycle.SunIntensity;
+            
+            if (sunBlend == 0f || sunBlend == 1f)
+            {
+                foreach (var chunk in ChunkBuffer.Values)
+                    Array.Copy(chunk.LightLevels, chunk.PreviousLightLevels, chunk.LightLevels.Length);
+                
+                pendingDayNightPrevLightsSync = false;
+            }
         }
         
         // Try to upload any queued meshes (must be done on main thread)
