@@ -12,7 +12,12 @@ namespace DIBBLES.Systems;
 
 public class RenderEngine
 {
-    public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
+    //public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
+
+    public static Color CurrentSkyColor = new();
+    public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1.0f);
+    public static Color DawnDuskSkyColor = new Color(0.98f, 0.6f, 0.41f, 1.0f);
+    public static Color NightSkyColor = DaySkyColor.Darken(0.2f);
     
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
@@ -28,6 +33,11 @@ public class RenderEngine
     private bool backBuffersDebug = false;
 
     private GraphicsDevice graphics;
+
+    public void Update()
+    {
+        // Update sky color based on time of day here
+    }
     
     public void DrawAll()
     {
@@ -44,7 +54,7 @@ public class RenderEngine
 
         // 2) Clear each color target individually
         graphics.SetRenderTarget(BackBuffer);
-        graphics.Clear(SkyColor);
+        graphics.Clear(CurrentSkyColor);
 
         graphics.SetRenderTarget(DepthBuffer);
         graphics.Clear(Color.White);         // far = 1.0 for the sampled depth texture

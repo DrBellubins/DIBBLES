@@ -142,51 +142,34 @@ public class TerrainGeneration
                     chunk.ResetToStage(ChunkGenerationStage.Decorations);
             }
             
+            foreach (var pos in activeViewChunks)
+                EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
+            
             DayNightCycle.NeedsRelight = false;
         }
         
         // Try to upload any queued meshes (must be done on main thread)
         // Opaque pass: throttle to 2 uploads per frame
         while (Mesh.MeshUploadQueue.TryDequeue(out var entry))
-        //for (int i = 0; i < 1; i++)
         {
-            //if (!Mesh.MeshUploadQueue.TryDequeue(out var entry))
-            //    break;
-            
-            //Debug.TimerStart("Opaque upload");
-            
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
         
             Mesh.OpaqueModels[chunkPos] = Mesh.UploadMesh(meshData);
-            
-            //Debug.TimerStop();
         }
         
         // Transparent pass: throttle to 2 uploads per frame
         while (Mesh.TMeshUploadQueue.TryDequeue(out var entry))
-        //for (int i = 0; i < 1; i++)
         {
-            //if (!Mesh.TMeshUploadQueue.TryDequeue(out var entry))
-            //    break;
-            
-            //Debug.TimerStart("Transparent upload");
-            
             var chunkPos = entry.chunkPos;
             var meshData = entry.meshData;
         
             Mesh.TransparentModels[chunkPos] = Mesh.UploadMesh(meshData);
-            
-            //Debug.TimerStop();
         }
         
         // Billboard pass: throttle to 1 upload per frame
         while (Mesh.BillboardUploadQueue.TryDequeue(out var entry))
-        //for (int i = 0; i < 1; i++)
         {
-            //if (!Mesh.BillboardUploadQueue.TryDequeue(out var entry))
-            //    break;
-            
             var chunkPos = entry.chunkPos;
             var instancesByType = entry.instancesByType;
 

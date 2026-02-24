@@ -15,7 +15,7 @@ public class FogEffect
 
     public static Vector4 FogColor()
     {
-        var colorVec = new Vector4(RenderEngine.SkyColor.R / 255f, RenderEngine.SkyColor.G / 255f, RenderEngine.SkyColor.B / 255f, 1.0f);
+        var colorVec = new Vector4(RenderEngine.CurrentSkyColor.R / 255f, RenderEngine.CurrentSkyColor.G / 255f, RenderEngine.CurrentSkyColor.B / 255f, 1.0f);
         return colorVec;
     }
 }
