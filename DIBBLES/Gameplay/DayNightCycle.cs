@@ -3,21 +3,22 @@ using DIBBLES.Terrain;
 
 namespace DIBBLES.Gameplay;
 
+// TODO: Dusk -> Night transition needs to happen quicker
 public class DayNightCycle
 {
-    public static float TimeOfDay = 8.0f; // 0..24
-    public static bool IsDay = true;
+    public float TimeOfDay = 8.0f; // 0..24
+    public bool IsDay = true;
 
     // Constants
     public const float DayStart = 6.0f;
     public const float NightStart = 18.0f;
     public const float FullDayHours = 24f;
-    public const float RealSecondsPerGameHour = 60f; // 1 min = 1 hour
+    public const float RealSecondsPerGameHour = 10f; // 1 min = 1 hour
     public const float RealSecondsPerFullDay = RealSecondsPerGameHour * FullDayHours;
 
-    public static bool NeedsRelight = false;
+    public bool NeedsRelight = false;
     
-    private static bool _lastIsDay = true;
+    private bool _lastIsDay = true;
 
     public void Start()
     {

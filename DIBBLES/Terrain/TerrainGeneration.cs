@@ -133,7 +133,7 @@ public class TerrainGeneration
         ProcessDisposeQueue(2);
         
         // Day/Night cycle light regen marshall
-        if (DayNightCycle.NeedsRelight)
+        if (GameScene.DayNightCycle.NeedsRelight)
         {
             // Rewind all loaded chunks to before lighting  
             foreach (var chunk in ChunkBuffer.Values)
@@ -145,7 +145,7 @@ public class TerrainGeneration
             foreach (var pos in activeViewChunks)
                 EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
             
-            DayNightCycle.NeedsRelight = false;
+            GameScene.DayNightCycle.NeedsRelight = false;
         }
         
         // Try to upload any queued meshes (must be done on main thread)

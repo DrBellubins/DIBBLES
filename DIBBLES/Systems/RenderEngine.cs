@@ -17,7 +17,7 @@ public class RenderEngine
     public static Color CurrentSkyColor = new();
     public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1.0f);
     public static Color DawnDuskSkyColor = new Color(0.98f, 0.6f, 0.41f, 1.0f);
-    public static Color NightSkyColor = DaySkyColor.Darken(0.2f);
+    public static Color NightSkyColor = DaySkyColor.Multiply(0.2f);
     
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
@@ -36,7 +36,76 @@ public class RenderEngine
 
     public void Update()
     {
-        // Update sky color based on time of day here
+        // Smoothly lerp sky color based on time of day
+        float tod = GameScene.DayNightCycle.TimeOfDay;
+    
+        // Normalize to [0,24)
+        if (tod < 0f)
+            tod += 24f;
+        if (tod >= 24f)
+            tod -= 24f;
+    
+        // Dawn/Dusk spans: 5-7 (dawn) and 17-19 (dusk)
+        float dawnStart = 5f, dawnEnd = 7f;
+        float duskStart = 17f, duskEnd = 19f;
+    
+        // Day: 7–17 (peaks at noon)
+        float dayStart = dawnEnd, dayEnd = duskStart;
+        float noon = 12f;
+    
+        // Night: 19–5 (wraps over midnight)
+        float nightStart = duskEnd, nightEnd = dawnStart;
+    
+        Color color;
+        // Dawn transition
+        if (tod >= dawnStart && tod < dawnEnd)
+        {
+            float t = (tod - dawnStart) / (dawnEnd - dawnStart);
+            color = Color.Lerp(NightSkyColor, DawnDuskSkyColor, t);
+        }
+        // Day transition
+        else if (tod >= dayStart && tod < dayEnd)
+        {
+            // Optionally blend slightly at edges
+            float blendEdge = 2.0f;
+            if (tod < dayStart + blendEdge) // dawn to day
+            {
+                float t = (tod - dayStart) / blendEdge;
+                color = Color.Lerp(DawnDuskSkyColor, DaySkyColor, t);
+            }
+            else if (tod > dayEnd - blendEdge) // day to dusk
+            {
+                float t = (tod - (dayEnd - blendEdge)) / blendEdge;
+                color = Color.Lerp(DaySkyColor, DawnDuskSkyColor, t);
+            }
+            else // full day
+            {
+                color = DaySkyColor;
+            }
+        }
+        // Dusk transition
+        else if (tod >= duskStart && tod < duskEnd)
+        {
+            float t = (tod - duskStart) / (duskEnd - duskStart);
+            color = Color.Lerp(DawnDuskSkyColor, NightSkyColor, t);
+        }
+        // Night transition (19–24 OR 0–5)
+        else
+        {
+            // Handle night wrapping 19–24 and 0–5
+            float t;
+            if (tod >= nightStart && tod < 24f)
+            {
+                t = (tod - nightStart) / (24f - nightStart);
+            }
+            else // 0–5
+            {
+                t = tod / nightEnd;
+            }
+            color = Color.Lerp(NightSkyColor, NightSkyColor, t); // pure night, no blend
+        }
+    
+        CurrentSkyColor = color;
     }
     
     public void DrawAll()
