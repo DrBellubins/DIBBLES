@@ -83,6 +83,7 @@ PixelInput VS(VertexInput input)
     output.Position = mul(viewPos, Projection);
     output.TexCoord = input.TexCoord;
     output.Color = input.Color;
+    output.PrevColor = input.PrevColor;
     output.WorldPos = worldPos.xyz;
 
     // View-space forward is -Z; use -viewPos.z for positive distance
