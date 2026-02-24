@@ -147,7 +147,11 @@ PixelOutput PS_Color(PixelInput input)
     float4 texColor = tex2D(AtlasSampler, atlasUV);
     float4 blockColor = texColor * input.Color;
 
-    blockColor.rgb *= SunIntensity;
+    float sunStrength = SunIntensity;
+
+    sunStrength = clamp(sunStrength, 0.5, 1.0);
+
+    blockColor.rgb *= sunStrength;
 
     // Hand cutoff vs transparency
     float alpha = blockColor.a;
