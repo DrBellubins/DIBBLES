@@ -56,7 +56,7 @@ public class Chat
     private int prevMsgTraversalIndex = 0;
     
     // Chat text/scrolling checks
-    private float scrollOffset = 0;
+    private static float scrollOffset = 0;
     private bool isUserScrolling = false;
     
     private static int maxLines = (int)(Height / FontSize);
@@ -135,9 +135,6 @@ public class Chat
             {
                 Write(textBox.Text, ChatMessageType.Message);
                 Debug.Info($"Player typed: '{textBox.Text}'");
-                
-                if (!isUserScrolling)
-                    scrollOffset = 0;
             }
             
             prevChatMessages.Add(textBox.Text);
@@ -271,11 +268,15 @@ public class Chat
         
         var msg = new ChatMessage(message, type);
         ChatMessages.Add(msg);
+
+        scrollOffset = maxScroll;
     }
 
     public static void WriteHelp(string[] args)
     {
         foreach (var cmd in Commands.Registry)
             ChatMessages.Add(new ChatMessage($"/{cmd.Value.Name}: {cmd.Value.Description}", ChatMessageType.Command));
+        
+        scrollOffset = maxScroll;
     }
 }
