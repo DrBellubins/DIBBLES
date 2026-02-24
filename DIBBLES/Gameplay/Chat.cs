@@ -137,7 +137,7 @@ public class Chat
                 Debug.Info($"Player typed: '{textBox.Text}'");
             }
 
-            scrollOffset = maxLines;
+            scrollOffset = 0;
             
             prevChatMessages.Add(textBox.Text);
             prevMsgTraversalIndex = prevChatMessages.Count;
