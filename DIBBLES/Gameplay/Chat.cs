@@ -101,7 +101,6 @@ public class Chat
             
             if (wheel != 0)
             {
-                Debug.Info($"Scroll wheel: {wheel}");
                 scrollOffset += wheel;
                 
                 maxScroll = Math.Max(0, ChatMessages.Count - maxLines);
@@ -199,7 +198,6 @@ public class Chat
         {
             // Draw messages
             int totalLines = (int)(Height / FontSize);
-            int maxScroll = Math.Max(0, ChatMessages.Count - totalLines);
             int start = Math.Max(0, ChatMessages.Count - totalLines - (int)scrollOffset);
 
             if (start < 0)
