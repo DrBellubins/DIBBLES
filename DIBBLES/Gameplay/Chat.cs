@@ -136,6 +136,8 @@ public class Chat
                 Write(textBox.Text, ChatMessageType.Message);
                 Debug.Info($"Player typed: '{textBox.Text}'");
             }
+
+            scrollOffset = maxLines;
             
             prevChatMessages.Add(textBox.Text);
             prevMsgTraversalIndex = prevChatMessages.Count;
@@ -268,15 +270,11 @@ public class Chat
         
         var msg = new ChatMessage(message, type);
         ChatMessages.Add(msg);
-
-        scrollOffset = maxScroll;
     }
 
     public static void WriteHelp(string[] args)
     {
         foreach (var cmd in Commands.Registry)
             ChatMessages.Add(new ChatMessage($"/{cmd.Value.Name}: {cmd.Value.Description}", ChatMessageType.Command));
-        
-        scrollOffset = maxScroll;
     }
 }

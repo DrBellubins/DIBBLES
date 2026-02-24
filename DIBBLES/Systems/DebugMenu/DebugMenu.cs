@@ -24,7 +24,7 @@ public class DebugMenu
     
     private static Func<Texture2D, IntPtr> _bindTextureFunc;
     
-    public bool Open = true;
+    public bool Open = false;
     
     private const float width = 400.0f;
     private RectangleF sideMenuRect;
