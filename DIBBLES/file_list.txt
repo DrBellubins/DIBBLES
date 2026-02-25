@@ -10,6 +10,7 @@
 ./Utils/RaylibExtensions.cs
 ./Utils/Debug.cs
 ./Utils/UI.cs
+./Utils/ShaderExtensions.cs
 ./Utils/Resource.cs
 ./Utils/GMath.cs
 ./Utils/RectangleF.cs

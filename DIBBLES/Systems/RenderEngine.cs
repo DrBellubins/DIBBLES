@@ -26,10 +26,12 @@ public class RenderEngine
     {
         get
         {
-            var ambientLightCol = CurrentSkyColor.Brighten(0.5f);
+            /*var ambientLightCol = CurrentSkyColor.Brighten(0.5f);
             ambientLightCol.Multiply(0.35f);
 
-            return ambientLightCol;
+            return ambientLightCol;*/
+
+            return CurrentSkyColor.Saturation(0.2f);
         }
     }
 
@@ -52,8 +54,6 @@ public class RenderEngine
     
     public void DrawAll()
     {
-        Sky.Draw();
-        
         // Bind MRTs
         graphics.SetRenderTargets(
             new RenderTargetBinding(BackBuffer),
@@ -67,7 +67,9 @@ public class RenderEngine
 
         // 2) Clear each color target individually
         graphics.SetRenderTarget(BackBuffer);
-        graphics.Clear(CurrentSkyColor);
+        graphics.Clear(AmbientLightColor);
+        
+        //Sky.Draw();
 
         graphics.SetRenderTarget(DepthBuffer);
         graphics.Clear(Color.White);         // far = 1.0 for the sampled depth texture

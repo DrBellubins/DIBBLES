@@ -49,6 +49,13 @@ public static class ColorExtensions
                 colorFloat.A + alphaAmount);
         }
 
+        public Color Saturation(float amount)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[2] = amount;
+            return HSVToRGB(hsv[0], hsv[1], hsv[2]);
+        }
+
         public ColorF ToColorF()
         {
             color.Deconstruct(out float red, out float green, out float blue, out float alpha);
