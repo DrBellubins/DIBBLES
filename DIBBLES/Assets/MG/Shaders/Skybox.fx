@@ -35,15 +35,28 @@ struct VSInput
     float3 Position : POSITION0;
 };
 
-struct PSInput
+struct PixelInput
 {
     float4 Position : SV_POSITION;
     float3 World : TEXCOORD0;
+
+    float4 Color : COLOR0;
+    float4 Normal : COLOR1;
+    float4 Depth : COLOR2;
+    float4 Emissive : COLOR2;
 };
 
-PSInput VS(VSInput input)
+struct PixelOutput
 {
-    PSInput output;
+    float4 Color : COLOR0; // scene color
+    float4 Depth : COLOR1; // linear depth in [0..1]
+    float4 Normal : COLOR2; // view-space normals encoded to [0..1]
+    float4 Emissive : COLOR3; // emissive color (RGB) + mask in A
+};
+
+PixelInput VS(VSInput input)
+{
+    PixelInput output;
 
     float4 world = mul(float4(input.Position, 1.0), World);
 
@@ -90,7 +103,7 @@ float2 computeLocalUV(float3 viewDir, float3 center, float size)
     return 0.5 + offset / (2.0 * size * 3.0);  // Scale to cover ~3 sigma
 }
 
-float4 PS(PSInput input) : SV_Target
+PixelOutput PS(PixelInput input) : SV_Target
 {
     float3 viewDir = normalize(input.World);
 
@@ -104,26 +117,30 @@ float4 PS(PSInput input) : SV_Target
     // Sun
     float3 sunCenter = -SunDirection;
     float sunDot = dot(viewDir, sunCenter);
-    float sunMask = gaussian(viewDir, sunCenter, sunMoonSize);
     float sunBrightness = pow(max(sunDot, 0), 250);
-    float sunAlpha = sunMask * horizonFade;
     float2 sunUV = computeLocalUV(viewDir, sunCenter, sunMoonSize);
     float4 sunTex = tex2D(SunSampler, sunUV);
-    float3 sunColor = sunTex.rgb * sunTex.a * sunAlpha * sunBrightness * 1.4;
+    float3 sunColor = sunTex.rgb * sunTex.a * sunBrightness * 1.4;
 
     // Moon: same logic, maybe softer (smaller pow)
     float3 moonCenter = -MoonDirection;
     float moonDot = dot(viewDir, moonCenter);
-    float moonMask = gaussian(viewDir, moonCenter, sunMoonSize);
     float moonBrightness = pow(max(moonDot, 0), 90);
-    float moonAlpha = moonMask * horizonFade;
     float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
     float4 moonTex = tex2D(MoonSampler, moonUV);
-    float3 moonColor = moonTex.rgb * moonTex.a * moonAlpha * moonBrightness * 1.0;
+    float3 moonColor = moonTex.rgb * moonTex.a * moonBrightness * 1.0;
 
-    float3 color = baseColor + sunColor + moonColor;
+    PixelOutput output;
 
-    return float4(color, 1.0);
+    float3 sunMoonColor = sunColor + moonColor;
+    float3 color = baseColor + sunMoonColor;
+
+    output.Color = float4(color, 1.0);
+    output.Depth = input.Depth;
+    output.Normal = input.Normal;
+    output.Emissive = float4(sunMoonColor, 1.0);
+
+    return output;
 }
 
 technique Skybox
