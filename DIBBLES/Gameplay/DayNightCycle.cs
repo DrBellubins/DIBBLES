@@ -72,54 +72,62 @@ public class DayNightCycle
         Color color;
         
         // Dawn transition
-        if (tod >= dawnStart && tod < dawnEnd)
+        if (tod >= dawnStart && tod < dawnEnd) // 5–7
         {
-            float t = (tod - dawnStart) / (dawnEnd - dawnStart);
-            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskSkyColor, t);
-            
-            SunIntensity = GMath.Smoothstep(t);
-            SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
+            float t = (tod - dawnStart) / (dawnEnd - dawnStart); // 0→1
+
+            // Night → DawnPeak (warm-up)
+            if (t < 0.5f)
+            {
+                float t1 = t * 2f;
+                color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskPeakColor, t1);
+            }
+            // DawnPeak → DawnFade (warm to pale)
+            else
+            {
+                float t2 = (t - 0.5f) * 2f;
+                color = Color.Lerp(RenderEngine.DawnDuskPeakColor, RenderEngine.DawnDuskFadeColor, t2);
+            }
+
+            SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
-        else if (tod >= dayStart && tod < dayEnd) // Day transition
+        else if (tod >= dayStart && tod < dayEnd) // 7–17
         {
-            // Optionally blend slightly at edges
-            float blendEdge = 2.0f;
-            
-            if (tod < dayStart + blendEdge) // dawn to day
+            float blendEdge = 1.5f; // shorter than before to reduce purple risk
+
+            if (tod < dayStart + blendEdge) // DawnFade → Day
             {
                 float t = (tod - dayStart) / blendEdge;
-                color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.DaySkyColor, t);
+                color = Color.Lerp(RenderEngine.DawnDuskFadeColor, RenderEngine.DaySkyColor, t);
+                SunIntensity = 1f;
             }
-            else if (tod > dayEnd - blendEdge) // day to dusk
+            else if (tod > dayEnd - blendEdge) // Day → DuskPeak
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskSkyColor, t);
+                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskPeakColor, t); // symmetric
+                SunIntensity = 1f;
             }
-            else // full day
+            else
             {
                 color = RenderEngine.DaySkyColor;
                 SunIntensity = 1f;
             }
         }
-        else if (tod >= duskStart && tod < duskEnd) // Dusk transition
+        else if (tod >= duskStart && tod < duskEnd) // 17–19 symmetric to dawn
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
-            color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.NightSkyColor, t);
-            SunIntensity = 1f - GMath.Smoothstep(t);
-            SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
-        }
-        else // Night transition (19–24 OR 0–5)
-        {
-            // Handle night wrapping 19–24 and 0–5
-            float t;
-            
-            if (tod >= nightStart && tod < 24f)
-                t = (tod - nightStart) / (24f - nightStart);
-            else // 0–5
-                t = tod / nightEnd;
 
+            if (t < 0.5f)
+                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskPeakColor, t * 2f); // reverse path
+            else
+                color = Color.Lerp(RenderEngine.DawnDuskPeakColor, RenderEngine.NightSkyColor, (t - 0.5f) * 2f);
+
+            SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
+        }
+        else // night
+        {
+            color = RenderEngine.NightSkyColor;
             SunIntensity = 0f;
-            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.NightSkyColor, t); // pure night, no blend
         }
     
         RenderEngine.CurrentSkyColor = color;

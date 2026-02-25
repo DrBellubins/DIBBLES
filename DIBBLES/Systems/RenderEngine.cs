@@ -15,9 +15,12 @@ public class RenderEngine
     //public static Color SkyColor = new Color(0.08f, 0.14f, 0.2f, 1.0f);
 
     public static Color CurrentSkyColor = new();
-    public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1.0f);
-    public static Color DawnDuskSkyColor = new Color(0.98f, 0.6f, 0.41f, 1.0f);
-    public static Color NightSkyColor = DaySkyColor.Multiply(0.2f);
+    public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
+    
+    public static Color DawnDuskPeakColor = new Color(0.98f, 0.6f, 0.41f, 1f);
+    public static Color DawnDuskFadeColor     = new Color(0.90f, 0.75f, 0.60f, 1f);
+    
+    public static Color NightSkyColor     = new Color(0.08f, 0.10f, 0.18f, 1f);
 
     public static Color AmbientLightColor
     {

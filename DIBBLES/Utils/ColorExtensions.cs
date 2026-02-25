@@ -56,129 +56,75 @@ public static class ColorExtensions
         }
     }
 
-    /// <summary>
-    /// Returns HSV components from the Color.
-    /// Hue range: [0, 360], Saturation/Value: [0, 1]
-    /// </summary>
-    public static void ToHSV(this Color inColor, out float h, out float s, out float v)
+    public static Color HSVLerp(Color a, Color b, float t)
     {
-        float r = inColor.R / 255f;
-        float g = inColor.G / 255f;
-        float b = inColor.B / 255f;
-    
-        float max = MathF.Max(r, MathF.Max(g, b));
-        float min = MathF.Min(r, MathF.Min(g, b));
+        var hsvA = RGBToHSV(a);
+        var hsvB = RGBToHSV(b);
+
+        // Shortest hue path
+        float dh = hsvB[0] - hsvA[0];
+        if (dh > 180f) dh -= 360f;
+        else if (dh < -180f) dh += 360f;
+
+        float h = hsvA[0] + dh * t;
+        if (h < 0f) h += 360f;
+        else if (h >= 360f) h -= 360f;
+
+        float s = MathHelper.Lerp(hsvA[1], hsvB[1], t);
+        float v = MathHelper.Lerp(hsvA[2], hsvB[2], t);
+
+        return HSVToRGB(h, s, v);
+    }
+
+    private static float[] RGBToHSV(Color c)
+    {
+        float r = c.R / 255f;
+        float g = c.G / 255f;
+        float b = c.B / 255f;
+
+        float max = Math.Max(r, Math.Max(g, b));
+        float min = Math.Min(r, Math.Min(g, b));
         float delta = max - min;
-    
-        // Hue
-        if (delta == 0f)
-            h = 0f;
-        else if (max == r)
-            h = 60f * (((g - b) / delta) % 6f);
-        else if (max == g)
-            h = 60f * (((b - r) / delta) + 2f);
-        else
-            h = 60f * (((r - g) / delta) + 4f);
-        
-        if (h < 0f)
-            h += 360f;
-    
-        // Saturation
-        s = (max == 0f) ? 0f : delta / max;
-    
-        // Value
-        v = max;
-    }
-    
-    /// <summary>
-    /// Constructs a Color from HSV components.
-    /// h: [0,360], s: [0,1], v: [0,1]
-    /// </summary>
-    public static Color FromHSV(float h, float s, float v)
-    {
-        h = h % 360f;
-        
-        if (h < 0f)
-            h += 360f;
-    
-        float r, g, b;
-    
-        if (s == 0f)
-            r = g = b = v;
-        else
+
+        float h = 0f;
+        if (delta != 0f)
         {
-            float c = v * s;
-            float x = c * (1 - MathF.Abs((h / 60f) % 2 - 1));
-            float m = v - c;
-    
-            if (h < 60f)
-            {
-                r = c;
-                g = x;
-                b = 0;
-            }
-            else if (h < 120f)
-            {
-                r = x;
-                g = c;
-                b = 0;
-            }
-            else if (h < 180f)
-            {
-                r = 0;
-                g = c;
-                b = x;
-            }
-            else if (h < 240f)
-            {
-                r = 0;
-                g = x;
-                b = c;
-            }
-            else if (h < 300f)
-            {
-                r = x;
-                g = 0;
-                b = c;
-            }
+            if (max == r)
+                h = (((g - b) / delta) % 6f + 6f) % 6f;
+            else if (max == g)
+                h = (b - r) / delta + 2f;
             else
-            {
-                r = c;
-                g = 0;
-                b = x;
-            }
-            
-            r += m;
-            g += m;
-            b += m;
+                h = (r - g) / delta + 4f;
+            h *= 60f;
         }
-        
-        return new Color(r, g, b, 1f);
+
+        float s = (max == 0f) ? 0f : (delta / max);
+        float v = max;
+
+        return new[] { h, s, v };
     }
-    
-    public static Color HueLerp(Color from, Color to, float t, bool forceWarm = false)
+
+    private static Color HSVToRGB(float h, float s, float v)
     {
-        from.ToHSV(out float h1, out float s1, out float v1);
-        to.ToHSV(out float h2, out float s2, out float v2);
+        h = ((h % 360f) + 360f) % 360f;
+        int sector = (int)(h / 60f);
+        float f = (h / 60f) - sector;
 
-        // If forceWarm is true and h1 > h2, wrap h2 around clockwise
-        if (forceWarm && (h1 > h2))
-            h2 += 360.0f;
+        float p = v * (1f - s);
+        float q = v * (1f - s * f);
+        float t = v * (1f - s * (1f - f));
 
-        // original shortest-arc logic for general use
-        if (!forceWarm)
+        float rr, gg, bb;
+        switch (sector)
         {
-            float dh = h2 - h1;
-            if (dh > 180.0f)
-                h1 += 360.0f;
-            else if (dh < -180.0f)
-                h2 += 360.0f;
+            case 0: rr = v; gg = t; bb = p; break;
+            case 1: rr = q; gg = v; bb = p; break;
+            case 2: rr = p; gg = v; bb = t; break;
+            case 3: rr = p; gg = q; bb = v; break;
+            case 4: rr = t; gg = p; bb = v; break;
+            default: rr = v; gg = p; bb = q; break;
         }
 
-        float h = GMath.Lerp(h1, h2, t) % 360.0f;
-        float s = GMath.Lerp(s1, s2, t);
-        float v = GMath.Lerp(v1, v2, t);
-
-        return FromHSV(h, s, v);
+        return new Color((byte)(rr * 255f), (byte)(gg * 255f), (byte)(bb * 255f));
     }
 }

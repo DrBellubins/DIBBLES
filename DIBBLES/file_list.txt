@@ -148,6 +148,7 @@
 ./Assets/MG/Textures/BlueNoise.png
 ./Assets/MG/.mgstats
 ./Assets/MG/MG.mgcb
+./Assets/Textures/Sun.png
 ./Assets/Textures/Blocks/Leaves_e2.png
 ./Assets/Textures/Blocks/Error.png
 ./Assets/Textures/Blocks/Feeb_e.png
@@ -188,6 +189,7 @@
 ./Artwork/Blocks/Error.pxo
 ./Artwork/Blocks/RedFlower.pxo
 ./Artwork/Blocks/Snow.pxo
+./Artwork/Blocks/Sun.pxo
 ./Artwork/Blocks/Dirt.pxo
 ./Artwork/Blocks/LeavesBlue.pxo
 ./Artwork/Blocks/Feeb_e.pxo

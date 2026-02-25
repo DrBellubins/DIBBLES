@@ -1,150 +1,104 @@
-/*using System.Numerics;
-using DIBBLES.Gameplay.Player;
+using DIBBLES.Gameplay;
+using DIBBLES.Scenes;
 using DIBBLES.Systems;
-using DIBBLES.Utils;
-using Raylib_cs;
-
-namespace DIBBLES.Effects;
-
-public class Skybox
-{
-    private Shader skyboxShader;
-    private Texture2D skyboxTexture;
-
-    private int textureLocation = 0;
-    
-    private Mesh cubemesh;
-    private Model skybox;
-
-    public void Start()
-    {
-        // Load skybox shader
-        skyboxShader = Resource.LoadShader("skybox.vs", "skybox2.fs");
-
-        // Check shader loading
-        if (skyboxShader.Id == 0)
-        {
-            Console.WriteLine("Skybox shader compilation failed");
-        }
-        else
-        {
-            Console.WriteLine($"Skybox shader loaded: ID={skyboxShader.Id}");
-        }
-
-        // Load skybox texture as cubemap cross (assuming 2048x1536 is a 4x3 layout)
-        var skyImg = Raylib.LoadImage("Assets/Textures/skybox_noise.png");
-
-        unsafe
-        {
-            if (skyImg.Data == null)
-            {
-                Console.WriteLine("Failed to load skybox.png as image");
-                var fallbackImg = Raylib.GenImageColor(512, 512, Color.Blue);
-                skyboxTexture = Raylib.LoadTextureFromImage(fallbackImg);
-                Raylib.UnloadImage(fallbackImg);
-            }
-            else
-            {
-                skyboxTexture = Raylib.LoadTextureFromImage(skyImg);
-                Raylib.SetTextureFilter(skyboxTexture, TextureFilter.Bilinear);
-                
-                //skyboxTexture = Raylib.LoadTextureCubemap(skyImg, CubemapLayout.AutoDetect);
-                Raylib.UnloadImage(skyImg);
-                Console.WriteLine($"Skybox texture loaded: ID={skyboxTexture.Id}, Width={skyboxTexture.Width}, Height={skyboxTexture.Height}");
-            }
-        }
-
-        // Check if cubemap was created successfully
-        if (skyboxTexture.Id == 0)
-        {
-            Console.WriteLine("Skybox texture loading failed");
-            var fallbackImg = Raylib.GenImageColor(512, 512, Color.Blue);
-            skyboxTexture = Raylib.LoadTextureFromImage(fallbackImg);
-            Raylib.UnloadImage(fallbackImg);
-        }
-
-        cubemesh = Raylib.GenMeshCube(1000.0f, 1000.0f, 1000.0f);
-        skybox = Raylib.LoadModelFromMesh(cubemesh);
-
-        unsafe
-        {
-            skybox.Materials[0].Shader = skyboxShader;
-            textureLocation= Raylib.GetShaderLocation(skyboxShader, "environmentMap");
-            
-            Console.WriteLine($"Skybox material loc: {textureLocation}");
-            
-            if (textureLocation == -1)
-            {
-                Console.WriteLine("Failed to find environmentMap uniform in skybox shader");
-            }
-            
-            int texUnit = 2;
-            Raylib.SetShaderValue(skyboxShader, textureLocation, texUnit, ShaderUniformDataType.Int);
-            int vflippedLoc = Raylib.GetShaderLocation(skyboxShader, "vflipped");
-            
-            if (vflippedLoc != -1)
-            {
-                int vflipped = 0; // Test with 0 first, try 1 if needed
-                Raylib.SetShaderValue(skyboxShader, vflippedLoc, vflipped, ShaderUniformDataType.Int);
-                Console.WriteLine($"vflipped set to: {vflipped}");
-            }
-            
-            int doGammaLoc = Raylib.GetShaderLocation(skyboxShader, "doGamma");
-            
-            if (doGammaLoc != -1)
-            {
-                int doGamma = 0; // Disable gamma for now
-                Raylib.SetShaderValue(skyboxShader, doGammaLoc, doGamma, ShaderUniformDataType.Int);
-                Console.WriteLine($"doGamma set to: {doGamma}");
-            }
-        }
-    }
-
-    public void Draw(PlayerCharacter playerCharacter)
-    {
-        // Draw skybox
-        Rlgl.DisableBackfaceCulling();
-        Rlgl.DisableDepthMask();
-        Raylib.BeginShaderMode(skyboxShader);
-        
-        // Set view and projection matrices
-        Matrix4x4 view = Matrix4x4.CreateLookAt(
-            playerCharacter.Camera.Position,
-            playerCharacter.Camera.Target,
-            playerCharacter.Camera.Up
-        );
-        
-        Matrix4x4 rotView = Matrix4x4.CreateFromQuaternion(Quaternion.CreateFromRotationMatrix(view));
-        rotView.M44 = 1.0f;
-    
-        Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matView"), rotView);
-        Raylib.SetShaderValueMatrix(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "matProjection"), Matrix4x4.CreatePerspectiveFieldOfView(
-            GMath.ToRadians(playerCharacter.Camera.FovY),
-            (float)Engine.VirtualScreenWidth / Engine.VirtualScreenHeight,
-            0.1f, 1000.0f
-        ));
-        
-        Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "Time"), Time.time, ShaderUniformDataType.Float);
-        Raylib.SetShaderValue(skyboxShader, Raylib.GetShaderLocation(skyboxShader, "cameraPosition"), playerCharacter.Camera.Position, ShaderUniformDataType.Vec3);
-        
-        // Bind cubemap texture explicitly before drawing
-        Rlgl.ActiveTextureSlot(2);
-        Rlgl.EnableTexture(skyboxTexture.Id);
-        
-        //Console.WriteLine($"Texture unit: {textureLocation}, Texture ID: {skyboxTexture.Id}");
-        
-        Raylib.DrawModel(skybox, Vector3.Zero, 1.0f, Color.White);
-        
-        Raylib.EndShaderMode();
-        Rlgl.DisableTexture();
-        Rlgl.EnableBackfaceCulling();
-        Rlgl.EnableDepthMask();
-    }
-
-    public void Unload()
-    {
-        Raylib.UnloadTexture(skyboxTexture);
-        Raylib.UnloadShader(skyboxShader);
-        Raylib.UnloadModel(skybox);
-    }
-}*/
+   using Microsoft.Xna.Framework;
+   using Microsoft.Xna.Framework.Graphics;
+   
+   namespace DIBBLES.Effects;
+   
+   public class Skybox
+   {
+       public Texture2D SunTexture;
+       public Texture2D MoonTexture;
+       private Effect skyboxShader;
+       private VertexBuffer vb;
+       private IndexBuffer ib;
+   
+       public void Initialize(Texture2D sunTex, Texture2D moonTex, Effect shader)
+       {
+           SunTexture = sunTex;
+           MoonTexture = moonTex;
+           skyboxShader = shader;
+           createDomeMesh();
+       }
+   
+       public void Draw()
+       {
+           var gd = Engine.Graphics;
+           gd.BlendState = BlendState.Opaque;
+           gd.DepthStencilState = DepthStencilState.DepthRead;
+           gd.RasterizerState = RasterizerState.CullNone;
+   
+           gd.SetVertexBuffer(vb);
+           gd.Indices = ib;
+   
+           skyboxShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
+           skyboxShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
+   
+           skyboxShader.Parameters["SkyColor"].SetValue(RenderEngine.CurrentSkyColor.ToVector4());
+           skyboxShader.Parameters["DaySkyColor"].SetValue(RenderEngine.DaySkyColor.ToVector4());
+           skyboxShader.Parameters["DawnDuskSkyColor"].SetValue(RenderEngine.DawnDuskPeakColor.ToVector4());
+           skyboxShader.Parameters["NightSkyColor"].SetValue(RenderEngine.NightSkyColor.ToVector4());
+   
+           skyboxShader.Parameters["SunTexture"].SetValue(SunTexture);
+           skyboxShader.Parameters["MoonTexture"].SetValue(MoonTexture);
+           skyboxShader.Parameters["TimeOfDay"].SetValue(GameScene.DayNightCycle.TimeOfDay);
+   
+           // Sun: simple path (overhead at noon, below at midnight)
+           float sunAngle = MathHelper.TwoPi * (GameScene.DayNightCycle.TimeOfDay - 6f) / 24f;
+           Vector3 sunDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, sunAngle));
+   
+           skyboxShader.Parameters["SunDirection"].SetValue(sunDir);
+   
+           float moonAngle = sunAngle + MathF.PI;
+           Vector3 moonDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, moonAngle));
+   
+           skyboxShader.Parameters["MoonDirection"].SetValue(moonDir);
+   
+           foreach (var pass in skyboxShader.CurrentTechnique.Passes)
+           {
+               pass.Apply();
+               gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, vb.VertexCount, 0, ib.IndexCount / 3);
+           }
+       }
+   
+       private void createDomeMesh(int slices = 32, int stacks = 16, float radius = 80f)
+       {
+           List<Vector3> verts = new();
+           List<ushort> inds = new();
+   
+           for (int stack = 0; stack <= stacks; stack++)
+           {
+               float phi = MathHelper.PiOver2 * (stack / (float)stacks); // 0..Pi/2 quarter dome
+               float y = MathF.Sin(phi);
+               float r = MathF.Cos(phi);
+   
+               for (int slice = 0; slice <= slices; slice++)
+               {
+                   float theta = MathHelper.TwoPi * (slice / (float)slices);
+                   float x = r * MathF.Cos(theta);
+                   float z = r * MathF.Sin(theta);
+                   verts.Add(new Vector3(x * radius, y * radius, z * radius));
+               }
+           }
+   
+           for (int stack = 0; stack < stacks; stack++)
+           {
+               for (int slice = 0; slice < slices; slice++)
+               {
+                   int baseIdx = stack * (slices + 1) + slice;
+                   inds.Add((ushort)baseIdx);
+                   inds.Add((ushort)(baseIdx + slices + 1));
+                   inds.Add((ushort)(baseIdx + 1));
+                   inds.Add((ushort)(baseIdx + 1));
+                   inds.Add((ushort)(baseIdx + slices + 1));
+                   inds.Add((ushort)(baseIdx + slices + 2));
+               }
+           }
+   
+           vb = new VertexBuffer(Engine.Graphics, typeof(VertexPosition), verts.Count, BufferUsage.WriteOnly);
+           vb.SetData(verts.Select(v => new VertexPosition(v)).ToArray());
+           ib = new IndexBuffer(Engine.Graphics, IndexElementSize.SixteenBits, inds.Count, BufferUsage.WriteOnly);
+           ib.SetData(inds.ToArray());
+       }
+   }
