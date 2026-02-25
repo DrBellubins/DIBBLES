@@ -58,7 +58,6 @@ public class GameScene : Scene
         DayNightCycle.Start();
         
         TerrainGen.Start(); // Initial terrain generation
-        TerrainGeneration.Gameplay.Start();
         
         Inventory.Start();
         PlayerCharacter.Start(); // Must be started after terrain

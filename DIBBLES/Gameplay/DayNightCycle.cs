@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework;
 
 namespace DIBBLES.Gameplay;
 
-// TODO: Dusk -> Night transition needs to happen quicker
+// TODO: In between Dusk - Day transition is gray
 public class DayNightCycle
 {
     public float TimeOfDay = 8.0f; // 0..24
@@ -75,7 +75,8 @@ public class DayNightCycle
         if (tod >= dawnStart && tod < dawnEnd)
         {
             float t = (tod - dawnStart) / (dawnEnd - dawnStart);
-            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskSkyColor, t);
+            color = ColorExtensions.HueLerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskSkyColor, t);
+            
             SunIntensity = GMath.Smoothstep(t);
             SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
         }
@@ -87,12 +88,12 @@ public class DayNightCycle
             if (tod < dayStart + blendEdge) // dawn to day
             {
                 float t = (tod - dayStart) / blendEdge;
-                color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.DaySkyColor, t);
+                color = ColorExtensions.HueLerp(RenderEngine.DawnDuskSkyColor, RenderEngine.DaySkyColor, t);
             }
             else if (tod > dayEnd - blendEdge) // day to dusk
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskSkyColor, t);
+                color = ColorExtensions.HueLerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskSkyColor, t);
             }
             else // full day
             {
@@ -103,7 +104,7 @@ public class DayNightCycle
         else if (tod >= duskStart && tod < duskEnd) // Dusk transition
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
-            color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.NightSkyColor, t);
+            color = ColorExtensions.HueLerp(RenderEngine.DawnDuskSkyColor, RenderEngine.NightSkyColor, t);
             SunIntensity = 1f - GMath.Smoothstep(t);
             SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
         }
@@ -118,7 +119,7 @@ public class DayNightCycle
                 t = tod / nightEnd;
 
             SunIntensity = 0f;
-            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.NightSkyColor, t); // pure night, no blend
+            color = ColorExtensions.HueLerp(RenderEngine.NightSkyColor, RenderEngine.NightSkyColor, t); // pure night, no blend
         }
     
         RenderEngine.CurrentSkyColor = color;
