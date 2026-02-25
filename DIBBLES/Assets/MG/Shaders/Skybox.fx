@@ -48,10 +48,8 @@ struct PixelInput
 
 struct PixelOutput
 {
-    float4 Color : COLOR0; // scene color
-    float4 Depth : COLOR1; // linear depth in [0..1]
-    float4 Normal : COLOR2; // view-space normals encoded to [0..1]
-    float4 Emissive : COLOR3; // emissive color (RGB) + mask in A
+    float4 Color : COLOR0;    // scene color
+    float4 Emissive : COLOR1; // emissive color
 };
 
 PixelInput VS(VSInput input)
@@ -136,8 +134,6 @@ PixelOutput PS(PixelInput input) : SV_Target
     float3 color = baseColor + sunMoonColor;
 
     output.Color = float4(color, 1.0);
-    output.Depth = input.Depth;
-    output.Normal = input.Normal;
     output.Emissive = float4(sunMoonColor, 1.0);
 
     return output;
