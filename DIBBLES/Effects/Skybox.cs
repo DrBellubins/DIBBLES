@@ -32,7 +32,11 @@ public class Skybox
 
         graphics.SetVertexBuffer(vb);
         graphics.Indices = ib;
+        
+        var cameraPosition = GameScene.PlayerCharacter.Camera.Position.ToVector3();
+        var worldMatrix = Matrix.CreateTranslation(cameraPosition);
 
+        skyboxShader.SetValue("World", worldMatrix);
         skyboxShader.SetValue("View", GameScene.PlayerCharacter.Camera.View);
         skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
 
