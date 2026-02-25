@@ -319,7 +319,7 @@ public class TerrainGameplay
         
         // Decrement stack amount
         if (GameScene.PlayerCharacter.IsSurvival)
-            GameScene.Inventory.PlayerInventory.DecrementStack();
+            GameScene.Inventory.PlayerInventory.DecrementHeldStack();
     }
 
     public Vector3Int QuantizedNormal(Vector3Int normal)

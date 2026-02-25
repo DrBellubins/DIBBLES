@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using DIBBLES.Gameplay;
 using NVorbis;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -185,13 +186,6 @@ public class BlockData
         EmissiveTextureAtlas = emissiveResult.AtlasTexture;
         EmissiveAtlasUVs = emissiveResult.BlockUVs;
         
-        // DEBUG: Save generated atlas to file
-        /*using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.OpenOrCreate))
-            TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
-        
-        using (var emissivePngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
-            EmissiveTextureAtlas.SaveAsPng(emissivePngStr, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);*/
-        
         // Regular face UVs
         FaceUVsOrdered.Clear();
         
@@ -355,6 +349,17 @@ public class BlockData
                 EmissiveFaceUVsOrdered[(blockType, faceIdx)] = emisFaceUVs;
             }
         }
+    }
+
+    public static void SaveAtlasesCMD(string[] args)
+    {
+        using (var atlasPngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "Blocks.png"), FileMode.Create))
+            TextureAtlas.SaveAsPng(atlasPngStr, TextureAtlas.Width, TextureAtlas.Height);
+
+        using (var emissivePngStr = new FileStream(Path.Combine(AppContext.BaseDirectory, "EmissiveAtlas.png"), FileMode.Create))
+            EmissiveTextureAtlas.SaveAsPng(emissivePngStr, EmissiveTextureAtlas.Width, EmissiveTextureAtlas.Height);
+        
+        Chat.Write("Atlases saved to png!", ChatMessageType.Command);
     }
     
     private static Texture2D loadBlockTexture(BlockType blockType)

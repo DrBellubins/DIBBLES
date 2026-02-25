@@ -72,6 +72,7 @@ public class GameScene : Scene
         Commands.Register("db", "Toggle debug information", Debug.ToggleDebugCMD);
         Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebugCMD);
         Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebugCMD);
+        Commands.Register("atlas", "Save atlases to png", BlockData.SaveAtlasesCMD);
     }
 
     private int fpsCounter;

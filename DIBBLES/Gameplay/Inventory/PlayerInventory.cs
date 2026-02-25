@@ -127,25 +127,104 @@ public class PlayerInventory : InventoryBase
             }
         }
     }
-
-    // TODO: Doesn't add to pre-existing stack
-    // TODO: Doesn't add at all if selected block type is different the broken block type
+    
     public void AddBlock(BlockType blockType, int stackAmount = 1)
     {
-        var selectedSlot = HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex];
+        var prefab = BlockData.Prefabs[blockType];
         
-        if (selectedSlot.Type == BlockType.Air && selectedSlot.StackAmount <= 0)
-            selectedSlot.Set(blockType, stackAmount);
-        else if (selectedSlot.Type == blockType)
-            InrementStack(stackAmount);
+        if (blockType == BlockType.Air || prefab.IsBillboard)
+            return;
+        
+        var inventorySlotMatches = InventoryContainsType(blockType);
+
+        // Search for first < MaxStack slot
+        ItemSlot? resultMatch = null;
+        
+        foreach (var slot in inventorySlotMatches)
+        {
+            if (slot.StackAmount < prefab.MaxStack)
+            {
+                resultMatch = slot;
+                break;
+            }
+        }
+        
+        if (resultMatch != null) // Add to current stack
+            IncrementStack(resultMatch, stackAmount);
+        else // Add to inventory for the first time
+        {
+            var emptySlot = FindEmptySlot();
+
+            if (emptySlot != null)
+                emptySlot.Set(blockType, stackAmount);
+        }
     }
-    
-    public void InrementStack(int amount = 1)
+
+    // Returns a list of matches for type in inventory
+    public List<ItemSlot> InventoryContainsType(BlockType type)
     {
-        HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex].StackAmount += amount;
+        List<ItemSlot> resultSlots = new();
+        
+        // Hotbar slots - Check hotbar slots first!
+        for (var i = 0; i < HotBarSlots.Length; i++)
+        {
+            if (HotBarSlots[i].Type == type)
+                resultSlots.Add(HotBarSlots[i]);
+        }
+        
+        // Main slots
+        for (var x = 0; x < ItemSlots.GetLength(0); x++)
+        {
+            for (var y = 0; y < ItemSlots.GetLength(1); y++)
+            {
+                if (ItemSlots[x, y].Type == type)
+                    resultSlots.Add(ItemSlots[x, y]);
+            }
+        }
+        
+        return resultSlots;
+    }
+
+    public ItemSlot? FindEmptySlot()
+    {
+        // Hotbar slots - Check hotbar slots first!
+        for (var i = 0; i < HotBarSlots.Length; i++)
+        {
+            if (HotBarSlots[i].Type == BlockType.Air && HotBarSlots[i].StackAmount <= 0)
+                return HotBarSlots[i];
+        }
+        
+        // Main slots
+        for (var x = 0; x < ItemSlots.GetLength(0); x++)
+        {
+            for (var y = 0; y < ItemSlots.GetLength(1); y++)
+            {
+                if (ItemSlots[x, y].Type == BlockType.Air && ItemSlots[x, y].StackAmount <= 0)
+                    return ItemSlots[x, y];
+            }
+        }
+
+        return null;
     }
     
-    public void DecrementStack(int amount = 1)
+    public void IncrementStack(ItemSlot slot, int amount = 1)
+    {
+        if (slot.Type == BlockType.Air)
+            return;
+        
+        slot.StackAmount += amount;
+    }
+    
+    public void DecrementStack(ItemSlot slot, int amount = 1)
+    {
+        if (slot.Type == BlockType.Air)
+            return;
+        
+        slot.StackAmount -= amount;
+    }
+    
+    // For block placing
+    public void DecrementHeldStack(int amount = 1)
     {
         HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex].StackAmount -= amount;
     }

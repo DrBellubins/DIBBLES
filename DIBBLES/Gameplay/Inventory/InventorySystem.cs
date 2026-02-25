@@ -142,6 +142,7 @@ public class InventorySystem
     }
     
     // Draw each block type as a cube, then render out to a texture
+    // TODO: Render icon with correct UVs (including face specific textures)
     private void renderBlockIcons()
     {
         int iconSize = 128; // icon pixel size
