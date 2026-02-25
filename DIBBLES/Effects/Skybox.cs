@@ -27,8 +27,9 @@ public class Skybox
     {
         var graphics = Engine.Graphics;
         graphics.BlendState = BlendState.Opaque;
-        graphics.DepthStencilState = DepthStencilState.DepthRead;
+        graphics.DepthStencilState = DepthStencilState.None;
         graphics.RasterizerState = RasterizerState.CullNone;
+        graphics.SamplerStates[0] = SamplerState.PointClamp;
 
         graphics.SetVertexBuffer(vb);
         graphics.Indices = ib;
@@ -52,7 +53,7 @@ public class Skybox
         skyboxShader.SetValue("TimeOfDay", GameScene.TimeCycle.TimeOfDay);
 
         // Sun: simple path (overhead at noon, below at midnight)
-        float sunAngle = MathHelper.TwoPi * (-(GameScene.TimeCycle.TimeOfDay - 6f)) / 24f;
+        float sunAngle = -MathHelper.TwoPi * (GameScene.TimeCycle.TimeOfDay - 6f) / 24f;
         
         // Instead of rotating around Forward (Z), rotate around Right (X)
         Vector3 sunDir = Vector3.Transform(Vector3.Forward, Matrix.CreateFromAxisAngle(Vector3.Right, sunAngle));

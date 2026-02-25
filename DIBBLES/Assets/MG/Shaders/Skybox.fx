@@ -11,15 +11,24 @@ texture MoonTexture;
 
 float3 SunDirection;
 float3 MoonDirection;
+
 float TimeOfDay; // 0..24
 
-sampler2D SunSampler = sampler_state { Texture = <SunTexture>; };
-sampler2D MoonSampler = sampler_state { Texture = <MoonTexture>; };
+sampler2D SunSampler = sampler_state
+{
+    Texture = <SunTexture>;
+};
+
+sampler2D MoonSampler = sampler_state
+{
+    Texture = <MoonTexture>;
+};
 
 struct VSInput
 {
     float3 Position : POSITION0;
 };
+
 struct PSInput
 {
     float4 Position : SV_POSITION;
@@ -65,6 +74,16 @@ float gaussian(float2 p, float2 center, float sigma)
     return exp(-dot(d,d) / (2*sigma*sigma));
 }
 
+float2 computeLocalUV(float3 viewDir, float3 center, float size)
+{
+    float3 arbitrary = (abs(center.y) > 0.9) ? float3(1,0,0) : float3(0,1,0);
+    float3 tan1 = normalize(cross(arbitrary, center));
+    float3 tan2 = cross(center, tan1);
+    float2 offset = float2(dot(viewDir, tan1), dot(viewDir, tan2));
+
+    return 0.5 + offset / (2.0 * size * 3.0);  // Scale to cover ~3 sigma
+}
+
 float4 PS(PSInput input) : SV_Target
 {
     float3 viewDir = normalize(input.World);
@@ -77,25 +96,24 @@ float4 PS(PSInput input) : SV_Target
     float2 domeUV = 0.5 + viewDir.xz * 0.5;
 
     // Sun
-    float4 sunTex = tex2D(SunSampler, domeUV);
-
-    float sunDot = dot(viewDir, -SunDirection);
-    float sunMask = gaussian(viewDir, -SunDirection, sunMoonSize);
-    float sunBrightness = pow(max(sunDot, 0), 250); // Only brighten when above horizon:
+    float3 sunCenter = -SunDirection;
+    float sunDot = dot(viewDir, sunCenter);
+    float sunMask = gaussian(viewDir, sunCenter, sunMoonSize);
+    float sunBrightness = pow(max(sunDot, 0), 250);
     float sunAlpha = sunMask * horizonFade;
-
-    // Final color uses sunAlpha for fade-out at horizon and below
-    float3 sunColor = sunTex.rgb * sunTex.a * sunAlpha * 1.4;
+    float2 sunUV = computeLocalUV(viewDir, sunCenter, sunMoonSize);
+    float4 sunTex = tex2D(SunSampler, sunUV);
+    float3 sunColor = sunTex.rgb * sunTex.a * sunAlpha * sunBrightness * 1.4;
 
     // Moon: same logic, maybe softer (smaller pow)
-    float4 moonTex = tex2D(MoonSampler, domeUV);
-
-    float moonDot = dot(viewDir, -MoonDirection);
-    float moonMask = gaussian(viewDir, -MoonDirection, sunMoonSize);
+    float3 moonCenter = -MoonDirection;
+    float moonDot = dot(viewDir, moonCenter);
+    float moonMask = gaussian(viewDir, moonCenter, sunMoonSize);
     float moonBrightness = pow(max(moonDot, 0), 90);
     float moonAlpha = moonMask * horizonFade;
-
-    float3 moonColor = moonTex.rgb * moonTex.a * moonAlpha * 1.0;
+    float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
+    float4 moonTex = tex2D(MoonSampler, moonUV);
+    float3 moonColor = moonTex.rgb * moonTex.a * moonAlpha * moonBrightness * 1.0;
 
     float3 color = baseColor + sunColor + moonColor;
 
