@@ -212,8 +212,13 @@ public class TerrainGeneration
 
                 vb.SetData(instances);
 
-                var typeDict = new Dictionary<BlockType, VertexBuffer>();
-                typeDict.Add(type, vb);
+                if (!Mesh.BillboardGen.BillboardBatches.TryGetValue(chunkPos, out var typeDict))
+                {
+                    typeDict = new Dictionary<BlockType, VertexBuffer>();
+                    Mesh.BillboardGen.BillboardBatches[chunkPos] = typeDict;
+                }
+
+                typeDict[type] = vb;
                 
                 Mesh.BillboardGen.BillboardBatches[chunkPos] = typeDict;
             }

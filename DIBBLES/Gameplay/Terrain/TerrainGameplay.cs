@@ -236,9 +236,7 @@ public class TerrainGameplay
             var sound = BlockData.Sounds[SelectedBlock.Type].RND;
         
             if (!sound.IsDisposed)
-            {
                 AudioPlayer.CreateAndPlay(sound, blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
-            }
         }
         
         // Add block to inventory
@@ -317,9 +315,7 @@ public class TerrainGameplay
         var sound = BlockData.Sounds[blockType].RND;
 
         if (!sound.IsDisposed)
-        {
             AudioPlayer.CreateAndPlay(sound, newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
-        }
         
         // Decrement stack amount
         if (GameScene.PlayerCharacter.IsSurvival)

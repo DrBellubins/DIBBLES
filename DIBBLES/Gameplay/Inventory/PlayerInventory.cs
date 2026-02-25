@@ -128,6 +128,8 @@ public class PlayerInventory : InventoryBase
         }
     }
 
+    // TODO: Doesn't add to pre-existing stack
+    // TODO: Doesn't add at all if selected block type is different the broken block type
     public void AddBlock(BlockType blockType, int stackAmount = 1)
     {
         var selectedSlot = HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex];
