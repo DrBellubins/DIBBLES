@@ -37,7 +37,14 @@ public class Skybox
         var worldMatrix = Matrix.CreateTranslation(cameraPosition);
 
         skyboxShader.SetValue("World", worldMatrix);
-        skyboxShader.SetValue("View", GameScene.PlayerCharacter.Camera.View);
+        
+        var view = GameScene.PlayerCharacter.Camera.View;
+
+        // Remove translation: use only rotation for the skybox view!
+        view.Translation = Vector3.Zero;
+        
+        skyboxShader.SetValue("View", view);
+        
         skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
 
         skyboxShader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
