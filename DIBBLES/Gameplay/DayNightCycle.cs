@@ -75,7 +75,7 @@ public class DayNightCycle
         if (tod >= dawnStart && tod < dawnEnd)
         {
             float t = (tod - dawnStart) / (dawnEnd - dawnStart);
-            color = ColorExtensions.HueLerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskSkyColor, t);
+            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskSkyColor, t);
             
             SunIntensity = GMath.Smoothstep(t);
             SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
@@ -88,12 +88,12 @@ public class DayNightCycle
             if (tod < dayStart + blendEdge) // dawn to day
             {
                 float t = (tod - dayStart) / blendEdge;
-                color = ColorExtensions.HueLerp(RenderEngine.DawnDuskSkyColor, RenderEngine.DaySkyColor, t);
+                color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.DaySkyColor, t);
             }
             else if (tod > dayEnd - blendEdge) // day to dusk
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                color = ColorExtensions.HueLerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskSkyColor, t);
+                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskSkyColor, t);
             }
             else // full day
             {
@@ -104,7 +104,7 @@ public class DayNightCycle
         else if (tod >= duskStart && tod < duskEnd) // Dusk transition
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
-            color = ColorExtensions.HueLerp(RenderEngine.DawnDuskSkyColor, RenderEngine.NightSkyColor, t);
+            color = Color.Lerp(RenderEngine.DawnDuskSkyColor, RenderEngine.NightSkyColor, t);
             SunIntensity = 1f - GMath.Smoothstep(t);
             SunIntensity = GMath.Clamp(SunIntensity, 0f, 1f);
         }
@@ -119,7 +119,7 @@ public class DayNightCycle
                 t = tod / nightEnd;
 
             SunIntensity = 0f;
-            color = ColorExtensions.HueLerp(RenderEngine.NightSkyColor, RenderEngine.NightSkyColor, t); // pure night, no blend
+            color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.NightSkyColor, t); // pure night, no blend
         }
     
         RenderEngine.CurrentSkyColor = color;

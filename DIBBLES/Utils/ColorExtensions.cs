@@ -156,29 +156,29 @@ public static class ColorExtensions
         return new Color(r, g, b, 1f);
     }
     
-    public static Color HueLerp(Color from, Color to, float t)
+    public static Color HueLerp(Color from, Color to, float t, bool forceWarm = false)
     {
-        // Extract HSV from both colors
         from.ToHSV(out float h1, out float s1, out float v1);
         to.ToHSV(out float h2, out float s2, out float v2);
-    
-        // Interpolate hue (wraps around 360)
-        float dh = h2 - h1;
-        
-        if (dh > 180.0f)
-            h1 += 360.0f;
-        else if (dh < -180.0f)
+
+        // If forceWarm is true and h1 > h2, wrap h2 around clockwise
+        if (forceWarm && (h1 > h2))
             h2 += 360.0f;
-    
-        float h = GMath.Lerp(h1, h2, t);
-        h = h % 360.0f;
-    
-        // Optionally, interpolate s/v independently, or just use from's s/v
-        // Best visual: average s/v as well (for full control, you may interpolate or keep one as fixed)
+
+        // original shortest-arc logic for general use
+        if (!forceWarm)
+        {
+            float dh = h2 - h1;
+            if (dh > 180.0f)
+                h1 += 360.0f;
+            else if (dh < -180.0f)
+                h2 += 360.0f;
+        }
+
+        float h = GMath.Lerp(h1, h2, t) % 360.0f;
         float s = GMath.Lerp(s1, s2, t);
         float v = GMath.Lerp(v1, v2, t);
-    
-        // Build color
+
         return FromHSV(h, s, v);
     }
 }
