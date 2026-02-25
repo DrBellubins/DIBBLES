@@ -9,6 +9,18 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Meshing;
 
+public struct Billboard
+{
+    public VertexBuffer VB;
+    public BlockType Type;
+
+    public Billboard(VertexBuffer vb, BlockType type)
+    {
+        VB = vb;
+        Type = type;
+    }
+}
+
 public class Billboards
 {
     public VertexBuffer BillboardVB;
@@ -16,7 +28,7 @@ public class Billboards
     
     //public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
     
-    public Dictionary<(Vector3Int ChunkPos, BlockType Type), VertexBuffer> BillboardBatches = new();
+    public Dictionary<Vector3Int, Billboard> BillboardBatches = new();
     
     public void Draw()
     {
@@ -51,15 +63,19 @@ public class Billboards
     
         foreach (var kv in BillboardBatches)
         {
-            var chunkPos = kv.Key.ChunkPos;
-            var type = kv.Key.Type;
+            var chunkPos = kv.Key;
+            var type = kv.Value.Type;
+            var vertexBuffer = kv.Value.VB;
+            
+            if (!ActiveViewChunks.Contains(chunkPos))
+                continue;
 
             Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
 
             if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
                 continue;
 
-            VertexBuffer instanceBuffer = kv.Value;
+            VertexBuffer instanceBuffer = vertexBuffer;
 
             if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
                 continue;
@@ -102,9 +118,7 @@ public class Billboards
             var info = chunk.GetInfoAt(x, y, z);
 
             if (type == BlockType.Air || !info.IsBillboard)
-            {
                 continue;
-            }
 
             var localCenter = new Vector3(x + 0.5f, y + 0.0f, z + 0.5f);
             var worldCenter = chunk.Position.ToVector3() + localCenter;
@@ -139,9 +153,7 @@ public class Billboards
         var perChunk = new Dictionary<BlockType, VertexBillboardInstance[]>();
 
         foreach (var kv in grouped)
-        {
             perChunk[kv.Key] = kv.Value.ToArray();
-        }
 
         var result = new Dictionary<Vector3Int, Dictionary<BlockType, VertexBillboardInstance[]>>();
         result[chunk.Position] = perChunk;
@@ -196,9 +208,7 @@ public class Billboards
         RectangleF rect;
     
         if (!BlockData.AtlasUVs.TryGetValue((type, 0), out rect))
-        {
             rect = new RectangleF(0f, 0f, 1f, 1f);
-        }
 
         return new Vector4(rect.X, rect.Y, rect.Width, rect.Height);
     }

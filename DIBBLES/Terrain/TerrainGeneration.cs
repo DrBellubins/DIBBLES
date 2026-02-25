@@ -49,7 +49,7 @@ public class TerrainGeneration
 
     private Vector3Int lastCameraChunk = Vector3Int.One; // Needs to != zero for first gen
     
-    private readonly HashSet<Vector3Int> activeViewChunks = new();
+    public static readonly HashSet<Vector3Int> ActiveViewChunks = new();
     
     public float VisualLoadProgress { get; private set; } = 0f;
     
@@ -114,15 +114,15 @@ public class TerrainGeneration
         }
         
         ProcessTaskQueue();
-        VisualLoadProgress = computeVisualProgress(activeViewChunks);
+        VisualLoadProgress = computeVisualProgress(ActiveViewChunks);
 
         Debug.Draw2DText($"Load progress: {VisualLoadProgress * 100f}%", Color.Azure);
         
         if (!InitialLoadDone)
         {
             // Use the actual render cube (activeViewChunks), not the inset, for progress
-            int total = activeViewChunks.Count;
-            int ready = countChunksReady(activeViewChunks);
+            int total = ActiveViewChunks.Count;
+            int ready = countChunksReady(ActiveViewChunks);
 
             if (total > 0 && ready == total)
             {
@@ -147,7 +147,7 @@ public class TerrainGeneration
                 }
             }
 
-            foreach (var pos in activeViewChunks)
+            foreach (var pos in ActiveViewChunks)
                 EnqueueAdvance(pos, ChunkGenerationStage.Meshing, lastCameraChunk);
 
             GameScene.DayNightCycle.NeedsRelight = false;
@@ -183,13 +183,13 @@ public class TerrainGeneration
             var instancesByType = entry.instancesByType;
 
             // Dispose existing buffers for this chunk (all types)
-            foreach (var key in Mesh.BillboardGen.BillboardBatches.Keys.ToList())
+            foreach (var pos in Mesh.BillboardGen.BillboardBatches.Keys.ToList())
             {
-                if (key.ChunkPos != chunkPos)
+                if (pos != chunkPos)
                     continue;
 
-                Mesh.BillboardGen.BillboardBatches[key].Dispose();
-                Mesh.BillboardGen.BillboardBatches.Remove(key);
+                //Mesh.BillboardGen.BillboardBatches[pos].Dispose();
+                Mesh.BillboardGen.BillboardBatches.Remove(pos);
             }
 
             if (instancesByType == null || instancesByType.Count == 0)
@@ -199,7 +199,7 @@ public class TerrainGeneration
             {
                 var type = kv.Key;
                 var instances = kv.Value;
-
+                
                 if (instances == null || instances.Length == 0)
                     continue;
 
@@ -211,7 +211,12 @@ public class TerrainGeneration
                 );
 
                 vb.SetData(instances);
-                Mesh.BillboardGen.BillboardBatches[(chunkPos, type)] = vb;
+
+                var tempBillboard = new Billboard();
+                tempBillboard.Type = type;
+                tempBillboard.VB = vb;
+                
+                Mesh.BillboardGen.BillboardBatches[chunkPos] = tempBillboard;
             }
             
             meshUploadBudget--;
@@ -220,7 +225,7 @@ public class TerrainGeneration
     
     private bool IsInsideActiveView(Vector3Int pos)
     {
-        return activeViewChunks.Contains(pos);
+        return ActiveViewChunks.Contains(pos);
     }
     
     private static void EnsureViewOffsets()
@@ -302,7 +307,7 @@ public class TerrainGeneration
                 chunk.IsFrozen = true;
 
                 // Dispose meshes (existing logic)
-                /*if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
+                if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
                 {
                     _disposeQueue.Enqueue(oModel);
                     Mesh.OpaqueModels.Remove(pos);
@@ -314,7 +319,7 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
 
-                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
+                /*if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
                 {
                     buffer.Dispose();
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
@@ -538,7 +543,7 @@ public class TerrainGeneration
 
     private void rebuildActiveView(Vector3Int centerChunk)
     {
-        activeViewChunks.Clear();
+        ActiveViewChunks.Clear();
 
         int half = RenderDistance / 2;
 
@@ -547,17 +552,17 @@ public class TerrainGeneration
         for (int cz = centerChunk.Z - half; cz <= centerChunk.Z + half; cz++)
         {
             var pos = new Vector3Int(cx * ChunkSize, cy * ChunkSize, cz * ChunkSize);
-            activeViewChunks.Add(pos);
+            ActiveViewChunks.Add(pos);
         }
 
         // Build inset set: only chunks whose 6 neighbors are also inside the view cube.
-        foreach (var pos in activeViewChunks)
+        foreach (var pos in ActiveViewChunks)
         {
             bool allNeighborsInside = true;
 
             foreach (var off in TerrainUtils.GetNeighborOffsets())
             {
-                if (!activeViewChunks.Contains(pos + off))
+                if (!ActiveViewChunks.Contains(pos + off))
                 {
                     allNeighborsInside = false;
                     break;
@@ -633,7 +638,7 @@ public class TerrainGeneration
 
     public void DrawOpaque()
     {
-        Mesh.DrawOpaque(activeViewChunks);
+        Mesh.DrawOpaque(ActiveViewChunks);
     }
 
     public void DrawBillboards()
@@ -643,7 +648,7 @@ public class TerrainGeneration
     
     public void DrawTransparent()
     {
-        Mesh.DrawTransparent(activeViewChunks);
+        Mesh.DrawTransparent(ActiveViewChunks);
     }
     
     public void DrawDebug()
