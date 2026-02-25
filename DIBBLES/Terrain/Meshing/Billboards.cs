@@ -9,18 +9,6 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Meshing;
 
-public struct Billboard
-{
-    public VertexBuffer VB;
-    public BlockType Type;
-
-    public Billboard(VertexBuffer vb, BlockType type)
-    {
-        VB = vb;
-        Type = type;
-    }
-}
-
 public class Billboards
 {
     public VertexBuffer BillboardVB;
@@ -28,7 +16,7 @@ public class Billboards
     
     //public Dictionary<Vector3Int, Dictionary<BlockType, (VertexBuffer InstanceBuffer, int InstanceCount)>> BillboardBatches = new();
     
-    public Dictionary<Vector3Int, Billboard> BillboardBatches = new();
+    public Dictionary<Vector3Int, Dictionary<BlockType, VertexBuffer>> BillboardBatches = new();
     
     public void Draw()
     {
@@ -64,40 +52,44 @@ public class Billboards
         foreach (var kv in BillboardBatches)
         {
             var chunkPos = kv.Key;
-            var type = kv.Value.Type;
-            var vertexBuffer = kv.Value.VB;
-            
-            if (!ActiveViewChunks.Contains(chunkPos))
-                continue;
+            var typeDict = kv.Value;
 
-            Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
-
-            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
-                continue;
-
-            VertexBuffer instanceBuffer = vertexBuffer;
-
-            if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
-                continue;
-
-            EffectParams.SetVector4(shader, "UVRect", getBillboardUVRect(type));
-
-            graphics.SetVertexBuffers(
-                new VertexBufferBinding(BillboardVB, 0, 0),
-                new VertexBufferBinding(instanceBuffer, 0, 1));
-
-            graphics.Indices = BillboardIB;
-
-            var billboardTech = shader.Techniques["BillboardInstanced"];
-
-            if (billboardTech != null && shader.CurrentTechnique != billboardTech)
-                shader.CurrentTechnique = billboardTech;
-
-            foreach (var pass in shader.CurrentTechnique.Passes)
+            foreach (var typeEntry in typeDict)
             {
-                pass.Apply();
-                graphics.DrawInstancedPrimitives(
-                    PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instanceBuffer.VertexCount);
+                var vertexBuffer = typeEntry.Value;
+            
+                if (!ActiveViewChunks.Contains(chunkPos))
+                    continue;
+
+                Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
+
+                if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
+                    continue;
+
+                VertexBuffer instanceBuffer = vertexBuffer;
+
+                if (instanceBuffer == null || instanceBuffer.VertexCount == 0)
+                    continue;
+
+                EffectParams.SetVector4(shader, "UVRect", getBillboardUVRect(typeEntry.Key));
+
+                graphics.SetVertexBuffers(
+                    new VertexBufferBinding(BillboardVB, 0, 0),
+                    new VertexBufferBinding(instanceBuffer, 0, 1));
+
+                graphics.Indices = BillboardIB;
+
+                var billboardTech = shader.Techniques["BillboardInstanced"];
+
+                if (billboardTech != null && shader.CurrentTechnique != billboardTech)
+                    shader.CurrentTechnique = billboardTech;
+
+                foreach (var pass in shader.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
+                    graphics.DrawInstancedPrimitives(
+                        PrimitiveType.TriangleList, 0, 0, 8, 0, 4, instanceBuffer.VertexCount);
+                }
             }
         }
         

@@ -212,11 +212,10 @@ public class TerrainGeneration
 
                 vb.SetData(instances);
 
-                var tempBillboard = new Billboard();
-                tempBillboard.Type = type;
-                tempBillboard.VB = vb;
+                var typeDict = new Dictionary<BlockType, VertexBuffer>();
+                typeDict.Add(type, vb);
                 
-                Mesh.BillboardGen.BillboardBatches[chunkPos] = tempBillboard;
+                Mesh.BillboardGen.BillboardBatches[chunkPos] = typeDict;
             }
             
             meshUploadBudget--;
@@ -319,11 +318,11 @@ public class TerrainGeneration
                     Mesh.TransparentModels.Remove(pos);
                 }
 
-                /*if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
+                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var billboard))
                 {
-                    buffer.Dispose();
+                    //_disposeQueue.Enqueue(billboard);
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
-                }*/
+                }
             }
         }
     }
