@@ -59,9 +59,6 @@ public class Chat
     private static float scrollOffset = 0;
     private bool isUserScrolling = false;
     
-    private static int maxLines = (int)(Height / FontSize);
-    private static int maxScroll = Math.Max(0, ChatMessages.Count - maxLines);
-    
     public void Start()
     {
         ChatTexture = new RenderTarget2D(
@@ -93,6 +90,9 @@ public class Chat
             elapsed -= disappearTime;
         }
         
+        int linesThatFit = (int)(Height / FontSize);
+        int maxScroll = Math.Max(0, ChatMessages.Count - linesThatFit);
+        
         if (IsOpen)
         {
             textBox.Update();
@@ -102,10 +102,8 @@ public class Chat
             if (wheel != 0)
             {
                 scrollOffset += wheel;
-                
-                maxScroll = Math.Max(0, ChatMessages.Count - maxLines);
-                
                 scrollOffset = Math.Clamp(scrollOffset, 0, maxScroll);
+                
                 isUserScrolling = scrollOffset > 0;
             }
         }
@@ -137,7 +135,8 @@ public class Chat
                 Debug.Info($"Player typed: '{textBox.Text}'");
             }
 
-            scrollOffset = 0;
+            if (!isUserScrolling)
+                scrollOffset = 0;
             
             prevChatMessages.Add(textBox.Text);
             prevMsgTraversalIndex = prevChatMessages.Count;
@@ -196,8 +195,9 @@ public class Chat
         if (IsOpen || IsClosedButShown)
         {
             // Draw messages
-            int totalLines = (int)(Height / FontSize);
-            int start = Math.Max(0, ChatMessages.Count - totalLines - (int)scrollOffset);
+            int linesThatFit = (int)(Height / FontSize);
+            int maxScroll = Math.Max(0, ChatMessages.Count - linesThatFit);
+            int start = Math.Max(0, ChatMessages.Count - linesThatFit - (int)scrollOffset);
 
             if (start < 0)
                 start = 0;
@@ -205,7 +205,7 @@ public class Chat
             if (start > maxScroll)
                 start = maxScroll;
             
-            var toDisplay = ChatMessages.Skip(start).Take(maxLines);
+            var toDisplay = ChatMessages.Skip(start).Take(linesThatFit);
             
             int index = 0;
             foreach (var msg in toDisplay)
