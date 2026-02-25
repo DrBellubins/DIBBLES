@@ -23,7 +23,7 @@ public class GameScene : Scene
     public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
     public static InventorySystem Inventory = new();
-    public static DayNightCycle DayNightCycle = new();
+    public static DayNightCycle TimeCycle = new();
     
     public static PostProcessingManager postProcessingManager = new();
 
@@ -55,7 +55,7 @@ public class GameScene : Scene
         UIBatch.Initialize();
         Primatives3D.Initialize();
         
-        DayNightCycle.Start();
+        TimeCycle.Start();
         
         TerrainGen.Start(); // Initial terrain generation
         
@@ -96,9 +96,9 @@ public class GameScene : Scene
         
         Debug.Draw2DText($"FPS: {fpsCounter}", Color.White);
         Debug.Draw2DText($"Seed: {TerrainGeneration.Seed}", Color.White);
-        Debug.Draw2DText($"Time: {DayNightCycle.TimeOfDay}");
+        Debug.Draw2DText($"Time: {TimeCycle.TimeOfDay}");
         
-        DayNightCycle.Update();
+        TimeCycle.Update();
         
         PlayerCharacter.Update();
         

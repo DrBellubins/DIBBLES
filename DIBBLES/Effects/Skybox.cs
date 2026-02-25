@@ -25,29 +25,29 @@ public class Skybox
 
     public void Draw()
     {
-        var gd = Engine.Graphics;
-        gd.BlendState = BlendState.Opaque;
-        gd.DepthStencilState = DepthStencilState.DepthRead;
-        gd.RasterizerState = RasterizerState.CullNone;
+        var graphics = Engine.Graphics;
+        graphics.BlendState = BlendState.Opaque;
+        graphics.DepthStencilState = DepthStencilState.DepthRead;
+        graphics.RasterizerState = RasterizerState.CullNone;
 
-        gd.SetVertexBuffer(vb);
-        gd.Indices = ib;
+        graphics.SetVertexBuffer(vb);
+        graphics.Indices = ib;
 
         skyboxShader.SetValue("View", GameScene.PlayerCharacter.Camera.View);
         skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
 
-        skyboxShader.SetValue("SkyColor", RenderEngine.CurrentSkyColor.ToVector3());
-        skyboxShader.SetValue("DaySkyColor", RenderEngine.DaySkyColor.ToVector3());
-        skyboxShader.SetValue("DawnDuskSkyColor", RenderEngine.DawnDuskPeakColor.ToVector3());
-        skyboxShader.SetValue("NightSkyColor", RenderEngine.NightSkyColor.ToVector3());
+        skyboxShader.SetValue("SkyColor", DayNightCycle.CurrentSkyColor.ToVector3());
+        skyboxShader.SetValue("DaySkyColor", DayNightCycle.DaySkyColor.ToVector3());
+        skyboxShader.SetValue("DawnDuskSkyColor", DayNightCycle.DawnDuskPeakColor.ToVector3());
+        skyboxShader.SetValue("NightSkyColor", DayNightCycle.NightSkyColor.ToVector3());
 
         skyboxShader.SetValue("SunTexture", SunTexture);
         skyboxShader.SetValue("MoonTexture", MoonTexture);
         
-        skyboxShader.SetValue("TimeOfDay", GameScene.DayNightCycle.TimeOfDay);
+        skyboxShader.SetValue("TimeOfDay", GameScene.TimeCycle.TimeOfDay);
 
         // Sun: simple path (overhead at noon, below at midnight)
-        float sunAngle = MathHelper.TwoPi * (GameScene.DayNightCycle.TimeOfDay - 6f) / 24f;
+        float sunAngle = MathHelper.TwoPi * (GameScene.TimeCycle.TimeOfDay - 6f) / 24f;
         Vector3 sunDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, sunAngle));
 
         skyboxShader.SetValue("SunDirection", sunDir);
@@ -60,7 +60,7 @@ public class Skybox
         foreach (var pass in skyboxShader.CurrentTechnique.Passes)
         {
             pass.Apply();
-            gd.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, vb.VertexCount, 0, ib.IndexCount / 3);
+            graphics.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, vb.VertexCount, 0, ib.IndexCount / 3);
         }
     }
 

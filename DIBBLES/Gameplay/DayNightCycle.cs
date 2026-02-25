@@ -23,6 +23,21 @@ public class DayNightCycle
 
     public bool NeedsRelight = false;
     
+    // Colors
+    public static Color CurrentSkyColor = new();
+    
+    public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
+    public static Color DawnDuskPeakColor = new Color(0.98f, 0.6f, 0.41f, 1f);
+    public static Color DawnDuskFadeColor = new Color(0.90f, 0.75f, 0.60f, 1f);
+    public static Color NightSkyColor = new Color(0.08f, 0.10f, 0.18f, 1f);
+    
+    // TODO: Set ambient to transition of ambient day/dawn/dusk/night colors.
+    public static Color AmbientLightColor = new();
+    
+    public static Color AmbientDayColor = DaySkyColor.HSV(1f, 0.45f, 0.3f);
+    public static Color AmbientDawnDuskColor = DawnDuskPeakColor.HSV(1f, 0.35f, 0.2f);
+    public static Color AmbientNightColor = NightSkyColor.HSV(1f, 0.35f, 1.0f);
+    
     private bool _lastIsDay = true;
 
     public void Start()
@@ -50,7 +65,7 @@ public class DayNightCycle
         }
         
         // Smoothly lerp sky color based on time of day
-        float tod = GameScene.DayNightCycle.TimeOfDay;
+        float tod = GameScene.TimeCycle.TimeOfDay;
     
         // Normalize to [0,24)
         if (tod < 0f)
@@ -66,9 +81,6 @@ public class DayNightCycle
         float dayStart = dawnEnd, dayEnd = duskStart;
         float noon = 12f;
     
-        // Night: 19–5 (wraps over midnight)
-        float nightStart = duskEnd, nightEnd = dawnStart;
-    
         Color color;
         
         // Dawn transition
@@ -80,13 +92,13 @@ public class DayNightCycle
             if (t < 0.5f)
             {
                 float t1 = t * 2f;
-                color = Color.Lerp(RenderEngine.NightSkyColor, RenderEngine.DawnDuskPeakColor, t1);
+                color = Color.Lerp(NightSkyColor, DawnDuskPeakColor, t1);
             }
             // DawnPeak → DawnFade (warm to pale)
             else
             {
                 float t2 = (t - 0.5f) * 2f;
-                color = Color.Lerp(RenderEngine.DawnDuskPeakColor, RenderEngine.DawnDuskFadeColor, t2);
+                color = Color.Lerp(DawnDuskPeakColor, DawnDuskFadeColor, t2);
             }
 
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
@@ -98,18 +110,18 @@ public class DayNightCycle
             if (tod < dayStart + blendEdge) // DawnFade → Day
             {
                 float t = (tod - dayStart) / blendEdge;
-                color = Color.Lerp(RenderEngine.DawnDuskFadeColor, RenderEngine.DaySkyColor, t);
+                color = Color.Lerp(DawnDuskFadeColor, DaySkyColor, t);
                 SunIntensity = 1f;
             }
             else if (tod > dayEnd - blendEdge) // Day → DuskPeak
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskPeakColor, t); // symmetric
+                color = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t); // symmetric
                 SunIntensity = 1f;
             }
             else
             {
-                color = RenderEngine.DaySkyColor;
+                color = DaySkyColor;
                 SunIntensity = 1f;
             }
         }
@@ -118,19 +130,19 @@ public class DayNightCycle
             float t = (tod - duskStart) / (duskEnd - duskStart);
 
             if (t < 0.5f)
-                color = Color.Lerp(RenderEngine.DaySkyColor, RenderEngine.DawnDuskPeakColor, t * 2f); // reverse path
+                color = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t * 2f); // reverse path
             else
-                color = Color.Lerp(RenderEngine.DawnDuskPeakColor, RenderEngine.NightSkyColor, (t - 0.5f) * 2f);
+                color = Color.Lerp(DawnDuskPeakColor, NightSkyColor, (t - 0.5f) * 2f);
 
             SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
         }
         else // night
         {
-            color = RenderEngine.NightSkyColor;
+            color = NightSkyColor;
             SunIntensity = 0f;
         }
     
-        RenderEngine.CurrentSkyColor = color;
+        CurrentSkyColor = color;
     }
 
     private void timeCMD(string[] args)

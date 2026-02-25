@@ -96,9 +96,9 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
                 EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
                 
-                EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
+                EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
                 
-                EffectParams.SetFloat(shader, "SunIntensity", GameScene.DayNightCycle.SunIntensity);
+                EffectParams.SetFloat(shader, "SunIntensity", GameScene.TimeCycle.SunIntensity);
                 EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
                 EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
@@ -147,9 +147,9 @@ public class TerrainMesh
             EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
             EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
             
-            EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
+            EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
 
-            EffectParams.SetFloat(shader, "SunIntensity", GameScene.DayNightCycle.SunIntensity);
+            EffectParams.SetFloat(shader, "SunIntensity", GameScene.TimeCycle.SunIntensity);
             EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
             EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
             EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);

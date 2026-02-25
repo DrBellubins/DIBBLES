@@ -1,4 +1,5 @@
 using DIBBLES.Effects;
+using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -45,7 +46,7 @@ public class Billboards
         EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
         EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
 
-        EffectParams.SetVector3(shader, "AmbientLightColor", RenderEngine.AmbientLightColor.ToVector3());
+        EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
         
         EffectParams.SetFloat(shader, "Time", Time.time);
     

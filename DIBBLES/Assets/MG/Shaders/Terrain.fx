@@ -150,7 +150,7 @@ PixelOutput PS_Color(PixelInput input)
     }
 
     float4 texColor = tex2D(AtlasSampler, atlasUV);
-    float4 vertLighting = float4(lerp(input.Color.rgb, AmbientLightColor, 0.2f), texColor.a * input.Color.a);
+    float4 vertLighting = float4(input.Color.rgb + AmbientLightColor, texColor.a * input.Color.a);
     float4 blockColor = texColor * vertLighting;
 
     // Hand cutoff vs transparency

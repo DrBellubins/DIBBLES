@@ -49,11 +49,62 @@ public static class ColorExtensions
                 colorFloat.A + alphaAmount);
         }
 
-        public Color Saturation(float amount)
+        public Color HSV(float hue, float saturation, float value)
         {
             var hsv = RGBToHSV(color);
-            hsv[2] = amount;
-            return HSVToRGB(hsv[0], hsv[1], hsv[2]);
+            hsv[0] *= hue;
+            hsv[1] *= saturation;
+            hsv[2] *= value;
+
+            return HSVToRGB(hsv);
+        }
+
+        public Color SetHue(float hue)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[0] = hue;
+            
+            return HSVToRGB(hsv);
+        }
+        
+        public Color SetSaturation(float saturation)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[1] = saturation;
+            
+            return HSVToRGB(hsv);
+        }
+        
+        public Color SetValue(float value)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[2] = value;
+            
+            return HSVToRGB(hsv);
+        }
+        
+        public Color MultiplyHue(float hue)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[0] *= hue;
+            
+            return HSVToRGB(hsv);
+        }
+        
+        public Color MultiplySaturation(float saturation)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[1] *= saturation;
+            
+            return HSVToRGB(hsv);
+        }
+        
+        public Color MultiplyValue(float value)
+        {
+            var hsv = RGBToHSV(color);
+            hsv[2] *= value;
+            
+            return HSVToRGB(hsv);
         }
 
         public ColorF ToColorF()
@@ -133,5 +184,10 @@ public static class ColorExtensions
         }
 
         return new Color((byte)(rr * 255f), (byte)(gg * 255f), (byte)(bb * 255f));
+    }
+
+    private static Color HSVToRGB(float[] hsv)
+    {
+        return HSVToRGB(hsv[0], hsv[1], hsv[2]);
     }
 }

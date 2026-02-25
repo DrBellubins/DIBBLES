@@ -54,7 +54,7 @@ public class TerrainLighting
             var currentLightLevel = chunk.GetLightLevelAt(x, y, z);
             var skyLight = chunk.GetSkyLightAt(x, y, z);
 
-            currentLightLevel = skyLight && GameScene.DayNightCycle.IsDay ? (byte)15 : (byte)0;
+            currentLightLevel = skyLight && GameScene.TimeCycle.IsDay ? (byte)15 : (byte)0;
             
             var emission = chunk.GetInfoAt(x, y, z).LightEmission;
             
