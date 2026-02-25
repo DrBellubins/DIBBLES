@@ -11,6 +11,8 @@ namespace DIBBLES.Gameplay;
 public class DayNightCycle
 {
     public float TimeOfDay = 8.0f; // 0..24
+
+    private float testValue = 1.0f;
     
     public bool IsDay = true;
 
@@ -31,7 +33,8 @@ public class DayNightCycle
     public static Color ZenithColor = new();
     public static Color HorizonColor = new();
     
-    public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
+    //public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
+    public static Color DaySkyColor = new Color(0.423529411765f, 0.705882352941f, 1.0f);
     public static Color SunriseSunsetColor = new Color(0.98f, 0.6f, 0.41f, 1f);
     public static Color NightSkyColor = new Color(0.08f, 0.10f, 0.18f, 1f);
     
@@ -50,7 +53,8 @@ public class DayNightCycle
         
         DebugMenu.RegisterMenuItem("DayNight",
         
-            new SliderParam("Time of day", 0f, 24f, () => TimeOfDay, v => TimeOfDay = v)
+            new SliderParam("Time of day", 0f, 24f, () => TimeOfDay, v => TimeOfDay = v),
+            new SliderParam("Test", 0f, 10f, () => testValue, v => testValue = v)
         );
     }
     
@@ -89,43 +93,59 @@ public class DayNightCycle
         // Day: 7–17 (peaks at noon)
         float dayStart = dawnEnd, dayEnd = duskStart;
         float noon = 12f;
-    
-        Color color;
+
+        Color sunriseSunsetHorizon = SunriseSunsetColor;
+        Color sunriseSunsetZenith = SunriseSunsetColor.Darken(0.2f);
+        
+        Color DayHorizon = DaySkyColor.Brighten(1f);
+        Color DayZenith = DaySkyColor;
+        
+        Color NightHorizon = NightSkyColor.MultiplyValue(2.5f);
+        Color NightZenith = NightSkyColor.Darken(0.2f);
         
         // Update sky colors
-        if (tod >= dawnStart && tod < dawnEnd) // 5–7
+        if (tod >= dawnStart && tod < dawnEnd) // 5–7 - Sunrise
         {
             float t = (tod - dawnStart) / (dawnEnd - dawnStart);
 
-            // Dawn: blend from night → sunrise at horizon, night → blue at zenith
-            HorizonColor = Color.Lerp(NightSkyColor, SunriseSunsetColor.Brighten(0.20f), t);
-            ZenithColor  = Color.Lerp(NightSkyColor, DaySkyColor, t * 0.74f);
+            HorizonColor = Color.Lerp(NightHorizon, sunriseSunsetHorizon, t);
+            ZenithColor  = Color.Lerp(NightZenith, DayZenith, t * 0.74f);
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
-        else if (tod >= dayStart && tod < dayEnd) // 7–17
+        else if (tod >= dawnEnd && tod < dawnEnd + 1f) // 7–8 fade sunrise -> day
         {
-            float t = (tod - dayStart) / (dayEnd - dayStart);
+            float t = (tod - dawnEnd) / 1.0f;
 
-            // Full day: horizon goes from bright blue (skylight near sun) to base DaySkyColor, zenith is pure base DaySkyColor
-            // Keep horizon always somewhat brighter than zenith for depth
-            HorizonColor = DaySkyColor.Brighten(0.11f);
-            ZenithColor  = DaySkyColor;
+            HorizonColor = Color.Lerp(sunriseSunsetHorizon, DayHorizon, t);
+            ZenithColor  = Color.Lerp(DayZenith, DayZenith, t); // stabilizes pure blue
             SunIntensity = 1f;
         }
-        else if (tod >= duskStart && tod < duskEnd) // 17–19 (dusk)
+        else if (tod >= dayStart + 1f && tod < duskStart) // 8–17 - Day
+        {
+            HorizonColor = DayHorizon;
+            ZenithColor  = DayZenith;
+            SunIntensity = 1f;
+        }
+        else if (tod >= duskStart && tod < duskEnd) // 17–19 - Sunset
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
 
-            // Dusk: blend from blue (day) toward a brightened orange at the horizon, and blue to night at zenith
-            HorizonColor = Color.Lerp(DaySkyColor.Brighten(0.11f), SunriseSunsetColor.Brighten(0.20f), t);
-            ZenithColor  = Color.Lerp(DaySkyColor, NightSkyColor, t * 1.0f);
+            HorizonColor = Color.Lerp(DayHorizon, sunriseSunsetHorizon, t);
+            ZenithColor  = Color.Lerp(DayZenith, NightZenith, t);
             SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
+        }
+        else if (tod >= duskEnd && tod < duskEnd + 1f) // 19–20 fade sunset -> night
+        {
+            float t = (tod - duskEnd) / 1.0f;
+
+            HorizonColor = Color.Lerp(sunriseSunsetHorizon, NightHorizon, t);
+            ZenithColor  = Color.Lerp(NightZenith, NightZenith, t);
+            SunIntensity = 0f;
         }
         else // night
         {
-            // Night: keep horizon slightly brighter than zenith; use a bluish night
-            HorizonColor = NightSkyColor.Brighten(0.13f);
-            ZenithColor  = NightSkyColor.Darken(0.04f);
+            HorizonColor = NightHorizon;
+            ZenithColor  = NightZenith;
             SunIntensity = 0f;
         }
 

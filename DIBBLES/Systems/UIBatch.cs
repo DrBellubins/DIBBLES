@@ -383,6 +383,12 @@ public static class UIBatch
         _indices.Add((short)(baseIndex + 2));
         _indices.Add((short)(baseIndex + 3));
     }
+
+    public static void DrawTexture(Texture2D texture, Vector2 position, Color color)
+    {
+        var rect = new RectangleF(position.X, position.Y, texture.Width, texture.Height);
+        DrawTextureRect(texture, rect, color);
+    }
     
     /// <summary>
     /// Draws a texture with source and destination rectangles, origin, and rotation.

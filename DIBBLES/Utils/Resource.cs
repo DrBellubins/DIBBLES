@@ -22,7 +22,10 @@ public static class Resource
         string fullPath = Path.Combine(path, fileName);
 
         if (!File.Exists(fullPath))
+        {
+            Debug.Warning($"Texture doesn't exist at: {fullPath}");
             return Path.Combine(path, "Error.png");
+        }
 
         return fullPath;
     }
@@ -33,7 +36,10 @@ public static class Resource
         string fullPath = Path.Combine(path, fileName);
 
         if (!File.Exists(fullPath))
+        {
+            Debug.Warning($"Sound doesn't exist at: {fullPath}");
             return Path.Combine(path, "Error.ogg");
+        }
 
         return fullPath;
     }
@@ -51,33 +57,26 @@ public static class Resource
     
     private static string FindTextureLoose(string fileName)
     {
-        string path = Path.Combine(assetsPath, "Textures");
-        string fullPath = Path.Combine(path, fileName);
+        string fullPath = Path.Combine(assetsPath, fileName);
 
         if (!File.Exists(fullPath))
-            return Path.Combine(path, "Blocks", "Error.png");
+        {
+            Debug.Warning($"Texture doesn't exist at: {fullPath}");
+            return Path.Combine(assetsPath, "Textures", "Blocks", "Error.png");
+        }
 
         return fullPath;
     }
 
     private static string FindSoundLoose(string fileName)
     {
-        string path = Path.Combine(assetsPath, "Sounds");
-        string fullPath = Path.Combine(path, fileName);
+        string fullPath = Path.Combine(assetsPath, fileName);
 
         if (!File.Exists(fullPath))
-            return Path.Combine(path, "Blocks", "Error.ogg");
-
-        return fullPath;
-    }
-    
-    private static string? FindShaderLoose(string fileName)
-    {
-        string path = Path.Combine(assetsPath, "Shaders");
-        string fullPath = Path.Combine(path, fileName);
-
-        if (!File.Exists(fullPath))
-            return null;
+        {
+            Debug.Warning($"Sound doesn't exist at: {fullPath}");
+            return Path.Combine(assetsPath, "Sounds", "Blocks", "Error.ogg");
+        }
 
         return fullPath;
     }
@@ -113,7 +112,7 @@ public static class Resource
     {
         if (typeof(T) == typeof(Texture2D))
         {
-            string file = FindTextureLoose(fileName);
+            string file = FindTextureLoose($"{fileName}.png");
             
             var texture = Texture2D.FromFile(Engine.Graphics, file);
             textures.Add(texture);
@@ -122,7 +121,7 @@ public static class Resource
         }
         else if (typeof(T) == typeof(SoundEffect))
         {
-            string file = FindSoundLoose(fileName);
+            string file = FindSoundLoose($"{fileName}.ogg");
 
             var sound = LoadOggSound(file);
             sounds.Add(sound);

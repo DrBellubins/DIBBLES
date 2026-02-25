@@ -168,6 +168,8 @@ public class RenderEngine
         
         UIBatch.Begin();
         
+        UIBatch.DrawTexture(Sky.SunTexture, Vector2.Zero, Color.White);
+        
         PlayerCharacter.DrawUI();
         
         Inventory.Draw();
