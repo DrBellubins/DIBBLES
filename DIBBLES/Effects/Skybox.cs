@@ -53,12 +53,17 @@ public class Skybox
 
         // Sun: simple path (overhead at noon, below at midnight)
         float sunAngle = MathHelper.TwoPi * (GameScene.TimeCycle.TimeOfDay - 6f) / 24f;
-        Vector3 sunDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, sunAngle));
+        
+        // Instead of rotating around Forward (Z), rotate around Right (X)
+        Vector3 sunDir = Vector3.Transform(Vector3.Forward, Matrix.CreateFromAxisAngle(Vector3.Right, sunAngle));
+        
+        //float sunAngle = MathHelper.TwoPi * (GameScene.TimeCycle.TimeOfDay - 6f) / 24f;
+        //Vector3 sunDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, sunAngle));
 
         skyboxShader.SetValue("SunDirection", sunDir);
 
         float moonAngle = sunAngle + MathF.PI;
-        Vector3 moonDir = Vector3.Transform(Vector3.Down, Matrix.CreateFromAxisAngle(Vector3.Forward, moonAngle));
+        Vector3 moonDir = Vector3.Transform(Vector3.Forward, Matrix.CreateFromAxisAngle(Vector3.Right, moonAngle));
 
         skyboxShader.SetValue("MoonDirection", moonDir);
 

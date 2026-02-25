@@ -71,24 +71,31 @@ float4 PS(PSInput input) : SV_Target
 
     float3 baseColor = computeSky(viewDir);
 
+    float horizonFade = smoothstep(-0.07, 0.07, viewDir.y); // Fade between slightly below and above horizon
+
+    float sunMoonSize = 0.04;
+    float2 domeUV = 0.5 + viewDir.xz * 0.5;
+
     // Sun
-    float sunDot = saturate(dot(viewDir, -SunDirection));
-    float2 sunUV = 0.5 + viewDir.xz * 0.5;
+    float4 sunTex = tex2D(SunSampler, domeUV);
 
-    float sunSize = 0.04;
-    float sunBrightness = pow(sunDot, 250);
-    float4 sunTex = tex2D(SunSampler, sunUV);
-    float sunMask = gaussian(viewDir, -SunDirection, sunSize);
-    float3 sunColor = sunTex.rgb * sunTex.a * sunBrightness * sunMask * 1.4;
+    float sunDot = dot(viewDir, -SunDirection);
+    float sunMask = gaussian(viewDir, -SunDirection, sunMoonSize);
+    float sunBrightness = pow(max(sunDot, 0), 250); // Only brighten when above horizon:
+    float sunAlpha = sunMask * horizonFade;
 
-    // Moon (opposite sun)
-    float moonDot = saturate(dot(viewDir, -MoonDirection));
-    float2 moonUV = 0.5 + viewDir.xz * 0.5;
-    float moonSize = 0.03;
-    float moonBrightness = pow(moonDot, 90);
-    float4 moonTex = tex2D(MoonSampler, moonUV);
-    float moonMask = gaussian(viewDir, -MoonDirection, moonSize);
-    float3 moonColor = moonTex.rgb * moonTex.a * moonBrightness * moonMask * 1.0;
+    // Final color uses sunAlpha for fade-out at horizon and below
+    float3 sunColor = sunTex.rgb * sunTex.a * sunAlpha * 1.4;
+
+    // Moon: same logic, maybe softer (smaller pow)
+    float4 moonTex = tex2D(MoonSampler, domeUV);
+
+    float moonDot = dot(viewDir, -MoonDirection);
+    float moonMask = gaussian(viewDir, -MoonDirection, sunMoonSize);
+    float moonBrightness = pow(max(moonDot, 0), 90);
+    float moonAlpha = moonMask * horizonFade;
+
+    float3 moonColor = moonTex.rgb * moonTex.a * moonAlpha * 1.0;
 
     float3 color = baseColor + sunColor + moonColor;
 
