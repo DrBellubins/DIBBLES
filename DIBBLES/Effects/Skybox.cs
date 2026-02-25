@@ -44,7 +44,6 @@ public class Skybox
         view.Translation = Vector3.Zero;
         
         skyboxShader.SetValue("View", view);
-        
         skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
 
         skyboxShader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
