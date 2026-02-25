@@ -29,7 +29,6 @@ public class Skybox
         graphics.BlendState = BlendState.Opaque;
         graphics.DepthStencilState = DepthStencilState.None;
         graphics.RasterizerState = RasterizerState.CullNone;
-        graphics.SamplerStates[0] = SamplerState.PointClamp;
 
         graphics.SetVertexBuffer(vb);
         graphics.Indices = ib;

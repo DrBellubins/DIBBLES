@@ -17,11 +17,17 @@ float TimeOfDay; // 0..24
 sampler2D SunSampler = sampler_state
 {
     Texture = <SunTexture>;
+    Filter = POINT;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 sampler2D MoonSampler = sampler_state
 {
     Texture = <MoonTexture>;
+    Filter = POINT;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 struct VSInput
