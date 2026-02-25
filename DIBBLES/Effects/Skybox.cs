@@ -69,11 +69,15 @@ public class Skybox
         List<Vector3> verts = new();
         List<ushort> inds = new();
 
+        // Change: Full sphere (phi = 0..Pi), not just Pi/2 (quarter dome)
         for (int stack = 0; stack <= stacks; stack++)
         {
-            float phi = MathHelper.PiOver2 * (stack / (float)stacks); // 0..Pi/2 quarter dome
-            float y = MathF.Sin(phi);
-            float r = MathF.Cos(phi);
+            // Old (dome): float phi = MathHelper.PiOver2 * (stack / (float)stacks);
+            // New (sphere): phi = 0..Pi
+            float phi = MathHelper.Pi * (stack / (float)stacks); // 0..Pi
+
+            float y = MathF.Cos(phi);   // y up: cos(phi)
+            float r = MathF.Sin(phi);   // radius in XZ: sin(phi)
 
             for (int slice = 0; slice <= slices; slice++)
             {
@@ -89,6 +93,7 @@ public class Skybox
             for (int slice = 0; slice < slices; slice++)
             {
                 int baseIdx = stack * (slices + 1) + slice;
+                // Two triangles per quad face of the sphere
                 inds.Add((ushort)baseIdx);
                 inds.Add((ushort)(baseIdx + slices + 1));
                 inds.Add((ushort)(baseIdx + 1));

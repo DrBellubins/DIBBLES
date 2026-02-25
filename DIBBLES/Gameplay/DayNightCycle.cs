@@ -1,5 +1,6 @@
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
@@ -43,12 +44,17 @@ public class DayNightCycle
     public void Start()
     {
         Commands.Register("time", "Set time of day", timeCMD);
+        
+        DebugMenu.RegisterMenuItem("DayNight",
+        
+            new SliderParam("Time of Day", 0f, 24f, () => TimeOfDay, v => TimeOfDay = v)
+        );
     }
     
     public void Update()
     {
         // Advance time
-        TimeOfDay += (Time.DeltaTime / RealSecondsPerGameHour);
+        //TimeOfDay += (Time.DeltaTime / RealSecondsPerGameHour);
         
         if (TimeOfDay >= FullDayHours)
             TimeOfDay -= FullDayHours;
