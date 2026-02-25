@@ -25,8 +25,6 @@ public struct ChatMessage(string message, ChatMessageType type)
     public string Message = message;
 }
 
-// TODO: Implement scrolling.
-
 // TODO: Implement text wrapping.
 public class Chat
 {
@@ -34,14 +32,13 @@ public class Chat
     public const float Height = 400f;
     public const float FontSize = 24f;
     
-    public static bool IsOpen {get; private set;}
-    public static bool IsClosedButShown {get; private set;}
+    public static bool IsOpen { get; private set; }
+    public static bool IsOpenNotFocused { get; private set; }
+    public static bool IsClosedButShown { get; private set; }
     
     public static List<ChatMessage> ChatMessages = new();
     
     private static List<string> prevChatMessages = new();
-    
-    public RenderTarget2D ChatTexture;
     
     private RectangleF chatBox = new RectangleF(0f, 0f, Width, Height);
     private TextBox textBox = new TextBox(new RectangleF(0f, 0f, Width, 40f));
@@ -61,17 +58,6 @@ public class Chat
     
     public void Start()
     {
-        ChatTexture = new RenderTarget2D(
-            Engine.Graphics,
-            (int)Width,
-            (int)Height,
-            false,
-            SurfaceFormat.Color,
-            DepthFormat.None,
-            0,
-            RenderTargetUsage.PreserveContents // Allows transparency
-        );
-        
         textBox.Bounds.X = (int)UI.LeftCenterPivot.X;
         textBox.Bounds.Y = (int)(UI.LeftCenterPivot.Y + (Height / 2f));
     }
@@ -92,6 +78,8 @@ public class Chat
         
         int linesThatFit = (int)(Height / FontSize);
         int maxScroll = Math.Max(0, ChatMessages.Count - linesThatFit);
+
+        IsOpenNotFocused = IsOpen && textBox.IsFocused;
         
         if (IsOpen)
         {
@@ -99,13 +87,15 @@ public class Chat
             
             float wheel = Input.ScrollDelta();
             
-            if (wheel != 0)
+            if (wheel != 0 && textBox.IsFocused)
             {
                 scrollOffset += wheel;
                 scrollOffset = Math.Clamp(scrollOffset, 0, maxScroll);
                 
                 isUserScrolling = scrollOffset > 0;
             }
+            else
+                isUserScrolling = false;
         }
         
         // Send msg/cmd to chat

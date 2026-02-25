@@ -80,6 +80,9 @@ public class GameScene : Scene
     {
         Input.Update();
         
+        if ((!Chat.IsOpenNotFocused && Input.Quit()))
+            Engine.Instance.Exit();
+        
         fpsElapsed += Time.DeltaTime;
         
         if (fpsElapsed >= 0.5f)
@@ -103,7 +106,7 @@ public class GameScene : Scene
         
         GameChat.Update();
         
-        if (!Chat.IsOpen && Input.IsKeyPressed(Keys.L))
+        if (!Chat.IsOpenNotFocused && Input.IsKeyPressed(Keys.L))
             WorldSave.SaveWorldData("test");
         
         _DebugMenu.Update();

@@ -94,9 +94,6 @@ public class Engine : Game
             return;
         }
         
-        if ((!Chat.IsOpen && Input.Quit()))
-            Exit();
-        
         foreach (var scene in Scenes)
             scene.Update();
 
@@ -107,13 +104,11 @@ public class Engine : Game
         long targetTicks = (long)(FrameTimestep * (double)Stopwatch.Frequency); // Use double for precision
         long beforeWait = timer.ElapsedTicks;
         long elapsedTicks = beforeWait - previousTicks;
-        //int spinCount = 0;
         
         while (elapsedTicks < targetTicks)
         {
             Thread.SpinWait(100); // Brief spin-wait to reduce CPU usage
             elapsedTicks = timer.ElapsedTicks - previousTicks;
-            //spinCount++;
         }
         
         long afterWait = timer.ElapsedTicks;
