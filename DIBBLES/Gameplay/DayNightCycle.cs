@@ -31,14 +31,14 @@ public class DayNightCycle
     public static Color HorizonColor = new();
     
     public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
-    public static Color DawnDuskPeakColor = new Color(0.98f, 0.6f, 0.41f, 1f);
+    public static Color SunriseSunsetColor = new Color(0.98f, 0.6f, 0.41f, 1f);
     public static Color NightSkyColor = new Color(0.08f, 0.10f, 0.18f, 1f);
     
     // TODO: Set ambient to transition of ambient day/dawn/dusk/night colors.
     public static Color AmbientLightColor = new();
     
     public static Color AmbientDayColor = DaySkyColor.HSV(1f, 0.45f, 0.3f);
-    public static Color AmbientDawnDuskColor = DawnDuskPeakColor.HSV(1f, 0.35f, 0.2f);
+    public static Color AmbientSunriseSunsetColor = SunriseSunsetColor.HSV(1f, 0.35f, 0.2f);
     public static Color AmbientNightColor = NightSkyColor.HSV(1f, 0.35f, 1.0f);
     
     private bool _lastIsDay = true;
@@ -96,7 +96,7 @@ public class DayNightCycle
             float t = (tod - dawnStart) / (dawnEnd - dawnStart);
 
             // Gradually shift horizon from night to orange, zenith from night to dawn blue
-            HorizonColor = Color.Lerp(NightSkyColor, DawnDuskPeakColor, t);
+            HorizonColor = Color.Lerp(NightSkyColor, SunriseSunsetColor, t);
             ZenithColor  = Color.Lerp(NightSkyColor, DaySkyColor, t * 0.5f);
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
@@ -106,14 +106,14 @@ public class DayNightCycle
             if (tod < dayStart + blendEdge) // DawnFade → Day
             {
                 float t = (tod - dayStart) / blendEdge;
-                HorizonColor = Color.Lerp(DawnDuskPeakColor, DaySkyColor, t);
+                HorizonColor = Color.Lerp(SunriseSunsetColor, DaySkyColor, t);
                 ZenithColor  = Color.Lerp(DawnDuskFadeColor, DaySkyColor, t);
                 SunIntensity = 1f;
             }
             else if (tod > dayEnd - blendEdge) // Day → DuskPeak
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                HorizonColor = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t);
+                HorizonColor = Color.Lerp(DaySkyColor, SunriseSunsetColor, t);
                 ZenithColor  = Color.Lerp(DaySkyColor, DawnDuskFadeColor, t);
                 SunIntensity = 1f;
             }
@@ -128,7 +128,7 @@ public class DayNightCycle
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
 
-            HorizonColor = Color.Lerp(DawnDuskPeakColor, NightSkyColor, t);
+            HorizonColor = Color.Lerp(SunriseSunsetColor, NightSkyColor, t);
             ZenithColor  = Color.Lerp(DaySkyColor, NightSkyColor, t);
             SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
         }
