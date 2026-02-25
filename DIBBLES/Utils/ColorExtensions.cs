@@ -133,6 +133,55 @@ public static class ColorExtensions
 
         return HSVToRGB(h, s, v);
     }
+    
+    /// <summary>
+    /// Direct Kelvin → Color conversion (1000 K – 40 000 K).
+    /// </summary>
+    public static Color FromKelvin(float kelvin)
+    {
+        kelvin = Math.Clamp(kelvin, 1000f, 40000f);
+
+        float temp = kelvin / 100f;   // all formulas expect temperature / 100
+
+        float r, g, b;
+
+        // Red
+        if (temp <= 66f)
+            r = 255f;
+        else
+        {
+            r = 329.698727446f * MathF.Pow(temp - 60f, -0.1332047592f);
+            r = Math.Clamp(r, 0f, 255f);
+        }
+
+        // Green
+        if (temp <= 66f)
+        {
+            g = 99.4708025861f * MathF.Log(temp) - 161.1195681661f;
+            g = Math.Clamp(g, 0f, 255f);
+        }
+        else
+        {
+            g = 288.1221695283f * MathF.Pow(temp - 60f, -0.0755148492f);
+            g = Math.Clamp(g, 0f, 255f);
+        }
+
+        // Blue
+        if (temp >= 66f)
+            b = 255f;
+        else if (temp <= 19f)
+            b = 0f;
+        else
+        {
+            b = 138.5177312231f * MathF.Log(temp - 10f) - 305.0447927307f;
+            b = Math.Clamp(b, 0f, 255f);
+        }
+
+        return new Color((byte)MathF.Round(r),
+            (byte)MathF.Round(g),
+            (byte)MathF.Round(b),
+            (byte)255);   // full opacity
+    }
 
     private static float[] RGBToHSV(Color c)
     {
