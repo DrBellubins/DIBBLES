@@ -80,7 +80,7 @@ public class GameScene : Scene
     {
         Input.Update();
         
-        if ((!Chat.IsOpenNotFocused && Input.Quit()))
+        if (!Chat.IsOpenNotFocused && Input.Quit())
             Engine.Instance.Exit();
         
         fpsElapsed += Time.DeltaTime;
