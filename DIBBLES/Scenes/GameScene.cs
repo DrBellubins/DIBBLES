@@ -56,7 +56,10 @@ public class GameScene : Scene
         Primatives3D.Initialize();
         
         DayNightCycle.Start();
+        
         TerrainGen.Start(); // Initial terrain generation
+        TerrainGeneration.Gameplay.Start();
+        
         Inventory.Start();
         PlayerCharacter.Start(); // Must be started after terrain
         GameChat.Start();

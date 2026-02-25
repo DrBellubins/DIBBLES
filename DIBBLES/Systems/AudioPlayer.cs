@@ -4,6 +4,7 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 
+// TODO: Implement ability to play 2D sounds
 public class AudioPlayer
 {
     public Vector3 Position = Vector3.Zero;
@@ -31,18 +32,6 @@ public class AudioPlayer
     {
         Engine.AudioPlayers.Add(this);
     }
-
-    public static void CreateAndPlay(SoundEffect sound, Vector3 position)
-    {
-        var audioPlayer = new AudioPlayer();
-        audioPlayer.Sound = sound;
-        audioPlayer.Position = position;
-        
-        Debug.Info("Audio player created");
-        Debug.Info($"Audio players in buffer: {Engine.AudioPlayers.Count}");
-        
-        audioPlayer.Play();
-    }
     
     public void Update()
     {
@@ -59,7 +48,7 @@ public class AudioPlayer
             // Dispose after we've played.
             if (!IsPlaying && hasPlayed)
             {
-                Debug.Info("Audio player unloaded");
+                //Debug.Info("Audio player unloaded");
                 Engine.AudioPlayers.Remove(this);
                 hasPlayed = false; // ensure we only run this block once
             }
@@ -88,6 +77,19 @@ public class AudioPlayer
         // Play
         instance.Play();
         hasPlayed = true;
+    }
+
+    public void Play(SoundEffect sound)
+    {
+        Sound = sound;
+        Play();
+    }
+    
+    public void Play(SoundEffect sound, Vector3 position)
+    {
+        Sound = sound;
+        Position = position;
+        Play();
     }
     
     public void Stop()
