@@ -8,6 +8,7 @@ using static DIBBLES.Terrain.Meshing.Helpers;
 
 namespace DIBBLES.Terrain.Meshing;
 
+// TODO: When placing along z axis, anti tiling shifts on blocks around placed block
 public class MeshDataGeneration
 {
     // MeshData generation (thread-safe, basic data for meshing)
