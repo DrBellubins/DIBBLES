@@ -428,6 +428,9 @@ public class PlayerCharacter
     
     public void SetCameraDirection(Vector3 direction)
     {
+        if (direction == Vector3.Zero)
+            direction = new Vector3(0f, 0f, 1f); // Fallback to default forward if zero
+        
         direction = Vector3.Normalize(direction);
 
         CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is

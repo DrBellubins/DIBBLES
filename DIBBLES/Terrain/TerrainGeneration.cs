@@ -302,7 +302,7 @@ public class TerrainGeneration
                 chunk.IsFrozen = true;
 
                 // Dispose meshes (existing logic)
-                if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
+                /*if (Mesh.OpaqueModels.TryGetValue(pos, out var oModel) && oModel != null)
                 {
                     _disposeQueue.Enqueue(oModel);
                     Mesh.OpaqueModels.Remove(pos);
@@ -313,8 +313,8 @@ public class TerrainGeneration
                     _disposeQueue.Enqueue(tModel);
                     Mesh.TransparentModels.Remove(pos);
                 }
-                
-                /*if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
+
+                if (Mesh.BillboardGen.BillboardBatches.TryGetValue(pos, out var buffer))
                 {
                     buffer.Dispose();
                     Mesh.BillboardGen.BillboardBatches.Remove(pos);
