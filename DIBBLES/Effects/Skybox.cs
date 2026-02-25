@@ -35,10 +35,10 @@ using DIBBLES.Systems;
            skyboxShader.Parameters["View"].SetValue(GameScene.PlayerCharacter.Camera.View);
            skyboxShader.Parameters["Projection"].SetValue(GameScene.PlayerCharacter.Camera.Projection);
    
-           skyboxShader.Parameters["SkyColor"].SetValue(RenderEngine.CurrentSkyColor.ToVector4());
-           skyboxShader.Parameters["DaySkyColor"].SetValue(RenderEngine.DaySkyColor.ToVector4());
-           skyboxShader.Parameters["DawnDuskSkyColor"].SetValue(RenderEngine.DawnDuskPeakColor.ToVector4());
-           skyboxShader.Parameters["NightSkyColor"].SetValue(RenderEngine.NightSkyColor.ToVector4());
+           skyboxShader.Parameters["SkyColor"].SetValue(RenderEngine.CurrentSkyColor.ToVector3());
+           skyboxShader.Parameters["DaySkyColor"].SetValue(RenderEngine.DaySkyColor.ToVector3());
+           skyboxShader.Parameters["DawnDuskSkyColor"].SetValue(RenderEngine.DawnDuskPeakColor.ToVector3());
+           skyboxShader.Parameters["NightSkyColor"].SetValue(RenderEngine.NightSkyColor.ToVector3());
    
            skyboxShader.Parameters["SunTexture"].SetValue(SunTexture);
            skyboxShader.Parameters["MoonTexture"].SetValue(MoonTexture);

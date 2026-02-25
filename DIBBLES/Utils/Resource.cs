@@ -48,9 +48,42 @@ public static class Resource
 
         return fullPath;
     }
+    
+    private static string FindTextureLoose(string fileName)
+    {
+        string path = Path.Combine(assetsPath, "Textures");
+        string fullPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(fullPath))
+            return Path.Combine(path, "Blocks", "Error.png");
+
+        return fullPath;
+    }
+
+    private static string FindSoundLoose(string fileName)
+    {
+        string path = Path.Combine(assetsPath, "Sounds");
+        string fullPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(fullPath))
+            return Path.Combine(path, "Blocks", "Error.ogg");
+
+        return fullPath;
+    }
+    
+    private static string? FindShaderLoose(string fileName)
+    {
+        string path = Path.Combine(assetsPath, "Shaders");
+        string fullPath = Path.Combine(path, fileName);
+
+        if (!File.Exists(fullPath))
+            return null;
+
+        return fullPath;
+    }
 
     // Load method for Texture2D and SoundEffect
-    public static T Load<T>(string fileName, bool isItem = false)
+    public static T LoadFixed<T>(string fileName, bool isItem = false)
     {
         if (typeof(T) == typeof(Texture2D))
         {
@@ -70,10 +103,37 @@ public static class Resource
             
             return (T)(object)sound;
         }
-        //else if (typeof(T) == typeof(Effect))
-        //{
-        //    // TODO: Use Content.Load<Effect> later
-        //}
+        else
+        {
+            throw new ArgumentException($"Unsupported type: {typeof(T).Name}");
+        }
+    }
+    
+    public static T Load<T>(string fileName)
+    {
+        if (typeof(T) == typeof(Texture2D))
+        {
+            string file = FindTextureLoose(fileName);
+            
+            var texture = Texture2D.FromFile(Engine.Graphics, file);
+            textures.Add(texture);
+            
+            return (T)(object)texture;
+        }
+        else if (typeof(T) == typeof(SoundEffect))
+        {
+            string file = FindSoundLoose(fileName);
+
+            var sound = LoadOggSound(file);
+            sounds.Add(sound);
+            
+            return (T)(object)sound;
+        }
+        else if (typeof(T) == typeof(Effect))
+        {
+            var shader = Engine.Instance.Content.Load<Effect>(fileName);
+            return (T)(object)shader;
+        }
         else
         {
             throw new ArgumentException($"Unsupported type: {typeof(T).Name}");

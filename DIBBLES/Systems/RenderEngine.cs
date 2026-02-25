@@ -32,6 +32,8 @@ public class RenderEngine
             return ambientLightCol;
         }
     }
+
+    public static Skybox Sky { get; private set; } = new();
     
     public static RenderTarget2D BackBuffer;
     public static RenderTarget2D DepthBuffer;
@@ -50,6 +52,8 @@ public class RenderEngine
     
     public void DrawAll()
     {
+        Sky.Draw();
+        
         // Bind MRTs
         graphics.SetRenderTargets(
             new RenderTargetBinding(BackBuffer),
@@ -261,6 +265,11 @@ public class RenderEngine
             0,
             RenderTargetUsage.PreserveContents // safe for multi-pass UI composites
         );
+        
+        Sky.Initialize(
+            Resource.Load<Texture2D>("Textures/Sun"),
+            Resource.Load<Texture2D>("Textures/Moon"),
+            Resource.Load<Effect>("Shaders/Skybox"));
         
         Commands.Register("bbd", "Toggle buffer debug to screen", toggleBBDCMD);
         Commands.Register("ao", "Toggle ambient occlusion", toggleAOCMD);

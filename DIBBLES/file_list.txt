@@ -136,6 +136,7 @@
 ./Assets/MG/Shaders/BillboardInstanced.fx
 ./Assets/MG/Shaders/Bloom.fx
 ./Assets/MG/Shaders/SSAOPostProcess.fx
+./Assets/MG/Shaders/Skybox.fx
 ./Assets/MG/Shaders/Includes/AgX.hlsl
 ./Assets/MG/Shaders/Includes/ACES.hlsl
 ./Assets/MG/Shaders/Includes/Hable.hlsl

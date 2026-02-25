@@ -87,7 +87,7 @@ public class BlockData
             {
                 for (int faceIdx = 0; faceIdx < 6; faceIdx++)
                 {
-                    var texture = Resource.Load<Texture2D>(faceTextureNames[faceIdx]);
+                    var texture = Resource.LoadFixed<Texture2D>(faceTextureNames[faceIdx]);
                     Textures.Add((blockType, faceIdx), texture);
                     maxWidth = Math.Max(maxWidth, texture.Width);
                     maxHeight = Math.Max(maxHeight, texture.Height);
@@ -154,7 +154,7 @@ public class BlockData
                 if (emisFaceNames != null && !string.IsNullOrWhiteSpace(emisFaceNames[faceIdx]))
                 {
                     // Explicit emissive texture from TOML
-                    tex = Resource.Load<Texture2D>(emisFaceNames[faceIdx]);
+                    tex = Resource.LoadFixed<Texture2D>(emisFaceNames[faceIdx]);
                 }
                 else if (info.LightEmission > 0)
                 {
@@ -364,7 +364,7 @@ public class BlockData
     
     private static Texture2D loadBlockTexture(BlockType blockType)
     {
-        return Resource.Load<Texture2D>($"{blockType.ToString()}.png");
+        return Resource.LoadFixed<Texture2D>($"{blockType.ToString()}.png");
     }
     
     private static string[]? getFaceTextureNamesForBlock(BlockType blockType)
@@ -471,7 +471,7 @@ public class BlockData
         var blockName = blockType.ToString();
         var blockSoundPath = Path.Combine(blockName, $"{blockName}{i}.ogg");
         
-        return Resource.Load<SoundEffect>(blockSoundPath);
+        return Resource.LoadFixed<SoundEffect>(blockSoundPath);
     }
     
     public static void loadBlockPrefabsFromToml(string tomlPath)

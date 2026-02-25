@@ -41,6 +41,9 @@
 # Build the tonemap shader
 /build:Shaders/Tonemap.fx
 
+# Build the skybox shader
+/build:Shaders/Skybox.fx
+
 #----------------------------- Includes/ACES.hlsl ----------------------------#
 /copy:Shaders/Includes/ACES.hlsl
 
