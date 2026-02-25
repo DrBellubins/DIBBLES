@@ -91,38 +91,21 @@ public class DayNightCycle
     
         Color color;
         
+        // Update sky colors
         if (tod >= dawnStart && tod < dawnEnd) // 5–7
         {
             float t = (tod - dawnStart) / (dawnEnd - dawnStart);
 
-            // Gradually shift horizon from night to orange, zenith from night to dawn blue
             HorizonColor = Color.Lerp(NightSkyColor, SunriseSunsetColor, t);
-            ZenithColor  = Color.Lerp(NightSkyColor, DaySkyColor, t * 0.5f);
+            ZenithColor = Color.Lerp(NightSkyColor, DaySkyColor, t * 0.5f);
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
         else if (tod >= dayStart && tod < dayEnd) // 7–17
         {
-            float blendEdge = 1.5f;
-            if (tod < dayStart + blendEdge) // DawnFade → Day
-            {
-                float t = (tod - dayStart) / blendEdge;
-                HorizonColor = Color.Lerp(SunriseSunsetColor, DaySkyColor, t);
-                ZenithColor  = Color.Lerp(DawnDuskFadeColor, DaySkyColor, t);
-                SunIntensity = 1f;
-            }
-            else if (tod > dayEnd - blendEdge) // Day → DuskPeak
-            {
-                float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                HorizonColor = Color.Lerp(DaySkyColor, SunriseSunsetColor, t);
-                ZenithColor  = Color.Lerp(DaySkyColor, DawnDuskFadeColor, t);
-                SunIntensity = 1f;
-            }
-            else
-            {
-                HorizonColor = DaySkyColor;
-                ZenithColor  = DaySkyColor;
-                SunIntensity = 1f;
-            }
+            float t = (tod - dayStart) / (dayEnd - dayStart);
+            HorizonColor = Color.Lerp(SunriseSunsetColor, DaySkyColor, t);
+            ZenithColor  = Color.Lerp(SunriseSunsetColor, DaySkyColor, t * 0.6f);
+            SunIntensity = 1f;
         }
         else if (tod >= duskStart && tod < duskEnd) // 17–19 (dusk)
         {
@@ -135,7 +118,7 @@ public class DayNightCycle
         else // night
         {
             HorizonColor = NightSkyColor;
-            ZenithColor  = NightSkyColor;
+            ZenithColor  = NightSkyColor;   // Slightly darker zenith
             SunIntensity = 0f;
         }
 
