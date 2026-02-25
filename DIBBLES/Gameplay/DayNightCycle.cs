@@ -27,9 +27,11 @@ public class DayNightCycle
     // Colors
     public static Color CurrentSkyColor = new();
     
+    public static Color ZenithColor = new();
+    public static Color HorizonColor = new();
+    
     public static Color DaySkyColor = new Color(0.4f, 0.74f, 1.0f, 1f);
     public static Color DawnDuskPeakColor = new Color(0.98f, 0.6f, 0.41f, 1f);
-    public static Color DawnDuskFadeColor = new Color(0.90f, 0.75f, 0.60f, 1f);
     public static Color NightSkyColor = new Color(0.08f, 0.10f, 0.18f, 1f);
     
     // TODO: Set ambient to transition of ambient day/dawn/dusk/night colors.
@@ -66,7 +68,7 @@ public class DayNightCycle
         if (currentlyDay != _lastIsDay)
         {
             IsDay = currentlyDay;
-            NeedsRelight = true;
+            //NeedsRelight = true;
             _lastIsDay = currentlyDay;
         }
         
@@ -89,66 +91,56 @@ public class DayNightCycle
     
         Color color;
         
-        // Dawn transition
         if (tod >= dawnStart && tod < dawnEnd) // 5–7
         {
-            float t = (tod - dawnStart) / (dawnEnd - dawnStart); // 0→1
+            float t = (tod - dawnStart) / (dawnEnd - dawnStart);
 
-            // Night → DawnPeak (warm-up)
-            if (t < 0.5f)
-            {
-                float t1 = t * 2f;
-                color = Color.Lerp(NightSkyColor, DawnDuskPeakColor, t1);
-            }
-            // DawnPeak → DawnFade (warm to pale)
-            else
-            {
-                float t2 = (t - 0.5f) * 2f;
-                color = Color.Lerp(DawnDuskPeakColor, DawnDuskFadeColor, t2);
-            }
-
+            // Gradually shift horizon from night to orange, zenith from night to dawn blue
+            HorizonColor = Color.Lerp(NightSkyColor, DawnDuskPeakColor, t);
+            ZenithColor  = Color.Lerp(NightSkyColor, DaySkyColor, t * 0.5f);
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
         else if (tod >= dayStart && tod < dayEnd) // 7–17
         {
-            float blendEdge = 1.5f; // shorter than before to reduce purple risk
-
+            float blendEdge = 1.5f;
             if (tod < dayStart + blendEdge) // DawnFade → Day
             {
                 float t = (tod - dayStart) / blendEdge;
-                color = Color.Lerp(DawnDuskFadeColor, DaySkyColor, t);
+                HorizonColor = Color.Lerp(DawnDuskPeakColor, DaySkyColor, t);
+                ZenithColor  = Color.Lerp(DawnDuskFadeColor, DaySkyColor, t);
                 SunIntensity = 1f;
             }
             else if (tod > dayEnd - blendEdge) // Day → DuskPeak
             {
                 float t = (tod - (dayEnd - blendEdge)) / blendEdge;
-                color = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t); // symmetric
+                HorizonColor = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t);
+                ZenithColor  = Color.Lerp(DaySkyColor, DawnDuskFadeColor, t);
                 SunIntensity = 1f;
             }
             else
             {
-                color = DaySkyColor;
+                HorizonColor = DaySkyColor;
+                ZenithColor  = DaySkyColor;
                 SunIntensity = 1f;
             }
         }
-        else if (tod >= duskStart && tod < duskEnd) // 17–19 symmetric to dawn
+        else if (tod >= duskStart && tod < duskEnd) // 17–19 (dusk)
         {
             float t = (tod - duskStart) / (duskEnd - duskStart);
 
-            if (t < 0.5f)
-                color = Color.Lerp(DaySkyColor, DawnDuskPeakColor, t * 2f); // reverse path
-            else
-                color = Color.Lerp(DawnDuskPeakColor, NightSkyColor, (t - 0.5f) * 2f);
-
+            HorizonColor = Color.Lerp(DawnDuskPeakColor, NightSkyColor, t);
+            ZenithColor  = Color.Lerp(DaySkyColor, NightSkyColor, t);
             SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
         }
         else // night
         {
-            color = NightSkyColor;
+            HorizonColor = NightSkyColor;
+            ZenithColor  = NightSkyColor;
             SunIntensity = 0f;
         }
-    
-        CurrentSkyColor = color;
+
+        // For backwards compatibility, set CurrentSkyColor as the zenith color.
+        CurrentSkyColor = ZenithColor;
     }
 
     private void timeCMD(string[] args)

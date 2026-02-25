@@ -36,10 +36,8 @@ public class Skybox
         skyboxShader.SetValue("View", GameScene.PlayerCharacter.Camera.View);
         skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
 
-        skyboxShader.SetValue("SkyColor", DayNightCycle.CurrentSkyColor.ToVector3());
-        skyboxShader.SetValue("DaySkyColor", DayNightCycle.DaySkyColor.ToVector3());
-        skyboxShader.SetValue("DawnDuskSkyColor", DayNightCycle.DawnDuskPeakColor.ToVector3());
-        skyboxShader.SetValue("NightSkyColor", DayNightCycle.NightSkyColor.ToVector3());
+        skyboxShader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
+        skyboxShader.SetValue("SkyHorizonColor", DayNightCycle.HorizonColor.ToVector3());
 
         skyboxShader.SetValue("SunTexture", SunTexture);
         skyboxShader.SetValue("MoonTexture", MoonTexture);

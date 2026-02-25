@@ -2,10 +2,8 @@
 float4x4 View;
 float4x4 Projection;
 
-float3 SkyColor;
-float3 DaySkyColor;
-float3 DawnDuskSkyColor;
-float3 NightSkyColor;
+float3 SkyZenithColor;
+float3 SkyHorizonColor;
 
 texture SunTexture;
 texture MoonTexture;
@@ -40,7 +38,7 @@ PSInput VS(VSInput input)
 float3 computeSky(float3 dir)
 {
     // Parameterize daytime factor [0=night, 1=day]
-    float t = saturate(sin((TimeOfDay - 6) * 3.14159/12)); // peaks at noon
+    /*float t = saturate(sin((TimeOfDay - 6) * 3.14159/12)); // peaks at noon
 
     // Altitude for horizon fade
     float horizon = saturate(dir.y * 0.5 + 0.5);
@@ -48,16 +46,13 @@ float3 computeSky(float3 dir)
     // Dawn/Dusk: crossfade around 6-7, 17-19
     float dawnT = smoothstep(5, 7, TimeOfDay);
     float duskT = 1-smoothstep(17, 19, TimeOfDay);
-    float dawnDusk = saturate(max(dawnT, duskT));
+    float dawnDusk = saturate(max(dawnT, duskT));*/
 
-    float3 color =
-          NightSkyColor * (1.0 - t)
-        + DaySkyColor   * t * (1-dawnDusk)
-        + DawnDuskSkyColor * dawnDusk;
-    // Fade near horizon to lighter sky color
-    color = lerp(color, SkyColor, pow(horizon,2));
+    // v is normalized view direction (from fragment position)
+    float t = saturate(dir.y * 0.5 + 0.5); // t = 0: horizon, t = 1: zenith (up)
+    float3 skyColor = lerp(SkyHorizonColor, SkyZenithColor, t);
 
-    return color;
+    return skyColor;
 }
 
 float gaussian(float2 p, float2 center, float sigma)

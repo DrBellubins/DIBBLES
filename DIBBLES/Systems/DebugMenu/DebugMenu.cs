@@ -86,8 +86,6 @@ public class DebugMenu
             UIBatch.DrawRect(button.Rect, UI.MainColor.Darken(0.2f)); // Use a different color if you have one for buttons
 
             var textPos = new Vector2(button.Rect.X + (buttonWidth * 0.5f), button.Rect.Y + (ButtonHeight * 0.5f));
-
-            UIBatch.DrawCircle(textPos, 5f, Color.Blue);
                 
             // If you have a text API in UIBatch, draw the label here using rect.X/Y for positioning.
             // Example (pseudo): UIBatch.DrawString(MainFont, label, new Vector2(rect.X + 8, rect.Y + 8), Color.White);
