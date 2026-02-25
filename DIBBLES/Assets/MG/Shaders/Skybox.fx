@@ -1,4 +1,5 @@
 // Simple atmospheric scattering + sun and moon sprite
+float4x4 World;
 float4x4 View;
 float4x4 Projection;
 
@@ -28,9 +29,12 @@ struct PSInput
 PSInput VS(VSInput input)
 {
     PSInput output;
-    float4 world = float4(input.Position, 1.0);
+
+    float4 world = mul(float4(input.Position, 1.0), World);
+
     output.Position = mul(mul(world, View), Projection);
-    output.World = input.Position;
+    output.World = world.xyz;
+
     return output;
 }
 
