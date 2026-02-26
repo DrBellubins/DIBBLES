@@ -109,28 +109,38 @@ PixelOutput PS(PixelInput input) : SV_Target
 
     // Sun
     float3 sunCenter = -SunDirection;
-    float sunDot = dot(viewDir, sunCenter);
-    float sunBrightness = pow(max(sunDot, 0), 250);
-    float2 sunUV = computeLocalUV(viewDir, sunCenter, sunMoonSize);
-    float4 sunTex = tex2D(SunSampler, sunUV);
-    float3 sunColor = sunTex.rgb * sunBrightness;
+    float sunDot = dot(viewDir, sunCenter); // cosine of angle to sun
+    float sunSize = 0.040; // adjust as needed
 
-    // Moon: same logic, maybe softer (smaller pow)
+    // Is this pixel in the sun disk?
+    float inSun = step(sunDot, cos(sunSize)); // step returns 0 outside disk, 1 inside
+
+    float2 sunUV = computeLocalUV(viewDir, sunCenter, sunSize);
+    float3 sunColor = tex2D(SunSampler, sunUV).rgb;
+
+    // If inside sun, use sunColor * brightness, else fall back to sky
+    float sunBrightness = pow(max(sunDot, 0), 250); // you can tweak exponent
+    float3 finalColor = baseColor;
+
+    if(inSun > 0.5)
+    {
+        finalColor = sunColor * sunBrightness;
+    }
+
+    // Moon (same logic)
     float3 moonCenter = -MoonDirection;
     float moonDot = dot(viewDir, moonCenter);
+    float moonSize = 0.038; // adjust as needed
+    float inMoon = step(moonDot, cos(moonSize));
+
+    float2 moonUV = computeLocalUV(viewDir, moonCenter, moonSize);
+    float3 moonColor = tex2D(MoonSampler, moonUV).rgb;
     float moonBrightness = pow(max(moonDot, 0), 90);
-    float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
-    float4 moonTex = tex2D(MoonSampler, moonUV);
-    float3 moonColor = moonTex.rgb * moonBrightness;
 
-    // Alpha blending
-    float sunAlpha  = sunTex.a * saturate(sunBrightness);
-    float moonAlpha = moonTex.a * saturate(moonBrightness);
-
-    float3 sunBlended = lerp(baseColor, sunColor, sunAlpha);
-
-    // Final blending
-    float3 finalBlended = lerp(sunBlended, moonColor, moonAlpha);
+    if(inMoon > 0.5)
+    {
+        finalColor = moonColor * moonBrightness;
+    }
 
     // Final emssive
     float sunMultiplier = 4.5;
@@ -144,7 +154,7 @@ PixelOutput PS(PixelInput input) : SV_Target
     // Output
     PixelOutput output;
 
-    output.Color = float4(finalBlended, 1.0);
+    output.Color = float4(finalColor, 1.0);
     output.Emissive = float4(finalSunMoon * 4.0, 1.0);
 
     return output;
