@@ -6,6 +6,7 @@ using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 
 namespace DIBBLES.Utils;
 

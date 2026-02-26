@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System.Text;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 
 namespace DIBBLES.Utils;
 

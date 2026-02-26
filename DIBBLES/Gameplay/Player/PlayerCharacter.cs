@@ -2,6 +2,7 @@ using DIBBLES.Gameplay.Inventory;
 using Microsoft.Xna.Framework;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 

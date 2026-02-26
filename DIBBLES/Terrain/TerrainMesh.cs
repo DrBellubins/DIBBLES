@@ -5,6 +5,7 @@ using DIBBLES.Effects;
 using DIBBLES.Gameplay;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Terrain.Meshing;

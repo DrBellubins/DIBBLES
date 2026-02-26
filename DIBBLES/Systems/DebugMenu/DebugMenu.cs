@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Diagnostics;
 using DIBBLES.Gameplay;
 using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;

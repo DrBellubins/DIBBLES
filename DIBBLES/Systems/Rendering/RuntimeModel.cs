@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Systems.Rendering;
 
 // Add this class to represent a runtime mesh/model in MonoGame
 public class RuntimeModel : IDisposable

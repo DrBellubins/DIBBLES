@@ -1,5 +1,6 @@
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;

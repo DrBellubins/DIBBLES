@@ -2,9 +2,10 @@ using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Utils;
 
-namespace DIBBLES.Effects;
+namespace DIBBLES.Systems.Rendering;
 
 public abstract class PostProcessingEffect
 {

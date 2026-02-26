@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Systems.Rendering;
 
 /// <summary>
 /// Immediate-mode 2D/2.5D polygon batch for drawing UI elements with floating-point precision.

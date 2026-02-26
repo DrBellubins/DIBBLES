@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
 using DIBBLES.Systems.DebugMenu;
+using DIBBLES.Systems.Rendering;
 using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;

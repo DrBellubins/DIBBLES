@@ -8,7 +8,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 using static DIBBLES.Scenes.GameScene;
 
-namespace DIBBLES.Systems;
+namespace DIBBLES.Systems.Rendering;
 
 public class RenderEngine
 {
