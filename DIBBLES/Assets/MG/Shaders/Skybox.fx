@@ -6,8 +6,8 @@ float4x4 Projection;
 float3 SkyZenithColor;
 float3 SkyHorizonColor;
 
-texture SunTexture : register(t0);
-texture MoonTexture : register(t1);
+texture SunTexture;
+texture MoonTexture;
 
 float3 SunDirection;
 float3 MoonDirection;
@@ -16,14 +16,16 @@ float TimeOfDay; // 0..24
 
 sampler2D SunSampler : register(s0) = sampler_state
 {
-    Filter = POINT;
+    Texture = <SunTexture>;
+    Filter  = POINT;
     AddressU = Clamp;
     AddressV = Clamp;
 };
 
 sampler2D MoonSampler : register(s1) = sampler_state
 {
-    Filter = POINT;
+    Texture = <MoonTexture>;
+    Filter  = POINT;
     AddressU = Clamp;
     AddressV = Clamp;
 };
@@ -60,10 +62,28 @@ PixelInput VS(VSInput input)
 // Sky color calculation
 float3 computeSky(float3 dir)
 {
+    // Parameterize daytime factor [0=night, 1=day]
+    /*float t = saturate(sin((TimeOfDay - 6) * 3.14159/12)); // peaks at noon
+
+    // Altitude for horizon fade
+    float horizon = saturate(dir.y * 0.5 + 0.5);
+
+    // Dawn/Dusk: crossfade around 6-7, 17-19
+    float dawnT = smoothstep(5, 7, TimeOfDay);
+    float duskT = 1-smoothstep(17, 19, TimeOfDay);
+    float dawnDusk = saturate(max(dawnT, duskT));*/
+
+    // v is normalized view direction (from fragment position)
     float t = saturate(dir.y * 0.5 + 0.5); // t = 0: horizon, t = 1: zenith (up)
     float3 skyColor = lerp(SkyHorizonColor, SkyZenithColor, t);
 
     return skyColor;
+}
+
+float gaussian(float2 p, float2 center, float sigma)
+{
+    float2 d = p - center;
+    return exp(-dot(d,d) / (2*sigma*sigma));
 }
 
 float2 computeLocalUV(float3 viewDir, float3 center, float size)
@@ -87,44 +107,44 @@ PixelOutput PS(PixelInput input) : SV_Target
     // ────────────────────────────────────────────────
     const float sunMoonAngularRadius = 0.04;  // in radians – adjust 0.025–0.06 as needed
 
-    float3 sunCenter = -SunDirection;
+    float3 sunCenter  = -SunDirection;
     float3 moonCenter = -MoonDirection;
 
     // ────────────────────────────────────────────────
     // UVs – exact fit to angular disk
     // ────────────────────────────────────────────────
-    float2 sunUV = computeLocalUV(viewDir, sunCenter, sunMoonAngularRadius);
+    float2 sunUV  = computeLocalUV(viewDir, sunCenter,  sunMoonAngularRadius);
     float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonAngularRadius);
 
-    float4 sunTex = tex2D(SunSampler, sunUV);
     float4 moonTex = tex2D(MoonSampler, moonUV);
+    float4 sunTex  = tex2D(SunSampler,  sunUV);
 
     // ────────────────────────────────────────────────
     // Intensity control
     // ────────────────────────────────────────────────
-    float sunBaseMultiplier = 1.0;    // base appearance in color buffer
+    float sunBaseMultiplier  = 1.0;    // base appearance in color buffer
     float moonBaseMultiplier = 1.0;
 
-    float sunGlowMultiplier = 1.5;    // brighter version → emissive / bloom
-    float moonGlowMultiplier = 1.0;   // usually lower than sun
+    float sunGlowMultiplier  = 1.5;    // brighter version → emissive / bloom
+    float moonGlowMultiplier = 1.0;    // usually lower than sun
 
     // ────────────────────────────────────────────────
     // Base (non-multiplied) versions – go to color buffer
     // ────────────────────────────────────────────────
-    float3 sunBaseRgb = sunTex.rgb * sunBaseMultiplier * sunTex.a;
+    float3 sunBaseRgb  = sunTex.rgb  * sunBaseMultiplier  * sunTex.a;
     float3 moonBaseRgb = moonTex.rgb * moonBaseMultiplier * moonTex.a;
 
     // Composite base sun/moon over sky (standard over operator)
     float3 sceneColor = baseColor;
 
     // No mask → texture alpha alone controls blending shape/edges
-    sceneColor = sceneColor * (1.0 - sunTex.a) + sunBaseRgb * sunTex.a;
+    sceneColor = sceneColor * (1.0 - sunTex.a)  + sunBaseRgb  * sunTex.a;
     sceneColor = sceneColor * (1.0 - moonTex.a) + moonBaseRgb * moonTex.a;
 
     // ────────────────────────────────────────────────
     // Glow (multiplied) versions – go to emissive only
     // ────────────────────────────────────────────────
-    float3 sunGlowRgb = sunTex.rgb * sunGlowMultiplier * sunTex.a;
+    float3 sunGlowRgb  = sunTex.rgb  * sunGlowMultiplier  * sunTex.a;
     float3 moonGlowRgb = moonTex.rgb * moonGlowMultiplier * moonTex.a;
 
     float3 emissive = sunGlowRgb + moonGlowRgb;
@@ -133,8 +153,9 @@ PixelOutput PS(PixelInput input) : SV_Target
     // Output
     // ────────────────────────────────────────────────
     PixelOutput output;
-    output.Color = float4(sceneColor, 1.0);
-    output.Emissive = float4(emissive, 1.0);
+    //output.Color    = float4(sceneColor, 1.0);
+    output.Color    = float4(sunBaseRgb.rgb + moonBaseRgb.rgb * 0.3, 1);  // tint moon a bit to distinguish
+    output.Emissive = float4(emissive,   1.0);
 
     return output;
 }
@@ -144,6 +165,6 @@ technique Skybox
     pass P0
     {
         VertexShader = compile vs_3_0 VS();
-        PixelShader = compile ps_3_0 PS();
+        PixelShader  = compile ps_3_0 PS();
     }
 }
