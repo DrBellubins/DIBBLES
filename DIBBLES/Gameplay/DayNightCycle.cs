@@ -56,8 +56,11 @@ public class DayNightCycle
         DebugMenu.RegisterMenuItem("DayNight",
         
             new SliderParam("Time of day", 0f, 24f, () => TimeOfDay, v => TimeOfDay = v),
-            new SliderParam("Test", 0f, 10f, () => testValue, v => testValue = v)
-            //new TextureDisplayParam("Test color", )
+            new SliderParam("Test", 0f, 10f, () => testValue, v => testValue = v),
+            new ColorDisplayParam("Zenith color", () => ZenithColor, 64f),
+            new ColorDisplayParam("Horizon color", () => HorizonColor, 64f),
+            new ColorDisplayParam("Ambient color", () => AmbientLightColor, 64f),
+            new ColorDisplayParam("Fog color", () => FogColor, 64f)
         );
     }
     
@@ -76,7 +79,7 @@ public class DayNightCycle
         if (currentlyDay != _lastIsDay)
         {
             IsDay = currentlyDay;
-            NeedsRelight = true;
+            //NeedsRelight = true;
             _lastIsDay = currentlyDay;
         }
         

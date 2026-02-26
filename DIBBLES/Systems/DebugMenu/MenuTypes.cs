@@ -198,30 +198,30 @@ public sealed class ColorDisplayParam : IDebugParam
     {
         ImGui.Text(_label);
 
-        Texture2D texture = _get();
+        Color color = _get();
+        float h = _targetHeight <= 0f ? 256f : _targetHeight;
 
-        if (texture == null)
-        {
-            ImGui.TextDisabled("null texture");
-            return;
-        }
+        // ImGui color expects normalized RGBA floats.
+        var colorF = new System.Numerics.Vector4(
+            color.R / 255.0f,
+            color.G / 255.0f,
+            color.B / 255.0f,
+            color.A / 255.0f
+        );
 
-        var id = DebugMenu.BindImGuiTexture(texture);
-
-        if (id == IntPtr.Zero)
-        {
-            ImGui.TextDisabled("texture not bound");
-            return;
-        }
-
-        float h = _targetHeight;
-
-        if (h <= 0f)
-            h = 256f;
-
-        float aspect = (float)texture.Width / MathF.Max(1f, texture.Height);
+        float aspect = 1.0f; // Square swatch
         float w = h * aspect;
 
-        ImGui.Image(id, new System.Numerics.Vector2(w, h));
+        // Draw colored rectangle. To prevent confusion with ImGui.ColorEdit, simply render.
+        // ImGui's DrawList API is the best way to draw a colored box:
+
+        // Get current cursor position for swatch
+        var drawList = ImGui.GetWindowDrawList();
+        var pos = ImGui.GetCursorScreenPos();
+        var min = pos;
+        var max = new System.Numerics.Vector2(pos.X + w, pos.Y + h);
+
+        drawList.AddRectFilled(min, max, ImGui.ColorConvertFloat4ToU32(colorF));
+        ImGui.Dummy(new System.Numerics.Vector2(w, h));
     }
 }
