@@ -192,7 +192,6 @@
 ./Artwork/Blocks/Error.pxo
 ./Artwork/Blocks/RedFlower.pxo
 ./Artwork/Blocks/Moon.pxo
-./Artwork/Blocks/Moon.png
 ./Artwork/Blocks/Snow.pxo
 ./Artwork/Blocks/Sun.pxo
 ./Artwork/Blocks/Dirt.pxo

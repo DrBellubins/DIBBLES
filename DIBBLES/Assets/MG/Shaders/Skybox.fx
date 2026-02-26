@@ -93,7 +93,7 @@ float2 computeLocalUV(float3 viewDir, float3 center, float size)
     float3 tan2 = cross(center, tan1);
     float2 offset = float2(dot(viewDir, tan1), dot(viewDir, tan2));
 
-    return 0.5 + offset / (2.0 * size);  // Exact fit: UV edges align with angular radius
+    return (0.5 + offset / (2.0 * size));  // Exact fit: UV edges align with angular radius
 }
 
 PixelOutput PS(PixelInput input) : SV_Target
@@ -108,7 +108,7 @@ PixelOutput PS(PixelInput input) : SV_Target
     // ────────────────────────────────────────────────
     // Sun / Moon parameters
     // ────────────────────────────────────────────────
-    float sunMoonSize = 0.04;  // keep your current angular size
+    float sunMoonSize = 0.08;  // keep your current angular size
 
     float3 sunCenter  = -SunDirection;
     float3 moonCenter = -MoonDirection;
@@ -117,20 +117,23 @@ PixelOutput PS(PixelInput input) : SV_Target
     float2 sunUV  = computeLocalUV(viewDir, sunCenter, sunMoonSize);
     float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
 
+    // Saturate UVs to prevent sampling outside texture bounds
+    sunUV  = saturate(sunUV);
+    moonUV = saturate(moonUV);
+
     // Sample textures exactly once
     float4 sunTex  = tex2D(SunSampler,  sunUV);
     float4 moonTex = tex2D(MoonSampler, moonUV);
 
     // ────────────────────────────────────────────────
     // Decide visibility (simple angular cutoff – no fade)
-    // Adjust threshold 0.01–0.2 depending on how sharp you want the edge
-    float sunVisibility  = step(0.05, dot(viewDir, sunCenter));
-    float moonVisibility = step(0.05, dot(viewDir, moonCenter));
+    float cosThreshold = 0.99;   // ≈ 31.8° half-angle; try 0.7–0.95
 
-    // Optional: completely hide when below horizon
-    // float horizonCutoff = step(0.0, viewDir.y);   // 0 = hide below horizon
-    // sunVisibility  *= horizonCutoff;
-    // moonVisibility *= horizonCutoff;
+    float sunDot  = dot(viewDir, sunCenter);
+    float moonDot = dot(viewDir, moonCenter);
+
+    float sunVisibility  = step(cosThreshold, sunDot);
+    float moonVisibility = step(cosThreshold, moonDot);
 
     // ────────────────────────────────────────────────
     // Final colors – no sky lerp, no extra brightness pow
@@ -138,20 +141,29 @@ PixelOutput PS(PixelInput input) : SV_Target
     float3 moonColor = moonTex.rgb * moonVisibility;
 
     // Multipliers (tweak to taste – sun usually much brighter)
-    float sunMultiplier  = 1.5;
-    float moonMultiplier = 1.0;
+    float sunMultiplier  = 2.5;
+    float moonMultiplier = 0.7;
 
     float3 sunEmission = sunColor * sunTex.a  * sunMultiplier;
     float3 moonEmission = moonColor * moonTex.a * moonMultiplier;
 
     float3 totalEmission = sunEmission + moonEmission;
 
+    // Scene color output
+    float3 outputColor = sceneColor.rgb;
+
+    if (sunVisibility > 0.0 && sunTex.a > 0.0)
+        outputColor.rgb = sunTex.rgb;
+
+    if (moonVisibility > 0.0 && sunTex.a > 0.0)
+        outputColor.rgb = moonColor.rgb;
+
     // ────────────────────────────────────────────────
     // Output
     PixelOutput output;
 
     // Scene color = pure sky (no sun/moon blended in here)
-    output.Color = float4(sceneColor, 1.0);
+    output.Color = float4(outputColor, 1.0);
 
     // Emissive = bright sun/moon contribution only
     // Multiply by 4–8 if you need stronger glow in bloom/post-process
