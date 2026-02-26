@@ -141,6 +141,7 @@
 ./Assets/MG/Shaders/Includes/AgX.hlsl
 ./Assets/MG/Shaders/Includes/ACES.hlsl
 ./Assets/MG/Shaders/Includes/Hable.hlsl
+./Assets/MG/Shaders/Includes/Fog.hlsl
 ./Assets/MG/Shaders/Includes/Utils.hlsl
 ./Assets/MG/Shaders/Includes/ColorCorrection.hlsl
 ./Assets/MG/Shaders/Tonemap.fx

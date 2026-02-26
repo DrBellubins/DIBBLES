@@ -158,12 +158,22 @@ public class MainSurfaceEffect
         }
     }
 
-    public Vector4 FogColor
+    public Vector4 HorizonColor
     {
-        get { return _fogColor; }
+        get { return _horizonColor; }
         set
         {
-            _fogColor = value;
+            _horizonColor = value;
+            _dirtyFogCam = true;
+        }
+    }
+    
+    public Vector4 ZenithZolor
+    {
+        get { return _zenithColor; }
+        set
+        {
+            _zenithColor = value;
             _dirtyFogCam = true;
         }
     }
@@ -186,7 +196,9 @@ public class MainSurfaceEffect
 
         _pFogNear     = _effect.Parameters["FogNear"];
         _pFogFar      = _effect.Parameters["FogFar"];
-        _pFogColor    = _effect.Parameters["FogColor"];
+        
+        _pHorizonColor    = _effect.Parameters["SkyHorizonColor"];
+        _pZenithColor     = _effect.Parameters["SkyZenithColor"];
 
         // Defaults
         _world = Matrix.Identity;
@@ -194,7 +206,9 @@ public class MainSurfaceEffect
         _projection = Matrix.Identity;
 
         _diffuseColor = Color.White.ToVector4();
-        _fogColor = new Color(0, 0, 0, 0).ToVector4();
+        
+        _horizonColor = new Color(0, 0, 0, 0).ToVector4();
+        _zenithColor = new Color(0, 0, 0, 0).ToVector4();
 
         _cameraNear = 0.01f;
         _cameraFar  = 1000.0f;
@@ -244,7 +258,10 @@ public class MainSurfaceEffect
 
             _pFogNear?.SetValue(_fogNear);
             _pFogFar?.SetValue(_fogFar);
-            _pFogColor?.SetValue(_fogColor);
+            
+            _pHorizonColor?.SetValue(_horizonColor);
+            _pZenithColor?.SetValue(_zenithColor);
+            
             _dirtyFogCam = false;
         }
     }
@@ -260,7 +277,9 @@ public class MainSurfaceEffect
 
         FogNear = FogEffect.FogNear;
         FogFar  = FogEffect.FogFar;
-        FogColor = DayNightCycle.FogColor.ToVector4();
+        
+        HorizonColor = DayNightCycle.HorizonColor.ToVector4();
+        ZenithZolor = DayNightCycle.ZenithColor.ToVector4();
     }
 
     // Internals
@@ -334,7 +353,9 @@ public class MainSurfaceEffect
 
     private EffectParameter _pFogNear;
     private EffectParameter _pFogFar;
-    private EffectParameter _pFogColor;
+    
+    private EffectParameter _pHorizonColor;
+    private EffectParameter _pZenithColor;
 
     private bool _textureEnabled;
     private bool _vertexColorEnabled;
@@ -353,7 +374,9 @@ public class MainSurfaceEffect
 
     private float _fogNear;
     private float _fogFar;
-    private Vector4 _fogColor;
+    
+    private Vector4 _horizonColor;
+    private Vector4 _zenithColor;
 
     private bool _dirtyMatrices;
     private bool _dirtyMaterial;

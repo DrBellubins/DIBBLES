@@ -83,27 +83,30 @@ public class TerrainMesh
                 var view = GameScene.PlayerCharacter.Camera.View;
                 var projection = GameScene.PlayerCharacter.Camera.Projection;
                 
-                EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
-                EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
-                
-                EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
-                
-                EffectParams.SetMatrix(shader, "World", world);
-                EffectParams.SetMatrix(shader, "View", view);
-                EffectParams.SetMatrix(shader, "Projection", projection);
-                
-                EffectParams.SetVector3(shader, "CameraPos",GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-                EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
-                
-                EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
-                
-                EffectParams.SetFloat(shader, "SunIntensity", GameScene.TimeCycle.SunIntensity);
-                EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
-                EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
-                EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
-                EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-                EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
+                shader.SetValue("AtlasTex", BlockData.TextureAtlas);
+                shader.SetValue("EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
+
+                shader.SetValue("UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
+
+                shader.SetValue("World", world);
+                shader.SetValue("View", view);
+                shader.SetValue("Projection", projection);
+
+                shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
+                shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+                shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+            
+                shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
+
+                shader.SetValue("SunIntensity", GameScene.TimeCycle.SunIntensity);
+                shader.SetValue("DayEmissiveStrengthMax", DayEmissiveStrengthMax);
+                shader.SetValue("EmissiveStrength", EmissiveStrength);
+                shader.SetValue("FogNear", FogEffect.FogNear);
+                shader.SetValue("FogFar", FogEffect.FogFar);
+                //EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
+            
+                shader.SetValue("SkyHorizonColor", DayNightCycle.HorizonColor.ToVector3());
+                shader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
                 
                 // Ensure technique is set
                 var terrainTech = shader.Techniques["Terrain"];
@@ -134,27 +137,30 @@ public class TerrainMesh
             var view = GameScene.PlayerCharacter.Camera.View;
             var projection = GameScene.PlayerCharacter.Camera.Projection;
 
-            EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
-            EffectParams.SetTexture(shader, "EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
+            shader.SetValue("AtlasTex", BlockData.TextureAtlas);
+            shader.SetValue("EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
 
-            EffectParams.SetInt(shader, "UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
+            shader.SetValue("UseGreedyMeshing", UseGreedyMeshing ? 1 : 0);
 
-            EffectParams.SetMatrix(shader, "World", world);
-            EffectParams.SetMatrix(shader, "View", view);
-            EffectParams.SetMatrix(shader, "Projection", projection);
+            shader.SetValue("World", world);
+            shader.SetValue("View", view);
+            shader.SetValue("Projection", projection);
 
-            EffectParams.SetVector3(shader, "CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
-            EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-            EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+            shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
+            shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+            shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
             
-            EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
+            shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
 
-            EffectParams.SetFloat(shader, "SunIntensity", GameScene.TimeCycle.SunIntensity);
-            EffectParams.SetFloat(shader, "DayEmissiveStrengthMax", DayEmissiveStrengthMax);
-            EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
-            EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
-            EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-            EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
+            shader.SetValue("SunIntensity", GameScene.TimeCycle.SunIntensity);
+            shader.SetValue("DayEmissiveStrengthMax", DayEmissiveStrengthMax);
+            shader.SetValue("EmissiveStrength", EmissiveStrength);
+            shader.SetValue("FogNear", FogEffect.FogNear);
+            shader.SetValue("FogFar", FogEffect.FogFar);
+            //EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
+            
+            shader.SetValue("SkyHorizonColor", DayNightCycle.HorizonColor.ToVector3());
+            shader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
 
             var terrainTech = shader.Techniques["Terrain"];
 

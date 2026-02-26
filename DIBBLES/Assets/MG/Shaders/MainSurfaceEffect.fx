@@ -12,7 +12,10 @@
 // - Assumes uniform scaling for normals; use inverse-transpose if needed.
 // - Ignore sampler binding issues as requested.
 
+#include "Includes/Fog.hlsl"
+
 texture DiffuseTex;
+float4 DiffuseColor;     // Base material color/tint (RGBA)
 
 float4x4 World;
 float4x4 View;
@@ -24,9 +27,6 @@ float CameraFar;
 
 float FogNear;
 float FogFar;
-float4 FogColor;
-
-float4 DiffuseColor;     // Base material color/tint (RGBA)
 
 static const float AlphaCutoff = 0.35f;
 
@@ -161,16 +161,20 @@ struct PSOutput
     float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
 };
 
-float4 applyFog(float4 color, float3 worldPos)
+float4 applyFog(float4 color, PSInput input)
 {
-    float dist = distance(worldPos, CameraPos);
+    float dist = distance(input.WorldPos, CameraPos);
 
     // If fog range is invalid/uninitialized, disable fog
-    float fogFactor = (FogFar <= FogNear) ? 0.0f
+    float fogFactor = (FogFar <= FogNear) ? 0.0
                                           : saturate((dist - FogNear) / (FogFar - FogNear));
 
-    float4 fogged = lerp(color, FogColor, fogFactor);
+    float3 viewDir = normalize(input.WorldPos - CameraPos);
+    float3 dirFogColor = ComputeFog(viewDir, SkyHorizonColor, SkyZenithColor);
+
+    float4 fogged = lerp(color, float4(dirFogColor, 1.0), fogFactor);
     fogged.a = color.a;
+
     return fogged;
 }
 
@@ -180,7 +184,7 @@ PSOutput PS_NoTex_Fog(PSInput input)
 
     clip(baseColor.a - AlphaCutoff);
 
-    float4 finalColor = applyFog(baseColor, input.WorldPos);
+    float4 finalColor = applyFog(baseColor, input);
 
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;
@@ -214,7 +218,7 @@ PSOutput PS_Tex_Fog(PSInput input)
 
     clip(baseColor.a - AlphaCutoff);
 
-    float4 finalColor = applyFog(baseColor, input.WorldPos);
+    float4 finalColor = applyFog(baseColor, input);
 
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;

@@ -1,4 +1,5 @@
 #include "Includes/Utils.hlsl"
+#include "Includes/Fog.hlsl"
 
 texture AtlasTex;
 texture EmissiveAtlasTex;
@@ -20,7 +21,6 @@ float DayEmissiveStrengthMax;
 float EmissiveStrength;
 float FogNear;
 float FogFar;
-float4 FogColor;
 
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
@@ -160,8 +160,13 @@ PixelOutput PS_Color(PixelInput input)
         clip(alpha - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
+
+    float3 viewDir = normalize(input.WorldPos - CameraPos);
+    float3 dirFogColor = ComputeFog(viewDir, SkyHorizonColor, SkyZenithColor);
+
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
-    float4 finalColor = lerp(blockColor, FogColor, fogFactor);
+
+    float4 finalColor = lerp(blockColor, float4(dirFogColor, 1.0), fogFactor);
 
     finalColor.a = alpha;
 

@@ -8,6 +8,7 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
 
+// TODO: Make SSAO use fog to fade out.
 [StructLayout(LayoutKind.Sequential)]
 public struct VertexPositionTexCoord :  IVertexType
 {
