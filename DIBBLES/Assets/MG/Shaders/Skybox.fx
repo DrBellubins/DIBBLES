@@ -93,7 +93,7 @@ float2 computeLocalUV(float3 viewDir, float3 center, float size)
     float3 tan2 = cross(center, tan1);
     float2 offset = float2(dot(viewDir, tan1), dot(viewDir, tan2));
 
-    return 0.5 + offset / (2.0 * size * 3.0);  // Scale to cover ~3 sigma
+    return 0.5 + offset / (2.0 * size);  // Exact fit: UV edges align with angular radius
 }
 
 PixelOutput PS(PixelInput input) : SV_Target
