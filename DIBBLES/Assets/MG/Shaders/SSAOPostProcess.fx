@@ -219,6 +219,12 @@ float RangeWeight(float centerZ, float sampleZ, float r)
     return saturate(d > 1e-4f ? smoothstep(0.0f, 1.0f, r / d) : 1.0f);
 }
 
+float FogFactor(float3 viewPos)
+{
+    float dist = length(viewPos - CameraPos);
+    return saturate((dist - FogNear) / (FogFar - FogNear));
+}
+
 // Core AO
 float ComputeAO(float2 uv)
 {
@@ -303,6 +309,11 @@ float ComputeAO(float2 uv)
         return 1.0f;
 
     float ao = 1.0f - (occlusion / (float)validSamples) * total_strength;
+
+    // Fog falloff (fade AO as fog increases)
+    float fogFactor = FogFactor(P);
+    ao = lerp(ao, 1.0, fogFactor); // Fade AO with fog; at max fog, AO is 1 (no darken)
+
     return saturate(ao + base_ao);
 }
 

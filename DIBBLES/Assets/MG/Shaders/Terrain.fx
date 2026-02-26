@@ -160,11 +160,10 @@ PixelOutput PS_Color(PixelInput input)
         clip(alpha - AlphaCutoff);
 
     float dist = distance(input.WorldPos, CameraPos);
+    float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
 
     float3 viewDir = normalize(input.WorldPos - CameraPos);
     float3 dirFogColor = ComputeFog(viewDir, SkyHorizonColor, SkyZenithColor);
-
-    float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
 
     float4 finalColor = lerp(blockColor, float4(dirFogColor, 1.0), fogFactor);
 
