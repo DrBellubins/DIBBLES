@@ -128,10 +128,9 @@ PixelOutput PS(PixelInput input) : SV_Target
     float moonAlpha = moonTex.a * saturate(moonBrightness);
 
     float3 sunBlended = lerp(baseColor, sunColor, sunAlpha);
-    float3 moonBlended = lerp(baseColor, moonColor, moonAlpha);
 
-    // Final color
-    float3 color = baseColor + sunBlended + moonBlended;
+    // Final blending
+    float3 finalBlended = lerp(sunBlended, moonColor, moonAlpha);
 
     // Final emssive
     float sunMultiplier = 4.5;
@@ -145,7 +144,7 @@ PixelOutput PS(PixelInput input) : SV_Target
     // Output
     PixelOutput output;
 
-    output.Color = float4(color, 1.0);
+    output.Color = float4(finalBlended, 1.0);
     output.Emissive = float4(finalSunMoon * 4.0, 1.0);
 
     return output;
