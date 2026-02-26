@@ -81,6 +81,15 @@ public static class Resource
         return fullPath;
     }
 
+    // Platform agnostic path parsing, so that directory/file.ext can always be used.
+    private static string parseRelativePath(string relativePath)
+    {
+        var dirPaths = relativePath.Split('/');
+        var fixedPath = Path.Combine(dirPaths);
+        
+        return fixedPath;
+    }
+
     // Load method for Texture2D and SoundEffect
     public static T LoadFixed<T>(string fileName, bool isItem = false)
     {
@@ -108,11 +117,14 @@ public static class Resource
         }
     }
     
-    public static T Load<T>(string fileName)
+    public static T Load<T>(string input)
     {
         if (typeof(T) == typeof(Texture2D))
         {
-            string file = FindTextureLoose($"{fileName}.png");
+            string fixedPath = parseRelativePath(input);
+            string file = FindTextureLoose($"{fixedPath}.png");
+            
+            Debug.Info($"relative input: {input}, fixed path: {fixedPath}, full path: {file}");
             
             var texture = Texture2D.FromFile(Engine.Graphics, file);
             textures.Add(texture);
@@ -121,7 +133,8 @@ public static class Resource
         }
         else if (typeof(T) == typeof(SoundEffect))
         {
-            string file = FindSoundLoose($"{fileName}.ogg");
+            string fixedPath = parseRelativePath(input);
+            string file = FindSoundLoose($"{fixedPath}.ogg");
 
             var sound = LoadOggSound(file);
             sounds.Add(sound);
@@ -130,7 +143,8 @@ public static class Resource
         }
         else if (typeof(T) == typeof(Effect))
         {
-            var shader = Engine.Instance.Content.Load<Effect>(fileName);
+            // Path is always relative, let monogame handle it.
+            var shader = Engine.Instance.Content.Load<Effect>(input);
             return (T)(object)shader;
         }
         else

@@ -9,6 +9,7 @@
 ./Utils/Primatives3D.cs
 ./Utils/RaylibExtensions.cs
 ./Utils/Debug.cs
+./Utils/Ranges.cs
 ./Utils/UI.cs
 ./Utils/ShaderExtensions.cs
 ./Utils/Resource.cs
@@ -209,6 +210,8 @@
 ./Systems/DebugMenu/DebugMenu.cs
 ./Systems/CursorManager.cs
 ./Systems/Camera3D.cs
+./Systems/SFX/Soundscape.cs
+./Systems/SFX/WorldSound.cs
 ./Systems/Rendering/RuntimeModel.cs
 ./Systems/Rendering/UIBatch.cs
 ./Systems/Rendering/PostProcessingEffect.cs
