@@ -103,7 +103,7 @@ public class TerrainMesh
                 EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
                 EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
                 EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-                EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
+                EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
                 
                 // Ensure technique is set
                 var terrainTech = shader.Techniques["Terrain"];
@@ -154,7 +154,7 @@ public class TerrainMesh
             EffectParams.SetFloat(shader, "EmissiveStrength", EmissiveStrength);
             EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
             EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-            EffectParams.SetVector4(shader, "FogColor", FogEffect.FogColor());
+            EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
 
             var terrainTech = shader.Techniques["Terrain"];
 

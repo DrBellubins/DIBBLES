@@ -1,6 +1,7 @@
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using ImGuiNET;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.ImGuiNet;
 
@@ -152,6 +153,52 @@ public sealed class TextureDisplayParam : IDebugParam
         ImGui.Text(_label);
 
         Texture2D texture = _getTexture();
+
+        if (texture == null)
+        {
+            ImGui.TextDisabled("null texture");
+            return;
+        }
+
+        var id = DebugMenu.BindImGuiTexture(texture);
+
+        if (id == IntPtr.Zero)
+        {
+            ImGui.TextDisabled("texture not bound");
+            return;
+        }
+
+        float h = _targetHeight;
+
+        if (h <= 0f)
+            h = 256f;
+
+        float aspect = (float)texture.Width / MathF.Max(1f, texture.Height);
+        float w = h * aspect;
+
+        ImGui.Image(id, new System.Numerics.Vector2(w, h));
+    }
+}
+
+// Color display (Vector3)
+public sealed class ColorDisplayParam : IDebugParam
+{
+    private readonly string _label;
+    private readonly Func<Vector3> _get;
+    private readonly float _targetHeight;
+
+    public ColorDisplayParam(string label, Func<Vector3> getter, float targetHeight = 256f)
+    {
+        _label = label;
+        _get = getter;
+        _targetHeight = targetHeight;
+    }
+
+    public void Draw()
+    {
+        ImGui.Text(_label);
+
+        Texture2D texture = _get();
 
         if (texture == null)
         {

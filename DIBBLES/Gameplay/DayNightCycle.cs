@@ -28,23 +28,27 @@ public class DayNightCycle
     public bool NeedsRelight = false;
     
     // Colors
-    public static Color CurrentSkyColor = new();
-    
     public static Color ZenithColor = new();
     public static Color HorizonColor = new();
+    
+    public static Color AmbientLightColor = new();
+    public static Color FogColor = new();
     
     public static Color DaySkyColor = new Color(0.423529411765f, 0.705882352941f, 1.0f);
     public static Color SunriseSunsetColor = new Color(0.98f, 0.6f, 0.41f, 1f);
     public static Color NightSkyColor = new Color(0.08f, 0.10f, 0.18f, 1f);
     
-    public static Color AmbientLightColor = new();
-    
     public static Color AmbientDayColor = DaySkyColor.HSV(1f, 0.45f, 0.3f);
     public static Color AmbientSunriseSunsetColor = SunriseSunsetColor.HSV(1f, 0.35f, 0.2f);
     public static Color AmbientNightColor = NightSkyColor.HSV(1f, 0.35f, 1.0f);
     
+    // TODO: Implement horizon & zenith based fog in terrain shader (oh boy)
+    public static Color FogDayColor = DaySkyColor.HSV(1f, 1f, 1f);
+    public static Color FogSunriseSunsetColor = DaySkyColor.HSV(1f, 1f, 0.4f);
+    public static Color FogNightColor = NightSkyColor.HSV(1f, 1f, 0.7f);
+    
     private bool _lastIsDay = true;
-
+    
     public void Start()
     {
         Commands.Register("time", "Set time of day", timeCMD);
@@ -53,6 +57,7 @@ public class DayNightCycle
         
             new SliderParam("Time of day", 0f, 24f, () => TimeOfDay, v => TimeOfDay = v),
             new SliderParam("Test", 0f, 10f, () => testValue, v => testValue = v)
+            //new TextureDisplayParam("Test color", )
         );
     }
     
@@ -71,7 +76,7 @@ public class DayNightCycle
         if (currentlyDay != _lastIsDay)
         {
             IsDay = currentlyDay;
-            //NeedsRelight = true;
+            NeedsRelight = true;
             _lastIsDay = currentlyDay;
         }
         
@@ -93,7 +98,7 @@ public class DayNightCycle
         float noon = 12f;
 
         Color sunriseSunsetHorizon = SunriseSunsetColor;
-        Color sunriseSunsetZenith = SunriseSunsetColor.Darken(0.2f);
+        //Color sunriseSunsetZenith = SunriseSunsetColor.Darken(0.2f);
         
         Color DayHorizon = DaySkyColor.Brighten(1f);
         Color DayZenith = DaySkyColor;
@@ -110,6 +115,8 @@ public class DayNightCycle
             ZenithColor  = Color.Lerp(NightZenith, DayZenith, t * 0.74f);
 
             AmbientLightColor = Color.Lerp(AmbientNightColor, AmbientSunriseSunsetColor, t);
+            FogColor = Color.Lerp(FogNightColor, FogSunriseSunsetColor, t);
+            
             SunIntensity = MathHelper.SmoothStep(0f, 1f, t);
         }
         else if (tod >= dawnEnd && tod < dawnEnd + 1f) // 7–8 fade sunrise -> day
@@ -120,6 +127,8 @@ public class DayNightCycle
             ZenithColor  = DayZenith; // stabilizes pure blue
             
             AmbientLightColor = Color.Lerp(AmbientSunriseSunsetColor, AmbientDayColor, t);
+            FogColor = Color.Lerp(FogSunriseSunsetColor, FogDayColor, t);
+            
             SunIntensity = 1f;
         }
         else if (tod >= dayStart + 1f && tod < duskStart) // 8–17 - Day
@@ -128,6 +137,8 @@ public class DayNightCycle
             ZenithColor  = DayZenith;
             
             AmbientLightColor = AmbientDayColor;
+            FogColor = FogDayColor;
+            
             SunIntensity = 1f;
         }
         else if (tod >= duskStart && tod < duskEnd) // 17–19 - Sunset
@@ -138,6 +149,8 @@ public class DayNightCycle
             ZenithColor  = Color.Lerp(DayZenith, NightZenith, t);
             
             AmbientLightColor = Color.Lerp(AmbientDayColor, AmbientSunriseSunsetColor, t);
+            FogColor = Color.Lerp(FogDayColor, FogSunriseSunsetColor, t);
+            
             SunIntensity = MathHelper.SmoothStep(1f, 0f, t);
         }
         else if (tod >= duskEnd && tod < duskEnd + 1f) // 19–20 fade sunset -> night
@@ -148,6 +161,8 @@ public class DayNightCycle
             ZenithColor  = NightZenith;
 
             AmbientLightColor = Color.Lerp(AmbientSunriseSunsetColor, AmbientNightColor, t);
+            FogColor = Color.Lerp(FogSunriseSunsetColor, FogNightColor, t);
+            
             SunIntensity = 0f;
         }
         else // night
@@ -156,10 +171,10 @@ public class DayNightCycle
             ZenithColor  = NightZenith;
             
             AmbientLightColor = AmbientNightColor;
+            FogColor = FogNightColor;
+            
             SunIntensity = 0f;
         }
-
-        CurrentSkyColor = ZenithColor;
     }
 
     private void timeCMD(string[] args)
@@ -187,6 +202,8 @@ public class DayNightCycle
             
                 // Keep state consistent for next Update
                 _lastIsDay = IsDay;
+                
+                Chat.Write($"Set time to '{time}'", ChatMessageType.Command);
             }
             else
             {
