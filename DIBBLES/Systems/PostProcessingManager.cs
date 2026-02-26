@@ -6,6 +6,7 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
 
+// TODO: Implement ability to input MRT into shaders
 public class PostProcessingManager
 {
     // Initialize every post processing effect in order here!
