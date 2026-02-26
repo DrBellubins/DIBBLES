@@ -180,14 +180,14 @@ public sealed class TextureDisplayParam : IDebugParam
     }
 }
 
-// Color display (Vector3)
+// Color display
 public sealed class ColorDisplayParam : IDebugParam
 {
     private readonly string _label;
-    private readonly Func<Vector3> _get;
+    private readonly Func<Color> _get;
     private readonly float _targetHeight;
 
-    public ColorDisplayParam(string label, Func<Vector3> getter, float targetHeight = 256f)
+    public ColorDisplayParam(string label, Func<Color> getter, float targetHeight = 256f)
     {
         _label = label;
         _get = getter;
