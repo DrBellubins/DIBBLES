@@ -63,7 +63,7 @@ public class Skybox
         Vector3 moonDir = Vector3.Transform(Vector3.Forward, Matrix.CreateFromAxisAngle(Vector3.Right, moonAngle));
 
         skyboxShader.SetValue("MoonDirection", moonDir);
-
+        
         foreach (var pass in skyboxShader.CurrentTechnique.Passes)
         {
             pass.Apply();
