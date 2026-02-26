@@ -175,6 +175,7 @@
 ./Assets/Textures/Blocks/GrassBlades.png
 ./Assets/Textures/Blocks/Sandstone.png
 ./Assets/Textures/Blocks/WoodLog_Side.png
+./Assets/Textures/Moon.png
 ./Assets/Blocks.toml
 ./Artwork/Blocks/Ice.pxo
 ./Artwork/Blocks/GrassBlades.pxo
@@ -190,6 +191,8 @@
 ./Artwork/Blocks/WoodLog_Top.pxo
 ./Artwork/Blocks/Error.pxo
 ./Artwork/Blocks/RedFlower.pxo
+./Artwork/Blocks/Moon.pxo
+./Artwork/Blocks/Moon.png
 ./Artwork/Blocks/Snow.pxo
 ./Artwork/Blocks/Sun.pxo
 ./Artwork/Blocks/Dirt.pxo

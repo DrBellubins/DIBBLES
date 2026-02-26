@@ -104,8 +104,8 @@ public class GameScene : Scene
         
         Inventory.Update();
         
-        TerrainGen.Update(PlayerCharacter);
-        TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
+        //TerrainGen.Update(PlayerCharacter);
+        //TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
         
         GameChat.Update();
         

@@ -102,60 +102,60 @@ PixelOutput PS(PixelInput input) : SV_Target
 
     float3 baseColor = computeSky(viewDir);
 
-    float horizonFade = smoothstep(-0.07, 0.07, viewDir.y); // Fade between slightly below and above horizon
+    // Sky output (unchanged)
+    float3 sceneColor = baseColor;
 
-    float sunMoonSize = 0.04;
-    float2 domeUV = 0.5 + viewDir.xz * 0.5;
+    // ────────────────────────────────────────────────
+    // Sun / Moon parameters
+    // ────────────────────────────────────────────────
+    float sunMoonSize = 0.04;  // keep your current angular size
 
-    // Sun
-    float3 sunCenter = -SunDirection;
-    float sunDot = dot(viewDir, sunCenter); // cosine of angle to sun
-    float sunSize = 0.040; // adjust as needed
-
-    // Is this pixel in the sun disk?
-    float inSun = step(sunDot, cos(sunSize)); // step returns 0 outside disk, 1 inside
-
-    float2 sunUV = computeLocalUV(viewDir, sunCenter, sunSize);
-    float3 sunColor = tex2D(SunSampler, sunUV).rgb;
-
-    // If inside sun, use sunColor * brightness, else fall back to sky
-    float sunBrightness = pow(max(sunDot, 0), 250); // you can tweak exponent
-    float3 finalColor = baseColor;
-
-    if(inSun > 0.5)
-    {
-        finalColor = sunColor * sunBrightness;
-    }
-
-    // Moon (same logic)
+    float3 sunCenter  = -SunDirection;
     float3 moonCenter = -MoonDirection;
-    float moonDot = dot(viewDir, moonCenter);
-    float moonSize = 0.038; // adjust as needed
-    float inMoon = step(moonDot, cos(moonSize));
 
-    float2 moonUV = computeLocalUV(viewDir, moonCenter, moonSize);
-    float3 moonColor = tex2D(MoonSampler, moonUV).rgb;
-    float moonBrightness = pow(max(moonDot, 0), 90);
+    // Local UVs (already good – centered billboard projection)
+    float2 sunUV  = computeLocalUV(viewDir, sunCenter, sunMoonSize);
+    float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
 
-    if(inMoon > 0.5)
-    {
-        finalColor = moonColor * moonBrightness;
-    }
+    // Sample textures exactly once
+    float4 sunTex  = tex2D(SunSampler,  sunUV);
+    float4 moonTex = tex2D(MoonSampler, moonUV);
 
-    // Final emssive
-    float sunMultiplier = 4.5;
+    // ────────────────────────────────────────────────
+    // Decide visibility (simple angular cutoff – no fade)
+    // Adjust threshold 0.01–0.2 depending on how sharp you want the edge
+    float sunVisibility  = step(0.05, dot(viewDir, sunCenter));
+    float moonVisibility = step(0.05, dot(viewDir, moonCenter));
+
+    // Optional: completely hide when below horizon
+    // float horizonCutoff = step(0.0, viewDir.y);   // 0 = hide below horizon
+    // sunVisibility  *= horizonCutoff;
+    // moonVisibility *= horizonCutoff;
+
+    // ────────────────────────────────────────────────
+    // Final colors – no sky lerp, no extra brightness pow
+    float3 sunColor  = sunTex.rgb  * sunVisibility;
+    float3 moonColor = moonTex.rgb * moonVisibility;
+
+    // Multipliers (tweak to taste – sun usually much brighter)
+    float sunMultiplier  = 1.5;
     float moonMultiplier = 1.0;
 
-    float3 finalSun = sunColor * sunMultiplier;
-    float3 finalMoon = moonColor * moonMultiplier;
+    float3 sunEmission = sunColor * sunTex.a  * sunMultiplier;
+    float3 moonEmission = moonColor * moonTex.a * moonMultiplier;
 
-    float3 finalSunMoon = finalSun + finalMoon;
+    float3 totalEmission = sunEmission + moonEmission;
 
+    // ────────────────────────────────────────────────
     // Output
     PixelOutput output;
 
-    output.Color = float4(finalColor, 1.0);
-    output.Emissive = float4(finalSunMoon * 4.0, 1.0);
+    // Scene color = pure sky (no sun/moon blended in here)
+    output.Color = float4(sceneColor, 1.0);
+
+    // Emissive = bright sun/moon contribution only
+    // Multiply by 4–8 if you need stronger glow in bloom/post-process
+    output.Emissive = float4(totalEmission, 1.0);
 
     return output;
 }
