@@ -99,42 +99,63 @@ float2 computeLocalUV(float3 viewDir, float3 center, float size)
 PixelOutput PS(PixelInput input) : SV_Target
 {
     float3 viewDir = normalize(input.World);
+
     float3 baseColor = computeSky(viewDir);
 
-    const float sunMoonAngularRadius = 0.04;
+    // Sky output (unchanged)
+    float3 sceneColor = baseColor;
+
+    // ────────────────────────────────────────────────
+    // Sun / Moon parameters
+    // ────────────────────────────────────────────────
+    float sunMoonSize = 0.04;  // keep your current angular size
 
     float3 sunCenter  = -SunDirection;
     float3 moonCenter = -MoonDirection;
 
-    float2 sunUV  = computeLocalUV(viewDir, sunCenter,  sunMoonAngularRadius);
-    float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonAngularRadius);
+    // Local UVs (already good – centered billboard projection)
+    float2 sunUV  = computeLocalUV(viewDir, sunCenter, sunMoonSize);
+    float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
 
-    // Keep this order — sun first — to match typical working pattern
+    // Sample textures exactly once
     float4 sunTex  = tex2D(SunSampler,  sunUV);
     float4 moonTex = tex2D(MoonSampler, moonUV);
 
-    float sunBaseMultiplier  = 1.0;
-    float moonBaseMultiplier = 1.0;
-    float sunGlowMultiplier  = 1.5;
-    float moonGlowMultiplier = 1.0;
+    // ────────────────────────────────────────────────
+    // Decide visibility (simple angular cutoff – no fade)
+    // Adjust threshold 0.01–0.2 depending on how sharp you want the edge
+    float sunVisibility  = step(0.05, dot(viewDir, sunCenter));
+    float moonVisibility = step(0.05, dot(viewDir, moonCenter));
 
-    float3 sunBaseRgb  = sunTex.rgb  * sunBaseMultiplier  * sunTex.a;
-    float3 moonBaseRgb = moonTex.rgb * moonBaseMultiplier * moonTex.a;
+    // Optional: completely hide when below horizon
+    // float horizonCutoff = step(0.0, viewDir.y);   // 0 = hide below horizon
+    // sunVisibility  *= horizonCutoff;
+    // moonVisibility *= horizonCutoff;
 
-    float3 sceneColor = baseColor;
-    sceneColor = sceneColor * (1.0 - sunTex.a)  + sunBaseRgb  * sunTex.a;
-    sceneColor = sceneColor * (1.0 - moonTex.a) + moonBaseRgb * moonTex.a;
+    // ────────────────────────────────────────────────
+    // Final colors – no sky lerp, no extra brightness pow
+    float3 sunColor  = sunTex.rgb  * sunVisibility;
+    float3 moonColor = moonTex.rgb * moonVisibility;
 
-    float3 sunGlowRgb  = sunTex.rgb  * sunGlowMultiplier  * sunTex.a;
-    float3 moonGlowRgb = moonTex.rgb * moonGlowMultiplier * moonTex.a;
+    // Multipliers (tweak to taste – sun usually much brighter)
+    float sunMultiplier  = 1.5;
+    float moonMultiplier = 1.0;
 
-    float3 emissive = sunGlowRgb + moonGlowRgb;
+    float3 sunEmission = sunColor * sunTex.a  * sunMultiplier;
+    float3 moonEmission = moonColor * moonTex.a * moonMultiplier;
 
+    float3 totalEmission = sunEmission + moonEmission;
+
+    // ────────────────────────────────────────────────
+    // Output
     PixelOutput output;
-    //output.Color = moonTex;
-    output.Color    = float4(sceneColor, 1.0);
-    output.Emissive = float4(0.0, 0.0, 0.0, 1.0);
-    //output.Emissive = float4(emissive,   1.0);
+
+    // Scene color = pure sky (no sun/moon blended in here)
+    output.Color = float4(sceneColor, 1.0);
+
+    // Emissive = bright sun/moon contribution only
+    // Multiply by 4–8 if you need stronger glow in bloom/post-process
+    output.Emissive = float4(totalEmission, 1.0);
 
     return output;
 }
