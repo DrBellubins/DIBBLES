@@ -37,15 +37,13 @@ public class RenderEngine
             new RenderTargetBinding(NormalBuffer),
             new RenderTargetBinding(EmissiveBuffer)
         );
-
+        
         // 1) Clear the depth-stencil actually used by the geometry pass (attached to the first RT)
         graphics.Clear(ClearOptions.DepthBuffer, Color.Transparent, 1.0f, 0);
 
         // 2) Clear each color target individually
         graphics.SetRenderTarget(BackBuffer);
         graphics.Clear(Color.Black);
-        
-        Sky.Draw();
 
         graphics.SetRenderTarget(DepthBuffer);
         graphics.Clear(Color.White);         // far = 1.0 for the sampled depth texture
@@ -56,25 +54,26 @@ public class RenderEngine
         graphics.SetRenderTarget(EmissiveBuffer);
         graphics.Clear(Color.Black);
 
-        // 3) Rebind MRTs for drawing, and draw world-space
+        // 3) Render skybox
+        graphics.SetRenderTargets(BackBuffer, EmissiveBuffer);
+        Sky.Draw();
+        
+        // 4) Rebind MRTs for drawing, and draw world-space
         graphics.SetRenderTargets(BackBuffer, DepthBuffer, NormalBuffer, EmissiveBuffer);
         
-        // 4) Draw opaque + cutout
+        // 5) Draw opaque + cutout
         drawOpaque();
         
-        // Switch to single target with the same depth-stencil to preserve terrain depth
-        //graphics.SetRenderTarget(BackBuffer);
-        
-        // 5) Draw transparent
+        // 6) Draw transparent
         drawTransparent();
         
-        // 6) Draw UI
+        // 7) Draw UI
         if (UIEnabled)
             drawUI();
         
         graphics.SetRenderTarget(null);
         
-        // 7) Draw post processing
+        // 8) Draw post processing
         drawPostProcessing();
     }
     

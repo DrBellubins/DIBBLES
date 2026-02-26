@@ -39,17 +39,12 @@ struct PixelInput
 {
     float4 Position : SV_POSITION;
     float3 World : TEXCOORD0;
-
-    float4 Color : COLOR0;
-    float4 Normal : COLOR1;
-    float4 Depth : COLOR2;
-    float4 Emissive : COLOR2;
 };
 
 struct PixelOutput
 {
-    float4 Color : COLOR0;    // scene color
-    float4 Emissive : COLOR1; // emissive color
+    float4 Color : COLOR0; // scene color
+    float4 Emissive : COLOR1; // emissive color (RGB) + mask in A
 };
 
 PixelInput VS(VSInput input)
@@ -118,7 +113,7 @@ PixelOutput PS(PixelInput input) : SV_Target
     float sunBrightness = pow(max(sunDot, 0), 250);
     float2 sunUV = computeLocalUV(viewDir, sunCenter, sunMoonSize);
     float4 sunTex = tex2D(SunSampler, sunUV);
-    float3 sunColor = sunTex.rgb * sunTex.a * sunBrightness * 1.4;
+    float3 sunColor = sunTex.rgb * sunBrightness;
 
     // Moon: same logic, maybe softer (smaller pow)
     float3 moonCenter = -MoonDirection;
@@ -126,15 +121,25 @@ PixelOutput PS(PixelInput input) : SV_Target
     float moonBrightness = pow(max(moonDot, 0), 90);
     float2 moonUV = computeLocalUV(viewDir, moonCenter, sunMoonSize);
     float4 moonTex = tex2D(MoonSampler, moonUV);
-    float3 moonColor = moonTex.rgb * moonTex.a * moonBrightness * 1.0;
+    float3 moonColor = moonTex.rgb * moonBrightness;
 
+    // Final color
+    float3 color = baseColor + sunColor + moonColor;
+
+    // Final emssive
+    float sunMultiplier = 4.5;
+    float moonMultiplier = 1.0;
+
+    float3 finalSun = sunColor * sunMultiplier;
+    float3 finalMoon = moonColor * moonMultiplier;
+
+    float3 finalSunMoon = finalSun + finalMoon;
+
+    // Output
     PixelOutput output;
 
-    float3 sunMoonColor = sunColor + moonColor;
-    float3 color = baseColor + sunMoonColor;
-
     output.Color = float4(color, 1.0);
-    output.Emissive = float4(sunMoonColor, 1.0);
+    output.Emissive = float4(finalSunMoon * 4.0, 1.0);
 
     return output;
 }
