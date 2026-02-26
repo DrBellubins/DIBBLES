@@ -123,8 +123,15 @@ PixelOutput PS(PixelInput input) : SV_Target
     float4 moonTex = tex2D(MoonSampler, moonUV);
     float3 moonColor = moonTex.rgb * moonBrightness;
 
+    // Alpha blending
+    float sunAlpha  = sunTex.a * saturate(sunBrightness);
+    float moonAlpha = moonTex.a * saturate(moonBrightness);
+
+    float3 sunBlended = lerp(baseColor, sunColor, sunAlpha);
+    float3 moonBlended = lerp(baseColor, moonColor, moonAlpha);
+
     // Final color
-    float3 color = baseColor + sunColor + moonColor;
+    float3 color = baseColor + sunBlended + moonBlended;
 
     // Final emssive
     float sunMultiplier = 4.5;
