@@ -28,8 +28,12 @@ float2 ScreenSize;
 float4x4 Projection;
 float4x4 InvProjection;
 
+float3 CameraPos;
 float CameraNear;
 float CameraFar;
+
+float FogNear;
+float FogFar;
 
 float TanHalfFovY;  // tan(fov * 0.5)
 float AspectRatio;  // width / height

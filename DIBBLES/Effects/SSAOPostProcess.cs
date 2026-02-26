@@ -93,42 +93,47 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.Indices = indexBuffer;
         
         // Set G-buffer textures
-        EffectParams.SetTexture(effect, "DepthTex", RenderEngine.DepthBuffer);
-        EffectParams.SetTexture(effect, "NormalTex", RenderEngine.NormalBuffer);
-        EffectParams.SetTexture(effect, "RandomTex", blueNoiseTex);
+        
+        effect.SetValue("DepthTex", RenderEngine.DepthBuffer);
+        effect.SetValue("NormalTex", RenderEngine.NormalBuffer);
+        effect.SetValue("RandomTex", blueNoiseTex);
     
         // Camera params
         var proj = GameScene.PlayerCharacter.Camera.Projection;
         var invProj = Matrix.Invert(proj);
     
-        EffectParams.SetMatrix(effect, "Projection", proj);
-        EffectParams.SetMatrix(effect, "InvProjection", invProj);
+        effect.SetValue("Projection", proj);
+        effect.SetValue("InvProjection", invProj);
         
-        EffectParams.SetFloat(effect, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-        EffectParams.SetFloat(effect, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+        effect.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        effect.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+        effect.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
         
-        EffectParams.SetVector2(effect, "ScreenSize", new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
+        effect.SetValue("FogNear", FogEffect.FogNear);
+        effect.SetValue("FogFar", FogEffect.FogFar);
+        
+        effect.SetValue("ScreenSize", new Vector2(Engine.ScreenWidth, Engine.ScreenHeight));
     
         float tanHalfFovY = 1.0f / proj.M22;
         float aspectRatio = proj.M22 / proj.M11;
     
-        EffectParams.SetFloat(effect, "TanHalfFovY", tanHalfFovY);
-        EffectParams.SetFloat(effect, "AspectRatio", aspectRatio);
+        effect.SetValue("TanHalfFovY", tanHalfFovY);
+        effect.SetValue("AspectRatio", aspectRatio);
     
         var noiseScale = new Vector2(
             (float)Engine.ScreenWidth / blueNoiseTex.Width,
             (float)Engine.ScreenHeight / blueNoiseTex.Height
         );
     
-        EffectParams.SetVector2(effect, "NoiseScale", noiseScale);
+        effect.SetValue("NoiseScale", noiseScale);
 
-        EffectParams.SetFloat(effect, "radius", Radius);
-        EffectParams.SetFloat(effect, "bias", Bias);
-        EffectParams.SetFloat(effect, "total_strength", TotalStrength);
-        EffectParams.SetFloat(effect, "base_ao", BaseAO);
+        effect.SetValue("radius", Radius);
+        effect.SetValue("bias", Bias);
+        effect.SetValue("total_strength", TotalStrength);
+        effect.SetValue("base_ao", BaseAO);
         
-        EffectParams.SetFloat(effect, "BlurDepthSigma", 5.5f);
-        EffectParams.SetFloat(effect, "BlurNormalPower", 14.0f);
+        effect.SetValue("BlurDepthSigma", 5.5f);
+        effect.SetValue("BlurNormalPower", 14.0f);
     
         // Pass 1: SSAO -> SSAOTarget
         Graphics.SetRenderTarget(SSAOTarget);
@@ -145,7 +150,7 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.SetRenderTarget(SSAOBlurTarget);
         Graphics.Clear(Color.White);
         
-        EffectParams.SetTexture(effect, "AOTex", SSAOTarget);
+        effect.SetValue("AOTex", SSAOTarget);
         
         effect.CurrentTechnique = effect.Techniques["BlurH"];
     
@@ -159,7 +164,7 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.SetRenderTarget(SSAOTarget);
         Graphics.Clear(Color.White);
         
-        EffectParams.SetTexture(effect, "AOTex", SSAOBlurTarget);
+        effect.SetValue("AOTex", SSAOBlurTarget);
         
         effect.CurrentTechnique = effect.Techniques["BlurV"];
     
@@ -173,10 +178,10 @@ public class SSAOPostProcess : PostProcessingEffect
         Graphics.SetRenderTarget(OutputBuffer);
         Graphics.Clear(Color.Transparent);
         
-        EffectParams.SetTexture(effect, "AOTex", SSAOTarget);
+        effect.SetValue("AOTex", SSAOTarget);
         
         // IMPORTANT: Sample color from the chained input (previous effect output or BackBuffer if first)
-        EffectParams.SetTexture(effect, "ColorTex", ColorBuffer);
+        effect.SetValue("ColorTex", ColorBuffer);
         
         effect.CurrentTechnique = effect.Techniques["Composite"];
     

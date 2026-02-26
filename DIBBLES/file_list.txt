@@ -214,6 +214,7 @@
 ./Systems/Rendering/PostProcessingEffect.cs
 ./Systems/Rendering/RenderEngine.cs
 ./Systems/Rendering/PostProcessingManager.cs
+./Systems/Rendering/GBuffer.cs
 ./Systems/Input.cs
 ./Systems/TextBox.cs
 ./Systems/AudioPlayer.cs
