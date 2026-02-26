@@ -1,6 +1,8 @@
 // TODO: Wind only seems to blow billboards in one direction
 // TODO: Weird stretching with mesh on flowers (and sometimes grass)
 
+#include "Includes/Fog.hlsl"
+
 texture AtlasTex;
 
 float4x4 View;
@@ -12,7 +14,6 @@ float CameraFar;
 
 float FogNear;
 float FogFar;
-float4 FogColor;
 
 float3 AmbientLightColor;
 
@@ -286,14 +287,15 @@ PixelInput VS(VertexInput input)
 struct PixelOutput
 {
     float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth
-    float4 Color2 : COLOR2; // view-space normals
+    float4 Color1 : COLOR1; // linear depth in [0..1]
+    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
+    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
 };
 
 PixelOutput PS_Color(PixelInput input)
 {
     float4 texColor = tex2D(AtlasSampler, input.Tex);
-    float4 vertLighting = float4(lerp(input.Color.rgb, AmbientLightColor, 0.2f), texColor.a * input.Color.a);
+    float4 vertLighting = float4(input.Color.rgb + AmbientLightColor, texColor.a * input.Color.a);
     float4 blockColor = texColor * vertLighting;
 
     // Hard alpha cutout so near-transparent texels don’t occlude
@@ -302,7 +304,12 @@ PixelOutput PS_Color(PixelInput input)
     // Fog
     float dist      = distance(input.WorldPos, CameraPos);
     float fogFactor = saturate((dist - FogNear) / (FogFar - FogNear));
-    float4 finalColor = lerp(blockColor, FogColor, fogFactor);
+
+    float3 viewDir = normalize(input.WorldPos - CameraPos);
+    float3 dirFogColor = ComputeFog(viewDir, SkyHorizonColor, SkyZenithColor);
+
+    float4 finalColor = lerp(blockColor, float4(dirFogColor, 1.0), fogFactor);
+
     finalColor.a = blockColor.a;
 
     // Normalized linear depth
@@ -312,7 +319,7 @@ PixelOutput PS_Color(PixelInput input)
     float3 nrm = normalize(input.ViewNorm);
     float3 n01 = nrm * 0.5f + 0.5f;
 
-    PixelOutput o;
+    PixelOutput output;
 
     if (WindDebug)
     {
@@ -321,16 +328,24 @@ PixelOutput PS_Color(PixelInput input)
         float g = saturate(input.WindBend.z);
         float b = saturate(0.5f + input.WindBend.y);
 
-        o.Color0 = float4(r, g, b, 1.0f);
-        o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-        o.Color2 = float4(n01, 1.0f);
-        return o;
+        output.Color0 = float4(r, g, b, 1.0f);
+        output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+        output.Color2 = float4(n01, 1.0f);
+
+        return output;
     }
 
-    o.Color0 = finalColor;
-    o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-    o.Color2 = float4(n01, 1.0f);
-    return o;
+    output.Color0 = finalColor;
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(n01, 1.0f);
+
+    // Emissive occlusion
+    if (finalColor.a > 0.0)
+    {
+        output.Color3 = float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    return output;
 }
 
 technique BillboardInstanced

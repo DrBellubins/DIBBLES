@@ -33,22 +33,25 @@ public class Billboards
         var view = GameScene.PlayerCharacter.Camera.View;
         var projection = GameScene.PlayerCharacter.Camera.Projection;
     
-        EffectParams.SetTexture(shader, "AtlasTex", BlockData.TextureAtlas);
+        shader.SetValue("AtlasTex", BlockData.TextureAtlas);
     
-        EffectParams.SetMatrix(shader, "View", view);
-        EffectParams.SetMatrix(shader, "Projection", projection);
+        shader.SetValue("View", view);
+        shader.SetValue("Projection", projection);
     
-        EffectParams.SetVector3(shader, "CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        EffectParams.SetFloat(shader, "CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-        EffectParams.SetFloat(shader, "CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+        shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
+        shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
+        shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
     
-        EffectParams.SetFloat(shader, "FogNear", FogEffect.FogNear);
-        EffectParams.SetFloat(shader, "FogFar", FogEffect.FogFar);
-        EffectParams.SetVector4(shader, "FogColor", DayNightCycle.FogColor.ToVector4());
-
-        EffectParams.SetVector3(shader, "AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
+        shader.SetValue("FogNear", FogEffect.FogNear);
+        shader.SetValue("FogFar", FogEffect.FogFar);
         
-        EffectParams.SetFloat(shader, "Time", Time.time);
+        
+        shader.SetValue("SkyHorizonColor", DayNightCycle.HorizonColor.ToVector3());
+        shader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
+
+        shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
+        
+        shader.SetValue("Time", Time.time);
     
         foreach (var kv in BillboardBatches)
         {

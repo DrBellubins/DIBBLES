@@ -158,7 +158,7 @@ public class MainSurfaceEffect
         }
     }
 
-    public Vector4 HorizonColor
+    public Vector3 HorizonColor
     {
         get { return _horizonColor; }
         set
@@ -168,7 +168,7 @@ public class MainSurfaceEffect
         }
     }
     
-    public Vector4 ZenithZolor
+    public Vector3 ZenithZolor
     {
         get { return _zenithColor; }
         set
@@ -207,8 +207,8 @@ public class MainSurfaceEffect
 
         _diffuseColor = Color.White.ToVector4();
         
-        _horizonColor = new Color(0, 0, 0, 0).ToVector4();
-        _zenithColor = new Color(0, 0, 0, 0).ToVector4();
+        _horizonColor = new Color(0, 0, 0).ToVector3();
+        _zenithColor = new Color(0, 0, 0).ToVector3();
 
         _cameraNear = 0.01f;
         _cameraFar  = 1000.0f;
@@ -278,8 +278,8 @@ public class MainSurfaceEffect
         FogNear = FogEffect.FogNear;
         FogFar  = FogEffect.FogFar;
         
-        HorizonColor = DayNightCycle.HorizonColor.ToVector4();
-        ZenithZolor = DayNightCycle.ZenithColor.ToVector4();
+        HorizonColor = DayNightCycle.HorizonColor.ToVector3();
+        ZenithZolor = DayNightCycle.ZenithColor.ToVector3();
     }
 
     // Internals
@@ -375,8 +375,8 @@ public class MainSurfaceEffect
     private float _fogNear;
     private float _fogFar;
     
-    private Vector4 _horizonColor;
-    private Vector4 _zenithColor;
+    private Vector3 _horizonColor;
+    private Vector3 _zenithColor;
 
     private bool _dirtyMatrices;
     private bool _dirtyMaterial;

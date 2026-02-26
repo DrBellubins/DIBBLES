@@ -75,7 +75,7 @@ struct PSInput
 
 PSInput VSBasic(VSInput input)
 {
-    PSInput o;
+    PSInput output;
 
     float4 worldPos = mul(float4(input.Position, 1), World);
     float4 viewPos  = mul(worldPos, View);
@@ -84,19 +84,19 @@ PSInput VSBasic(VSInput input)
     float3 worldNormal = mul(float4(input.Normal, 0), World).xyz;
     float3 viewNormal  = mul(float4(worldNormal, 0), View).xyz;
 
-    o.Position   = mul(viewPos, Projection);
-    o.WorldPos   = worldPos.xyz;
-    o.ViewDepth  = -viewPos.z;
-    o.ViewNormal = normalize(viewNormal);
-    o.TexCoord   = float2(0, 0);
-    o.Color      = DiffuseColor;
+    output.Position   = mul(viewPos, Projection);
+    output.WorldPos   = worldPos.xyz;
+    output.ViewDepth  = -viewPos.z;
+    output.ViewNormal = normalize(viewNormal);
+    output.TexCoord   = float2(0, 0);
+    output.Color      = DiffuseColor;
 
-    return o;
+    return output;
 }
 
 PSInput VSBasicTx(VSInputTx input)
 {
-    PSInput o;
+    PSInput output;
 
     float4 worldPos = mul(float4(input.Position, 1), World);
     float4 viewPos  = mul(worldPos, View);
@@ -104,19 +104,19 @@ PSInput VSBasicTx(VSInputTx input)
     float3 worldNormal = mul(float4(input.Normal, 0), World).xyz;
     float3 viewNormal  = mul(float4(worldNormal, 0), View).xyz;
 
-    o.Position   = mul(viewPos, Projection);
-    o.WorldPos   = worldPos.xyz;
-    o.ViewDepth  = -viewPos.z;
-    o.ViewNormal = normalize(viewNormal);
-    o.TexCoord   = input.TexCoord;
-    o.Color      = DiffuseColor;
+    output.Position   = mul(viewPos, Projection);
+    output.WorldPos   = worldPos.xyz;
+    output.ViewDepth  = -viewPos.z;
+    output.ViewNormal = normalize(viewNormal);
+    output.TexCoord   = input.TexCoord;
+    output.Color      = DiffuseColor;
 
-    return o;
+    return output;
 }
 
 PSInput VSBasicVc(VSInputVc input)
 {
-    PSInput o;
+    PSInput output;
 
     float4 worldPos = mul(float4(input.Position, 1), World);
     float4 viewPos  = mul(worldPos, View);
@@ -124,19 +124,19 @@ PSInput VSBasicVc(VSInputVc input)
     float3 worldNormal = mul(float4(input.Normal, 0), World).xyz;
     float3 viewNormal  = mul(float4(worldNormal, 0), View).xyz;
 
-    o.Position   = mul(viewPos, Projection);
-    o.WorldPos   = worldPos.xyz;
-    o.ViewDepth  = -viewPos.z;
-    o.ViewNormal = normalize(viewNormal);
-    o.TexCoord   = float2(0, 0);
-    o.Color      = DiffuseColor * input.Color;
+    output.Position   = mul(viewPos, Projection);
+    output.WorldPos   = worldPos.xyz;
+    output.ViewDepth  = -viewPos.z;
+    output.ViewNormal = normalize(viewNormal);
+    output.TexCoord   = float2(0, 0);
+    output.Color      = DiffuseColor * input.Color;
 
-    return o;
+    return output;
 }
 
 PSInput VSBasicTxVc(VSInputTxVc input)
 {
-    PSInput o;
+    PSInput output;
 
     float4 worldPos = mul(float4(input.Position, 1), World);
     float4 viewPos  = mul(worldPos, View);
@@ -144,21 +144,22 @@ PSInput VSBasicTxVc(VSInputTxVc input)
     float3 worldNormal = mul(float4(input.Normal, 0), World).xyz;
     float3 viewNormal  = mul(float4(worldNormal, 0), View).xyz;
 
-    o.Position   = mul(viewPos, Projection);
-    o.WorldPos   = worldPos.xyz;
-    o.ViewDepth  = -viewPos.z;
-    o.ViewNormal = normalize(viewNormal);
-    o.TexCoord   = input.TexCoord;
-    o.Color      = DiffuseColor * input.Color;
+    output.Position   = mul(viewPos, Projection);
+    output.WorldPos   = worldPos.xyz;
+    output.ViewDepth  = -viewPos.z;
+    output.ViewNormal = normalize(viewNormal);
+    output.TexCoord   = input.TexCoord;
+    output.Color      = DiffuseColor * input.Color;
 
-    return o;
+    return output;
 }
 
-struct PSOutput
+struct PixelOutput
 {
     float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth (replicated to RGB)
+    float4 Color1 : COLOR1; // linear depth in [0..1]
     float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
+    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
 };
 
 float4 applyFog(float4 color, PSInput input)
@@ -178,7 +179,7 @@ float4 applyFog(float4 color, PSInput input)
     return fogged;
 }
 
-PSOutput PS_NoTex_Fog(PSInput input)
+PixelOutput PS_NoTex_Fog(PSInput input)
 {
     float4 baseColor = input.Color;
 
@@ -189,14 +190,21 @@ PSOutput PS_NoTex_Fog(PSInput input)
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;
 
-    PSOutput o;
-    o.Color0 = finalColor;
-    o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-    o.Color2 = float4(n01, 1.0f);
-    return o;
+    PixelOutput output;
+    output.Color0 = finalColor;
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(n01, 1.0f);
+
+    // Emissive occlusion
+    if (finalColor.a > 0.0)
+    {
+        output.Color3 = float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    return output;
 }
 
-PSOutput PS_NoTex_NoFog(PSInput input)
+PixelOutput PS_NoTex_NoFog(PSInput input)
 {
     float4 baseColor = input.Color;
     clip(baseColor.a - AlphaCutoff);
@@ -204,14 +212,21 @@ PSOutput PS_NoTex_NoFog(PSInput input)
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;
 
-    PSOutput o;
-    o.Color0 = baseColor;
-    o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-    o.Color2 = float4(n01, 1.0f);
-    return o;
+    PixelOutput output;
+    output.Color0 = baseColor;
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(n01, 1.0f);
+
+    // Emissive occlusion
+    if (baseColor.a > 0.0)
+    {
+        output.Color3 = float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    return output;
 }
 
-PSOutput PS_Tex_Fog(PSInput input)
+PixelOutput PS_Tex_Fog(PSInput input)
 {
     float4 texColor  = tex2D(DiffuseSampler, input.TexCoord);
     float4 baseColor = texColor * input.Color;
@@ -223,14 +238,21 @@ PSOutput PS_Tex_Fog(PSInput input)
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;
 
-    PSOutput o;
-    o.Color0 = finalColor;
-    o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-    o.Color2 = float4(n01, 1.0f);
-    return o;
+    PixelOutput output;
+    output.Color0 = finalColor;
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(n01, 1.0f);
+
+    // Emissive occlusion
+    if (finalColor.a > 0.0)
+    {
+        output.Color3 = float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    return output;
 }
 
-PSOutput PS_Tex_NoFog(PSInput input)
+PixelOutput PS_Tex_NoFog(PSInput input)
 {
     float4 texColor  = tex2D(DiffuseSampler, input.TexCoord);
     float4 baseColor = texColor * input.Color;
@@ -240,11 +262,18 @@ PSOutput PS_Tex_NoFog(PSInput input)
     float depth01 = saturate((input.ViewDepth - CameraNear) / (CameraFar - CameraNear));
     float3 n01    = normalize(input.ViewNormal) * 0.5f + 0.5f;
 
-    PSOutput o;
-    o.Color0 = baseColor;
-    o.Color1 = float4(depth01, depth01, depth01, 1.0f);
-    o.Color2 = float4(n01, 1.0f);
-    return o;
+    PixelOutput output;
+    output.Color0 = baseColor;
+    output.Color1 = float4(depth01, depth01, depth01, 1.0f);
+    output.Color2 = float4(n01, 1.0f);
+
+    // Emissive occlusion
+    if (baseColor.a > 0.0)
+    {
+        output.Color3 = float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    return output;
 }
 
 // Techniques mirroring BasicEffect combinations (but MRT outputs)
