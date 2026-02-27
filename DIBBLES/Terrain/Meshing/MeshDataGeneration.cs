@@ -32,7 +32,7 @@ public class MeshDataGeneration
         List<Vector4> emissiveUVRects = new();
         List<Vector4> emissiveUVBasis = new();
         
-        var rng = new SeededRandom(1337); // TEMP
+        var rng = new SeededRandom(1337); // TEMP SEED
         
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)

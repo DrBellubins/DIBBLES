@@ -35,6 +35,8 @@ public class GreedyMeshing
 
         var nc = NeighborCache.Build(chunk);
 
+        var rng = new SeededRandom(1337); // TEMP SEED
+        
         // Scan along each axis and both face directions
         for (int axis = 0; axis < 3; axis++)
         {
@@ -106,9 +108,17 @@ public class GreedyMeshing
                             }
 
                             // Current block
+                            var pos = new Vector3Int(x, y, z);
                             var curType = chunk.IsInBounds(x, y, z) ? chunk.GetTypeAt(x, y, z) : BlockType.Air;
                             var curInfo = BlockData.Prefabs[curType];
 
+                            long chunkBlockSeed = Seed 
+                                                  ^ (pos.X * 73428767L)
+                                                  ^ (pos.Y * 9127841L)
+                                                  ^ (pos.Z * 192837465L);
+            
+                            rng.SetSeed(chunkBlockSeed);
+                            
                             // Neighbor block across the face plane (solid check)
                             bool neighborSolid = Helpers.IsVoxelSolid(chunk, nx, ny, nz, nc);
 
@@ -162,7 +172,9 @@ public class GreedyMeshing
                                 Type = curType,
                                 FaceIdx = faceIdx,
                                 UVRect = uvRect,
-                                UVFlipDirection = 0 // TEMP
+                                UVFlipDirection = TerrainMesh.GreedyRespectAntiTileFlips
+                                    ? Helpers.ComputeRndFlipMask(rng, curInfo, new Vector3Int(x, y, z), faceIdx)
+                                    : 0
                             };
                         }
                     }
@@ -177,6 +189,7 @@ public class GreedyMeshing
                         while (uCol < size)
                         {
                             var cell = mask[uCol, vRow];
+                            var flipMask = cell.UVFlipDirection;
 
                             if (!cell.Visible)
                             {
