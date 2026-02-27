@@ -6,6 +6,7 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Meshing;
 
+// TODO: Fix weird vertex lighting
 // TODO: Implement emissive textures
 // TODO: Implement anti-tiling
 // TODO: Implement block brightness
@@ -301,7 +302,27 @@ public class GreedyMeshing
                             }
 
                             // Smooth per-vertex colors at merged corners
-                            var rectColors = FaceUtils.GetRectFaceColors(chunk, cell.FaceIdx, baseX, baseY, baseZ, du, dv);
+                            // Direct sampling using the EXACT same logic and defaults as FaceUtils.GetFaceColors (non-greedy path).
+                            // This guarantees 100% identical lighting on every shared edge between greedy and non-greedy meshing.
+                            bool isTopFace = (cell.FaceIdx == 5);
+
+                            Color cBL = FaceUtils.ToColor(isTopFace
+                                ? FaceUtils.GetVertexLightTopFace(chunk, (int)p1.X, (int)p1.Y, (int)p1.Z)
+                                : FaceUtils.GetVertexLight(chunk, (int)p1.X, (int)p1.Y, (int)p1.Z));
+
+                            Color cBR = FaceUtils.ToColor(isTopFace
+                                ? FaceUtils.GetVertexLightTopFace(chunk, (int)p2.X, (int)p2.Y, (int)p2.Z)
+                                : FaceUtils.GetVertexLight(chunk, (int)p2.X, (int)p2.Y, (int)p2.Z));
+
+                            Color cTR = FaceUtils.ToColor(isTopFace
+                                ? FaceUtils.GetVertexLightTopFace(chunk, (int)p3.X, (int)p3.Y, (int)p3.Z)
+                                : FaceUtils.GetVertexLight(chunk, (int)p3.X, (int)p3.Y, (int)p3.Z));
+
+                            Color cTL = FaceUtils.ToColor(isTopFace
+                                ? FaceUtils.GetVertexLightTopFace(chunk, (int)p0.X, (int)p0.Y, (int)p0.Z)
+                                : FaceUtils.GetVertexLight(chunk, (int)p0.X, (int)p0.Y, (int)p0.Z));
+
+                            Color[] rectColors = new[] { cBL, cBR, cTR, cTL };
                             
                             // Get precomputed ordered UVs aligned to this face's vertex order (matches q0..q3 below)
                             Vector2[] orderedUVs;
@@ -318,12 +339,6 @@ public class GreedyMeshing
                             
                             // Basis from ordered UVs (BL, TL, TR, BR in per-face order)
                             Vector4 basis4 = FaceUtils.ComputeUVBasis(orderedUVs);
-                            
-                            // Corner colors come back as [BL, BR, TR, TL]
-                            Color cBL = rectColors[0];
-                            Color cBR = rectColors[1];
-                            Color cTR = rectColors[2];
-                            Color cTL = rectColors[3];
                             
                             // Atlas sub-rect for shader tiling (width/height only; origin comes from uvBL)
                             RectangleF rect;

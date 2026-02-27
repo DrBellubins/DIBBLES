@@ -91,6 +91,8 @@ public class RenderEngine
         TerrainGen.DrawBillboards();
         
         PlayerCharacter.Draw();
+        
+        Debug.Draw3D();
     }
 
     private void drawTransparent()
@@ -108,7 +110,6 @@ public class RenderEngine
         
         // Draw block outline here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
         TerrainGeneration.Gameplay.Draw();
-        Debug.Draw3D();
     }
 
     private void drawPostProcessing()
