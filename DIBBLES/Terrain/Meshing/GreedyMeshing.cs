@@ -6,7 +6,6 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Meshing;
 
-// TODO: Fix weird vertex lighting
 // TODO: Implement emissive textures
 // TODO: Implement anti-tiling
 // TODO: Implement block brightness
