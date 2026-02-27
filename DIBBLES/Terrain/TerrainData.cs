@@ -18,7 +18,6 @@ public struct BlockInfo
     public int MaxStack;
     public bool IsTransparent;   // True if light can pass through
     public byte LightEmission;   // Light level emitted by this block (0-15)
-    public float Brightness;     // Brightness of the face as a multiplier of light level [0..1]
     
     // Key = FaceIdx
     public Dictionary<int, RectangleF>? FaceUVs; // Used for per-face texturing, if null, use same texture for all faces.
@@ -29,14 +28,13 @@ public struct BlockInfo
     public bool IsCollidable;
     
     public BlockInfo(int hardness, float thickness, int maxStack, bool isTransparent = false,
-        byte lightEmission = 0, float brightness = 1f, bool isBillboard = false, bool isCollidable = true)
+        byte lightEmission = 0, bool isBillboard = false, bool isCollidable = true)
     {
         Hardness = hardness;
         Thickness = thickness;
         MaxStack = maxStack;
         IsTransparent = isTransparent;
         LightEmission = lightEmission;
-        Brightness = brightness;
         IsBillboard = isBillboard;
         IsCollidable = isCollidable;
     }
@@ -499,14 +497,13 @@ public class BlockData
             int maxStack = table.HasKey("MaxStack") ? (int)table["MaxStack"].AsInteger.Value : 64;
             bool isTransparent = table.HasKey("IsTransparent") ? table["IsTransparent"].AsBoolean.Value : false;
             byte lightEmission = table.HasKey("LightEmission") ? (byte)table["LightEmission"].AsInteger.Value : (byte)0;
-            float brightness = table.HasKey("Brightness") ? (float)table["Brightness"].AsFloat.Value : 1f;
             bool antiTileUVsHorizontally = table.HasKey("AntiTileUVsHorizontally") ? table["AntiTileUVsHorizontally"].AsBoolean.Value : true;
             bool antiTileUVsVertically = table.HasKey("AntiTileUVsVertically") ? table["AntiTileUVsVertically"].AsBoolean.Value : true;
             bool isBillboard = table.HasKey("IsBillboard") ? table["IsBillboard"].AsBoolean.Value : false;
             bool isCollidable = table.HasKey("IsCollidable") ? table["IsCollidable"].AsBoolean.Value : true;
             
             var blockInfo = new BlockInfo(hardness, thickness, maxStack,
-                isTransparent, lightEmission, brightness, isBillboard, isCollidable);
+                isTransparent, lightEmission, isBillboard, isCollidable);
             
             blockInfo.AntiTileUVsHorizontally =  antiTileUVsHorizontally;
             blockInfo.AntiTileUVsVertically = antiTileUVsVertically;

@@ -124,11 +124,11 @@ public class MeshDataGeneration
 
                     if (SmoothLighting)
                     {
-                        faceColors = FaceUtils.GetFaceColors(chunk, pos, faceIdx, blockInfo.Brightness);
+                        faceColors = FaceUtils.GetFaceColors(chunk, pos, faceIdx);
                     }
                     else
                     {
-                        float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx, blockInfo.Brightness);
+                        float faceLight = FaceUtils.GetFaceLightFlat(chunk, pos, faceIdx);
                         Color flatColor = FaceUtils.ToColor(faceLight);
 
                         faceColors = new[] { flatColor, flatColor, flatColor, flatColor };

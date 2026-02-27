@@ -10,6 +10,7 @@ using DIBBLES.Systems.Rendering;
 
 namespace DIBBLES.Utils;
 
+// TODO: Debug box drawing is broken.
 public class Debug
 {
     private static List<(string, Color)> textBuffer2d = new();
