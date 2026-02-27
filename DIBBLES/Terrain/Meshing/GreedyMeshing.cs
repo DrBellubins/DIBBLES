@@ -6,8 +6,9 @@ using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Terrain.Meshing;
 
-// TODO: Implement block brightness
 // TODO: Implement emissive textures
+// TODO: Implement anti-tiling
+// TODO: Implement block brightness
 public class GreedyMeshing
 {
     private struct GreedyCell
