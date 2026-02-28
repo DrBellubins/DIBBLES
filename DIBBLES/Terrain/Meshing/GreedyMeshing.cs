@@ -462,7 +462,12 @@ public class GreedyMeshing
 
                                 vertices.Add(q0); vertices.Add(q1); vertices.Add(q2); vertices.Add(q3);
                                 normals.Add(normal); normals.Add(normal); normals.Add(normal); normals.Add(normal);
-                                texcoords.Add(t0); texcoords.Add(t1); texcoords.Add(t2); texcoords.Add(t3);
+                                //texcoords.Add(t0); texcoords.Add(t1); texcoords.Add(t2); texcoords.Add(t3);
+                                texcoords.Add(new Vector2(t0.X / du, t0.Y / dv));
+                                texcoords.Add(new Vector2(t1.X / du, t1.Y / dv));
+                                texcoords.Add(new Vector2(t2.X / du, t2.Y / dv));
+                                texcoords.Add(new Vector2(t3.X / du, t3.Y / dv));
+                                
                                 colors.Add(col0); colors.Add(col1); colors.Add(col2); colors.Add(col3);
 
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
