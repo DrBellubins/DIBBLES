@@ -480,7 +480,7 @@ public class GreedyMeshing
                                 }
                                 Vector2 emisBL = emisUVs[0];
                                 Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
-                                Vector4 emisRect4 = emisRect.ToVector4();
+                                Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
                                 
                                 emissiveUVRects.Add(emisRect4);
                                 emissiveUVRects.Add(emisRect4);

@@ -174,7 +174,7 @@ public class MeshDataGeneration
 
                     Vector2 emisBL = emisUVs[0];
                     Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
-                    Vector4 emisRect4 = baseRect.ToVector4();
+                    Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
                     
                     if (isTransparencyPass)
                     {
