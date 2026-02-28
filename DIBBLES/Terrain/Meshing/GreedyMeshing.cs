@@ -3,6 +3,8 @@ using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 
 using static DIBBLES.Terrain.TerrainGeneration;
+using static DIBBLES.Terrain.TerrainMesh;
+using static DIBBLES.Terrain.Meshing.Helpers;
 
 namespace DIBBLES.Terrain.Meshing;
 
@@ -19,7 +21,7 @@ public class GreedyMeshing
         public RectangleF UVRect;
     }
 
-    public static MeshData Generate(Chunk chunk, bool isTransparencyPass)
+    public MeshData Generate(Chunk chunk, bool isTransparencyPass)
     {
         var vertices = new List<Vector3>();
         var indices = new List<int>();
@@ -592,7 +594,7 @@ public class GreedyMeshing
         return meshData;
     }
 
-    private static bool uvEqual(RectangleF a, RectangleF b)
+    private bool uvEqual(RectangleF a, RectangleF b)
     {
         return a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
     }

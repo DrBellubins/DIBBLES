@@ -14,10 +14,6 @@ public class MeshDataGeneration
     // MeshData generation (thread-safe, basic data for meshing)
     public MeshData Generate(Chunk chunk, bool isTransparencyPass)
     {
-        // Switch to greedy meshing when enabled
-        if (UseGreedyMeshing)
-            return GreedyMeshing.Generate(chunk, isTransparencyPass);
-        
         var neighborCache = NeighborCache.Build(chunk);
         
         List<FaceData> transparentFaces = new();
@@ -39,15 +35,17 @@ public class MeshDataGeneration
         for (int z = 0; z < ChunkSize; z++)
         {
             var pos = new Vector3Int(x, y, z);
+            var worldPos = chunk.Position + pos;
+            
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
             
-            long chunkBlockSeed = Seed 
-                             ^ (pos.X * 73428767L)
-                             ^ (pos.Y * 9127841L)
-                             ^ (pos.Z * 192837465L);
-            
-            rng.SetSeed(chunkBlockSeed);
+            long blockSeed = Seed ^
+                             ((long)worldPos.X * 73428767L) ^
+                             ((long)worldPos.Y * 9127841L) ^
+                             ((long)worldPos.Z * 192837465L);
+
+            rng.SetSeed(blockSeed);
             
             // Billboard path for transparent mesh
             if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
@@ -86,7 +84,7 @@ public class MeshDataGeneration
                     // Deterministic random uv flipping
                     int rotationSteps = 0;
                     int flipMask = NonGreedyRespectAntiTileFlips
-                        ? Helpers.ComputeRndFlipMask(rng, blockInfo, pos, faceIdx)
+                        ? ComputeRndFlipMask(rng, blockInfo, worldPos, faceIdx)
                         : 0;
                     
                     Vector2 uv0 = baseUVs[0];

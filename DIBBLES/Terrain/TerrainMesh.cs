@@ -18,7 +18,7 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true;
-    public const bool UseGreedyMeshing = true;
+    public const bool UseGreedyMeshing = false;
 
     public const bool Fullbright = false;
     
@@ -35,6 +35,8 @@ public class TerrainMesh
 
     // Meshing extension classes
     public MeshDataGeneration MeshDataGen = new();
+    public GreedyMeshing GreedyMeshGen = new();
+    
     public Billboards BillboardGen = new();
     
     // Main-thread mesh upload queue
@@ -46,12 +48,23 @@ public class TerrainMesh
     
     public void Generate(Chunk chunk)
     {
-        var meshData = MeshDataGen.Generate(chunk, false);
+        MeshData meshData;
+        MeshData tMeshData;
+
+        if (UseGreedyMeshing)
+            meshData = GreedyMeshGen.Generate(chunk, false);
+        else
+            meshData = MeshDataGen.Generate(chunk, false);
+        
         MeshUploadQueue.Enqueue((chunk.Position, meshData));
 
         if (ChunkContainsTransparent(chunk))
         {
-            var tMeshData = MeshDataGen.Generate(chunk, true);
+            if (UseGreedyMeshing)
+                tMeshData = GreedyMeshGen.Generate(chunk, true);
+            else
+                tMeshData = MeshDataGen.Generate(chunk, true);
+            
             TMeshUploadQueue.Enqueue((chunk.Position, tMeshData));
         }
         

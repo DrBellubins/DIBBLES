@@ -88,7 +88,7 @@ public class RenderEngine
         graphics.RasterizerState = RasterizerState.CullCounterClockwise;
         
         TerrainGen.DrawOpaque();
-        TerrainGen.DrawBillboards();
+        //TerrainGen.DrawBillboards();
         
         PlayerCharacter.Draw();
     }
