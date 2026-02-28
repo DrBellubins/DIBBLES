@@ -11,12 +11,29 @@ namespace DIBBLES.Gameplay.Terrain;
 
 public class TerrainGameplay
 {
+    public static Block SolidBlockBelowPlayer;  // Only updated when non air is below player
+    public static Block BlockBelowPlayer;       // Updated with either air or solid is below player
+    public static Block BlockAtPlayersFeet;     // Updated with air block at player's feet
+    
     private AudioPlayer breakPlacePlayer = new();
     
     public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
+        
+        var solidBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter);
+        var blockBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false);
+        var blockAtFeetBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false, true);
+
+        if (solidBelowBlock != null)
+            SolidBlockBelowPlayer = solidBelowBlock.Value;
+        
+        if (blockBelowBlock != null)
+            BlockBelowPlayer = blockBelowBlock.Value;
+        
+        if (blockAtFeetBlock != null)
+            BlockAtPlayersFeet = blockAtFeetBlock.Value;
     }
 
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
@@ -29,10 +46,23 @@ public class TerrainGameplay
                 SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
-
-        var belowBlock = BlockBelowPlayer(GameScene.PlayerCharacter);
         
-        Debug.DrawBox(belowBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), new Vector3(0.25f));
+        const float debugBelowBlockSize = 0.25f;
+
+        if (PlayerCharacter.CollisionBoxDebug)
+        {
+            Debug.DrawBox(SolidBlockBelowPlayer.Position.ToVector3() + new Vector3(0.5f) +
+                          new Vector3(debugBelowBlockSize * 0.5f) +
+                          new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Red);
+        
+            Debug.DrawBox(BlockBelowPlayer.Position.ToVector3() + new Vector3(0.5f) +
+                          new Vector3(debugBelowBlockSize * 0.5f) +
+                          new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Green);
+        
+            Debug.DrawBox(BlockAtPlayersFeet.Position.ToVector3() + new Vector3(0.5f) +
+                          new Vector3(debugBelowBlockSize * 0.5f) +
+                          new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Blue);
+        }
     }
 
     // Rendered into the UI buffer.
@@ -52,35 +82,41 @@ public class TerrainGameplay
         }
     }
     
-    public Block BlockBelowPlayer(PlayerCharacter player)
+    public Block? GetBlockBelowPlayer(PlayerCharacter player, bool ignoreAir = true, bool atFeet = false)
     {
-        // Player's position floored to nearest block
-        var playerPosInt = new Vector3Int(
-            (int)MathF.Floor((int)player.Position.X),
-            (int)MathF.Floor((int)player.Position.Y),
-            (int)MathF.Floor((int)player.Position.Z)
+        var floored = new Vector3Int(
+            (int)MathF.Floor((float)player.Position.X),
+            (int)MathF.Floor((float)player.Position.Y),
+            (int)MathF.Floor((float)player.Position.Z)
         );
 
-        // Position directly beneath
-        var belowPos = new Vector3Int(playerPosInt.X, playerPosInt.Y, playerPosInt.Z);
+        // Block directly below (always Y - 1!)
+        Vector3Int below;
+        
+        if (atFeet)
+            below = new Vector3Int(floored.X, floored.Y, floored.Z);
+        else // Below feet
+            below = new Vector3Int(floored.X, floored.Y - 1, floored.Z);
 
-        int chunkX = (int)Math.Floor((float)belowPos.X / ChunkSize) * ChunkSize;
-        int chunkY = (int)Math.Floor((float)belowPos.Y / ChunkSize) * ChunkSize;
-        int chunkZ = (int)Math.Floor((float)belowPos.Z / ChunkSize) * ChunkSize;
+        int chunkX = (int)MathF.Floor((float)below.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)MathF.Floor((float)below.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)MathF.Floor((float)below.Z / ChunkSize) * ChunkSize;
 
         var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
 
         if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-        {
-            // Return Air block if chunk not loaded
-            return new Block(belowPos, BlockType.Air);
-        }
+            return null;
 
-        int localX = belowPos.X - chunkX;
-        int localY = belowPos.Y - chunkY;
-        int localZ = belowPos.Z - chunkZ;
+        int localX = below.X - chunkX;
+        int localY = below.Y - chunkY;
+        int localZ = below.Z - chunkZ;
 
-        return chunk.GetBlock(localX, localY, localZ);
+        var block = chunk.GetBlock(localX, localY, localZ);
+
+        if (block.Type == BlockType.Air && ignoreAir)
+            return null;
+        
+        return block;
     }
     
     private (Block, Vector3Int) selectBlock(Camera3D camera)

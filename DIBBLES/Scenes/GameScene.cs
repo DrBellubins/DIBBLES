@@ -7,6 +7,7 @@ using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Gameplay.Player;
 using DIBBLES.Systems.DebugMenu;
 using DIBBLES.Systems.Rendering;
+using DIBBLES.Systems.SFX;
 using DIBBLES.Terrain;
 using DIBBLES.Terrain.Blocks;
 using DIBBLES.Utils;
@@ -24,6 +25,7 @@ public class GameScene : Scene
     public static TerrainGeneration TerrainGen = new();
     public static PlayerCharacter PlayerCharacter = new();
     public static InventorySystem Inventory = new();
+    public static WorldSound WorldAudio = new();
     public static DayNightCycle TimeCycle = new();
     
     public static PostProcessingManager postProcessingManager = new();
@@ -57,6 +59,7 @@ public class GameScene : Scene
         Primatives3D.Initialize();
         
         TimeCycle.Start();
+        WorldAudio.Start();
         
         TerrainGen.Start(); // Initial terrain generation
         
@@ -100,6 +103,7 @@ public class GameScene : Scene
         Debug.Draw2DText($"Time: {TimeCycle.TimeOfDay}");
         
         TimeCycle.Update();
+        WorldAudio.Update();
         
         PlayerCharacter.Update();
         

@@ -129,6 +129,7 @@
 ./Assets/Sounds/Blocks/Feeb/Feeb4.ogg
 ./Assets/Sounds/Blocks/Feeb/Feeb1.ogg
 ./Assets/Sounds/Blocks/Feeb/Feeb2.ogg
+./Assets/Sounds/World/TestWhoosh.ogg
 ./Assets/Sounds/grass_jump.ogg
 ./Assets/MG/Fonts/Candal-Regular.otf
 ./Assets/MG/Fonts/MainFont.spritefont
