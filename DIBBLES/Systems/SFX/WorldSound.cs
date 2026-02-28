@@ -78,7 +78,6 @@ public class WorldSound
             var audioBug = AudioPlayers[i];
             
             audioBug.Position = GameScene.PlayerCharacter.Position.ToVector3() + audioBugPos;
-            //if
             audioBug.Volume = computeSwarmVolume(i, 0.1f);
             
             if (!audioBug.IsPlaying)

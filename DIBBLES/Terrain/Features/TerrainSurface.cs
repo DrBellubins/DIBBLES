@@ -65,6 +65,8 @@ public class TerrainSurface
     
                     var current = Chunk.GetBlockTypeGlobal(new Vector3Int(worldX, worldY, worldZ));
                     
+                    chunk.SetBiomeAt(x, y, z, columnBiome); // Always set biome!
+                    
                     if (current.Item1 != BlockType.Stone)
                         continue;
     
