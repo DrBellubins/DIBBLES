@@ -175,7 +175,7 @@ public class GreedyMeshing
                                 FaceIdx = faceIdx,
                                 UVRect = uvRect,
                                 UVFlipDirection = TerrainMesh.GreedyRespectAntiTileFlips
-                                    ? Helpers.ComputeRndFlipMask(rng, curInfo, new Vector3Int(x, y, z), faceIdx)
+                                    ? Helpers.ComputeRndFlipMask(Seed, curInfo, new Vector3Int(x, y, z), faceIdx)
                                     : 0
                             };
                         }

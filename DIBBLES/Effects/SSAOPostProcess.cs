@@ -9,7 +9,7 @@ using DIBBLES.Utils;
 
 namespace DIBBLES.Effects;
 
-// TODO: Make SSAO use fog to fade out.
+// TODO: SSAO Fog fadeout happens in world-space, when moving further from 0,0,0, ssao fades out
 public class SSAOPostProcess : PostProcessingEffect
 {
     public float Radius = 0.5f;

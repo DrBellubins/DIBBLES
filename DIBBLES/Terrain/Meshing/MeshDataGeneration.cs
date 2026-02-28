@@ -27,9 +27,7 @@ public class MeshDataGeneration
         List<Vector4> uvBasis = new();
         List<Vector4> emissiveUVRects = new();
         List<Vector4> emissiveUVBasis = new();
-        
-        var rng = new SeededRandom(1337); // TEMP SEED
-        
+
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
@@ -39,14 +37,7 @@ public class MeshDataGeneration
             
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
-            
-            long blockSeed = Seed ^
-                             ((long)worldPos.X * 73428767L) ^
-                             ((long)worldPos.Y * 9127841L) ^
-                             ((long)worldPos.Z * 192837465L);
 
-            rng.SetSeed(blockSeed);
-            
             // Billboard path for transparent mesh
             if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
             {
@@ -84,7 +75,7 @@ public class MeshDataGeneration
                     // Deterministic random uv flipping
                     int rotationSteps = 0;
                     int flipMask = NonGreedyRespectAntiTileFlips
-                        ? ComputeRndFlipMask(rng, blockInfo, worldPos, faceIdx)
+                        ? ComputeRndFlipMask(Seed, blockInfo, worldPos, faceIdx)
                         : 0;
                     
                     Vector2 uv0 = baseUVs[0];

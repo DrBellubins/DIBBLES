@@ -149,7 +149,7 @@ public class Helpers
         return FaceUtils.RotateUVs(faceUVs, rotation);
     }
     
-    public static int ComputeRndFlipMask(SeededRandom rng, BlockInfo blockInfo, Vector3Int pos, int faceIdx)
+    /*public static int ComputeRndFlipMask(SeededRandom rng, BlockInfo blockInfo, Vector3Int pos, int faceIdx)
     {
         int rndOffset = (int)(rng.NextFloat() * ChunkSize);
         var worldBlockPosRNG = new Vector3Int(pos.X + rndOffset, pos.Y + rndOffset, pos.Z + rndOffset);
@@ -179,6 +179,39 @@ public class Helpers
         }
 
         // If anti-tiling disabled entirely, no flips
+        if (!blockInfo.AntiTileUVsHorizontally && !blockInfo.AntiTileUVsVertically)
+        {
+            return 0;
+        }
+
+        return flip & 3;
+    }*/
+    
+    public static int ComputeRndFlipMask(int seed, BlockInfo blockInfo, Vector3Int worldPos, int faceIdx)
+    {
+        // Use a single deterministic hash – never use RNG state!
+        int flipRandom = GMath.Hash3i(worldPos.X, worldPos.Y, worldPos.Z, seed ^ faceIdx) & 3;
+        int flip = 0;
+
+        if (faceIdx >= 0 && faceIdx <= 3)
+        {
+            if (blockInfo.AntiTileUVsHorizontally && (flipRandom & 1) != 0)
+            {
+                flip |= 1;
+            }
+            if (blockInfo.AntiTileUVsVertically && (flipRandom & 2) != 0)
+            {
+                flip |= 2;
+            }
+        }
+        else
+        {
+            if (blockInfo.AntiTileUVsHorizontally || blockInfo.AntiTileUVsVertically)
+            {
+                flip = flipRandom;
+            }
+        }
+
         if (!blockInfo.AntiTileUVsHorizontally && !blockInfo.AntiTileUVsVertically)
         {
             return 0;
