@@ -16,7 +16,7 @@ public struct FaceData
     public BlockType Type;
     public int FaceIdx;
     
-    public RectangleF BaseRect;       // (x,y,w,h) in atlas space
+    public Vector4 BaseRect;       // (x,y,w,h) in atlas space
     public Vector4 BaseBasis;      // (uX,uY,vX,vY)
     public Vector4 EmissiveRect;   // (x,y,w,h) in emissive atlas
     public Vector4 EmissiveBasis;  // (uX,uY,vX,vY)

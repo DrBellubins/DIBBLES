@@ -556,7 +556,7 @@ public class GreedyMeshing
                 RectangleF emisRect;
                 
                 if (!BlockData.EmissiveAtlasUVs.TryGetValue((face.Type, face.FaceIdx), out emisRect))
-                    emisRect = face.BaseRect;
+                    emisRect = new RectangleF(face.BaseRect.X, face.BaseRect.Y, face.BaseRect.Z, face.BaseRect.W);
                 
                 Vector2 emisBL = emisUVs[0];
                 Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);

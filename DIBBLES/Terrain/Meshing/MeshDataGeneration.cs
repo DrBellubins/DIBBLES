@@ -27,17 +27,24 @@ public class MeshDataGeneration
         List<Vector4> uvBasis = new();
         List<Vector4> emissiveUVRects = new();
         List<Vector4> emissiveUVBasis = new();
-
+        
+        var rng = new SeededRandom(1337); // TEMP
+        
         for (int x = 0; x < ChunkSize; x++)
         for (int y = 0; y < ChunkSize; y++)
         for (int z = 0; z < ChunkSize; z++)
         {
             var pos = new Vector3Int(x, y, z);
-            var worldPos = chunk.Position + pos;
-            
             var blockType = chunk.GetTypeAt(x, y, z);
             var blockInfo = chunk.GetInfoAt(x, y, z);
-
+            
+            long chunkBlockSeed = Seed 
+                             ^ (pos.X * 73428767L)
+                             ^ (pos.Y * 9127841L)
+                             ^ (pos.Z * 192837465L);
+            
+            rng.SetSeed(chunkBlockSeed);
+            
             // Billboard path for transparent mesh
             if (isTransparencyPass && blockInfo.IsBillboard && blockType != BlockType.Air)
             {
@@ -75,7 +82,7 @@ public class MeshDataGeneration
                     // Deterministic random uv flipping
                     int rotationSteps = 0;
                     int flipMask = NonGreedyRespectAntiTileFlips
-                        ? ComputeRndFlipMask(Seed, blockInfo, worldPos, faceIdx)
+                        ? ComputeRndFlipMask(Seed, blockInfo, pos, faceIdx)
                         : 0;
                     
                     Vector2 uv0 = baseUVs[0];
@@ -188,7 +195,7 @@ public class MeshDataGeneration
                             Type = blockType,
                             FaceIdx = faceIdx,
                             
-                            BaseRect = baseRect,
+                            BaseRect = baseRect4,
                             BaseBasis = baseBasis4,
                             EmissiveRect = emisRect4,
                             EmissiveBasis = emisBasis4
@@ -256,10 +263,10 @@ public class MeshDataGeneration
                 });
 
                 // Append base and emissive UV data for transparent faces
-                uvRects.Add(face.BaseRect.ToVector4());
-                uvRects.Add(face.BaseRect.ToVector4());
-                uvRects.Add(face.BaseRect.ToVector4());
-                uvRects.Add(face.BaseRect.ToVector4());
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect);
 
                 uvBasis.Add(face.BaseBasis);
                 uvBasis.Add(face.BaseBasis);

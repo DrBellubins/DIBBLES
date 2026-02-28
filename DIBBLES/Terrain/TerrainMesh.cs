@@ -23,7 +23,7 @@ public class TerrainMesh
     public const bool Fullbright = false;
     
     public const bool GreedyRespectAntiTileFlips = true;
-    public const bool NonGreedyRespectAntiTileFlips = false;
+    public const bool NonGreedyRespectAntiTileFlips = true;
     
     public const float EmissiveStrength = 5.0f;
     public const float DayEmissiveStrengthMax = 0.35f;
