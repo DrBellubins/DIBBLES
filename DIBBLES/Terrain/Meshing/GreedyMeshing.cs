@@ -480,7 +480,7 @@ public class GreedyMeshing
                                 }
                                 Vector2 emisBL = emisUVs[0];
                                 Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
-                                Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+                                Vector4 emisRect4 = emisRect.ToVector4();
                                 
                                 emissiveUVRects.Add(emisRect4);
                                 emissiveUVRects.Add(emisRect4);
@@ -549,20 +549,29 @@ public class GreedyMeshing
                 Vector2[] emisUVs;
                 if (!BlockData.EmissiveFaceUVsOrdered.TryGetValue((face.Type, face.FaceIdx), out emisUVs))
                 {
-                    emisUVs = orderedUVs;
+                    // Fallback: use face.BaseRect's orientation
+                    emisUVs = FaceUtils.MapUVsToFaceVertexOrder(FaceUtils.GetFaceUVs(face.Type, face.FaceIdx), face.FaceIdx);
                 }
+
                 RectangleF emisRect;
+                
                 if (!BlockData.EmissiveAtlasUVs.TryGetValue((face.Type, face.FaceIdx), out emisRect))
-                {
-                    emisRect = rect;
-                }
+                    emisRect = face.BaseRect;
+                
                 Vector2 emisBL = emisUVs[0];
                 Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
-                Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+                Vector4 emisRect4 = emisRect.ToVector4();
 
                 // Four vertices per rect
-                emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4);
-                emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4);
+                emissiveUVRects.Add(emisRect4);
+                emissiveUVRects.Add(emisRect4);
+                emissiveUVRects.Add(emisRect4);
+                emissiveUVRects.Add(emisRect4);
+
+                emissiveUVBasis.Add(emisBasis4);
+                emissiveUVBasis.Add(emisBasis4);
+                emissiveUVBasis.Add(emisBasis4);
+                emissiveUVBasis.Add(emisBasis4);
                 
                 indices.Add(baseOffset + 2);
                 indices.Add(baseOffset + 1);

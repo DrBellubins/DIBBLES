@@ -32,6 +32,11 @@ public struct RectangleF
         Width = size.X;
         Height = size.Y;
     }
+
+    public Vector4 ToVector4()
+    {
+        return new Vector4(X, Y, Width, Height);
+    }
     
     /// <summary>
     /// Returns true if the specified point is contained within this rectangle.

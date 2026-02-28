@@ -174,7 +174,7 @@ public class MeshDataGeneration
 
                     Vector2 emisBL = emisUVs[0];
                     Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
-                    Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+                    Vector4 emisRect4 = baseRect.ToVector4();
                     
                     if (isTransparencyPass)
                     {
@@ -188,7 +188,7 @@ public class MeshDataGeneration
                             Type = blockType,
                             FaceIdx = faceIdx,
                             
-                            BaseRect = baseRect4,
+                            BaseRect = baseRect,
                             BaseBasis = baseBasis4,
                             EmissiveRect = emisRect4,
                             EmissiveBasis = emisBasis4
@@ -256,10 +256,10 @@ public class MeshDataGeneration
                 });
 
                 // Append base and emissive UV data for transparent faces
-                uvRects.Add(face.BaseRect);
-                uvRects.Add(face.BaseRect);
-                uvRects.Add(face.BaseRect);
-                uvRects.Add(face.BaseRect);
+                uvRects.Add(face.BaseRect.ToVector4());
+                uvRects.Add(face.BaseRect.ToVector4());
+                uvRects.Add(face.BaseRect.ToVector4());
+                uvRects.Add(face.BaseRect.ToVector4());
 
                 uvBasis.Add(face.BaseBasis);
                 uvBasis.Add(face.BaseBasis);

@@ -18,12 +18,12 @@ namespace DIBBLES.Terrain;
 public class TerrainMesh
 {
     public const bool SmoothLighting = true;
-    public const bool UseGreedyMeshing = true;
+    public const bool UseGreedyMeshing = false;
 
     public const bool Fullbright = false;
     
     public const bool GreedyRespectAntiTileFlips = true;
-    public const bool NonGreedyRespectAntiTileFlips = true;
+    public const bool NonGreedyRespectAntiTileFlips = false;
     
     public const float EmissiveStrength = 5.0f;
     public const float DayEmissiveStrengthMax = 0.35f;
