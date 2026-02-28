@@ -33,6 +33,9 @@ public class GreedyMeshing
         var uvRects = new List<Vector4>();
         var uvBasis = new List<Vector4>();
 
+        var emissiveUVRects = new List<Vector4>();
+        var emissiveUVBasis = new List<Vector4>();
+        
         var transparentFaces = new List<(float dist, FaceData face)>();
 
         var nc = NeighborCache.Build(chunk);
@@ -447,10 +450,6 @@ public class GreedyMeshing
                                 }
                             }
                             
-                            float emissiveVal = BlockData.Prefabs[cell.Type].LightEmission > 0
-                                ? BlockData.Prefabs[cell.Type].LightEmission / 15f // 0..1 normalized
-                                : 0.0f;
-                            
                             // Compute distance for transparent sorting
                             var centerLocal = (q0 + q1 + q2 + q3) * 0.25f;
                             var centerWorld = centerLocal + chunk.Position.ToVector3();
@@ -468,6 +467,31 @@ public class GreedyMeshing
                                 uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4); uvRects.Add(rect4);
                                 uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4); uvBasis.Add(basis4);
 
+                                // Compute ordered emissive UVs for this face
+                                Vector2[] emisUVs;
+                                if (!BlockData.EmissiveFaceUVsOrdered.TryGetValue((cell.Type, cell.FaceIdx), out emisUVs))
+                                {
+                                    emisUVs = orderedUVs;
+                                }
+                                RectangleF emisRect;
+                                if (!BlockData.EmissiveAtlasUVs.TryGetValue((cell.Type, cell.FaceIdx), out emisRect))
+                                {
+                                    emisRect = rect;
+                                }
+                                Vector2 emisBL = emisUVs[0];
+                                Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
+                                Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+                                
+                                emissiveUVRects.Add(emisRect4);
+                                emissiveUVRects.Add(emisRect4);
+                                emissiveUVRects.Add(emisRect4);
+                                emissiveUVRects.Add(emisRect4);
+                                
+                                emissiveUVBasis.Add(emisBasis4);
+                                emissiveUVBasis.Add(emisBasis4);
+                                emissiveUVBasis.Add(emisBasis4);
+                                emissiveUVBasis.Add(emisBasis4);
+                                
                                 indices.Add(baseOffset + 2);
                                 indices.Add(baseOffset + 1);
                                 indices.Add(baseOffset + 0);
@@ -521,6 +545,25 @@ public class GreedyMeshing
                 texcoords.AddRange(face.UVs);
                 colors.AddRange(face.Colors);
 
+                // Compute ordered emissive UVs for this face
+                Vector2[] emisUVs;
+                if (!BlockData.EmissiveFaceUVsOrdered.TryGetValue((face.Type, face.FaceIdx), out emisUVs))
+                {
+                    emisUVs = orderedUVs;
+                }
+                RectangleF emisRect;
+                if (!BlockData.EmissiveAtlasUVs.TryGetValue((face.Type, face.FaceIdx), out emisRect))
+                {
+                    emisRect = rect;
+                }
+                Vector2 emisBL = emisUVs[0];
+                Vector4 emisBasis4 = FaceUtils.ComputeUVBasis(emisUVs);
+                Vector4 emisRect4 = new Vector4(emisBL.X, emisBL.Y, emisRect.Width, emisRect.Height);
+
+                // Four vertices per rect
+                emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4); emissiveUVRects.Add(emisRect4);
+                emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4); emissiveUVBasis.Add(emisBasis4);
+                
                 indices.Add(baseOffset + 2);
                 indices.Add(baseOffset + 1);
                 indices.Add(baseOffset + 0);
@@ -580,6 +623,21 @@ public class GreedyMeshing
             meshData.UVBasis[i * 4 + 1] = uvBasis[i].Y;
             meshData.UVBasis[i * 4 + 2] = uvBasis[i].Z;
             meshData.UVBasis[i * 4 + 3] = uvBasis[i].W;
+        }
+        
+        for (int i = 0; i < emissiveUVRects.Count; i++)
+        {
+            meshData.EmissiveUVRects[i * 4 + 0] = emissiveUVRects[i].X;
+            meshData.EmissiveUVRects[i * 4 + 1] = emissiveUVRects[i].Y;
+            meshData.EmissiveUVRects[i * 4 + 2] = emissiveUVRects[i].Z;
+            meshData.EmissiveUVRects[i * 4 + 3] = emissiveUVRects[i].W;
+        }
+        for (int i = 0; i < emissiveUVBasis.Count; i++)
+        {
+            meshData.EmissiveUVBasis[i * 4 + 0] = emissiveUVBasis[i].X;
+            meshData.EmissiveUVBasis[i * 4 + 1] = emissiveUVBasis[i].Y;
+            meshData.EmissiveUVBasis[i * 4 + 2] = emissiveUVBasis[i].Z;
+            meshData.EmissiveUVBasis[i * 4 + 3] = emissiveUVBasis[i].W;
         }
         
         return meshData;
