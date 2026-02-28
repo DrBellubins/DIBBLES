@@ -8,6 +8,7 @@ using static DIBBLES.Terrain.Meshing.Helpers;
 
 namespace DIBBLES.Terrain.Meshing;
 
+// TODO: Breaking/placing blocks causes the uvs to INCREASE IN SIZE
 // TODO: Implement emissive textures
 // TODO: Fix anti-tiling
 public class GreedyMeshing
