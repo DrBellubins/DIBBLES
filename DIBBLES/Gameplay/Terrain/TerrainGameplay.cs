@@ -284,6 +284,8 @@ public class TerrainGameplay
         if (oldBlock.Info.Hardness != 10)
         {
             var newBlock = new Block(blockPos, BlockType.Air);
+
+            newBlock.Biome = oldBlock.Biome; // Preserve biome always!
             
             chunk.SetBlock(localX, localY, localZ, newBlock);
             chunk.IsModified = true;
@@ -311,11 +313,11 @@ public class TerrainGameplay
             if (!sound.IsDisposed)
                 breakPlacePlayer.Play(sound, blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
                 //AudioPlayer.CreateAndPlay(sound, blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
+                
+            // Add block to inventory
+            if (GameScene.PlayerCharacter.IsSurvival)
+                GameScene.Inventory.PlayerInventory.AddBlock(oldBlock.Type);
         }
-        
-        // Add block to inventory
-        if (GameScene.PlayerCharacter.IsSurvival)
-            GameScene.Inventory.PlayerInventory.AddBlock(oldBlock.Type);
     }
     
     public void PlaceBlock(PlayerCharacter player, BlockType blockType)
@@ -362,8 +364,11 @@ public class TerrainGameplay
             return;
         
         // Place the new block
+        var biome = chunk.GetBiomeAt(localX, localY, localZ);
         var newBlock = new Block(newBlockPos, blockType);
-            
+
+        newBlock.Biome = biome; // Preserve biome always!
+        
         chunk.SetBlock(localX, localY, localZ, newBlock);
 
         chunk.IsModified = true;

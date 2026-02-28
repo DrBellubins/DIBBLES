@@ -29,7 +29,7 @@ public class SnowlandsBiome
             returnData.IslandDepth++;
         }
         
-        chunk.SetBiomeAt(returnData.LocalPos.X, returnData.LocalPos.Y, returnData.LocalPos.Z, TerrainBiome.Snowlands);
+        //chunk.SetBiomeAt(returnData.LocalPos.X, returnData.LocalPos.Y, returnData.LocalPos.Z, TerrainBiome.Snowlands);
         
         bRetData = returnData;
     }
