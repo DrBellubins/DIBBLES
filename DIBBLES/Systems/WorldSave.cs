@@ -4,7 +4,7 @@ using DIBBLES.Gameplay.Inventory;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using DIBBLES.Terrain;
-
+using DIBBLES.Terrain.Biomes;
 using static DIBBLES.Terrain.TerrainGeneration;
 
 namespace DIBBLES.Systems;

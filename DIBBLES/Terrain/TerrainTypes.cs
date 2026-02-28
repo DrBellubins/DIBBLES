@@ -1,3 +1,4 @@
+using DIBBLES.Terrain.Biomes;
 using DIBBLES.Utils;
 
 using static DIBBLES.Terrain.TerrainGeneration;

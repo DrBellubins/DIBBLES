@@ -2,6 +2,7 @@ using System.Runtime.Intrinsics.X86;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using DIBBLES.Terrain;
+using DIBBLES.Terrain.Biomes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
 
@@ -12,14 +13,18 @@ namespace DIBBLES.Systems.SFX;
 /// </summary>
 public class WorldSound
 {
-    public const int AudioPlayersCount = 1;
+    public const int AudioPlayersCount = 4;
     public const float SwarmRadius = 5f;
     public const float SwarmSpeed = 0.1f;
     
     private List<AudioPlayer> AudioPlayers = new();
     private static Dictionary<string, Soundscape> soundscapes = new();
 
+    private Soundscape? currentSoundScape;
     private Block BlockBeneathPlayer => TerrainGameplay.BlockAtPlayersFeet;
+
+    private TerrainBiome currentBiome;
+    private TerrainBiome previousBiome;
     
     public void Start()
     {
@@ -27,6 +32,7 @@ public class WorldSound
         for (int i = 0; i < AudioPlayersCount; i++)
         {
             var audioPlayer = new AudioPlayer();
+            audioPlayer.IsLooped = true;
             AudioPlayers.Add(audioPlayer);
         }
         
@@ -43,28 +49,53 @@ public class WorldSound
         }
     }
 
-    // TODO: Implement smooth random swarming motion for audio players
     public void Update()
     {
+        previousBiome = BlockBeneathPlayer.Biome;
+
+        Debug.Draw2DText($"Current: {currentBiome}, previous: {previousBiome}");
+        
+        if (currentBiome != previousBiome)
+        {
+            Debug.Info($"Changed biomes! from {previousBiome} to {currentBiome}");
+            
+            // Update current sound scape based on biome
+            /*switch (BlockBeneathPlayer.Biome)
+            {
+                case TerrainBiome.Plains:
+                    currentSoundScape = GetSoundscape("Plains");
+                    break;
+                case TerrainBiome.Desert:
+                    break;
+                case TerrainBiome.Snowlands:
+                    break;
+            }*/
+        }
+        
         for (int i = 0; i < AudioPlayers.Count; i++)
         {
             var audioBugPos = computeSwarmPosition(i, SwarmRadius, SwarmSpeed);
             var audioBug = AudioPlayers[i];
             
             audioBug.Position = GameScene.PlayerCharacter.Position.ToVector3() + audioBugPos;
+            //if
+            audioBug.Volume = computeSwarmVolume(i, 0.1f);
             
             if (!audioBug.IsPlaying)
                 audioBug.Play();
 
             AudioPlayers[i] = audioBug;
         }
+
+        currentBiome = BlockBeneathPlayer.Biome;
     }
 
     public void DebugDraw()
     {
         foreach (var audioBug in AudioPlayers)
         {
-            Debug.DrawBox(audioBug.Position, new Vector3(0.1f), Color.Blue);
+            var volCol = GMath.Clamp(audioBug.Volume, 0.2f, 1f);
+            Debug.DrawBox(audioBug.Position, new Vector3(0.1f), new Color(0f, 0f, volCol));
         }
     }
     
@@ -72,6 +103,19 @@ public class WorldSound
     {
         soundscapes.TryGetValue(name, out var soundScape);
         return soundScape;
+    }
+
+    private float computeSwarmVolume(int index, float speed)
+    {
+        int seed = index * 523;
+        float phaseA = seed * 0.23f;
+        
+        // Time evolves smoothly per bug
+        float time = Time.time * speed + seed * 0.017f;
+
+        var volume = MathF.Sin(time) + 0.5f * 0.5f;
+        
+        return volume;
     }
     
     private Vector3 computeSwarmPosition(int index, float radius, float speed)

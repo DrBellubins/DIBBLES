@@ -22,8 +22,8 @@ public class TerrainGameplay
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
         
-        var solidBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter);
-        var blockBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false);
+        var solidBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, true, false);
+        var blockBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false, false);
         var blockAtFeetBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false, true);
 
         if (solidBelowBlock != null)
@@ -82,7 +82,7 @@ public class TerrainGameplay
         }
     }
     
-    public Block? GetBlockBelowPlayer(PlayerCharacter player, bool ignoreAir = true, bool atFeet = false)
+    public Block? GetBlockBelowPlayer(PlayerCharacter player, bool ignoreAir, bool atFeet)
     {
         var floored = new Vector3Int(
             (int)MathF.Floor((float)player.Position.X),

@@ -26,7 +26,6 @@
 ./Terrain/NeighborCache.cs
 ./Terrain/TerrainSkyfill.cs
 ./Terrain/TerrainLighting.cs
-./Terrain/TerrainBiomes.cs
 ./Terrain/TerrainMesh.cs
 ./Terrain/Features/TerrainIsland.cs
 ./Terrain/Features/TerrainDecorations.cs
@@ -39,6 +38,7 @@
 ./Terrain/Blocks/Water.cs
 ./Terrain/TerrainTick.cs
 ./Terrain/Biomes/DesertBiome.cs
+./Terrain/Biomes/TerrainBiomes.cs
 ./Terrain/Biomes/PlainsBiome.cs
 ./Terrain/Biomes/BiomeUtils.cs
 ./Terrain/Biomes/SnowlandsBiome.cs

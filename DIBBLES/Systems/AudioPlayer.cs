@@ -19,6 +19,8 @@ public class AudioPlayer
     public float Pitch = 0.0f; // MonoGame: -1.0f (down 1 octave) to +1.0f (up 1 octave)
     public bool IsPlaying => Sound != null && instance?.State == SoundState.Playing;
 
+    public bool IsLooped = false;
+    
     public float MaxDistance = 5.0f;
     public float MinDistance = 1.0f;
     public float DopplerFactor = 0.0f;
@@ -43,7 +45,7 @@ public class AudioPlayer
 
         if (instance != null)
         {
-            Debug.Info($"AudioListener pos: {listener.Position}, vel: {listener.Velocity}, forward: {listener.Forward}");
+            /*Debug.Info($"AudioListener pos: {listener.Position}, vel: {listener.Velocity}, forward: {listener.Forward}");
             Debug.Info($"AudioEmitter pos: {emitter.Position}, vel: {emitter.Velocity}");
 
             if (float.IsNaN(listener.Position.X) || float.IsInfinity(listener.Position.X)
@@ -51,7 +53,7 @@ public class AudioPlayer
                 || float.IsNaN(listener.Position.Z) || float.IsInfinity(listener.Position.Z))
             {
                 Debug.Error("Listener position is not finite!");
-            }
+            }*/
             
             instance.Apply3D(listener, emitter);
             
@@ -59,7 +61,7 @@ public class AudioPlayer
             if (!IsPlaying && hasPlayed)
             {
                 //Debug.Info("Audio player unloaded");
-                Engine.AudioPlayers.Remove(this);
+                //Engine.AudioPlayers.Remove(this);
                 hasPlayed = false; // ensure we only run this block once
             }
         }
@@ -71,6 +73,10 @@ public class AudioPlayer
             return;
         
         instance = Sound.CreateInstance();
+        instance.IsLooped = IsLooped;
+        
+        instance.Volume = MathHelper.Clamp(Volume, 0f, 1f);
+        instance.Pan = 0f;
         
         float pitch = Pitch;
 

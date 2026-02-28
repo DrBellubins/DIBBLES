@@ -1,4 +1,4 @@
-namespace DIBBLES.Terrain;
+namespace DIBBLES.Terrain.Biomes;
 
 public enum TerrainBiome
 {
