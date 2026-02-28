@@ -9,6 +9,12 @@ public struct Vector2Int
         X = x;
         Y = y;
     }
+    
+    public Vector2Int(int xy)
+    {
+        X = xy;
+        Y = xy;
+    }
 
     public override string ToString()
     {

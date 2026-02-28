@@ -27,11 +27,11 @@ public class PlayerCharacter
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     
+    public static bool CollisionBoxDebug = false;
+    
     // Gameplay
     public int Health = 100;
     public Hotbar hotbar = new();
-    
-    private Vector3 spawnPosition = new Vector3(0f, 0f, 0f);
     
     // Systems
     public GVec3 Position = GVec3.Zero;
@@ -46,6 +46,8 @@ public class PlayerCharacter
     public Vector3 CameraForward = Vector3.Zero;
     public Vector3 CameraUp = Vector3.Zero;
     public Vector3 CameraRight = Vector3.Zero;
+
+    public List<BoundingBox> CollisionBoxes = new();
     
     public bool FreeCamEnabled = true;
     public Freecam freecam = new();
@@ -65,6 +67,7 @@ public class PlayerCharacter
     
     public bool IsSurvival = false;
 
+    private Vector3 spawnPosition = new Vector3(0f, 0f, 0f);
     //private Sound fallSound;
     private HandModel handModel = new();
     
@@ -108,6 +111,7 @@ public class PlayerCharacter
         Commands.Register("heal", "Heals the player: /heal for full health", healCMD);
         Commands.Register("tp", "Teleport to a position: /teleport x y z", teleportCMD);
         Commands.Register("gm", "Toggle gamemode between creative and survival", gameModeCMD);
+        Commands.Register("col", "Toggle collision debug", collisionDbgCMD);
         
         CursorManager.LockCursor();
 
@@ -461,13 +465,13 @@ public class PlayerCharacter
         var newPosition = Position;
 
         // Call once per frame before axis checks!
-        var blockBoxes = getBlockBoxes(Position.ToVector3(), 10f);
+        CollisionBoxes = getBlockBoxes(Position.ToVector3(), 10f);
 
         // X axis
         newPosition.X += moveDelta.X;
         
         var playerBoxX = getBoundingBox(newPosition, currentHeight);
-        var collidedX = blockBoxes.Any(box => box.Intersects(playerBoxX));
+        var collidedX = CollisionBoxes.Any(box => box.Intersects(playerBoxX));
         
         if (collidedX)
         {
@@ -481,7 +485,7 @@ public class PlayerCharacter
         newPosition.Y += moveDelta.Y;
         
         var playerBoxY = getBoundingBox(newPosition, currentHeight);
-        var collidedY = blockBoxes.Any(box => box.Intersects(playerBoxY));
+        var collidedY = CollisionBoxes.Any(box => box.Intersects(playerBoxY));
         
         if (collidedY)
         {
@@ -498,7 +502,7 @@ public class PlayerCharacter
         newPosition.Z += moveDelta.Z;
         
         var playerBoxZ = getBoundingBox(newPosition, currentHeight);
-        var collidedZ = blockBoxes.Any(box => box.Intersects(playerBoxZ));
+        var collidedZ = CollisionBoxes.Any(box => box.Intersects(playerBoxZ));
         
         if (collidedZ)
         {
@@ -606,6 +610,12 @@ public class PlayerCharacter
     {
         UpdateClosestLightLevel();
         handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
+
+        if (CollisionBoxDebug)
+        {
+            foreach (var collider in CollisionBoxes)
+                Debug.DrawBox(collider.Min + new Vector3(1f), Vector3.One);
+        }
     }
 
     public void DrawUI()
@@ -684,5 +694,15 @@ public class PlayerCharacter
             Chat.Write("Set gamemode to survival",  ChatMessageType.Command);
         else
             Chat.Write("Set gamemode to creative",  ChatMessageType.Command);
+    }
+    
+    private void collisionDbgCMD(string[] args)
+    {
+        CollisionBoxDebug = !CollisionBoxDebug;
+        
+        if (CollisionBoxDebug)
+            Chat.Write("Enabled collision debug",  ChatMessageType.Command);
+        else
+            Chat.Write("Disabled collision debug",  ChatMessageType.Command);
     }
 }

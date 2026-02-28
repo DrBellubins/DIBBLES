@@ -29,6 +29,10 @@ public class TerrainGameplay
                 SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f),
                 1f, 1f, 1f, Color.Black, 0.025f);
         }
+
+        var belowBlock = BlockBelowPlayer(GameScene.PlayerCharacter);
+        
+        Debug.DrawBox(belowBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f), new Vector3(0.25f));
     }
 
     // Rendered into the UI buffer.
@@ -46,6 +50,37 @@ public class TerrainGameplay
             if (!SelectedBlock.Info.IsBillboard)
                 Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
         }
+    }
+    
+    public Block BlockBelowPlayer(PlayerCharacter player)
+    {
+        // Player's position floored to nearest block
+        var playerPosInt = new Vector3Int(
+            (int)MathF.Floor((int)player.Position.X),
+            (int)MathF.Floor((int)player.Position.Y),
+            (int)MathF.Floor((int)player.Position.Z)
+        );
+
+        // Position directly beneath
+        var belowPos = new Vector3Int(playerPosInt.X, playerPosInt.Y, playerPosInt.Z);
+
+        int chunkX = (int)Math.Floor((float)belowPos.X / ChunkSize) * ChunkSize;
+        int chunkY = (int)Math.Floor((float)belowPos.Y / ChunkSize) * ChunkSize;
+        int chunkZ = (int)Math.Floor((float)belowPos.Z / ChunkSize) * ChunkSize;
+
+        var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+
+        if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+        {
+            // Return Air block if chunk not loaded
+            return new Block(belowPos, BlockType.Air);
+        }
+
+        int localX = belowPos.X - chunkX;
+        int localY = belowPos.Y - chunkY;
+        int localZ = belowPos.Z - chunkZ;
+
+        return chunk.GetBlock(localX, localY, localZ);
     }
     
     private (Block, Vector3Int) selectBlock(Camera3D camera)

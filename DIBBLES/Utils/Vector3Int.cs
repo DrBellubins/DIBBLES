@@ -16,6 +16,13 @@ public struct Vector3Int
         Z = z;
     }
 
+    public Vector3Int(int xyz)
+    {
+        X = xyz;
+        Y = xyz;
+        Z = xyz;
+    }
+    
     public Vector3 ToVector3()
     {
         return new Vector3(X, Y, Z);

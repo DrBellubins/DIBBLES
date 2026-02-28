@@ -191,6 +191,23 @@ public class Debug
             debugBoxes.Add(debugBox);
     }
     
+    // Mixture Vector3 and Vector3Int
+    public static void DrawBox(Vector3Int position, Vector3 size, float thickness = 0.005f, float frustumCullRadius = 1f)
+    {
+        var debugBox = new DebuBox(position.ToVector3(), size, Color.White, thickness, frustumCullRadius);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
+    }
+    
+    public static void DrawBox(Vector3Int position, Vector3 size, Color color, float thickness = 0.005f, float frustumCullRadius = 1f)
+    {
+        var debugBox = new DebuBox(position.ToVector3(), size, color, thickness, frustumCullRadius);
+        
+        if (!debugBoxes.Contains(debugBox))
+            debugBoxes.Add(debugBox);
+    }
+    
     // Draw text
     public static void Draw2DText(string text, Color color)
     {
