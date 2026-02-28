@@ -43,6 +43,16 @@ public class AudioPlayer
 
         if (instance != null)
         {
+            Debug.Info($"AudioListener pos: {listener.Position}, vel: {listener.Velocity}, forward: {listener.Forward}");
+            Debug.Info($"AudioEmitter pos: {emitter.Position}, vel: {emitter.Velocity}");
+
+            if (float.IsNaN(listener.Position.X) || float.IsInfinity(listener.Position.X)
+                || float.IsNaN(listener.Position.Y) || float.IsInfinity(listener.Position.Y)
+                || float.IsNaN(listener.Position.Z) || float.IsInfinity(listener.Position.Z))
+            {
+                Debug.Error("Listener position is not finite!");
+            }
+            
             instance.Apply3D(listener, emitter);
             
             // Dispose after we've played.
