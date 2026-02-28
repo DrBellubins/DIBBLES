@@ -137,8 +137,8 @@ public class RenderEngine
         {
             var bufferWidth = Engine.ScreenWidth / 4.0f;
             var bufferHeight = Engine.ScreenHeight / 4.0f;
-            //var testBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
-            var testBuffer = postProcessingManager.bloom.BloomOutput;
+            var testBuffer = postProcessingManager.ssaoPostProcess.SSAOBlurTarget;
+            //var testBuffer = postProcessingManager.bloom.BloomOutput;
             //var testBuffer = EmissiveBuffer;
             
             UIBatch.Draw(DepthBuffer, UI.TopRightPivot - new Vector2(bufferWidth, 0), 

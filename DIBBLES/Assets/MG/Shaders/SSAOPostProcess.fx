@@ -28,7 +28,6 @@ float2 ScreenSize;
 float4x4 Projection;
 float4x4 InvProjection;
 
-float3 CameraPos;
 float CameraNear;
 float CameraFar;
 
@@ -221,7 +220,7 @@ float RangeWeight(float centerZ, float sampleZ, float r)
 
 float FogFactor(float3 viewPos)
 {
-    float dist = length(viewPos - CameraPos);
+    float dist = length(viewPos);
     return saturate((dist - FogNear) / (FogFar - FogNear));
 }
 

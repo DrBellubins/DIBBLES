@@ -105,7 +105,6 @@ public class SSAOPostProcess : PostProcessingEffect
         effect.SetValue("Projection", proj);
         effect.SetValue("InvProjection", invProj);
         
-        effect.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
         effect.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
         effect.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
         
