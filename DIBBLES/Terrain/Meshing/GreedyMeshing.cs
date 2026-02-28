@@ -9,7 +9,7 @@ using static DIBBLES.Terrain.Meshing.Helpers;
 namespace DIBBLES.Terrain.Meshing;
 
 // TODO: Implement emissive textures
-// TODO: Implement anti-tiling
+// TODO: Fix anti-tiling
 public class GreedyMeshing
 {
     private struct GreedyCell
@@ -36,8 +36,6 @@ public class GreedyMeshing
         var transparentFaces = new List<(float dist, FaceData face)>();
 
         var nc = NeighborCache.Build(chunk);
-
-        var rng = new SeededRandom(1337); // TEMP SEED
         
         // Scan along each axis and both face directions
         for (int axis = 0; axis < 3; axis++)
@@ -113,16 +111,9 @@ public class GreedyMeshing
                             var pos = new Vector3Int(x, y, z);
                             var curType = chunk.IsInBounds(x, y, z) ? chunk.GetTypeAt(x, y, z) : BlockType.Air;
                             var curInfo = BlockData.Prefabs[curType];
-
-                            long chunkBlockSeed = Seed 
-                                                  ^ (pos.X * 73428767L)
-                                                  ^ (pos.Y * 9127841L)
-                                                  ^ (pos.Z * 192837465L);
-            
-                            rng.SetSeed(chunkBlockSeed);
                             
                             // Neighbor block across the face plane (solid check)
-                            bool neighborSolid = Helpers.IsVoxelSolid(chunk, nx, ny, nz, nc);
+                            bool neighborSolid = IsVoxelSolid(chunk, nx, ny, nz, nc);
 
                             // Billboard exclusion
                             if (curInfo.IsBillboard)
@@ -174,8 +165,8 @@ public class GreedyMeshing
                                 Type = curType,
                                 FaceIdx = faceIdx,
                                 UVRect = uvRect,
-                                UVFlipDirection = TerrainMesh.GreedyRespectAntiTileFlips
-                                    ? Helpers.ComputeRndFlipMask(Seed, curInfo, new Vector3Int(x, y, z), faceIdx)
+                                UVFlipDirection = GreedyRespectAntiTileFlips
+                                    ? ComputeRndFlipMask(Seed, curInfo, new Vector3Int(x, y, z), faceIdx)
                                     : 0
                             };
                         }
