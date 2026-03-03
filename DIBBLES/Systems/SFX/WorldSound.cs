@@ -49,6 +49,9 @@ public class WorldSound
         }
     }
 
+    private float timer = 0f;
+    private float playDelayInterval = 0.1f;
+    
     public void Update()
     {
         previousBiome = BlockBeneathPlayer.Biome;
@@ -71,6 +74,8 @@ public class WorldSound
                     break;
             }*/
         }
+
+        timer += Time.DeltaTime;
         
         for (int i = 0; i < AudioPlayers.Count; i++)
         {
@@ -79,9 +84,13 @@ public class WorldSound
             
             audioBug.Position = GameScene.PlayerCharacter.Position.ToVector3() + audioBugPos;
             audioBug.Volume = computeSwarmVolume(i, 0.1f);
-            
-            if (!audioBug.IsPlaying)
+
+            if (timer > playDelayInterval && !audioBug.IsPlaying)
+            {
+                Debug.Info($"Played at: {timer}");
                 audioBug.Play();
+                timer = 0f;
+            }
 
             AudioPlayers[i] = audioBug;
         }
@@ -107,7 +116,6 @@ public class WorldSound
     private float computeSwarmVolume(int index, float speed)
     {
         int seed = index * 523;
-        float phaseA = seed * 0.23f;
         
         // Time evolves smoothly per bug
         float time = Time.time * speed + seed * 0.017f;
