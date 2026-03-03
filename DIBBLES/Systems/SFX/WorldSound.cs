@@ -101,11 +101,11 @@ public class WorldSound
 
     public void DebugDraw()
     {
-        foreach (var audioBug in AudioPlayers)
-        {
-            var volCol = GMath.Clamp(audioBug.Volume, 0.2f, 1f);
-            Debug.DrawBox(audioBug.Position, new Vector3(0.1f), new Color(0f, 0f, volCol));
-        }
+        //foreach (var audioBug in AudioPlayers)
+        //{
+        //    var volCol = GMath.Clamp(audioBug.Volume, 0.2f, 1f);
+        //    Debug.DrawBox(audioBug.Position, new Vector3(0.1f), new Color(0f, 0f, volCol));
+        //}
     }
     
     public static Soundscape? GetSoundscape(string name)
