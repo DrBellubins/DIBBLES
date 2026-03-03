@@ -1,4 +1,5 @@
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -54,9 +55,9 @@ public class TerrainCommands
     
     private void createCylinder(BlockType blockType, int radius, int height = 1)
     {
-        var centerX = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.X);
-        var centerY = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Y - 2);
-        var centerZ = (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z);
+        var centerX = (int)MathF.Floor((float)PlayerManager.Current.Position.X);
+        var centerY = (int)MathF.Floor((float)PlayerManager.Current.Position.Y - 2);
+        var centerZ = (int)MathF.Floor((float)PlayerManager.Current.Position.Z);
     
         HashSet<Vector3Int> affectedChunks = new();
     

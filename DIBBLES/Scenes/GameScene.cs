@@ -23,7 +23,7 @@ public class GameScene : Scene
 {
     public static RenderEngine Renderer = new();
     public static TerrainGeneration TerrainGen = new();
-    public static PlayerCharacter PlayerCharacter = new();
+    //public static PlayerCharacter PlayerCharacter = new();
     public static InventorySystem Inventory = new();
     public static WorldSound WorldAudio = new();
     public static DayNightCycle TimeCycle = new();
@@ -64,7 +64,7 @@ public class GameScene : Scene
         TerrainGen.Start(); // Initial terrain generation
         
         Inventory.Start();
-        PlayerCharacter.Start(); // Must be started after terrain
+        PlayerManager.Current.Start(); // Must be started after terrain
         GameChat.Start();
         
         UIBlur.Start();
@@ -105,12 +105,12 @@ public class GameScene : Scene
         TimeCycle.Update();
         WorldAudio.Update();
         
-        PlayerCharacter.Update();
+        PlayerManager.Current.Update();
         
         Inventory.Update();
         
-        TerrainGen.Update(PlayerCharacter);
-        TerrainGeneration.Gameplay.Update(PlayerCharacter.Camera);
+        TerrainGen.Update(PlayerManager.Current);
+        TerrainGeneration.Gameplay.Update(PlayerManager.Current.Camera);
         
         GameChat.Update();
         
@@ -118,7 +118,7 @@ public class GameScene : Scene
             WorldSave.SaveWorldData("test");
         
         _DebugMenu.Update();
-        Debug.Update(PlayerCharacter.Camera); // Must run after everything
+        Debug.Update(PlayerManager.Current.Camera); // Must run after everything
     }
 
     public override void Draw()

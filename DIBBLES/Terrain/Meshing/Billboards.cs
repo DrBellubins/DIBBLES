@@ -1,5 +1,6 @@
 using DIBBLES.Effects;
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -30,17 +31,17 @@ public class Billboards
         graphics.RasterizerState = RasterizerState.CullNone;
     
         var shader = billboardShader;
-        var view = GameScene.PlayerCharacter.Camera.View;
-        var projection = GameScene.PlayerCharacter.Camera.Projection;
+        var view = PlayerManager.Current.Camera.View;
+        var projection = PlayerManager.Current.Camera.Projection;
     
         shader.SetValue("AtlasTex", BlockData.TextureAtlas);
     
         shader.SetValue("View", view);
         shader.SetValue("Projection", projection);
     
-        shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-        shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+        shader.SetValue("CameraPos", PlayerManager.Current.Camera.Position.ToVector3());
+        shader.SetValue("CameraNear", PlayerManager.Current.Camera.NearPlane);
+        shader.SetValue("CameraFar", PlayerManager.Current.Camera.FarPlane);
     
         shader.SetValue("FogNear", FogEffect.FogNear);
         shader.SetValue("FogFar", FogEffect.FogFar);
@@ -67,7 +68,7 @@ public class Billboards
 
                 Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
 
-                if (!GameScene.PlayerCharacter.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
+                if (!PlayerManager.Current.Camera.InFrustum(center, TerrainMesh.FrustumCullRadius))
                     continue;
 
                 VertexBuffer instanceBuffer = vertexBuffer;

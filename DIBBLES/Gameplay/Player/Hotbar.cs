@@ -158,7 +158,7 @@ public class Hotbar
                 }
                 
                 // Stack amount
-                if (slot.Type != BlockType.Air && slot.StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
+                if (slot.Type != BlockType.Air && slot.StackAmount > 0 && PlayerManager.Current.IsSurvival)
                 {
                     var padding = 8f;
                     var text = $"{slot.StackAmount}";
@@ -173,7 +173,7 @@ public class Hotbar
         }
         
         // Health bar
-        if (GameScene.PlayerCharacter.IsSurvival)
+        if (PlayerManager.Current.IsSurvival)
         {
             var healthPercent = (health * 0.01f) * healthBarWidth;
             healthBarRect.Width = (int)healthPercent;

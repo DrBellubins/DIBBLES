@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -99,14 +100,14 @@ public class SSAOPostProcess : PostProcessingEffect
         effect.SetValue("RandomTex", blueNoiseTex);
     
         // Camera params
-        var proj = GameScene.PlayerCharacter.Camera.Projection;
+        var proj = PlayerManager.Current.Camera.Projection;
         var invProj = Matrix.Invert(proj);
     
         effect.SetValue("Projection", proj);
         effect.SetValue("InvProjection", invProj);
         
-        effect.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-        effect.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+        effect.SetValue("CameraNear", PlayerManager.Current.Camera.NearPlane);
+        effect.SetValue("CameraFar", PlayerManager.Current.Camera.FarPlane);
         
         effect.SetValue("FogNear", FogEffect.FogNear);
         effect.SetValue("FogFar", FogEffect.FogFar);

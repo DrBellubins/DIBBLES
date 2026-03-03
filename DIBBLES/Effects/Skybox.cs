@@ -1,4 +1,5 @@
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
@@ -35,13 +36,13 @@ public class Skybox
         
         skyboxShader.SetValue("World", Matrix.Identity);
         
-        var view = GameScene.PlayerCharacter.Camera.View;
+        var view = PlayerManager.Current.Camera.View;
 
         // Remove translation: use only rotation for the skybox view!
         view.Translation = Vector3.Zero;
         
         skyboxShader.SetValue("View", view);
-        skyboxShader.SetValue("Projection", GameScene.PlayerCharacter.Camera.Projection);
+        skyboxShader.SetValue("Projection", PlayerManager.Current.Camera.Projection);
 
         skyboxShader.SetValue("SkyZenithColor", DayNightCycle.ZenithColor.ToVector3());
         skyboxShader.SetValue("SkyHorizonColor", DayNightCycle.HorizonColor.ToVector3());

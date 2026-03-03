@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Systems.Rendering;
@@ -227,7 +228,7 @@ public class PlayerInventory : InventoryBase
     // For block placing
     public void DecrementHeldStack(int amount = 1)
     {
-        HotBarSlots[GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex].StackAmount -= amount;
+        HotBarSlots[PlayerManager.Current.hotbar.HotBarSelectionIndex].StackAmount -= amount;
     }
     
     // Commands
@@ -244,7 +245,7 @@ public class PlayerInventory : InventoryBase
         if (Enum.TryParse<BlockType>(blockName, true, out var blockType))
         {
             // Give block at selected slot in hotbar
-            var selectionIndex = GameScene.PlayerCharacter.hotbar.HotBarSelectionIndex;
+            var selectionIndex = PlayerManager.Current.hotbar.HotBarSelectionIndex;
 
             if (args.Length == 1)
             {

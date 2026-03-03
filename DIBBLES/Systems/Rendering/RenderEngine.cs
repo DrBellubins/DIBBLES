@@ -1,5 +1,6 @@
 using DIBBLES.Effects;
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
@@ -90,7 +91,7 @@ public class RenderEngine
         TerrainGen.DrawOpaque();
         TerrainGen.DrawBillboards();
         
-        PlayerCharacter.Draw();
+        PlayerManager.Current.Draw();
     }
 
     private void drawTransparent()
@@ -169,7 +170,7 @@ public class RenderEngine
         
         UIBatch.Begin();
         
-        PlayerCharacter.DrawUI();
+        PlayerManager.Current.DrawUI();
         
         Inventory.Draw();
         

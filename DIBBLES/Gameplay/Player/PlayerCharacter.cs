@@ -1,4 +1,5 @@
 using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Gameplay.Terrain;
 using Microsoft.Xna.Framework;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
@@ -6,8 +7,9 @@ using DIBBLES.Systems.Rendering;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 
-using static DIBBLES.Terrain.TerrainGeneration;
 //using Debug = DIBBLES.Utils.Debug;
+
+using static DIBBLES.Gameplay.Player.PlayerUtils;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -105,13 +107,6 @@ public class PlayerCharacter
         handModel.Start();
         
         Spawn();
-        
-        Commands.Register("kill", "Kills the player", killCMD);
-        Commands.Register("spawn", "Respawns player at spawn point",  respawnCMD);
-        Commands.Register("heal", "Heals the player: /heal for full health", healCMD);
-        Commands.Register("tp", "Teleport to a position: /teleport x y z", teleportCMD);
-        Commands.Register("gm", "Toggle gamemode between creative and survival", gameModeCMD);
-        Commands.Register("col", "Toggle collision debug", collisionDbgCMD);
         
         CursorManager.LockCursor();
 
@@ -233,7 +228,7 @@ public class PlayerCharacter
         {
             checkCollisions();
         
-            CollisionBox = getBoundingBox(Position, currentHeight); // Needs to be set after collision detection
+            CollisionBox = GetBoundingBox(Position, currentHeight); // Needs to be set after collision detection
         }
         
         // Update falling state
@@ -465,12 +460,12 @@ public class PlayerCharacter
         var newPosition = Position;
 
         // Call once per frame before axis checks!
-        CollisionBoxes = getBlockBoxes(Position.ToVector3(), 10f);
+        CollisionBoxes = GetBlockBoxes(Position.ToVector3(), 10f);
 
         // X axis
         newPosition.X += moveDelta.X;
         
-        var playerBoxX = getBoundingBox(newPosition, currentHeight);
+        var playerBoxX = GetBoundingBox(newPosition, currentHeight);
         var collidedX = CollisionBoxes.Any(box => box.Intersects(playerBoxX));
         
         if (collidedX)
@@ -484,7 +479,7 @@ public class PlayerCharacter
         // Y axis
         newPosition.Y += moveDelta.Y;
         
-        var playerBoxY = getBoundingBox(newPosition, currentHeight);
+        var playerBoxY = GetBoundingBox(newPosition, currentHeight);
         var collidedY = CollisionBoxes.Any(box => box.Intersects(playerBoxY));
         
         if (collidedY)
@@ -501,7 +496,7 @@ public class PlayerCharacter
         // Z axis
         newPosition.Z += moveDelta.Z;
         
-        var playerBoxZ = getBoundingBox(newPosition, currentHeight);
+        var playerBoxZ = GetBoundingBox(newPosition, currentHeight);
         var collidedZ = CollisionBoxes.Any(box => box.Intersects(playerBoxZ));
         
         if (collidedZ)
@@ -515,101 +510,11 @@ public class PlayerCharacter
         Position = newPosition;
     }
     
-    private static List<BoundingBox> getBlockBoxes(Vector3 center, float radius)
-    {
-        var result = new List<BoundingBox>();
-        
-        int minX = (int)MathF.Floor(center.X - radius);
-        int maxX = (int)MathF.Floor(center.X + radius);
-        int minY = (int)MathF.Floor(center.Y - radius);
-        int maxY = (int)MathF.Floor(center.Y + radius);
-        int minZ = (int)MathF.Floor(center.Z - radius);
-        int maxZ = (int)MathF.Floor(center.Z + radius);
-
-        float radiusSquared = radius * radius;
-
-        for (int x = minX; x <= maxX; x++)
-        for (int y = minY; y <= maxY; y++)
-        for (int z = minZ; z <= maxZ; z++)
-        {
-            var blockCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f);
-            
-            if (Vector3.DistanceSquared(center, blockCenter) > radiusSquared)
-                continue;
-
-            // Find which chunk this block belongs to
-            int chunkX = (int)Math.Floor((float)x / ChunkSize) * ChunkSize;
-            int chunkY = (int)Math.Floor((float)y / ChunkSize) * ChunkSize;
-            int chunkZ = (int)Math.Floor((float)z / ChunkSize) * ChunkSize;
-            
-            var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
-
-            if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
-                continue;
-            
-            int localX = x - chunkX;
-            int localY = y - chunkY;
-            int localZ = z - chunkZ;
-
-            // Bounds check
-            if (localX < 0 || localX >= ChunkSize ||
-                localY < 0 || localY >= ChunkSize ||
-                localZ < 0 || localZ >= ChunkSize)
-                continue;
-
-            var blockType = chunk.GetTypeAt(localX, localY, localZ);
-            
-            // Only add solid blocks
-            if (blockType != BlockType.Air &&
-                chunk.GetInfoAt(localX, localY, localZ).IsCollidable)
-            {
-                var blockMin = new Vector3(x, y, z);
-                var blockMax = blockMin + Vector3.One;
-                
-                result.Add(new BoundingBox(blockMin, blockMax));
-            }
-        }
-        
-        return result;
-    }
-    
-    private void UpdateClosestLightLevel()
-    {
-        var blockPos = new Vector3Int(
-            (int)MathF.Floor((float)Position.X),
-            (int)MathF.Floor((float)Position.Y),
-            (int)MathF.Floor((float)Position.Z)
-        );
-
-        // Get the light level at this block (use global helper)
-        byte lightLevel = Chunk.GetLightLevelGlobal(blockPos);
-
-        closestLightLevel = lightLevel;
-    }
-    
-    // Player box size: width and depth ≈ 0.5m (Source player is 32 units wide ≈ 0.81m, but keep hitbox thin for simplicity)
-    private BoundingBox getBoundingBox(GVec3 position, float height)
-    {
-        GVec3 min = new GVec3(
-            position.X - 0.25d,
-            position.Y - height * 0.5d,
-            position.Z - 0.25d
-        );
-        GVec3 max = new GVec3(
-            position.X + 0.25d,
-            position.Y + height * 0.5d,
-            position.Z + 0.25d
-        );
-        
-        return new BoundingBox(min.ToVector3(), max.ToVector3());
-    }
-    
     // Draw
-    private static byte closestLightLevel = 0;
     public void Draw()
     {
-        UpdateClosestLightLevel();
-        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, closestLightLevel, hotbar.SelectedItem);
+        UpdateClosestLightLevel(Position.ToVector3());
+        handModel.Draw(Camera, CameraForward, CameraRight, CameraUp, CameraRotation, ClosestLightLevel, hotbar.SelectedItem);
 
         if (CollisionBoxDebug)
         {
@@ -633,76 +538,5 @@ public class PlayerCharacter
         // Draw cursor
         if (!IsFrozen)
             UIBatch.DrawCircle(Engine.ScreenWidth / 2f, Engine.ScreenHeight / 2f, 1f, Color.White);
-    }
-    
-    // Commands
-    private void killCMD(string[] args)
-    {
-        Kill();
-        Chat.Write("Killed the player", ChatMessageType.Command);
-    }
-    
-    private void respawnCMD(string[] args)
-    {
-        Respawn();
-        Chat.Write($"Spawning at {WorldSave.Data.PlayerPosition}", ChatMessageType.Command);
-    }
-    
-    private void healCMD(string[] args)
-    {
-        int healAmount = 0;
-
-        if (args.Length != 1)
-        {
-            healAmount = 100;
-            Chat.Write("Set player health to full health", ChatMessageType.Command);
-        }
-        else if (int.TryParse(args[0], out var amount))
-        {
-            healAmount = amount;
-            Chat.Write($"Set player health to: {amount}", ChatMessageType.Command);
-        }
-        else
-            Chat.Write("Usage: /heal amount", ChatMessageType.Error);
-            
-        SetHealth(healAmount);
-    }
-
-    private void teleportCMD(string[] args)
-    {
-        if (args.Length == 1 && args[0].Contains(','))
-            args = args[0].Split(',');
-
-        if (args.Length != 3 ||
-            !double.TryParse(args[0], out var x) ||
-            !double.TryParse(args[1], out var y) ||
-            !double.TryParse(args[2], out var z))
-        {
-            Chat.Write("Usage: /teleport x y z", ChatMessageType.Error);
-            return;
-        }
-
-        Position = new GVec3(x, y, z);
-        Chat.Write($"Teleported to ({x}, {y}, {z})", ChatMessageType.Command);
-    }
-
-    private void gameModeCMD(string[] args)
-    {
-        IsSurvival = !IsSurvival;
-        
-        if (IsSurvival)
-            Chat.Write("Set gamemode to survival",  ChatMessageType.Command);
-        else
-            Chat.Write("Set gamemode to creative",  ChatMessageType.Command);
-    }
-    
-    private void collisionDbgCMD(string[] args)
-    {
-        CollisionBoxDebug = !CollisionBoxDebug;
-        
-        if (CollisionBoxDebug)
-            Chat.Write("Enabled collision debug",  ChatMessageType.Command);
-        else
-            Chat.Write("Disabled collision debug",  ChatMessageType.Command);
     }
 }

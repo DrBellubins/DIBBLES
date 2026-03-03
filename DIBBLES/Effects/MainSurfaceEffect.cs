@@ -1,4 +1,5 @@
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using DIBBLES.Systems;
@@ -269,7 +270,7 @@ public class MainSurfaceEffect
     // Convenience to set camera/fog from current scene
     public void SetSceneCameraAndFog()
     {
-        var cam = Scenes.GameScene.PlayerCharacter.Camera;
+        var cam = PlayerManager.Current.Camera;
 
         CameraPos = cam.Position.ToVector3();
         CameraNear = cam.NearPlane;

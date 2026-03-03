@@ -59,6 +59,9 @@
 ./Gameplay/Chat.cs
 ./Gameplay/Interactions.cs
 ./Gameplay/Commands.cs
+./Gameplay/Player/PlayerUtils.cs
+./Gameplay/Player/PlayerManager.cs
+./Gameplay/Player/PlayerCommands.cs
 ./Gameplay/Player/HandModel.cs
 ./Gameplay/Player/Hotbar.cs
 ./Gameplay/Player/PlayerCharacter.cs

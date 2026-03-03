@@ -143,7 +143,7 @@ public class Debug
 
     public static void Draw3D()
     {
-        var playerCamera = GameScene.PlayerCharacter.Camera;
+        var playerCamera = PlayerManager.Current.Camera;
 
         foreach (var box in debugBoxes)
         {

@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
@@ -454,7 +455,7 @@ public class GreedyMeshing
                             // Compute distance for transparent sorting
                             var centerLocal = (q0 + q1 + q2 + q3) * 0.25f;
                             var centerWorld = centerLocal + chunk.Position.ToVector3();
-                            float dist = Vector3.Distance(GameScene.PlayerCharacter.Camera.Position.ToVector3(), centerWorld);
+                            float dist = Vector3.Distance(PlayerManager.Current.Camera.Position.ToVector3(), centerWorld);
                             
                             if (!isTransparencyPass)
                             {

@@ -220,7 +220,7 @@ public class Chat
         {
             ChatMessageType.Message => Color.White,
             ChatMessageType.Command => Color.SkyBlue,
-            ChatMessageType.CommandHeader => Color.Purple,
+            ChatMessageType.CommandHeader => new Color(7, 113, 250, 255),
             ChatMessageType.Warning => Color.Yellow,
             ChatMessageType.Error => Color.Red,
             _ => Color.White

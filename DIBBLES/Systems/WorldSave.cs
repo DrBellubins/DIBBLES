@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using System.Text;
 using DIBBLES.Gameplay.Inventory;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using DIBBLES.Terrain;
@@ -75,13 +76,13 @@ public class WorldSave
             {
                 writer.Write(System.Text.Encoding.ASCII.GetBytes("DIBP"));
                 
-                writer.Write(GameScene.PlayerCharacter.Position.X);
-                writer.Write(GameScene.PlayerCharacter.Position.Y);
-                writer.Write(GameScene.PlayerCharacter.Position.Z);
+                writer.Write(PlayerManager.Current.Position.X);
+                writer.Write(PlayerManager.Current.Position.Y);
+                writer.Write(PlayerManager.Current.Position.Z);
                 
-                writer.Write(GameScene.PlayerCharacter.CameraForward.X);
-                writer.Write(GameScene.PlayerCharacter.CameraForward.Y);
-                writer.Write(GameScene.PlayerCharacter.CameraForward.Z);
+                writer.Write(PlayerManager.Current.CameraForward.X);
+                writer.Write(PlayerManager.Current.CameraForward.Y);
+                writer.Write(PlayerManager.Current.CameraForward.Z);
                 
                 writer.Write(Data.HotbarPosition);
 

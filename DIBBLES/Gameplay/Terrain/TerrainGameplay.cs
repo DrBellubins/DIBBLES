@@ -15,25 +15,43 @@ public class TerrainGameplay
     public static Block BlockBelowPlayer;       // Updated with either air or solid is below player
     public static Block BlockAtPlayersFeet;     // Updated with air block at player's feet
     
+    public static Block[,,] BlocksAroundPlayer;
+    public static Vector3Int BlocksAroundPlayerOrigin { get; private set; } = Vector3Int.Zero;
+
+    public static bool BlocksAroundDebug = false;
+    
+    private static int BlocksAroundPlayerRadius { get; set; } = -1;
+    
     private AudioPlayer breakPlacePlayer = new();
+
+    private float blockAroundTimer = 0f;
+    private const float blockAroundInterval = 0.25f; // 250ms
     
     public void Update(Camera3D camera)
     {
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
+
+        blockAroundTimer += Time.DeltaTime;
+
+        if (blockAroundTimer > blockAroundInterval)
+        {
+            GetBlocksAroundPlayer3D(PlayerManager.Current, 8);
+            blockAroundTimer = 0f;
+        }
         
-        var solidBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, true, false);
-        var blockBelowBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false, false);
-        var blockAtFeetBlock = GetBlockBelowPlayer(GameScene.PlayerCharacter, false, true);
+        /*var solidBelowBlock = GetBlockBelowPlayer(PlayerManager.Current, true, false);
+        var blockBelowBlock = GetBlockBelowPlayer(PlayerManager.Current, false, false);
+        var blockAtFeetBlock = GetBlockBelowPlayer(PlayerManager.Current, false, true);
 
         if (solidBelowBlock != null)
             SolidBlockBelowPlayer = solidBelowBlock.Value;
-        
+
         if (blockBelowBlock != null)
             BlockBelowPlayer = blockBelowBlock.Value;
-        
+
         if (blockAtFeetBlock != null)
-            BlockAtPlayersFeet = blockAtFeetBlock.Value;
+            BlockAtPlayersFeet = blockAtFeetBlock.Value;*/
     }
 
     // TODO: When at pos > 10000, DrawCubeWiresThick flails around wildly.
@@ -49,9 +67,17 @@ public class TerrainGameplay
         
         const float debugBelowBlockSize = 0.25f;
 
-        if (PlayerCharacter.CollisionBoxDebug)
+        if (BlocksAroundDebug)
         {
-            Debug.DrawBox(SolidBlockBelowPlayer.Position.ToVector3() + new Vector3(0.5f) +
+            foreach (var block in BlocksAroundPlayer)
+            {
+                var blockPos = block.Position;
+                
+                if (block.Type != BlockType.Air)
+                    Debug.DrawBox(blockPos.ToVector3() + new Vector3(1f), Vector3.One, Color.White);
+            }
+            
+            /*Debug.DrawBox(SolidBlockBelowPlayer.Position.ToVector3() + new Vector3(0.5f) +
                           new Vector3(debugBelowBlockSize * 0.5f) +
                           new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Red);
         
@@ -61,7 +87,7 @@ public class TerrainGameplay
         
             Debug.DrawBox(BlockAtPlayersFeet.Position.ToVector3() + new Vector3(0.5f) +
                           new Vector3(debugBelowBlockSize * 0.5f) +
-                          new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Blue);
+                          new Vector3(0f, 1f, 0f), new Vector3(debugBelowBlockSize), Color.Blue);*/
         }
     }
 
@@ -73,13 +99,75 @@ public class TerrainGameplay
             Vector3 center = SelectedBlock.Position.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f);
             Vector3 faceCenter = center + (SelectedNormal.ToVector3() * 0.51f);
             
-            var dist = Vector3.Distance(GameScene.PlayerCharacter.Position.ToVector3(), faceCenter);
+            var dist = Vector3.Distance(PlayerManager.Current.Position.ToVector3(), faceCenter);
             var smoothStepDist = GMath.Smoothstep(dist * 0.1f);
             var faceSelectionColor = new Color(1f, 1f, 1f, smoothStepDist * 0.35f);
 
             if (!SelectedBlock.Info.IsBillboard)
                 Primatives3D.DrawPlane(faceCenter, new Vector2(0.25f, 0.25f), faceSelectionColor, -SelectedNormal.ToVector3());
         }
+    }
+    
+    public Block[,,] GetBlocksAroundPlayer3D(PlayerCharacter player, int radius)
+    {
+        if (radius < 0)
+        {
+            radius = 0;
+        }
+    
+        int size = radius * 2 + 1;
+    
+        if (BlocksAroundPlayerRadius != radius ||
+            BlocksAroundPlayer.GetLength(0) != size ||
+            BlocksAroundPlayer.GetLength(1) != size ||
+            BlocksAroundPlayer.GetLength(2) != size)
+        {
+            BlocksAroundPlayer = new Block[size, size, size];
+            BlocksAroundPlayerRadius = radius;
+        }
+    
+        var center = new Vector3Int(
+            (int)MathF.Floor((float)player.Position.X),
+            (int)MathF.Floor((float)player.Position.Y),
+            (int)MathF.Floor((float)player.Position.Z)
+        );
+    
+        BlocksAroundPlayerOrigin = new Vector3Int(center.X - radius, center.Y - radius, center.Z - radius);
+    
+        for (int dz = -radius; dz <= radius; dz++)
+        {
+            for (int dy = -radius; dy <= radius; dy++)
+            {
+                for (int dx = -radius; dx <= radius; dx++)
+                {
+                    int ix = dx + radius; // [0..size-1]
+                    int iy = dy + radius;
+                    int iz = dz + radius;
+    
+                    var worldPos = new Vector3Int(center.X + dx, center.Y + dy, center.Z + dz);
+    
+                    int chunkX = (int)MathF.Floor((float)worldPos.X / ChunkSize) * ChunkSize;
+                    int chunkY = (int)MathF.Floor((float)worldPos.Y / ChunkSize) * ChunkSize;
+                    int chunkZ = (int)MathF.Floor((float)worldPos.Z / ChunkSize) * ChunkSize;
+    
+                    var chunkCoord = new Vector3Int(chunkX, chunkY, chunkZ);
+    
+                    if (!ChunkBuffer.TryGetValue(chunkCoord, out var chunk))
+                    {
+                        //BlocksAroundPlayer[ix, iy, iz] = null; // chunk not loaded
+                        continue;
+                    }
+    
+                    int localX = worldPos.X - chunkX;
+                    int localY = worldPos.Y - chunkY;
+                    int localZ = worldPos.Z - chunkZ;
+    
+                    BlocksAroundPlayer[ix, iy, iz] = chunk.GetBlock(localX, localY, localZ);
+                }
+            }
+        }
+    
+        return BlocksAroundPlayer;
     }
     
     public Block? GetBlockBelowPlayer(PlayerCharacter player, bool ignoreAir, bool atFeet)
@@ -315,7 +403,7 @@ public class TerrainGameplay
                 //AudioPlayer.CreateAndPlay(sound, blockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
                 
             // Add block to inventory
-            if (GameScene.PlayerCharacter.IsSurvival)
+            if (PlayerManager.Current.IsSurvival)
                 GameScene.Inventory.PlayerInventory.AddBlock(oldBlock.Type);
         }
     }
@@ -398,7 +486,7 @@ public class TerrainGameplay
             //AudioPlayer.CreateAndPlay(sound, newBlockPos.ToVector3() + new Vector3(0.5f, 0.5f, 0.5f));
         
         // Decrement stack amount
-        if (GameScene.PlayerCharacter.IsSurvival)
+        if (PlayerManager.Current.IsSurvival)
             GameScene.Inventory.PlayerInventory.DecrementHeldStack();
     }
 

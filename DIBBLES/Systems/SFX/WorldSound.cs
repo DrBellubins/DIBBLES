@@ -1,4 +1,5 @@
 using System.Runtime.Intrinsics.X86;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Gameplay.Terrain;
 using DIBBLES.Scenes;
 using DIBBLES.Terrain;
@@ -82,7 +83,7 @@ public class WorldSound
             var audioBugPos = computeSwarmPosition(i, SwarmRadius, SwarmSpeed);
             var audioBug = AudioPlayers[i];
             
-            audioBug.Position = GameScene.PlayerCharacter.Position.ToVector3() + audioBugPos;
+            audioBug.Position = PlayerManager.Current.Position.ToVector3() + audioBugPos;
             audioBug.Volume = computeSwarmVolume(i, 0.1f);
 
             if (timer > playDelayInterval && !audioBug.IsPlaying)

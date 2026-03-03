@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Systems.Rendering;
@@ -98,7 +99,7 @@ public class ItemSlot
             }
 
             // Stack amount
-            if (Type != BlockType.Air && StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
+            if (Type != BlockType.Air && StackAmount > 0 && PlayerManager.Current.IsSurvival)
             {
                 var padding = 8f;
                 var text = $"{StackAmount}";

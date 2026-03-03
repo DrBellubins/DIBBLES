@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 
 namespace DIBBLES.Utils;
@@ -57,8 +58,8 @@ public static class Primatives3D
             {0,4},{1,5},{2,6},{3,7}
         };
 
-        Matrix v = GameScene.PlayerCharacter.Camera.View;
-        Matrix p = GameScene.PlayerCharacter.Camera.Projection;
+        Matrix v = PlayerManager.Current.Camera.View;
+        Matrix p = PlayerManager.Current.Camera.Projection;
 
         _effect.World = Matrix.Identity;
         _effect.View = v;
@@ -94,8 +95,8 @@ public static class Primatives3D
     /// </summary>
     public static void DrawThickLine3D(Vector3 start, Vector3 end, Color color, float thickness)
     {
-        Vector3 camForward = Vector3.Normalize(GameScene.PlayerCharacter.Camera.Target - GameScene.PlayerCharacter.Camera.Position.ToVector3());
-        Vector3 camUp = GameScene.PlayerCharacter.Camera.Up;
+        Vector3 camForward = Vector3.Normalize(PlayerManager.Current.Camera.Target - PlayerManager.Current.Camera.Position.ToVector3());
+        Vector3 camUp = PlayerManager.Current.Camera.Up;
 
         Vector3 dir = end - start;
         float dirLenSq = dir.LengthSquared();
@@ -151,8 +152,8 @@ public static class Primatives3D
     public static void DrawPlane(
         Vector3 centerPos, Vector2 size, Color color, Vector3? up = null)
     {
-        Matrix v = GameScene.PlayerCharacter.Camera.View;
-        Matrix p = GameScene.PlayerCharacter.Camera.Projection;
+        Matrix v = PlayerManager.Current.Camera.View;
+        Matrix p = PlayerManager.Current.Camera.Projection;
 
         _effect.World = Matrix.Identity;
         _effect.View = v;

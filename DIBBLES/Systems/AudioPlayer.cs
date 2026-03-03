@@ -1,4 +1,5 @@
 using DIBBLES;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
@@ -39,9 +40,9 @@ public class AudioPlayer
     {
         emitter.Position = Position;
         
-        listener.Position = GameScene.PlayerCharacter.Position.ToVector3();
-        listener.Forward = GameScene.PlayerCharacter.CameraForward;
-        listener.Velocity = GameScene.PlayerCharacter.Velocity;
+        listener.Position = PlayerManager.Current.Position.ToVector3();
+        listener.Forward = PlayerManager.Current.CameraForward;
+        listener.Velocity = PlayerManager.Current.Velocity;
 
         if (instance != null)
         {

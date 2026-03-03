@@ -1,3 +1,4 @@
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Systems.Rendering;
@@ -82,7 +83,7 @@ public class InventorySystem
 
             // Stack amount
             if (HeldItem.Type != BlockType.Air &&
-                HeldItem.StackAmount > 0 && GameScene.PlayerCharacter.IsSurvival)
+                HeldItem.StackAmount > 0 && PlayerManager.Current.IsSurvival)
             {
                 var padding = 8f;
                 var text = $"{HeldItem.StackAmount}";

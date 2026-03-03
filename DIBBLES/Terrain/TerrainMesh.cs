@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using DIBBLES.Effects;
 using DIBBLES.Gameplay;
+using DIBBLES.Gameplay.Player;
 using DIBBLES.Scenes;
 using DIBBLES.Systems;
 using DIBBLES.Systems.Rendering;
@@ -85,7 +86,7 @@ public class TerrainMesh
             Vector3 center = chunkPos.ToVector3() + new Vector3(ChunkSize * 0.5f);
 
             // Skip if chunk is outside view frustum
-            if (!GameScene.PlayerCharacter.Camera.InFrustum(center, FrustumCullRadius))
+            if (!PlayerManager.Current.Camera.InFrustum(center, FrustumCullRadius))
                 continue;
             
             // oModel.Value is a RuntimeModel
@@ -94,8 +95,8 @@ public class TerrainMesh
                 var world = Matrix.CreateTranslation(chunkPos.ToVector3());
                 var shader = terrainShader;
                 
-                var view = GameScene.PlayerCharacter.Camera.View;
-                var projection = GameScene.PlayerCharacter.Camera.Projection;
+                var view = PlayerManager.Current.Camera.View;
+                var projection = PlayerManager.Current.Camera.Projection;
                 
                 shader.SetValue("AtlasTex", BlockData.TextureAtlas);
                 shader.SetValue("EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
@@ -106,9 +107,9 @@ public class TerrainMesh
                 shader.SetValue("View", view);
                 shader.SetValue("Projection", projection);
 
-                shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
-                shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-                shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+                shader.SetValue("CameraPos", PlayerManager.Current.Camera.Position.ToVector3());
+                shader.SetValue("CameraNear", PlayerManager.Current.Camera.NearPlane);
+                shader.SetValue("CameraFar", PlayerManager.Current.Camera.FarPlane);
             
                 shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
 
@@ -148,8 +149,8 @@ public class TerrainMesh
             var world = Matrix.CreateTranslation(chunkPos.ToVector3());
             var shader = terrainShader;
 
-            var view = GameScene.PlayerCharacter.Camera.View;
-            var projection = GameScene.PlayerCharacter.Camera.Projection;
+            var view = PlayerManager.Current.Camera.View;
+            var projection = PlayerManager.Current.Camera.Projection;
 
             shader.SetValue("AtlasTex", BlockData.TextureAtlas);
             shader.SetValue("EmissiveAtlasTex", BlockData.EmissiveTextureAtlas);
@@ -160,9 +161,9 @@ public class TerrainMesh
             shader.SetValue("View", view);
             shader.SetValue("Projection", projection);
 
-            shader.SetValue("CameraPos", GameScene.PlayerCharacter.Camera.Position.ToVector3());
-            shader.SetValue("CameraNear", GameScene.PlayerCharacter.Camera.NearPlane);
-            shader.SetValue("CameraFar", GameScene.PlayerCharacter.Camera.FarPlane);
+            shader.SetValue("CameraPos", PlayerManager.Current.Camera.Position.ToVector3());
+            shader.SetValue("CameraNear", PlayerManager.Current.Camera.NearPlane);
+            shader.SetValue("CameraFar", PlayerManager.Current.Camera.FarPlane);
             
             shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
 

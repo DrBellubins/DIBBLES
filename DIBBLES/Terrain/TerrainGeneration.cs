@@ -683,9 +683,9 @@ public class TerrainGeneration
         if (Debug.ShowLightDebug)
         {
             var playerBlockPos = new Vector3Int(
-                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.X),
-                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Y),
-                (int)MathF.Floor((float)GameScene.PlayerCharacter.Position.Z)
+                (int)MathF.Floor((float)PlayerManager.Current.Position.X),
+                (int)MathF.Floor((float)PlayerManager.Current.Position.Y),
+                (int)MathF.Floor((float)PlayerManager.Current.Position.Z)
             );
 
             int radius = 5; // 16 block radius (cube)
