@@ -10,6 +10,7 @@ using DIBBLES.Utils;
 //using Debug = DIBBLES.Utils.Debug;
 
 using static DIBBLES.Gameplay.Player.PlayerUtils;
+using static DIBBLES.Gameplay.Player.PlayerCommands;
 
 namespace DIBBLES.Gameplay.Player;
 
@@ -68,22 +69,21 @@ public class PlayerCharacter
     public float CameraYaw = 0f;
     
     public bool IsSurvival = false;
+    
+    public float CurrentSpeed = WalkSpeed;
+    public float CurrentHeight = PlayerHeight;
+    
+    public bool IsRunning = false;
+    public bool IsJumping = false;
+    public bool IsFalling = false;
+    public bool IsGrounded = false;
+    public bool IsCrouching = false;
 
     private Vector3 spawnPosition = new Vector3(0f, 0f, 0f);
     //private Sound fallSound;
     private HandModel handModel = new();
-    
-    private float currentSpeed = WalkSpeed;
-    private float currentHeight = PlayerHeight;
-    private float mouseSensitivity = 0.1f;
 
-    private float placeBreakTimer = 0f;
-
-    private bool isRunning = false;
-    private bool isJumping = false;
-    private bool isFalling = false;
-    private bool isGrounded = false;
-    private bool isCrouching = false;
+    private PlayerCommands playerCommands = new();
 
     private bool wasGrounded = false;
     
@@ -91,6 +91,10 @@ public class PlayerCharacter
     private bool justLanded = false;
     
     private float fallTimer = 0f;
+    
+    private float mouseSensitivity = 0.1f;
+
+    private float placeBreakTimer = 0f;
     
     public void Start()
     {
@@ -102,6 +106,8 @@ public class PlayerCharacter
         Camera.Up = new Vector3(0.0f, 1.0f, 0.0f);
         Camera.Fov = 90.0f;
         Camera.SetPerspective();
+
+        playerCommands.Initialize();
         
         hotbar.Start();
         handModel.Start();
@@ -124,7 +130,7 @@ public class PlayerCharacter
         var vec3Position = Position.ToVector3();
         Debug.Draw2DText($"Position: {vec3Position.X:F4}, {vec3Position.Y:F4}, {vec3Position.Z:F4}", Color.White);
         Debug.Draw2DText($"Camera Direction: {CameraForward.X:F4}, {CameraForward.Y:F4}, {CameraForward.Z:F4}", Color.White);
-        Debug.Draw2DText($"IsFalling: {isFalling} IsGrounded: {isGrounded} IsRunning: {isRunning}", Color.White);
+        Debug.Draw2DText($"IsFalling: {IsFalling} IsGrounded: {IsGrounded} IsRunning: {IsRunning}", Color.White);
 
         Freeze = Interactions.PlayerFrozen;
         
@@ -183,7 +189,7 @@ public class PlayerCharacter
             return;
         }
         
-        isGrounded = false; // Reset ground state 
+        IsGrounded = false; // Reset ground state 
         
         // --- Input ---
         Vector3 inputDir = Vector3.Zero;
@@ -197,24 +203,24 @@ public class PlayerCharacter
         if (Input.Run())
             run();
 
-        if (isRunning && isCrouching)
-            isRunning = false;
+        if (IsRunning && IsCrouching)
+            IsRunning = false;
         
         // Crouching
-        isCrouching = !IsFrozen && Input.Crouch();
+        IsCrouching = !IsFrozen && Input.Crouch();
 
         // Run vs Crouch checks
-        if (isCrouching)
-            currentSpeed = CrouchSpeed;
-        else if (isRunning)
-            currentSpeed = RunSpeed;
+        if (IsCrouching)
+            CurrentSpeed = CrouchSpeed;
+        else if (IsRunning)
+            CurrentSpeed = RunSpeed;
         else
-            currentSpeed = WalkSpeed;
+            CurrentSpeed = WalkSpeed;
 
         if (!IsFrozen)
-            isJumping = Input.Jump();
+            IsJumping = Input.Jump();
         else
-            isJumping = false;
+            IsJumping = false;
         
         // --- Gravity  ---
         Velocity.Y -= Gravity * Time.DeltaTime;
@@ -226,25 +232,25 @@ public class PlayerCharacter
         // Collision detection
         if (!FreeCamEnabled)
         {
-            checkCollisions();
+            CheckCollisions();
         
-            CollisionBox = GetBoundingBox(Position, currentHeight); // Needs to be set after collision detection
+            CollisionBox = GetBoundingBox(Position, CurrentHeight); // Needs to be set after collision detection
         }
         
         // Update falling state
-        isFalling = !isGrounded && Velocity.Y < 0f;
+        IsFalling = !IsGrounded && Velocity.Y < 0f;
         
         // Grounded/Landing checks
-        if (isGrounded && !wasGrounded) // Just landed
+        if (IsGrounded && !wasGrounded) // Just landed
         {
             justLanded = true;
         }
-        else if (!isGrounded && wasGrounded && Velocity.Y < 0f) // Started falling
+        else if (!IsGrounded && wasGrounded && Velocity.Y < 0f) // Started falling
         {
             
         }
         
-        if (isFalling)
+        if (IsFalling)
             fallTimer += Time.DeltaTime;
         
         // --- Mouse input for camera rotation ---
@@ -267,7 +273,7 @@ public class PlayerCharacter
             MathF.Cos(CameraYaw) * MathF.Cos(CameraPitch)
         );
         
-        SetCameraDirection(lookDirection);
+        SetCameraDirection(this, lookDirection);
 
         // Camera position
         Camera.Position = Position + new GVec3(0.0f, PlayerHeight * 0.49f, 0.0f);
@@ -294,20 +300,20 @@ public class PlayerCharacter
             wishDir = Vector3.Normalize(wishDir);
 
         // --- HL2 Style Acceleration & Friction ---
-        float accel = isGrounded ? GroundAcceleration : AirAcceleration;
-        float friction = isGrounded ? GroundFriction : AirFriction;
+        float accel = IsGrounded ? GroundAcceleration : AirAcceleration;
+        float friction = IsGrounded ? GroundFriction : AirFriction;
 
         Vector3 wishVel = Vector3.Zero;
         
         if (!IsFrozen)
-            wishVel = wishDir * currentSpeed;
+            wishVel = wishDir * CurrentSpeed;
         
         Vector3 velXZ = new Vector3(Velocity.X, 0f, Velocity.Z);
         
         float wishSpeed = wishVel.Length();
 
         // HL2-style friction: Only apply friction when no input and grounded
-        if (wishSpeed == 0 && isGrounded)
+        if (wishSpeed == 0 && IsGrounded)
         {
             float speed = velXZ.Length();
             
@@ -335,28 +341,28 @@ public class PlayerCharacter
         }
 
         // Relax speed cap for bunnyhopping
-        if (velXZ.Length() > currentSpeed)
-            velXZ = Vector3.Normalize(velXZ) * currentSpeed;
+        if (velXZ.Length() > CurrentSpeed)
+            velXZ = Vector3.Normalize(velXZ) * CurrentSpeed;
 
         Velocity.X = velXZ.X;
         Velocity.Z = velXZ.Z;
 
         // --- Crouching ---
-        var targetHeight = isCrouching ? CrouchHeight : PlayerHeight;
+        var targetHeight = IsCrouching ? CrouchHeight : PlayerHeight;
         var heightLerpSpeed = 20f;
         
-        currentHeight = GMath.Lerp(currentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
+        CurrentHeight = GMath.Lerp(CurrentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
         
         // TODO: Crouching can sometimes get stuck in the ground??
-        float heightDelta = currentHeight - lastHeight;
+        float heightDelta = CurrentHeight - lastHeight;
         Position.Y += heightDelta * 0.5f; // Move up/down by half the change, since bounding box is centered
-        lastHeight = currentHeight;
+        lastHeight = CurrentHeight;
         
         // --- Jumping ---
-        if (isGrounded && isJumping)
+        if (IsGrounded && IsJumping)
         {
             Velocity.Y = JumpImpulse;
-            isGrounded = false;
+            IsGrounded = false;
             justJumped = true;
         }
         
@@ -372,7 +378,7 @@ public class PlayerCharacter
         if (Health <= 0)
             Kill();
         
-        wasGrounded = isGrounded;
+        wasGrounded = IsGrounded;
     }
 
     public void SetHealth(int amount)
@@ -400,7 +406,7 @@ public class PlayerCharacter
         if (WorldSave.Exists)
         {
             Position = WorldSave.Data.PlayerPosition;
-            SetCameraDirection(WorldSave.Data.CameraDirection);
+            SetCameraDirection(this, WorldSave.Data.CameraDirection);
             
             Camera.Position = Position + new GVec3(0.0f, PlayerHeight * 0.49f, 0.0f);
             Camera.Target = Camera.Position.ToVector3() + CameraForward;
@@ -419,95 +425,17 @@ public class PlayerCharacter
     public void Respawn()
     {
         Position = spawnPosition.ToGVec3();
-        SetCameraDirection(WorldSave.Data.CameraDirection);
+        SetCameraDirection(this, WorldSave.Data.CameraDirection);
 
         Health = 100;
         IsDead = false;
         Velocity = Vector3.Zero;
     }
     
-    public void SetCameraDirection(Vector3 direction)
-    {
-        if (direction == Vector3.Zero)
-            direction = new Vector3(0f, 0f, 1f); // Fallback to default forward if zero
-        
-        direction = Vector3.Normalize(direction);
-
-        CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
-        CameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
-
-        // Now construct CameraRotation as usual
-        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, CameraYaw);
-        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, CameraPitch);
-
-        CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
-        
-        // Calculate camera direction
-        CameraForward = Vector3.Transform(Vector3.UnitZ, CameraRotation); // Forward
-        CameraUp = Vector3.Transform(Vector3.UnitY, CameraRotation);
-        CameraRight = Vector3.Transform(-Vector3.UnitX, CameraRotation); // This has to be flipped for some reason...
-    }
-    
     private void run()
     {
-        if (!isCrouching)
-            isRunning = !isRunning;
-    }
-    
-    private void checkCollisions()
-    {
-        var moveDelta = Velocity * Time.DeltaTime;
-        var newPosition = Position;
-
-        // Call once per frame before axis checks!
-        CollisionBoxes = GetBlockBoxes(Position.ToVector3(), 10f);
-
-        // X axis
-        newPosition.X += moveDelta.X;
-        
-        var playerBoxX = GetBoundingBox(newPosition, currentHeight);
-        var collidedX = CollisionBoxes.Any(box => box.Intersects(playerBoxX));
-        
-        if (collidedX)
-        {
-            newPosition.X -= moveDelta.X;
-            Velocity.X = 0f;
-            
-            CollisionBox = playerBoxX;
-        }
-
-        // Y axis
-        newPosition.Y += moveDelta.Y;
-        
-        var playerBoxY = GetBoundingBox(newPosition, currentHeight);
-        var collidedY = CollisionBoxes.Any(box => box.Intersects(playerBoxY));
-        
-        if (collidedY)
-        {
-            if (Velocity.Y < 0f)
-                isGrounded = true;
-            
-            newPosition.Y -= moveDelta.Y;
-            Velocity.Y = 0f;
-            
-            CollisionBox = playerBoxY;
-        }
-
-        // Z axis
-        newPosition.Z += moveDelta.Z;
-        
-        var playerBoxZ = GetBoundingBox(newPosition, currentHeight);
-        var collidedZ = CollisionBoxes.Any(box => box.Intersects(playerBoxZ));
-        
-        if (collidedZ)
-        {
-            newPosition.Z -= moveDelta.Z;
-            Velocity.Z = 0f;
-
-            CollisionBox = playerBoxZ;
-        }
-        
-        Position = newPosition;
+        if (!IsCrouching)
+            IsRunning = !IsRunning;
     }
     
     // Draw

@@ -1,3 +1,4 @@
+using DIBBLES.Systems;
 using DIBBLES.Terrain;
 using DIBBLES.Utils;
 using Microsoft.Xna.Framework;
@@ -9,6 +10,89 @@ using static TerrainGeneration;
 public class PlayerUtils
 {
     public static byte ClosestLightLevel = 0;
+    
+    public static void SetCameraDirection(PlayerCharacter player, Vector3 direction)
+    {
+        if (direction == Vector3.Zero)
+            direction = new Vector3(0f, 0f, 1f); // Fallback to default forward if zero
+        
+        direction = Vector3.Normalize(direction);
+
+        player.CameraYaw = MathF.Atan2(direction.X, direction.Z); // Or whatever your yaw convention is
+        player.CameraPitch = -MathF.Asin(direction.Y); // Negative sign for proper pitch direction
+
+        // Now construct CameraRotation as usual
+        Quaternion rotYaw = Quaternion.CreateFromAxisAngle(Vector3.UnitY, player.CameraYaw);
+        Quaternion rotPitch = Quaternion.CreateFromAxisAngle(Vector3.UnitX, player.CameraPitch);
+
+        player.CameraRotation = Quaternion.Normalize(rotYaw * rotPitch);
+        
+        // Calculate camera direction
+        player.CameraForward = Vector3.Transform(Vector3.UnitZ,
+            player.CameraRotation); // Forward
+        
+        player.CameraUp = Vector3.Transform(Vector3.UnitY,
+            player.CameraRotation);
+        
+        player.CameraRight = Vector3.Transform(-Vector3.UnitX,
+            player.CameraRotation); // This has to be flipped for some reason...
+    }
+    
+    public static void CheckCollisions()
+    {
+        var moveDelta = PlayerManager.Current.Velocity * Time.DeltaTime;
+        var newPosition = PlayerManager.Current.Position;
+
+        // Call once per frame before axis checks!
+        PlayerManager.Current.CollisionBoxes = GetBlockBoxes(PlayerManager.Current.Position.ToVector3(), 10f);
+
+        // X axis
+        newPosition.X += moveDelta.X;
+        
+        var playerBoxX = GetBoundingBox(newPosition, PlayerManager.Current.CurrentHeight);
+        var collidedX = PlayerManager.Current.CollisionBoxes.Any(box => box.Intersects(playerBoxX));
+        
+        if (collidedX)
+        {
+            newPosition.X -= moveDelta.X;
+            PlayerManager.Current.Velocity.X = 0f;
+            
+            PlayerManager.Current.CollisionBox = playerBoxX;
+        }
+
+        // Y axis
+        newPosition.Y += moveDelta.Y;
+        
+        var playerBoxY = GetBoundingBox(newPosition, PlayerManager.Current.CurrentHeight);
+        var collidedY = PlayerManager.Current.CollisionBoxes.Any(box => box.Intersects(playerBoxY));
+        
+        if (collidedY)
+        {
+            if (PlayerManager.Current.Velocity.Y < 0f)
+                PlayerManager.Current.IsGrounded = true;
+            
+            newPosition.Y -= moveDelta.Y;
+            PlayerManager.Current.Velocity.Y = 0f;
+            
+            PlayerManager.Current.CollisionBox = playerBoxY;
+        }
+
+        // Z axis
+        newPosition.Z += moveDelta.Z;
+        
+        var playerBoxZ = GetBoundingBox(newPosition, PlayerManager.Current.CurrentHeight);
+        var collidedZ = PlayerManager.Current.CollisionBoxes.Any(box => box.Intersects(playerBoxZ));
+        
+        if (collidedZ)
+        {
+            newPosition.Z -= moveDelta.Z;
+            PlayerManager.Current.Velocity.Z = 0f;
+
+            PlayerManager.Current.CollisionBox = playerBoxZ;
+        }
+        
+        PlayerManager.Current.Position = newPosition;
+    }
     
     public static void UpdateClosestLightLevel(Vector3 pos)
     {

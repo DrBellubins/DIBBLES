@@ -2,6 +2,8 @@ using Microsoft.Xna.Framework;
 using DIBBLES.Systems;
 using DIBBLES.Utils;
 
+using static DIBBLES.Gameplay.Player.PlayerUtils;
+
 namespace DIBBLES.Gameplay.Player;
 
 // TODO: Opening inventory when in freecam still allows moving the camera.
@@ -30,7 +32,7 @@ public class Freecam
             MathF.Cos(playerCharacter.CameraYaw) * MathF.Cos(playerCharacter.CameraPitch)
         );
         
-        playerCharacter.SetCameraDirection(lookDirection);
+        SetCameraDirection(playerCharacter, lookDirection);
         
         // Camera position
         playerCharacter.Camera.Position = playerCharacter.Position + new GVec3(0.0d, PlayerCharacter.PlayerHeight * 0.49d, 0.0d);
