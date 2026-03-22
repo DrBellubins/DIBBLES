@@ -88,7 +88,7 @@ public class WorldSound
 
             if (timer > playDelayInterval && !audioBug.IsPlaying)
             {
-                Debug.Info($"Played at: {timer}");
+                //Debug.Info($"Played at: {timer}");
                 audioBug.Play();
                 timer = 0f;
             }

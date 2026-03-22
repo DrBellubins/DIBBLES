@@ -124,7 +124,7 @@ public static class Resource
             string fixedPath = parseRelativePath(input);
             string file = FindTextureLoose($"{fixedPath}.png");
             
-            Debug.Info($"relative input: {input}, fixed path: {fixedPath}, full path: {file}");
+            //Debug.Info($"relative input: {input}, fixed path: {fixedPath}, full path: {file}");
             
             var texture = Texture2D.FromFile(Engine.Graphics, file);
             textures.Add(texture);
