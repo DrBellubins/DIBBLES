@@ -90,7 +90,7 @@ public class GameScene : Scene
         if (!Chat.IsOpenNotFocused && Input.Quit())
             Engine.Instance.Exit();
         
-        fpsElapsed += Time.DeltaTime;
+        fpsElapsed += (float)Time.DeltaTime;
         
         if (fpsElapsed >= 0.5f)
         {

@@ -52,7 +52,7 @@ public class Billboards
 
         shader.SetValue("AmbientLightColor", DayNightCycle.AmbientLightColor.ToVector3());
         
-        shader.SetValue("Time", Time.time);
+        shader.SetValue("Time", (float)Time.time);
     
         foreach (var kv in BillboardBatches)
         {

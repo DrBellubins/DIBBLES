@@ -16,7 +16,7 @@ public class TextBox
 
     public RectangleF Bounds;
     
-    private float caretBlinkTime = 0;
+    private double caretBlinkTime = 0d;
     private bool showCaret = true;
     private int caretPos => Text.Length;
 

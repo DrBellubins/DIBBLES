@@ -32,7 +32,7 @@ public class TerrainGameplay
         var (block, normal) = selectBlock(camera);
         SelectedBlock = block;
 
-        blockAroundTimer += Time.DeltaTime;
+        blockAroundTimer += (float)Time.DeltaTime;
 
         if (blockAroundTimer > blockAroundInterval)
         {

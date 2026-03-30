@@ -48,7 +48,7 @@ public class Debug
     public static void Update(Camera3D camera)
     {
         // Log save interval
-        logSaveTimer += Time.DeltaTime;
+        logSaveTimer += (float)Time.DeltaTime;
 
         if (logSaveTimer >= logSaveInterval)
         {

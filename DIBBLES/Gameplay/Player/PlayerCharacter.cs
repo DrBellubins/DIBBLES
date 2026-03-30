@@ -142,7 +142,7 @@ public class PlayerCharacter
         // --- Block breaking and placing ---
         if (!IsFrozen)
         {
-            placeBreakTimer += Time.DeltaTime;
+            placeBreakTimer += (float)Time.DeltaTime;
             
             if (Input.StartedBreaking) // Break immediately
             {
@@ -223,7 +223,7 @@ public class PlayerCharacter
             IsJumping = false;
         
         // --- Gravity  ---
-        Velocity.Y -= Gravity * Time.DeltaTime;
+        Velocity.Y -= Gravity * (float)Time.DeltaTime;
         
         // Reset one-frame flags at the start of each frame
         justJumped = false;
@@ -251,7 +251,7 @@ public class PlayerCharacter
         }
         
         if (IsFalling)
-            fallTimer += Time.DeltaTime;
+            fallTimer += (float)Time.DeltaTime;
         
         // --- Mouse input for camera rotation ---
         Vector2 lookDelta = Vector2.Zero;
@@ -319,7 +319,7 @@ public class PlayerCharacter
             
             if (speed != 0)
             {
-                float drop = speed * friction * Time.DeltaTime;
+                float drop = speed * friction * (float)Time.DeltaTime;
                 float newSpeed = Math.Max(speed - drop, 0);
                 velXZ *= (newSpeed / speed);
             }
@@ -333,7 +333,7 @@ public class PlayerCharacter
             
             if (addSpeed > 0)
             {
-                float accelSpeed = accel * Time.DeltaTime * wishSpeed;
+                float accelSpeed = accel * (float)Time.DeltaTime * wishSpeed;
                 
                 if (accelSpeed > addSpeed) accelSpeed = addSpeed;
                     velXZ += wishDir * accelSpeed;
@@ -351,7 +351,7 @@ public class PlayerCharacter
         var targetHeight = IsCrouching ? CrouchHeight : PlayerHeight;
         var heightLerpSpeed = 20f;
         
-        CurrentHeight = GMath.Lerp(CurrentHeight, targetHeight, heightLerpSpeed * Time.DeltaTime);
+        CurrentHeight = GMath.Lerp(CurrentHeight, targetHeight, heightLerpSpeed * (float)Time.DeltaTime);
         
         // TODO: Crouching can sometimes get stuck in the ground??
         float heightDelta = CurrentHeight - lastHeight;

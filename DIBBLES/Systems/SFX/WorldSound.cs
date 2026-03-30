@@ -76,7 +76,7 @@ public class WorldSound
             }*/
         }
 
-        timer += Time.DeltaTime;
+        timer += (float)Time.DeltaTime;
         
         for (int i = 0; i < AudioPlayers.Count; i++)
         {
@@ -119,7 +119,7 @@ public class WorldSound
         int seed = index * 523;
         
         // Time evolves smoothly per bug
-        float time = Time.time * speed + seed * 0.017f;
+        float time = (float)Time.time * speed + seed * 0.017f;
 
         var volume = MathF.Sin(time) + 0.5f * 0.5f;
         
@@ -135,7 +135,7 @@ public class WorldSound
         float phaseC = seed * 0.37f;
     
         // Time evolves smoothly per bug
-        float time = Time.time * speed + seed * 0.017f;
+        float time = (float)Time.time * speed + seed * 0.017f;
 
         // Spherical coordinates with smooth oscillation
         float theta = time + phaseA;

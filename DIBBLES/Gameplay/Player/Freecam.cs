@@ -61,7 +61,7 @@ public class Freecam
         else
             currentMovespeed = 5f;
         
-        float moveSpeed = currentMovespeed * Time.DeltaTime;
+        float moveSpeed = currentMovespeed * (float)Time.DeltaTime;
         
         // Forward on XZ plane ignoring pitch
         Vector3 forwardXZ = new Vector3(

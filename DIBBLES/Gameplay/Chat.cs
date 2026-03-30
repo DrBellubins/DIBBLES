@@ -68,7 +68,7 @@ public class Chat
         if (IsClosedButShown)
         {
             IsClosedButShown = !StateMachine.IsAnyOtherInventoryOpen(UIState.Chat);
-            elapsed += Time.DeltaTime;
+            elapsed += (float)Time.DeltaTime;
         }
 
         if (elapsed >= disappearTime)

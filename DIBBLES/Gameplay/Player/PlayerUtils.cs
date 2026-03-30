@@ -40,7 +40,7 @@ public class PlayerUtils
     
     public static void CheckCollisions()
     {
-        var moveDelta = PlayerManager.Current.Velocity * Time.DeltaTime;
+        var moveDelta = PlayerManager.Current.Velocity * (float)Time.DeltaTime;
         var newPosition = PlayerManager.Current.Position;
 
         // Call once per frame before axis checks!

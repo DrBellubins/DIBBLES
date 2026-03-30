@@ -72,7 +72,7 @@ public class HandModel
         
         // Framerate-independent exponential smoothing; higher rate = snappier response
         float rate = 8.0f;
-        float deltaTimeExp = 1f - MathF.Exp(-rate * Time.DeltaTime);
+        float deltaTimeExp = 1f - MathF.Exp(-rate * (float)Time.DeltaTime);
         
         var lightLevelLerped = GMath.Lerp(previousLightLevel, currentLightLevel, deltaTimeExp);
         
