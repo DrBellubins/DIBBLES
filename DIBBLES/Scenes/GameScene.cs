@@ -25,7 +25,7 @@ public class GameScene : Scene
     public static TerrainGeneration TerrainGen = new();
     //public static PlayerCharacter PlayerCharacter = new();
     public static InventorySystem Inventory = new();
-    public static WorldSound WorldAudio = new();
+    //public static WorldSound WorldAudio = new();
     public static DayNightCycle TimeCycle = new();
     
     public static PostProcessingManager postProcessingManager = new();
@@ -59,7 +59,7 @@ public class GameScene : Scene
         Primatives3D.Initialize();
         
         TimeCycle.Start();
-        WorldAudio.Start();
+        //WorldAudio.Start();
         
         TerrainGen.Start(); // Initial terrain generation
         
@@ -79,6 +79,7 @@ public class GameScene : Scene
         Commands.Register("dbc", "Toggle chunk border debug", Debug.ToggleChunkDebugCMD);
         Commands.Register("dbl", "Toggle light level debug", Debug.ToggleLightDebugCMD);
         Commands.Register("atlas", "Save atlases to png", BlockData.SaveAtlasesCMD);
+        Commands.Register("sys", "Print system info", sysCMD);
     }
 
     private int fpsCounter;
@@ -103,7 +104,7 @@ public class GameScene : Scene
         Debug.Draw2DText($"Time: {TimeCycle.TimeOfDay}");
         
         TimeCycle.Update();
-        WorldAudio.Update();
+        //WorldAudio.Update();
         
         PlayerManager.Current.Update();
         
@@ -255,5 +256,16 @@ public class GameScene : Scene
     
             Debug.Error($"Failed to save '{path}': Value does not fall within the expected range.");
         }
+    }
+
+    private void sysCMD(string[] args)
+    {
+        string output = string.Empty;
+
+        string gpuName = Engine.Graphics.Adapter.Description;
+        
+        output = $"GPU: {gpuName}\n";
+        
+        Chat.Write(output, ChatMessageType.Command);
     }
 }

@@ -25,8 +25,6 @@ public class Engine : Game
 
     public static GraphicsDevice Graphics;
 
-    //public static SpriteBatch Sprites;
-
     public static SpriteFont MainFont;
     
     public static GameTime MonoGameTime;

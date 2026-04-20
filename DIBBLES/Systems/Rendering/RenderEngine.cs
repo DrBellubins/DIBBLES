@@ -110,7 +110,7 @@ public class RenderEngine
         // Draw block outline here: depth-tested against terrain, but NOT writing to Normal/Depth MRTs
         TerrainGeneration.Gameplay.Draw();
         TerrainGen.DrawDebug();
-        WorldAudio.DebugDraw();
+        //WorldAudio.DebugDraw();
         Debug.Draw3D();
     }
 

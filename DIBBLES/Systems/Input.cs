@@ -43,8 +43,8 @@ public static class Input
     public static bool MoveLeft() => _currentKey.IsKeyDown(Keys.A);
     public static bool MoveRight() => _currentKey.IsKeyDown(Keys.D);
 
-    public static bool Run() => IsMouseButtonPressed(ButtonType.XButton2);
-    public static bool Crouch() => _currentKey.IsKeyDown(Keys.LeftShift);
+    public static bool Run() => _currentKey.IsKeyDown(Keys.LeftShift);
+    public static bool Crouch() => _currentKey.IsKeyDown(Keys.LeftControl);
     public static bool Jump() => _currentKey.IsKeyDown(Keys.Space);
     
     /*public static bool Jump(bool isCrouching)

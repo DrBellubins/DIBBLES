@@ -325,23 +325,23 @@ public class BloomEffect : PostProcessingEffect
         Graphics.SetRenderTarget(null);
     }
     
+    private int _lastWidth = -1;
+    private int _lastHeight = -1;
     private void ensureChainMatchesSource(int width, int height)
     {
         int count = Math.Max(1, SampleCount);
 
-        bool needsRebuild =
+        bool needsRebuild = 
             DownsampleRTs.Count != count ||
             UpsampleRTs.Count != count ||
-            UpsampleRTs.Count == 0 ||
-            DownsampleRTs.Count == 0 ||
-            UpsampleRTs[0].Width != width ||
-            UpsampleRTs[0].Height != height ||
-            DownsampleRTs[0].Width != Math.Max(1, width / 2) ||
-            DownsampleRTs[0].Height != Math.Max(1, height / 2);
+            _lastWidth != width ||
+            _lastHeight != height;
 
         if (needsRebuild)
         {
             buildChain(width, height);
+            _lastWidth = width;
+            _lastHeight = height;
         }
     }
     

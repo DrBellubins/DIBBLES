@@ -19,14 +19,14 @@ public class PlayerCharacter
 {
     // HL2 movement values, converted to meters and m/s.
     public const float WalkSpeed = 3.619f;        // 361.9 Hu
-    public const float RunSpeed = 6.096f;         // 609.6 Hu
+    public const float RunSpeed = 6.096f * 1.3f;         // 609.6 Hu
     public const float CrouchSpeed = 2.54f * 0.5f;      // HL2 crouch speed ≈ 100 units/s
     public const float AirAcceleration = 10.0f;  // HL2 style air accel
     public const float GroundAcceleration = 10.0f; // HL2 style ground accel
-    public const float GroundFriction = 8.0f;    // HL2 style ground friction
+    public const float GroundFriction = 1.075f;    // HL2 style ground friction
     public const float AirFriction = 0.0f;       // Less friction in air
-    public const float Gravity = 20.32f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
-    public const float JumpImpulse = 3.048f * 2.3f;       // HL2 jump velocity ≈ 5 m/s
+    public const float Gravity = 20.32f * 1.5f;         // HL2 = 800 units/s² ≈ 20.32 m/s²
+    public const float JumpImpulse = 3.048f * 3.8f;       // HL2 jump velocity ≈ 5 m/s
     public const float PlayerHeight = 1.83f;     // HL2 player height ≈ 72 units
     public const float CrouchHeight = 0.91f;     // HL2 crouch height ≈ 36 units
     
@@ -201,7 +201,9 @@ public class PlayerCharacter
 
         // Run
         if (Input.Run())
-            run();
+            IsRunning = true;
+        else
+            IsRunning = false;
 
         if (IsRunning && IsCrouching)
             IsRunning = false;
@@ -319,9 +321,10 @@ public class PlayerCharacter
             
             if (speed != 0)
             {
-                float drop = speed * friction * (float)Time.DeltaTime;
+                /*float drop = speed * friction * (float)Time.DeltaTime;
                 float newSpeed = Math.Max(speed - drop, 0);
-                velXZ *= (newSpeed / speed);
+                velXZ *= (newSpeed / speed);*/
+                velXZ /= friction;
             }
         }
 
