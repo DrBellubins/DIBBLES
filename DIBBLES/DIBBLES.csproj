@@ -33,6 +33,7 @@
       <PackageReference Include="MonoGame.Runtime.Windows.Vulkan" Version="3.8.5.1" />
       <PackageReference Include="MonoGame.Runtime.Linux.Vulkan" Version="3.8.5.1" />
       <PackageReference Include="MonoGame.Runtime.Mac.Vulkan" Version="3.8.5.1" />
+      <PackageReference Include="NVorbis" Version="0.10.5" />
     </ItemGroup>
 
     <ItemGroup>
