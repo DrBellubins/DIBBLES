@@ -200,10 +200,7 @@ public class PlayerCharacter
         if (Input.MoveRight()) inputDir.X += 1.0f;
 
         // Run
-        if (Input.Run())
-            IsRunning = true;
-        else
-            IsRunning = false;
+        IsRunning = Input.Run();
 
         if (IsRunning && IsCrouching)
             IsRunning = false;

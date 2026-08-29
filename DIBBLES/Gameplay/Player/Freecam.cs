@@ -53,8 +53,7 @@ public class Freecam
         // Movement
         float currentMovespeed;
 
-        if (Input.Run())
-            isRunning = !isRunning;
+        isRunning = Input.Run();
         
         if (isRunning)
             currentMovespeed = 20f;
