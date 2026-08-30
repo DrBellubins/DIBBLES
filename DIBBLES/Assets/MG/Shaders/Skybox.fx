@@ -176,7 +176,7 @@ technique Skybox
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VS();
-        PixelShader  = compile ps_3_0 PS();
+        VertexShader = compile vs_6_0 VS();
+        PixelShader  = compile ps_6_0 PS();
     }
 }

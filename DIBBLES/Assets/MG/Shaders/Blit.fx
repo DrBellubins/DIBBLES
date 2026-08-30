@@ -41,7 +41,7 @@ technique Blit
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 CopyPS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 CopyPS();
     }
 }

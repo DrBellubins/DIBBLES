@@ -540,8 +540,8 @@ technique SSAO
 {
     pass AO
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PS_SSAO();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PS_SSAO();
     }
 }
 
@@ -549,8 +549,8 @@ technique BlurH
 {
     pass H
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PS_BlurH();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PS_BlurH();
     }
 }
 
@@ -558,8 +558,8 @@ technique BlurV
 {
     pass V
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PS_BlurV();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PS_BlurV();
     }
 }
 
@@ -567,7 +567,7 @@ technique Composite
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PS_Composite();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PS_Composite();
     }
 }

@@ -281,8 +281,8 @@ technique MainSurfaceEffect
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasic();
-        PixelShader  = compile ps_3_0 PS_NoTex_Fog();
+        VertexShader = compile vs_6_0 VSBasic();
+        PixelShader  = compile ps_6_0 PS_NoTex_Fog();
     }
 }
 
@@ -290,8 +290,8 @@ technique MainSurfaceEffect_NoFog
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasic();
-        PixelShader  = compile ps_3_0 PS_NoTex_NoFog();
+        VertexShader = compile vs_6_0 VSBasic();
+        PixelShader  = compile ps_6_0 PS_NoTex_NoFog();
     }
 }
 
@@ -299,8 +299,8 @@ technique MainSurfaceEffect_VertexColor
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicVc();
-        PixelShader  = compile ps_3_0 PS_NoTex_Fog();
+        VertexShader = compile vs_6_0 VSBasicVc();
+        PixelShader  = compile ps_6_0 PS_NoTex_Fog();
     }
 }
 
@@ -308,8 +308,8 @@ technique MainSurfaceEffect_VertexColor_NoFog
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicVc();
-        PixelShader  = compile ps_3_0 PS_NoTex_NoFog();
+        VertexShader = compile vs_6_0 VSBasicVc();
+        PixelShader  = compile ps_6_0 PS_NoTex_NoFog();
     }
 }
 
@@ -317,8 +317,8 @@ technique MainSurfaceEffect_Texture
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicTx();
-        PixelShader  = compile ps_3_0 PS_Tex_Fog();
+        VertexShader = compile vs_6_0 VSBasicTx();
+        PixelShader  = compile ps_6_0 PS_Tex_Fog();
     }
 }
 
@@ -326,8 +326,8 @@ technique MainSurfaceEffect_Texture_NoFog
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicTx();
-        PixelShader  = compile ps_3_0 PS_Tex_NoFog();
+        VertexShader = compile vs_6_0 VSBasicTx();
+        PixelShader  = compile ps_6_0 PS_Tex_NoFog();
     }
 }
 
@@ -335,8 +335,8 @@ technique MainSurfaceEffect_Texture_VertexColor
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicTxVc();
-        PixelShader  = compile ps_3_0 PS_Tex_Fog();
+        VertexShader = compile vs_6_0 VSBasicTxVc();
+        PixelShader  = compile ps_6_0 PS_Tex_Fog();
     }
 }
 
@@ -344,7 +344,7 @@ technique MainSurfaceEffect_Texture_VertexColor_NoFog
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSBasicTxVc();
-        PixelShader  = compile ps_3_0 PS_Tex_NoFog();
+        VertexShader = compile vs_6_0 VSBasicTxVc();
+        PixelShader  = compile ps_6_0 PS_Tex_NoFog();
     }
 }

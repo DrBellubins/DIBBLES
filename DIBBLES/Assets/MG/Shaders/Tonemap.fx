@@ -77,7 +77,7 @@ technique Tonemap
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 TonemapPS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 TonemapPS();
     }
 }

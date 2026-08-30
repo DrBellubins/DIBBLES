@@ -130,8 +130,8 @@ technique GaussianBlurH
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PSBlurH();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PSBlurH();
     }
 }
 
@@ -139,8 +139,8 @@ technique GaussianBlurV
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PSBlurV();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PSBlurV();
     }
 }
 
@@ -148,7 +148,7 @@ technique MaskedComposite
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VSMain();
-        PixelShader  = compile ps_3_0 PSMask();
+        VertexShader = compile vs_6_0 VSMain();
+        PixelShader  = compile ps_6_0 PSMask();
     }
 }

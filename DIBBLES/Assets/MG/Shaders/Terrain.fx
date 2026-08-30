@@ -220,7 +220,7 @@ technique Terrain
 {
     pass Color
     {
-        VertexShader = compile vs_3_0 VS();
-        PixelShader  = compile ps_3_0 PS_Color();
+        VertexShader = compile vs_6_0 VS();
+        PixelShader  = compile ps_6_0 PS_Color();
     }
 }

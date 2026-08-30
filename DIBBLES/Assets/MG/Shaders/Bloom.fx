@@ -182,8 +182,8 @@ technique BloomDownsample
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 DownsamplePS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 DownsamplePS();
     }
 }
 
@@ -191,8 +191,8 @@ technique BloomAccumulate
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 AccumulatePS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 AccumulatePS();
     }
 }
 
@@ -200,8 +200,8 @@ technique BloomUpsample
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 UpsamplePS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 UpsamplePS();
     }
 }
 
@@ -209,7 +209,7 @@ technique BloomCombine
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 FullscreenVS();
-        PixelShader  = compile ps_3_0 CombinePS();
+        VertexShader = compile vs_6_0 FullscreenVS();
+        PixelShader  = compile ps_6_0 CombinePS();
     }
 }

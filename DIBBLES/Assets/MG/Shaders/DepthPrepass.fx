@@ -47,7 +47,7 @@ technique DepthPrepass
 {
     pass P0
     {
-        VertexShader = compile vs_3_0 VS_Depth();
-        PixelShader  = compile ps_3_0 PS_Depth();
+        VertexShader = compile vs_6_0 VS_Depth();
+        PixelShader  = compile ps_6_0 PS_Depth();
     }
 }
