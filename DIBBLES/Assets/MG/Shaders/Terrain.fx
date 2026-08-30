@@ -1,8 +1,8 @@
 #include "Includes/Utils.hlsl"
 #include "Includes/Fog.hlsl"
 
-texture AtlasTex;
-texture EmissiveAtlasTex;
+Texture2D AtlasTex;
+Texture2D EmissiveAtlasTex;
 
 int UseGreedyMeshing; // Toggle (0 or 1). Set from TerrainMesh.UseGreedyMeshing
 
@@ -25,12 +25,12 @@ float FogFar;
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
-sampler2D AtlasSampler = sampler_state
+sampler AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
 };
 
-sampler2D EmissiveAtlasSampler = sampler_state
+sampler EmissiveAtlasSampler = sampler_state
 {
     Texture = <EmissiveAtlasTex>;
 };
@@ -70,10 +70,10 @@ struct PixelInput
 
 struct PixelOutput
 {
-    float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth in [0..1]
-    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
-    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
+    float4 Color0 : SV_Target0; // scene color
+    float4 Color1 : SV_Target1; // linear depth in [0..1]
+    float4 Color2 : SV_Target2; // view-space normals encoded to [0..1]
+    float4 Color3 : SV_Target3; // emissive color (RGB) + mask in A
 };
 
 PixelInput VS(VertexInput input)
@@ -149,7 +149,7 @@ PixelOutput PS_Color(PixelInput input)
         atlasUV = input.TexCoord;
     }
 
-    float4 texColor = tex2D(AtlasSampler, atlasUV);
+    float4 texColor = AtlasTex.Sample(AtlasSampler, atlasUV);
     float4 vertLighting = float4(input.Color.rgb + AmbientLightColor, texColor.a * input.Color.a);
     float4 blockColor = texColor * vertLighting;
 
@@ -194,7 +194,7 @@ PixelOutput PS_Color(PixelInput input)
         emisUV = float2(input.EmisUVRect.x, input.EmisUVRect.y) + local.x * eU + local.y * eV;
     }
 
-    float4 emissiveColor = tex2D(EmissiveAtlasSampler, emisUV);
+    float4 emissiveColor = EmissiveAtlasTex.Sample(EmissiveAtlasSampler, emisUV);
 
     float sunStrength = lerp(DayEmissiveStrengthMax, 1.0, 1.0 - SunIntensity);
 

@@ -14,7 +14,7 @@
 
 #include "Includes/Fog.hlsl"
 
-texture DiffuseTex;
+Texture2D DiffuseTex;
 float4 DiffuseColor;     // Base material color/tint (RGBA)
 
 float4x4 World;
@@ -30,7 +30,7 @@ float FogFar;
 
 static const float AlphaCutoff = 0.35f;
 
-sampler2D DiffuseSampler = sampler_state
+sampler DiffuseSampler = sampler_state
 {
     Texture = <DiffuseTex>;
 };
@@ -156,10 +156,10 @@ PSInput VSBasicTxVc(VSInputTxVc input)
 
 struct PixelOutput
 {
-    float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth in [0..1]
-    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
-    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
+    float4 Color0 : SV_Target0; // scene color
+    float4 Color1 : SV_Target1; // linear depth in [0..1]
+    float4 Color2 : SV_Target2; // view-space normals encoded to [0..1]
+    float4 Color3 : SV_Target3; // emissive color (RGB) + mask in A
 };
 
 float4 applyFog(float4 color, PSInput input)
@@ -228,7 +228,7 @@ PixelOutput PS_NoTex_NoFog(PSInput input)
 
 PixelOutput PS_Tex_Fog(PSInput input)
 {
-    float4 texColor  = tex2D(DiffuseSampler, input.TexCoord);
+    float4 texColor  = DiffuseTex.Sample(DiffuseSampler, input.TexCoord);
     float4 baseColor = texColor * input.Color;
 
     clip(baseColor.a - AlphaCutoff);
@@ -254,7 +254,7 @@ PixelOutput PS_Tex_Fog(PSInput input)
 
 PixelOutput PS_Tex_NoFog(PSInput input)
 {
-    float4 texColor  = tex2D(DiffuseSampler, input.TexCoord);
+    float4 texColor  = DiffuseTex.Sample(DiffuseSampler, input.TexCoord);
     float4 baseColor = texColor * input.Color;
 
     clip(baseColor.a - AlphaCutoff);

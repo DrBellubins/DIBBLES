@@ -1,4 +1,4 @@
-texture Texture0;
+Texture2D Texture0;
 
 float4x4 World;
 float4x4 View;
@@ -13,7 +13,7 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
-sampler2D TextureSampler = sampler_state
+sampler TextureSampler = sampler_state
 {
     Texture = <Texture0>;  // bind the atlas
     MinFilter = POINT;
@@ -48,9 +48,9 @@ struct VertexInput
 // MRT output struct
 struct PSOutput
 {
-    float4 Color0   : COLOR0; // scene color
-    float4 NormalRT : COLOR1; // encoded normals
-    float4 DepthRT  : COLOR2; // linear depth
+    float4 Color0   : SV_Target0; // scene color
+    float4 NormalRT : SV_Target1; // encoded normals
+    float4 DepthRT  : SV_Target2; // linear depth
 };
 
 PixelInput VS(VertexInput input)
@@ -77,7 +77,7 @@ PixelInput VS(VertexInput input)
 
 PSOutput PS(PixelInput input)
 {
-    float4 texColor   = tex2D(TextureSampler, input.TexCoord);
+    float4 texColor   = Texture0.Sample(TextureSampler, input.TexCoord);
     float4 blockColor = texColor * input.Color;
 
     // Hard cutouts: use texture alpha (not multiplied color)

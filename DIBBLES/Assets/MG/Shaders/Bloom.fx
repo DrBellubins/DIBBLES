@@ -23,8 +23,8 @@ float2 TexelSize;
 float LayerDecay;
 int LayerIndex;
 
-texture SourceTex;
-sampler2D SourceSampler = sampler_state
+Texture2D SourceTex;
+sampler SourceSampler = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;
@@ -34,8 +34,8 @@ sampler2D SourceSampler = sampler_state
     AddressV = Clamp;
 };
 
-texture StageTex;
-sampler2D StageSampler = sampler_state
+Texture2D StageTex;
+sampler StageSampler = sampler_state
 {
     Texture = <StageTex>;
     MinFilter = Linear;
@@ -45,8 +45,8 @@ sampler2D StageSampler = sampler_state
     AddressV = Clamp;
 };
 
-texture BloomTex;
-sampler2D BloomSampler = sampler_state
+Texture2D BloomTex;
+sampler BloomSampler = sampler_state
 {
     Texture = <BloomTex>;
     MinFilter = Linear;
@@ -56,8 +56,8 @@ sampler2D BloomSampler = sampler_state
     AddressV = Clamp;
 };
 
-texture SceneTex;
-sampler2D SceneSampler = sampler_state
+Texture2D SceneTex;
+sampler SceneSampler = sampler_state
 {
     Texture = <SceneTex>;
     MinFilter = Linear;
@@ -92,23 +92,23 @@ float4 Box4(float4 a, float4 b, float4 c, float4 d)
     return (a + b + c + d) * 0.25;
 }
 
-float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
+float4 DownsamplePS(float2 uv : TEXCOORD0) : SV_Target0
 {
     float2 o = TexelSize * max(Radius, 0.0001);
 
-    float4 c0  = tex2D(SourceSampler, uv + float2(-2, -2) * o);
-    float4 c1  = tex2D(SourceSampler, uv + float2( 0, -2) * o);
-    float4 c2  = tex2D(SourceSampler, uv + float2( 2, -2) * o);
-    float4 c3  = tex2D(SourceSampler, uv + float2(-1, -1) * o);
-    float4 c4  = tex2D(SourceSampler, uv + float2( 1, -1) * o);
-    float4 c5  = tex2D(SourceSampler, uv + float2(-2,  0) * o);
-    float4 c6  = tex2D(SourceSampler, uv + float2( 0,  0) * o);
-    float4 c7  = tex2D(SourceSampler, uv + float2( 2,  0) * o);
-    float4 c8  = tex2D(SourceSampler, uv + float2(-1,  1) * o);
-    float4 c9  = tex2D(SourceSampler, uv + float2( 1,  1) * o);
-    float4 c10 = tex2D(SourceSampler, uv + float2(-2,  2) * o);
-    float4 c11 = tex2D(SourceSampler, uv + float2( 0,  2) * o);
-    float4 c12 = tex2D(SourceSampler, uv + float2( 2,  2) * o);
+    float4 c0  = SourceTex.Sample(SourceSampler, uv + float2(-2, -2) * o);
+    float4 c1  = SourceTex.Sample(SourceSampler, uv + float2( 0, -2) * o);
+    float4 c2  = SourceTex.Sample(SourceSampler, uv + float2( 2, -2) * o);
+    float4 c3  = SourceTex.Sample(SourceSampler, uv + float2(-1, -1) * o);
+    float4 c4  = SourceTex.Sample(SourceSampler, uv + float2( 1, -1) * o);
+    float4 c5  = SourceTex.Sample(SourceSampler, uv + float2(-2,  0) * o);
+    float4 c6  = SourceTex.Sample(SourceSampler, uv + float2( 0,  0) * o);
+    float4 c7  = SourceTex.Sample(SourceSampler, uv + float2( 2,  0) * o);
+    float4 c8  = SourceTex.Sample(SourceSampler, uv + float2(-1,  1) * o);
+    float4 c9  = SourceTex.Sample(SourceSampler, uv + float2( 1,  1) * o);
+    float4 c10 = SourceTex.Sample(SourceSampler, uv + float2(-2,  2) * o);
+    float4 c11 = SourceTex.Sample(SourceSampler, uv + float2( 0,  2) * o);
+    float4 c12 = SourceTex.Sample(SourceSampler, uv + float2( 2,  2) * o);
 
     float4 r =
     Box4(c0, c1, c5, c6)   * 0.125 +
@@ -121,7 +121,7 @@ float4 DownsamplePS(float2 uv : TEXCOORD0) : COLOR0
     return float4(r.rgb, 1.0);
 }
 
-float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
+float4 UpsamplePS(float2 uv : TEXCOORD0) : SV_Target0
 {
     float2 o = TexelSize * max(Radius, 0.0001);
 
@@ -135,15 +135,15 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
     float2 u7 = uv + float2( 0,  1) * o;
     float2 u8 = uv + float2( 1,  1) * o;
 
-    float4 c0 = tex2D(SourceSampler, u0);
-    float4 c1 = tex2D(SourceSampler, u1);
-    float4 c2 = tex2D(SourceSampler, u2);
-    float4 c3 = tex2D(SourceSampler, u3);
-    float4 c4 = tex2D(SourceSampler, u4);
-    float4 c5 = tex2D(SourceSampler, u5);
-    float4 c6 = tex2D(SourceSampler, u6);
-    float4 c7 = tex2D(SourceSampler, u7);
-    float4 c8 = tex2D(SourceSampler, u8);
+    float4 c0 = SourceTex.Sample(SourceSampler, u0);
+    float4 c1 = SourceTex.Sample(SourceSampler, u1);
+    float4 c2 = SourceTex.Sample(SourceSampler, u2);
+    float4 c3 = SourceTex.Sample(SourceSampler, u3);
+    float4 c4 = SourceTex.Sample(SourceSampler, u4);
+    float4 c5 = SourceTex.Sample(SourceSampler, u5);
+    float4 c6 = SourceTex.Sample(SourceSampler, u6);
+    float4 c7 = SourceTex.Sample(SourceSampler, u7);
+    float4 c8 = SourceTex.Sample(SourceSampler, u8);
 
     float4 tent = 0.0625 * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8);
     float3 rgb = tent.rgb * Strength;
@@ -155,9 +155,9 @@ float4 UpsamplePS(float2 uv : TEXCOORD0) : COLOR0
 // Accumulation PS: add a weighted contribution per layer.
 // Use additive blending on the render target for safe accumulation.
 // Weight falls off by pow(LayerDecay, LayerIndex); multiply by Strength for per-layer control.
-float4 AccumulatePS(float2 uv : TEXCOORD0) : COLOR0
+float4 AccumulatePS(float2 uv : TEXCOORD0) : SV_Target0
 {
-    float4 src = tex2D(SourceSampler, uv);
+    float4 src = SourceTex.Sample(SourceSampler, uv);
 
     // Decay weight per layer, keep within [0..1]
     float w = saturate(Strength * pow(saturate(LayerDecay), (float)LayerIndex));
@@ -166,10 +166,10 @@ float4 AccumulatePS(float2 uv : TEXCOORD0) : COLOR0
     return float4(src.rgb * w, 1.0);
 }
 
-float4 CombinePS(float2 uv : TEXCOORD0) : COLOR0
+float4 CombinePS(float2 uv : TEXCOORD0) : SV_Target0
 {
-    float4 scene = tex2D(SceneSampler, uv);
-    float4 bloom = tex2D(BloomSampler, uv);
+    float4 scene = SceneTex.Sample(SceneSampler, uv);
+    float4 bloom = BloomTex.Sample(BloomSampler, uv);
 
     bloom.rgb *= Intensity;
 

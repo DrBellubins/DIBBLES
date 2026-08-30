@@ -70,14 +70,14 @@ static const float w3 = 0.0540541f;
 static const float w4 = 0.0162162f;
 
 // Textures
-texture ColorTex;
-texture DepthTex;
-texture NormalTex;
-texture AOTex;
-texture RandomTex;
+Texture2D ColorTex;
+Texture2D DepthTex;
+Texture2D NormalTex;
+Texture2D AOTex;
+Texture2D RandomTex;
 
 // Samplers
-sampler2D ColorSampler = sampler_state
+sampler ColorSampler = sampler_state
 {
     Texture = <ColorTex>;
     MinFilter = Linear;
@@ -87,7 +87,7 @@ sampler2D ColorSampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler2D DepthSampler = sampler_state
+sampler DepthSampler = sampler_state
 {
     Texture = <DepthTex>;
     MinFilter = POINT;
@@ -97,7 +97,7 @@ sampler2D DepthSampler = sampler_state
     AddressV = CLAMP;
 };
 
-sampler2D NormalSampler = sampler_state
+sampler NormalSampler = sampler_state
 {
     Texture = <NormalTex>;
     MinFilter = POINT;
@@ -107,7 +107,7 @@ sampler2D NormalSampler = sampler_state
     AddressV = CLAMP;
 };
 
-sampler2D AOSamplerLinear = sampler_state
+sampler AOSamplerLinear = sampler_state
 {
     Texture = <AOTex>;
     MinFilter = LINEAR;
@@ -117,7 +117,7 @@ sampler2D AOSamplerLinear = sampler_state
     AddressV = CLAMP;
 };
 
-sampler2D RandomSampler = sampler_state
+sampler RandomSampler = sampler_state
 {
     Texture = <RandomTex>;
     MinFilter = POINT;
@@ -227,7 +227,7 @@ float FogFactor(float3 viewPos)
 // Core AO
 float ComputeAO(float2 uv)
 {
-    float depth01 = tex2D(DepthSampler, uv).r;
+    float depth01 = DepthTex.Sample(DepthSampler, uv).r;
 
     if (depth01 >= 0.999f)
         return 1.0f;
@@ -237,7 +237,7 @@ float ComputeAO(float2 uv)
 
     // Get normal from G-buffer
     float3 N;
-    float4 nTex = tex2D(NormalSampler, uv);
+    float4 nTex = NormalTex.Sample(NormalSampler, uv);
 
     if (nTex.a < 0.5f)
     {
@@ -250,7 +250,7 @@ float ComputeAO(float2 uv)
     }
 
     // TBN construction (same as before)
-    float3 R = tex2D(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
+    float3 R = RandomTex.Sample(RandomSampler, uv * NoiseScale).rgb * 2.0f - 1.0f;
     R = normalize(R);
 
     float3 T = R - N * dot(R, N);
@@ -287,7 +287,7 @@ float ComputeAO(float2 uv)
         if (!ProjectToUV(samplePosVS, uvSamp))
             continue;
 
-        float sampDepth01 = tex2D(DepthSampler, uvSamp).r;
+        float sampDepth01 = DepthTex.Sample(DepthSampler, uvSamp).r;
         float sceneZ = lerp(CameraNear, CameraFar, sampDepth01);
         float sampleZ = -samplePosVS.z;
 
@@ -325,7 +325,7 @@ float4 PS_SSAO(VSOutput input) : SV_Target0
 
 /*float4 PS_SSAO(VSOutput input) : SV_Target0
 {
-    float4 nTex = tex2D(NormalSampler, input. TexCoord);
+    float4 nTex = NormalTex.Sample(NormalSampler, input. TexCoord);
 
     // Visualize normals - should show smooth color gradients on surfaces
     // Red = X, Green = Y, Blue = Z
@@ -361,10 +361,10 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
 {
     float2 texel = float2(1.0f / ScreenSize.x, 0.0f);
 
-    float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-    float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+    float aoC = AOTex.Sample(AOSamplerLinear, input.TexCoord).r;
+    float dC  = DepthTex.Sample(DepthSampler, input.TexCoord).r;
 
-    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float4 nCtex = NormalTex.Sample(NormalSampler, input.TexCoord);
     float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
 
     float sum  = wC * aoC;
@@ -375,10 +375,10 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     for (int s = -1; s <= 1; s += 2)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -391,10 +391,10 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     for (int s = -2; s <= 2; s += 4)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -407,10 +407,10 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     for (int s = -3; s <= 3; s += 6)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -423,10 +423,10 @@ float4 PS_BlurH(VSOutput input) : SV_Target0
     for (int s = -4; s <= 4; s += 8)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -443,10 +443,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
 {
     float2 texel = float2(0.0f, 1.0f / ScreenSize.y);
 
-    float aoC = tex2D(AOSamplerLinear, input.TexCoord).r;
-    float dC  = tex2D(DepthSampler,   input.TexCoord).r;
+    float aoC = AOTex.Sample(AOSamplerLinear, input.TexCoord).r;
+    float dC  = DepthTex.Sample(DepthSampler, input.TexCoord).r;
 
-    float4 nCtex = tex2D(NormalSampler, input.TexCoord);
+    float4 nCtex = NormalTex.Sample(NormalSampler, input.TexCoord);
     float3 nC = (nCtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nCtex);
 
     float sum  = wC * aoC;
@@ -457,10 +457,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     for (int s = -1; s <= 1; s += 2)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w1 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -473,10 +473,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     for (int s = -2; s <= 2; s += 4)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w2 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -489,10 +489,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     for (int s = -3; s <= 3; s += 6)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w3 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -505,10 +505,10 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
     for (int s = -4; s <= 4; s += 8)
     {
         float2 uv = input.TexCoord + texel * s;
-        float aoN = tex2D(AOSamplerLinear, uv).r;
-        float dN  = tex2D(DepthSampler,   uv).r;
+        float aoN = AOTex.Sample(AOSamplerLinear, uv).r;
+        float dN  = DepthTex.Sample(DepthSampler, uv).r;
 
-        float4 nNtex = tex2D(NormalSampler, uv);
+        float4 nNtex = NormalTex.Sample(NormalSampler, uv);
         float3 nN = (nNtex.a < 0.5f) ? float3(0, 0, 1) : DecodeNormal01(nNtex);
 
         float w = w4 * DepthSimilarity(dC, dN, BlurDepthSigma) * NormalSimilarity(nC, nN, BlurNormalPower);
@@ -523,15 +523,15 @@ float4 PS_BlurV(VSOutput input) : SV_Target0
 float4 PS_Composite(VSOutput input) : SV_Target0
 {
     // Use blurred AO and mask where normals are invalid
-    float ao = tex2D(AOSamplerLinear, input.TexCoord).r;
+    float ao = AOTex.Sample(AOSamplerLinear, input.TexCoord).r;
 
     // If normal is missing (sky, BasicEffect geometry, etc.), do not darken
-    float4 nTex = tex2D(NormalSampler, input.TexCoord);
+    float4 nTex = NormalTex.Sample(NormalSampler, input.TexCoord);
 
     if (nTex.a < 0.5f)
         ao = 1.0f;
 
-    float4 color = tex2D(ColorSampler, input.TexCoord);
+    float4 color = ColorTex.Sample(ColorSampler, input.TexCoord);
 
     return float4(color.rgb * ao, 1.0f); // ensure alpha = 1
 }

@@ -10,9 +10,9 @@ float PostBrightness;
 float Contrast;
 float Saturation;
 
-texture SourceTex;
+Texture2D SourceTex;
 
-sampler2D SourceSampler = sampler_state
+sampler SourceSampler = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;
@@ -42,9 +42,9 @@ VertOut FullscreenVS(VertIn i)
     return o;
 }
 
-float4 TonemapPS(float2 uv : TEXCOORD0) : COLOR0
+float4 TonemapPS(float2 uv : TEXCOORD0) : SV_Target0
 {
-    float4 src = tex2D(SourceSampler, uv);
+    float4 src = SourceTex.Sample(SourceSampler, uv);
     src.rgb = src.rgb * PreBrightness;
 
     if (Algorithm == 0) // ACES

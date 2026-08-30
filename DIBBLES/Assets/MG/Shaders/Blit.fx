@@ -21,8 +21,8 @@ VSOut FullscreenVS(VSIn i)
     return o;
 }
 
-texture SourceTex;
-sampler2D SourceSampler = sampler_state
+Texture2D SourceTex;
+sampler SourceSampler = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;
@@ -32,9 +32,9 @@ sampler2D SourceSampler = sampler_state
     AddressV = Clamp;
 };
 
-float4 CopyPS(float2 uv : TEXCOORD0) : COLOR0
+float4 CopyPS(float2 uv : TEXCOORD0) : SV_Target0
 {
-    return tex2D(SourceSampler, uv);
+    return SourceTex.Sample(SourceSampler, uv);
 }
 
 technique Blit

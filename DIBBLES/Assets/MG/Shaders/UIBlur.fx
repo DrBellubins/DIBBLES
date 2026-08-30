@@ -71,7 +71,7 @@ float4 GaussianBlurHPS(float2 texCoord)
     {
         int offset = i - halfKernel;
         float2 sampleOffset = float2(offset, 0) * texelSize * radius;
-        color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
+        color += Texture0.Sample(Sampler, texCoord + sampleOffset) * kernel[i];
     }
 
     return color;
@@ -90,7 +90,7 @@ float4 GaussianBlurVPS(float2 texCoord)
     {
         int offset = i - halfKernel;
         float2 sampleOffset = float2(0, offset) * texelSize * radius;
-        color += tex2D(Sampler, texCoord + sampleOffset) * kernel[i];
+        color += Texture0.Sample(Sampler, texCoord + sampleOffset) * kernel[i];
     }
 
     return color;
@@ -99,8 +99,8 @@ float4 GaussianBlurVPS(float2 texCoord)
 // === Masked Upsample Pass ===
 float4 MaskedPS(float2 texCoord)
 {
-    float4 blurColor = tex2D(Sampler, texCoord); // Already blurred
-    float maskA = tex2D(MaskSampler, texCoord).a;
+    float4 blurColor = Texture0.Sample(Sampler, texCoord); // Already blurred
+    float maskA = MaskTexture.Sample(MaskSampler, texCoord).a;
 
     // Only output blurred color where mask alpha > 0.5
     if (maskA > 0.5)

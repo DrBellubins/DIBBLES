@@ -6,15 +6,15 @@ float4x4 Projection;
 float3 SkyZenithColor;
 float3 SkyHorizonColor;
 
-texture SunTexture;
-texture MoonTexture;
+Texture2D SunTexture;
+Texture2D MoonTexture;
 
 float3 SunDirection;
 float3 MoonDirection;
 
 float TimeOfDay; // 0..24
 
-sampler2D SunSampler = sampler_state
+sampler SunSampler = sampler_state
 {
     Texture = <SunTexture>;
     Filter = POINT;
@@ -22,7 +22,7 @@ sampler2D SunSampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler2D MoonSampler = sampler_state
+sampler MoonSampler = sampler_state
 {
     Texture = <MoonTexture>;
     Filter = POINT;
@@ -43,8 +43,8 @@ struct PixelInput
 
 struct PixelOutput
 {
-    float4 Color : COLOR0; // scene color
-    float4 Emissive : COLOR1; // emissive color (RGB) + mask in A
+    float4 Color : SV_Target0; // scene color
+    float4 Emissive : SV_Target1; // emissive color (RGB) + mask in A
 };
 
 PixelInput VS(VSInput input)
@@ -96,7 +96,7 @@ float2 computeLocalUV(float3 viewDir, float3 center, float size)
     return (0.5 + offset / (2.0 * size));  // Exact fit: UV edges align with angular radius
 }
 
-PixelOutput PS(PixelInput input) : SV_Target
+PixelOutput PS(PixelInput input)
 {
     float3 viewDir = normalize(input.World);
 
@@ -122,8 +122,8 @@ PixelOutput PS(PixelInput input) : SV_Target
     moonUV = saturate(moonUV);
 
     // Sample textures exactly once
-    float4 sunTex  = tex2D(SunSampler,  sunUV);
-    float4 moonTex = tex2D(MoonSampler, moonUV);
+    float4 sunTex  = SunTexture.Sample(SunSampler, sunUV);
+    float4 moonTex = MoonTexture.Sample(MoonSampler, moonUV);
 
     // ────────────────────────────────────────────────
     // Decide visibility (simple angular cutoff – no fade)

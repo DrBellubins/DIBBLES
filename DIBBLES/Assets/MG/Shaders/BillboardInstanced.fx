@@ -3,7 +3,7 @@
 
 #include "Includes/Fog.hlsl"
 
-texture AtlasTex;
+Texture2D AtlasTex;
 
 float4x4 View;
 float4x4 Projection;
@@ -39,7 +39,7 @@ static const float  BendExponent = 2.0f;          // bend grows toward tip
 static const float  SideCurlAmount = 0.45f;       // inward curl magnitude
 static const float  SideCurlExponent = 1.2f;      // curl grows toward tip
 
-sampler2D AtlasSampler = sampler_state
+sampler AtlasSampler = sampler_state
 {
     Texture = <AtlasTex>;
 };
@@ -286,15 +286,15 @@ PixelInput VS(VertexInput input)
 
 struct PixelOutput
 {
-    float4 Color0 : COLOR0; // scene color
-    float4 Color1 : COLOR1; // linear depth in [0..1]
-    float4 Color2 : COLOR2; // view-space normals encoded to [0..1]
-    float4 Color3 : COLOR3; // emissive color (RGB) + mask in A
+    float4 Color0 : SV_Target0; // scene color
+    float4 Color1 : SV_Target1; // linear depth in [0..1]
+    float4 Color2 : SV_Target2; // view-space normals encoded to [0..1]
+    float4 Color3 : SV_Target3; // emissive color (RGB) + mask in A
 };
 
 PixelOutput PS_Color(PixelInput input)
 {
-    float4 texColor = tex2D(AtlasSampler, input.Tex);
+    float4 texColor = AtlasTex.Sample(AtlasSampler, input.Tex);
     float4 vertLighting = float4(input.Color.rgb + AmbientLightColor, texColor.a * input.Color.a);
     float4 blockColor = texColor * vertLighting;
 
