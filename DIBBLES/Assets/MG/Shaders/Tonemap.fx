@@ -10,9 +10,9 @@ float PostBrightness;
 float Contrast;
 float Saturation;
 
-Texture2D SourceTex;
+Texture2D SourceTex : register(t0);
 
-sampler SourceSampler = sampler_state
+sampler SourceSampler : register(s0) = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;

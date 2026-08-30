@@ -21,8 +21,8 @@ VSOut FullscreenVS(VSIn i)
     return o;
 }
 
-Texture2D SourceTex;
-sampler SourceSampler = sampler_state
+Texture2D SourceTex : register(t0);
+sampler SourceSampler : register(s0) = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;

@@ -3,7 +3,7 @@
 
 #include "Includes/Fog.hlsl"
 
-Texture2D AtlasTex;
+Texture2D AtlasTex : register(t0);
 
 float4x4 View;
 float4x4 Projection;
@@ -39,7 +39,7 @@ static const float  BendExponent = 2.0f;          // bend grows toward tip
 static const float  SideCurlAmount = 0.45f;       // inward curl magnitude
 static const float  SideCurlExponent = 1.2f;      // curl grows toward tip
 
-sampler AtlasSampler = sampler_state
+sampler AtlasSampler : register(s0) = sampler_state
 {
     Texture = <AtlasTex>;
 };

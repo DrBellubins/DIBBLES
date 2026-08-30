@@ -14,7 +14,7 @@
 
 #include "Includes/Fog.hlsl"
 
-Texture2D DiffuseTex;
+Texture2D DiffuseTex : register(t0);
 float4 DiffuseColor;     // Base material color/tint (RGBA)
 
 float4x4 World;
@@ -30,7 +30,7 @@ float FogFar;
 
 static const float AlphaCutoff = 0.35f;
 
-sampler DiffuseSampler = sampler_state
+sampler DiffuseSampler : register(s0) = sampler_state
 {
     Texture = <DiffuseTex>;
 };

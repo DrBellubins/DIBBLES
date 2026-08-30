@@ -1,4 +1,4 @@
-Texture2D Texture0;
+Texture2D Texture0 : register(t0);
 
 float4x4 World;
 float4x4 View;
@@ -13,7 +13,7 @@ float FogNear;
 float FogFar;
 float4 FogColor;
 
-sampler TextureSampler = sampler_state
+sampler TextureSampler : register(s0) = sampler_state
 {
     Texture = <Texture0>;  // bind the atlas
     MinFilter = POINT;

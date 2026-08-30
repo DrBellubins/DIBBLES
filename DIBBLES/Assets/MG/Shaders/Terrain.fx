@@ -1,8 +1,8 @@
 #include "Includes/Utils.hlsl"
 #include "Includes/Fog.hlsl"
 
-Texture2D AtlasTex;
-Texture2D EmissiveAtlasTex;
+Texture2D AtlasTex : register(t0);
+Texture2D EmissiveAtlasTex : register(t1);
 
 int UseGreedyMeshing; // Toggle (0 or 1). Set from TerrainMesh.UseGreedyMeshing
 
@@ -25,12 +25,12 @@ float FogFar;
 // Alpha cutoff for foliage cutout; pixels below this alpha are discarded
 static const float AlphaCutoff = 0.35f;
 
-sampler AtlasSampler = sampler_state
+sampler AtlasSampler : register(s0) = sampler_state
 {
     Texture = <AtlasTex>;
 };
 
-sampler EmissiveAtlasSampler = sampler_state
+sampler EmissiveAtlasSampler : register(s1) = sampler_state
 {
     Texture = <EmissiveAtlasTex>;
 };

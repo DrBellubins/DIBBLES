@@ -14,7 +14,7 @@ Texture2D Texture0      : register(t0); // Input (for blur stage)
 Texture2D MaskTexture   : register(t1); // Mask (for masking stage)
 
 // === Samplers ===
-sampler Sampler = sampler_state
+sampler Sampler : register(s0) = sampler_state
 {
     Texture = <Texture0>;
     MinFilter = Linear;
@@ -24,7 +24,7 @@ sampler Sampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler MaskSampler = sampler_state
+sampler MaskSampler : register(s1) = sampler_state
 {
     Texture = <MaskTexture>;
     MinFilter = Linear;

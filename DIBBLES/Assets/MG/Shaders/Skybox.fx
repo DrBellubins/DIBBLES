@@ -6,15 +6,15 @@ float4x4 Projection;
 float3 SkyZenithColor;
 float3 SkyHorizonColor;
 
-Texture2D SunTexture;
-Texture2D MoonTexture;
+Texture2D SunTexture : register(t0);
+Texture2D MoonTexture : register(t1);
 
 float3 SunDirection;
 float3 MoonDirection;
 
 float TimeOfDay; // 0..24
 
-sampler SunSampler = sampler_state
+sampler SunSampler : register(s0) = sampler_state
 {
     Texture = <SunTexture>;
     Filter = POINT;
@@ -22,7 +22,7 @@ sampler SunSampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler MoonSampler = sampler_state
+sampler MoonSampler : register(s1) = sampler_state
 {
     Texture = <MoonTexture>;
     Filter = POINT;

@@ -70,14 +70,14 @@ static const float w3 = 0.0540541f;
 static const float w4 = 0.0162162f;
 
 // Textures
-Texture2D ColorTex;
-Texture2D DepthTex;
-Texture2D NormalTex;
-Texture2D AOTex;
-Texture2D RandomTex;
+Texture2D ColorTex : register(t0);
+Texture2D DepthTex : register(t1);
+Texture2D NormalTex : register(t2);
+Texture2D AOTex : register(t3);
+Texture2D RandomTex : register(t4);
 
 // Samplers
-sampler ColorSampler = sampler_state
+sampler ColorSampler : register(s0) = sampler_state
 {
     Texture = <ColorTex>;
     MinFilter = Linear;
@@ -87,7 +87,7 @@ sampler ColorSampler = sampler_state
     AddressV = Clamp;
 };
 
-sampler DepthSampler = sampler_state
+sampler DepthSampler : register(s1) = sampler_state
 {
     Texture = <DepthTex>;
     MinFilter = POINT;
@@ -97,7 +97,7 @@ sampler DepthSampler = sampler_state
     AddressV = CLAMP;
 };
 
-sampler NormalSampler = sampler_state
+sampler NormalSampler : register(s2) = sampler_state
 {
     Texture = <NormalTex>;
     MinFilter = POINT;
@@ -107,7 +107,7 @@ sampler NormalSampler = sampler_state
     AddressV = CLAMP;
 };
 
-sampler AOSamplerLinear = sampler_state
+sampler AOSamplerLinear : register(s3) = sampler_state
 {
     Texture = <AOTex>;
     MinFilter = LINEAR;
@@ -117,7 +117,7 @@ sampler AOSamplerLinear = sampler_state
     AddressV = CLAMP;
 };
 
-sampler RandomSampler = sampler_state
+sampler RandomSampler : register(s4) = sampler_state
 {
     Texture = <RandomTex>;
     MinFilter = POINT;

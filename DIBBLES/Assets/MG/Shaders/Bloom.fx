@@ -23,8 +23,8 @@ float2 TexelSize;
 float LayerDecay;
 int LayerIndex;
 
-Texture2D SourceTex;
-sampler SourceSampler = sampler_state
+Texture2D SourceTex : register(t0);
+sampler SourceSampler : register(s0) = sampler_state
 {
     Texture = <SourceTex>;
     MinFilter = Linear;
@@ -34,8 +34,8 @@ sampler SourceSampler = sampler_state
     AddressV = Clamp;
 };
 
-Texture2D StageTex;
-sampler StageSampler = sampler_state
+Texture2D StageTex : register(t1);
+sampler StageSampler : register(s1) = sampler_state
 {
     Texture = <StageTex>;
     MinFilter = Linear;
@@ -45,8 +45,8 @@ sampler StageSampler = sampler_state
     AddressV = Clamp;
 };
 
-Texture2D BloomTex;
-sampler BloomSampler = sampler_state
+Texture2D BloomTex : register(t2);
+sampler BloomSampler : register(s2) = sampler_state
 {
     Texture = <BloomTex>;
     MinFilter = Linear;
@@ -56,8 +56,8 @@ sampler BloomSampler = sampler_state
     AddressV = Clamp;
 };
 
-Texture2D SceneTex;
-sampler SceneSampler = sampler_state
+Texture2D SceneTex : register(t3);
+sampler SceneSampler : register(s3) = sampler_state
 {
     Texture = <SceneTex>;
     MinFilter = Linear;
