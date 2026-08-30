@@ -1,5 +1,7 @@
 bin/
 obj/
+/.store/
+DIBBLES/.store/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
