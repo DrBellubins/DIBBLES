@@ -65,7 +65,7 @@ struct VSInputTxVc
 
 struct PSInput
 {
-    float4 Position   : POSITION0;
+    float4 Position   : SV_Position;
     float2 TexCoord   : TEXCOORD0;
     float4 Color      : COLOR0;
     float3 WorldPos   : TEXCOORD1;

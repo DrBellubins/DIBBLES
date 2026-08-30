@@ -130,14 +130,12 @@ sampler RandomSampler : register(s4) = sampler_state
 struct VSInput
 {
     float3 Position :  POSITION0;
-    float4 Color    : COLOR0;
     float2 TexCoord :  TEXCOORD0;
 };
 
 struct VSOutput
 {
     float4 Position :  SV_Position;
-    float4 Color    : COLOR0;
     float2 TexCoord : TEXCOORD0;
 };
 
@@ -145,7 +143,6 @@ VSOutput VSMain(VSInput input)
 {
     VSOutput o;
     o.Position = float4(input.Position, 1.0f);
-    o.Color = input.Color;
     o. TexCoord = input.TexCoord;
     return o;
 }

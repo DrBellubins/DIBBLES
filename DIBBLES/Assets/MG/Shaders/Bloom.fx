@@ -75,7 +75,7 @@ struct VertIn
 
 struct VertOut
 {
-    float4 Position : POSITION0;
+    float4 Position : SV_Position;
     float2 TexCoord : TEXCOORD0;
 };
 
